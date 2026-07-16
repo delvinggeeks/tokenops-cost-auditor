@@ -3,7 +3,12 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D1 — scaffold (complete, awaiting gate sweep G1)
+## D1 — scaffold (COMPLETE; G1 verdicts: ops-engineer PASS, spec-guard PASS-WITH-NOTES)
+
+G1 notes (non-blocking): re-diff .env.example vs config.py directly at D6; config.py
+pre-declares FR-18/FR-20/detector settings ahead of owning milestones (intentional —
+kickoff requires .env.example to cover every docs/03 §7 variable from D1).
+
 
 Scaffold from scratch per PLAN.md WP-D1 on branch `d1-scaffold`. Python 3.14 (wheel +
 install verification in PLAN.md §0.2). Founder ruling R-NAMING applied mid-milestone:
