@@ -1,0 +1,88 @@
+# TokenOps Cost Auditor — production stack.
+# Topology per docs/06-OPS-RUNBOOK.md §1: caddy -> app -> postgres, plus cron sidecar.
+# Postgres is compose-internal only (no published ports). Deploy: runbook §2.
+name: tokenops-cost-auditor
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://tokenops_cost_auditor:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/tokenops_cost_auditor
+      UPLOAD_DIR: /data/uploads
+      REPORT_DIR: /data/reports
+    volumes:
+      - uploads:/data/uploads
+      - reports:/data/reports
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *logging
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tokenops_cost_auditor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: tokenops_cost_auditor
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tokenops_cost_auditor -d tokenops_cost_auditor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+    # NOTE: no `ports:` — local network only (HLD §6)
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    logging: *logging
+
+  # Cron sidecar (runbook §1). Jobs (purge 02:00 UTC, backup 02:30 UTC, daily digest)
+  # are enabled at D10 in ofelia.ini.
+  ofelia:
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    command: daemon --config=/etc/ofelia/config.ini
+    volumes:
+      - ./ofelia.ini:/etc/ofelia/config.ini:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - app
+    logging: *logging
+
+volumes:
+  pgdata:
+  uploads:
+  reports:
+  caddy_data:
+  caddy_config:

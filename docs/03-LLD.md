@@ -1,9 +1,9 @@
 # Low-Level Design — TokenOps Cost Auditor v1.0
 
-## 1. Package layout (src/tokenops)
+## 1. Package layout (src/tokenops_cost_auditor)
 
 ```
-src/tokenops/
+src/tokenops_cost_auditor/
   config.py            # pydantic-settings; all env vars documented
   main.py              # FastAPI app factory, middleware, routers
   web/                 # Jinja2 routes: landing, auth, upload, report, admin
@@ -58,7 +58,7 @@ src/tokenops/
     logging.py         # structlog config, request-id middleware
     errors.py          # sentry hook (env-gated)
     ratelimit.py       # slowapi limiter
-  cli.py               # `tokenops audit file --out report.pdf` (FR-04)
+  cli.py               # `tokenops-cost-auditor audit file --out report.pdf` (FR-04)
 ```
 
 ## 2. Core types

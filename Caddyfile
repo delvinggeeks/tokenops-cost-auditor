@@ -1,0 +1,15 @@
+# Auto-TLS reverse proxy (NFR-02). DOMAIN comes from .env via compose;
+# defaults to localhost (internal self-signed cert) for staging/dev.
+{$DOMAIN:localhost} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy app:8000
+}

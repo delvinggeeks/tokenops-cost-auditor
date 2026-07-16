@@ -1,0 +1,84 @@
+[project]
+name = "tokenops-cost-auditor"
+version = "0.1.0"
+description = "TokenOps Cost Auditor — zero-integration LLM API spend audit (upload logs, get a dollar-ranked waste report)"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "alembic",
+    "psycopg[binary]",
+    "pydantic-settings",
+    "jinja2",
+    "weasyprint",
+    "pandas",
+    "pyarrow",
+    "itsdangerous",
+    "structlog",
+    "slowapi",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "hypothesis",
+    "ruff",
+    "mypy",
+    # httpx is required by fastapi.testclient (docs/05 L3 mandates TestClient);
+    # test-only — T-NFR-01 forbids it inside services/rules and services/pricing.
+    "httpx",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokenops_cost_auditor"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.14"
+mypy_path = "src"
+packages = ["tokenops_cost_auditor"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+# docs/05 §4: mypy strict on services/*
+[[tool.mypy.overrides]]
+module = "tokenops_cost_auditor.services.*"
+strict = true
+
+# optional, env-gated integration (NFR-06) — intentionally not a dependency
+[[tool.mypy.overrides]]
+module = "sentry_sdk"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "perf: nightly performance tests (T-PERF-01, excluded from the default run)",
+]
+filterwarnings = [
+    # third-party: starlette testclient's httpx deprecation — not actionable here
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+[tool.coverage.run]
+branch = false
+omit = ["src/tokenops_cost_auditor/persistence/migrations/*"]
+
+[tool.coverage.report]
+precision = 1
