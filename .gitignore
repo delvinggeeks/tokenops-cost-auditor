@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.json
+coverage.xml
+htmlcov/
+dist/
+
+# Secrets & environment — never commit (.env.example is the template)
+.env
+.env.*
+!.env.example
+
+# Runtime data (volumes / local runs)
+uploads/
+reports/
+backups/
+*.dump
+
+# Gate handoff artifacts (generated per sweep)
+.gates/
+
+# Editor/OS noise
+.idea/
+.vscode/
+.DS_Store
