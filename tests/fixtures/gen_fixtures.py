@@ -18,7 +18,7 @@ from pathlib import Path
 SEED = 20260717
 BASE_TS = datetime(2026, 6, 1, 8, 0, 0, tzinfo=UTC)
 
-OPENAI_MODELS = ["gpt-5.2", "gpt-5.2-mini", "gpt-4o-mini"]
+OPENAI_MODELS = ["gpt-5.6-terra", "gpt-5.4-mini", "gpt-5.4-nano"]
 ANTHROPIC_MODELS = ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5"]
 TAGS = ["chat-api", "summarizer", "extraction", "support-bot"]
 
