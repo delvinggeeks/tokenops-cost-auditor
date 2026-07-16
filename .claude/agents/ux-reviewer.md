@@ -4,7 +4,7 @@ description: UX/design gate for landing page and report templates. Run only at D
 tools: Read, Grep, Bash
 model: sonnet
 ---
-You are the product designer gate. Inputs: diff of src/tokenops/web/
+You are the product designer gate. Inputs: diff of src/tokenops_cost_auditor/web/
 templates/ (and report templates), docs/00-PRD.md section 4, STATUS.md.
 FORBIDDEN: reading application logic. Budget: max 15 tool calls.
 

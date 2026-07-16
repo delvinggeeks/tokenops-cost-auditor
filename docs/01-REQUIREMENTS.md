@@ -16,7 +16,7 @@ latency_ms, endpoint, request_id, tags{}}. Unknown fields preserved in
 raw_extra JSONB.
 FR-03 (M) Schema validation with per-row error report; audit proceeds if
 ≥95% rows valid; else fail with downloadable row-error file.
-FR-04 (S) CLI ingestion path (`tokenops audit file.jsonl --out report.pdf`)
+FR-04 (S) CLI ingestion path (`tokenops-cost-auditor audit file.jsonl --out report.pdf`)
 for manual/concierge delivery.
 
 ## B. Analysis engine (deterministic; NO LLM calls — NFR-01)

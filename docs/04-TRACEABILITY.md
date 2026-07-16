@@ -42,6 +42,6 @@ test; matrix checked in review before merge to main.
 | NFR-11 | all | config, models (UTC), report display       | T-NFR-11 |
 | X-01..05 | — | reviewer checklist item                   | REV-X (PR template) |
 
-Coverage rule: `pytest --cov=src/tokenops` ≥ 85% lines on services/*,
+Coverage rule: `pytest --cov=src/tokenops_cost_auditor` ≥ 85% lines on services/*,
 100% on pricing/coster and rules/findings estimators (money math).
 Matrix maintenance: any new FR requires a row here in the same PR.
