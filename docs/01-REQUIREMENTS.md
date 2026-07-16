@@ -18,6 +18,11 @@ FR-03 (M) Schema validation with per-row error report; audit proceeds if
 ≥95% rows valid; else fail with downloadable row-error file.
 FR-04 (S) CLI ingestion path (`tokenops-cost-auditor audit file.jsonl --out report.pdf`)
 for manual/concierge delivery.
+FR-24 (M) [amendment 2026-07-17, R-ICP] Documented log-exporter scripts as first-class
+onboarding deliverables, starting with a Claude Code local-log exporter
+(scripts/exporters/claude_code_export.py): converts Claude Code session logs on disk
+to TokenOps JSONL consumable by FR-01/FR-02 ingestion; no prompt/completion text in
+output (FR-22 applies); tested against a checked-in session fixture.
 
 ## B. Analysis engine (deterministic; NO LLM calls — NFR-01)
 

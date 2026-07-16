@@ -114,4 +114,12 @@ under "Amendments" with date + reason.
 
 ## Amendments
 
-(none)
+- 2026-07-17 R-NAMING (founder): product name "TokenOps Cost Auditor" in full across
+  all dirs/files/code; spec strings updated accordingly (docs/01 FR-04 CLI name,
+  docs/03 §1 tree `src/tokenops_cost_auditor/`, docs/04 coverage-rule paths,
+  ux-reviewer charter path).
+- 2026-07-17 R-ICP (founder): primary ICP updated to agent-fleet engineering teams
+  (Claude Code/Codex logs on disk) per docs/09b finding #2; log-exporter scripts are
+  first-class onboarding deliverables — FR-24 added to docs/01 (Claude Code exporter,
+  D2); D8 landing copy leads with the agent-fleet story; marketing stats restricted to
+  attributed 79%/98% figures until dogfood numbers exist (docs/09 §6 amended).

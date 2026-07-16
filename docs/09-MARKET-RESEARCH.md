@@ -78,7 +78,14 @@ rides the documented industry turn toward developer token budgets.
 
 ## 6. Numbers usable in marketing copy (with attribution)
 
-"79% of enterprises overran AI budgets last year" (DoiT/Sapio 2026);
-"73% blew their AI budget plan" (State of FinOps 2026); "even mature
-FinOps teams overspent 31% on AI" (DoiT/Sapio 2026); "40-60% of token
-spend is typically waste" (operator field reports, 2026).
+[Amended 2026-07-17 per docs/09b §2 verification + founder ruling R-ICP(c).]
+APPROVED for copy until dogfood numbers exist (D11):
+"79% of enterprises overran AI budgets last year" (DoiT/Sapio 2026 — enterprise
+finance leaders, 1,000+ employee orgs; do not present as SMB evidence);
+"even mature FinOps teams overspent ~31% on AI" (DoiT/Sapio 2026);
+"98% of FinOps teams now manage AI spend, up from 31% two years ago"
+(State of FinOps 2026 — practitioner survey denominator).
+DROPPED: "73% blew their AI budget plan" (no primary source found — see docs/09b §2).
+RESTRICTED: "40-60% of token spend is waste" — no primary source; unattributed blog
+circulation only. Never state as fact; replace with our own audit/dogfood numbers
+after D11.
