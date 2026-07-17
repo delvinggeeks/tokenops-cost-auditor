@@ -3,7 +3,21 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D5 — rules part 2 (complete, all green; G3 sweep next)
+## D4-D5 — G3 SWEEP COMPLETE (vv PASS, spec-guard PASS, cold-reviewer PASS-WITH-NOTES)
+
+vv-engineer: 86 tests green, all 15 in-scope T-RUL/T-NFR IDs non-trivial, money-math
+discipline satisfied, coverage 94.1% / 100% / 100% — no notes. spec-guard: every
+change maps to FR-07..13/NFR-01, X-02 observe-only confirmed (no enforcement
+anywhere), FR-22 clean (EvidenceRef counts-only, fixed-vocabulary notes), fix_text
+deterministic templates (X-04-consistent). cold-reviewer: 5 findings, ALL FIXED
+same-day (commit ca5aed6): (1) D2 buckets spanning a pricing effective-date
+boundary now reprice per row/day — regression test with independent expected
+1.55136 across the Sonnet-5 Sep-1 boundary; (2) D4 mixed priced/unpriced clusters
+count priced rows only (conservative); (3) D6 mixed-model runs priced at run-min
+input rate (order-independent); (4) tz-naive timestamps assumed UTC defensively;
+(5) '-2' suffix rule commented. Merged to main; tags d4, d5.
+
+## D5 — rules part 2 (complete, all green)
 
 Branch `d4-d5-detectors`. File map: services/rules/{d1_oversized_model,
 d3_prompt_bloat,d5_unbounded_max_tokens,d6_chatty_loop}.py; registry now runs
