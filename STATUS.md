@@ -3,6 +3,23 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D11 RULINGS 2026-07-18 APPLIED — R-D6-AGG + FR-30 built; uat1 artifacts regenerated (sign-off OPEN)
+
+Branch `d11-agg-equiv`. Founder accepted all four UAT-1 fixes
+(R-UAT1-FIXES-ACCEPTED). R-D6-AGG: D6 AND D4 now emit ONE finding per
+session (shared split_on_gap in rules/base.py; gap = D6_SESSION_GAP_S) —
+impact summed, run/cluster count in text, evidence sampled across
+constituents, per-run/cluster breakdown in new Finding.detail → report.json
+("detail" key; null for non-aggregated). Goldens UNCHANGED BY CONSTRUCTION
+(fixture blocks are single sessions; derivation in NOTES sheet): D4 0.0510,
+D6 0.096. FR-30 (R-EQUIV-SPEND): ReportModel.equiv_spend when any endpoint
+== "claude-code"; verbatim line in header + methodology + JSON summary flag +
+quickstart framing; T-REP-09. docs/01 FR-30 amendment + docs/04 row same
+commit. WP-SELF (R-SELF-AUDIT) recorded in PLAN §0.1, scheduled post-D13.
+Suite 193 passed + 1 skip; mypy/ruff/strict-docs clean. uat1/ artifacts
+REGENERATED post-merge for founder review (per ruling item 5) — see report
+below. D13 remains blocked on founder sign-off (R-SEQ-POST-SIGNOFF).
+
 ## D11 UAT-1 DOGFOOD FIXES — first real-data run found 4 defects, all fixed (sign-off still OPEN)
 
 Branch `d11-uat-fixes`. Founder ran the harness on real Claude Code logs
