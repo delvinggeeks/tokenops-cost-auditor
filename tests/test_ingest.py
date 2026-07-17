@@ -92,6 +92,57 @@ class TestTING05ColumnMapping:
         assert frame["request_id"].str.startswith("csv-").all()
 
 
+class TestPrecomputedPrefixHashPassthrough:
+    """Counts-only JSONL shippers may precompute prefix_hash client-side (same
+    contract as generic CSV) — honored by both JSONL parsers since D11-12 prep."""
+
+    def test_openai_and_anthropic_wrappers(self, tmp_path: Path) -> None:
+        import json
+
+        openai_line = {
+            "created": 1750000000,
+            "model": "gpt-5.5",
+            "usage": {"prompt_tokens": 100, "completion_tokens": 10},
+            "id": "req_1",
+            "prefix_hash": "a" * 64,
+        }
+        anthropic_line = {
+            "ts": 1750000000,
+            "model": "claude-sonnet-5",
+            "type": "message",
+            "usage": {"input_tokens": 100, "output_tokens": 10},
+            "id": "msg_1",
+            "prefix_hash": "b" * 64,
+        }
+        for name, line, expected in (
+            ("o.jsonl", openai_line, "a" * 64),
+            ("a.jsonl", anthropic_line, "b" * 64),
+        ):
+            p = tmp_path / name
+            p.write_text(json.dumps(line) + "\n", encoding="utf-8")
+            frame, report = load(p)
+            assert report.valid_pct == 100.0
+            assert frame["prefix_hash"].iloc[0] == expected
+            # the hash is a first-class column, not a raw_extra leftover
+            assert frame["raw_extra"].map(lambda d: "prefix_hash" not in d).all()
+
+    def test_text_still_wins_over_precomputed(self, tmp_path: Path) -> None:
+        import json
+
+        line = {
+            "created": 1750000000,
+            "model": "gpt-5.5",
+            "usage": {"prompt_tokens": 100, "completion_tokens": 10},
+            "id": "req_1",
+            "prefix_hash": "c" * 64,
+            "request": {"messages": [{"role": "user", "content": "hello world"}]},
+        }
+        p = tmp_path / "both.jsonl"
+        p.write_text(json.dumps(line) + "\n", encoding="utf-8")
+        frame, _ = load(p)
+        assert frame["prefix_hash"].iloc[0] != "c" * 64  # computed from text instead
+
+
 class TestTING06RawExtraPreserved:
     def test_openai_unknown_field_preserved(self) -> None:
         frame, _ = load(F1)

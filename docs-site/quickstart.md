@@ -33,6 +33,14 @@ The auditor accepts three formats. Pick the tab that matches your stack.
     account emits them), `model`, and a timestamp. The parser detects the
     provider per file. <!-- src: services/ingest/{openai_jsonl,anthropic_jsonl}.py -->
 
+    If your logging shipper strips prompt text (good), add a top-level
+    `prefix_hash` per line — SHA-256 hex over the first 4,096 prompt
+    characters, computed on your side — and the cache, retry, and agent-loop
+    detectors run at full hash-verified power without your text ever leaving
+    your machine. Wrapper fields `tag`, `request_id`, and
+    `request.max_tokens` are honored too and improve per-route findings.
+    <!-- src: normalizer prefix_hash passthrough; D11-12 export hardening -->
+
 === "Generic CSV"
 
     Any provider, one row per API call. Required header columns
@@ -76,6 +84,26 @@ Start with the savings waterfall — findings are ranked by estimated monthly
 dollar impact, so the top row is your biggest lever. Field-by-field guidance:
 [Reading a report](report/reading-a-report.md).
 <!-- src: FR-15 signed URLs; FR-13/14 report content -->
+
+## Troubleshooting an export
+
+- **"could not detect the format"** — the first lines must parse as JSON with
+  a `usage` block (JSONL) or as the CSV header row. Aggregate exports (daily
+  totals, no per-call rows) are not per-request logs; ask us about
+  aggregate-mode audits instead of reshaping them.
+- **Rows rejected as invalid** — the report's data-quality section and the
+  `row_errors.csv` download list each rejected line and why (missing token
+  counts, negative values, unparseable timestamp). Below 95% valid rows the
+  audit aborts rather than report on a partial picture.
+  <!-- src: FR-03 95% rule -->
+- **Timestamps without timezones** are treated as UTC. If your logger writes
+  local time, convert before exporting — day-boundary charts and cache-window
+  math depend on it. <!-- src: NFR-11 -->
+- **File too big?** Split by time range (per week works well) and buy one
+  audit per slice, or gzip is fine to store but upload the decompressed file.
+- **Detectors showing `estimated` instead of `verified`?** Your export has no
+  `prefix_hash` column/field. Add it (see the format tabs above) to upgrade
+  cache and loop findings to hash-verified confidence.
 
 !!! warning "MEASUREMENT-PENDING (MP-1)"
     We will publish a measured "export to report in N minutes" end-to-end

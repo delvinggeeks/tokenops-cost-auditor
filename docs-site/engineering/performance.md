@@ -6,13 +6,27 @@ The specified requirement: a 1-million-row JSONL export processes in under 10
 minutes on a single 4-vCPU VPS. That is the machine class the product actually
 runs on — not a benchmark rig. <!-- src: NFR-04, target as specified -->
 
-!!! warning "MEASUREMENT-PENDING (MP-6)"
-    Measured results — 1M-row wall-clock with machine spec, per-stage timings,
-    memory peak — will be published here from the nightly performance run.
-    FOUNDER PRECONDITION: at least one successful scheduled nightly perf run
-    must exist before this section carries numbers; none has run yet at the
-    D10 milestone. No performance number on this page will ever come from an
-    untracked local run.
+## Measured run (T-PERF-01, 2026-07-17)
+
+One million rows of mixed synthetic traffic (the seeded F7 fixture, waste
+planted for all six detectors, 17,264 findings produced) through the full
+pipeline — ingest, price, detect, assemble, render JSON:
+<!-- src: MP-6 resolved per founder ruling R-PERF-MANUAL; uv run pytest tests/test_perf.py -m perf, 2026-07-17 -->
+
+| Stage | Wall-clock |
+|---|---|
+| ingest + normalize | 8.5 s |
+| price + reconcile (±0.5% property held at scale) | 1.2 s |
+| detect (all six detectors) | 82.8 s |
+| assemble + render JSON | 1.9 s |
+| **Total** | **94.3 s** (bound: 600 s) |
+
+Peak memory: 1,771 MB RSS. Machine: AMD Ryzen AI MAX+ 392 (24 threads),
+27 GB RAM, Ubuntu 24.04, Python 3.14 — a development workstation, stated
+plainly: it is faster than the 4-vCPU production VPS the NFR-04 target names.
+The pipeline is effectively single-core (pandas), so the headroom is large
+(6.4× under the bound), but the target will be re-verified on production
+hardware at deploy and this table updated with that run.
 
 ## Determinism (measured today)
 
@@ -42,5 +56,9 @@ the current milestone: <!-- src: MP-8 resolved at D5; pricing_golden_NOTES.md --
 - Golden precision proves arithmetic correctness on engineered traffic; recall
   on messy real-world logs is being calibrated in founder-run dogfood audits
   before public claims are made about it.
-- Throughput numbers await the nightly run (above). The 10-minute/1M-row
-  target is stated as the requirement it is, not as a result.
+- The measured run above used a development workstation; the 10-minute/1M-row
+  requirement is bound to a 4-vCPU VPS and will be re-verified on production
+  hardware at deploy.
+- The F7 fixture is synthetic. Synthetic traffic proves throughput and
+  arithmetic at scale, not real-world detector recall — that calibration
+  happens in founder-run dogfood audits.

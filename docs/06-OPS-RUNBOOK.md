@@ -86,6 +86,34 @@ Audit log: ✔ · Rate limiting: ✔ · Backups: ✔ · Monitoring: ✔ ·
 Data retention: ✔ automated · Legal: ToS + Privacy + DPA-lite pages
 (templates day 8) · Status page: UptimeRobot public page (free).
 
+## 8a. Detector threshold knobs (UAT calibration reference; added D11-12 prep)
+
+Every detector threshold is an env-tunable Settings field (config.py). When
+UAT feedback says a detector over/under-fires, turn the matching knob — never
+edit detector code for calibration. Golden tests pin behavior at DEFAULTS; a
+default change is money-math discipline (CLAUDE.md rule 4: golden update +
+spreadsheet diff in the same commit).
+
+| Env var | Default | Effect | Turn when UAT says |
+|---|---|---|---|
+| D1_SHORT_COMPLETION_T | 150 | completion p50 below this = "short/mechanical" bucket | D1 flags real reasoning routes -> lower; misses obvious gluework -> raise |
+| D2_CACHE_MIN_REPEATS | 25 | min identical-prefix repeats before a cache finding | noisy tiny groups -> raise |
+| D2_CACHE_MIN_PROMPT_TOKENS | 1024 | ignore prefixes shorter than this | trivial-prefix findings -> raise |
+| D2_SUFFIX_HAIRCUT | 0.8 | cacheable fraction without hash evidence (R-Q5) | — money-math default; golden discipline applies |
+| D2_TTL_WINDOW_S / D2_TTL_WINDOWS | 300 / {anthropic:300, gpt-5.6:1800} | cache-lifetime window per family (C4) | only on provider TTL changes, with source |
+| D2_NO_WINDOW_HAIRCUT | 0.7 | haircut when writes can't be estimated | — money-math default |
+| D3_BLOAT_MULT | 2.0 | route p90 prompt vs corpus bin median multiplier | lean routes flagged -> raise; obvious bloat missed -> lower |
+| D4_WINDOW_S | 120 | retry-cluster anchor window | slow retries missed -> raise; scheduled jobs clustered -> lower |
+| D4_DUP_MIN | 3 | min identical calls to call it a storm | pairs are noise -> raise |
+| D5_MAX_RATIO | 4.0 | declared max_tokens >= N x completion p95 | pedantic flags -> raise |
+| D5_RESERVED_BILLING | false | price D5 findings (only if account reserves capacity) | set true only with billing evidence |
+| D6_LOOP_MIN | 8 | min calls in a run to consider it a loop | short tool bursts flagged -> raise |
+| D6_BATCH_SZ | 5 | modeled batching factor for savings | — money-math default |
+| D6_SMALL_COMPLETION_T | 300 | loop calls have completions under this | verbose agents missed -> raise |
+| D6_RUN_WINDOW_S / D6_SESSION_GAP_S | 600 / 900 | run anchor / session split | slow agents missed -> raise window |
+| D6_REREAD_MIN | 5 | same prefix_hash >= N in session = re-read signature | hash-poor exports -> lower with care |
+| PREFIX_HASH_CHARS | 4096 | prefix identity span (R-Q6) | never per-customer; contract constant |
+
 ## 8. Launch-week ops cadence
 
 Daily: digest email review (5 min), failed-audit triage, backup check.

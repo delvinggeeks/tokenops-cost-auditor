@@ -85,6 +85,7 @@ class AnthropicJsonlParser:
         )
 
         known = {
+            "prefix_hash",
             "response",
             "request",
             "request_id",
@@ -117,6 +118,9 @@ class AnthropicJsonlParser:
             "tag": obj.get("tag") or "",
             "latency_ms": obj.get("latency_ms"),
             "declared_max_tokens": request.get("max_tokens"),
+            # counts-only shippers (e.g. the Claude Code exporter) may precompute
+            # the hash client-side (generic-CSV contract); text, when present, wins
+            "prefix_hash": obj.get("prefix_hash"),
             "_text": _prompt_text(request),
             "_extra": {
                 k: v

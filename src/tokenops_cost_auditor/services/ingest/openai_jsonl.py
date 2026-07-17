@@ -87,9 +87,13 @@ class OpenAIJsonlParser:
             "tag": obj.get("tag") or obj.get("user") or "",
             "latency_ms": obj.get("latency_ms"),
             "declared_max_tokens": request.get("max_tokens"),
+            # counts-only logging shippers may precompute the hash client-side
+            # (same contract as generic CSV); text, when present, wins downstream
+            "prefix_hash": obj.get("prefix_hash"),
             "_text": _prompt_text(request),
         }
         known = {
+            "prefix_hash",
             "cache_write_tokens",
             "response",
             "request",
