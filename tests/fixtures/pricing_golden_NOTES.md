@@ -80,6 +80,44 @@ write 2.50; TTL 300s):
 Severity thresholds for impact-scaled detectors: high >= $500/mo, med >= $50/mo
 (findings.py; D4 uses the LLD cluster>=10 rule instead).
 
+## waste_pack v2 golden derivations (D5 milestone; independent computation)
+
+Frame still spans exactly 3 UTC days -> monthly factor 10. D2 block completion
+raised 100->200 and max_tokens 1024->256 (isolates D1/D5 from the D2 route; D2's
+own golden is prompt/cache-based and UNCHANGED at 0.246784; D4 unchanged 0.0510).
+
+**D1 block** (25 opus-4-8 calls, tag extraction, prompt 1500 uncached, completion
+60 < 150 p50; downgrade per R-D1-MAP -> sonnet-5 at June intro rates):
+- per-call: opus (1500x5 + 60x25)/1e6 = 0.009; sonnet-5 (1500x2 + 60x10)/1e6 = 0.0036
+- savings_obs = 25 x 0.0054 = 0.135 -> **monthly = 1.35** (estimated; caveat R-D1-MAP e)
+
+**D3 blocks** (same completion bin 8 [256..511]: lean 40x prompt 1000 + bloated
+20x prompt 6000 + filler 20x800 -> corpus bin median = 1000; bloated route p90
+6000 > 2.0 x 1000):
+- excess = 20 x (6000-1000) = 100000 tokens; haiku input rate 1
+- savings_obs = 100000 x 1 x 0.5 / 1e6 = 0.05 -> **monthly = 0.50**
+
+**D5 block** (12 gpt-5.6-luna calls declaring max_tokens 8192, completion p95 120;
+8192 >= 4 x 120): informational finding, **monthly = 0.00** (D5_RESERVED_BILLING
+false), severity low.
+
+**D6 block** (12 haiku calls 65s apart, completion 80 < 300; run anchor 600s ->
+run1 n=10 (span 585s), run2 n=2 silent; even-index calls share one prefix ->
+re-read signature 6 >= 5, "agent loop suspected"):
+- saved = 10 - ceil(10/5) = 8; overhead = run-median prompt = 1200; haiku input 1
+- savings_obs = 8 x 1200 x 1 / 1e6 = 0.0096 -> **monthly = 0.096**
+
+### New money-math defaults of record (D5 milestone)
+
+| Default | Value | Where |
+|---|---|---|
+| D1 savings method | re-price bucket rows at suggested model's four-rate card; difference = savings (linear, equals LLD "token means x rate delta"); cached buckets excluded ("no cached reasoning marker") | d1_oversized_model.py, R-D1-MAP c |
+| D1 caveat | every D1 finding carries "model suitability requires your own quality evaluation" | R-D1-MAP e |
+| D3 excess definition | sum over flagged-route rows of max(prompt - corpus bin median, 0); x input rate x 0.5 safety factor (LLD) | d3_prompt_bloat.py |
+| D6 overhead tokens | run-median prompt_tokens (context re-sent per call); saved calls = n - ceil(n/BATCH_SZ) | d6_chatty_loop.py |
+| Model-key matching (pricing + D1 map) | exact, or key + "-2..." dated-snapshot suffix, longest key wins — prevents sibling bleed (gpt-5.4-nano never takes gpt-5.4's card) | table.py, d1_oversized_model.py |
+| D5 impact | 0.0 (informational) unless D5_RESERVED_BILLING; flag at declared p50 >= 4x completion p95 | d5_unbounded_max_tokens.py |
+
 ## Founder verification log
 
 - 2026-07-17 | Founder verification: all 12 rows arithmetic-recomputed

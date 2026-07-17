@@ -213,7 +213,7 @@ def _waste_pack_lines() -> list[str]:
                     "endpoint": "/v1/messages",
                     "tag": "summarizer",
                     "request": {
-                        "max_tokens": 1024,
+                        "max_tokens": 256,
                         "system": D2_PREFIX_TEXT,
                         "messages": [{"role": "user", "content": "vary-" + str(i)}],
                     },
@@ -225,7 +225,7 @@ def _waste_pack_lines() -> list[str]:
                             "input_tokens": 2000,
                             "cache_creation_input_tokens": 0,
                             "cache_read_input_tokens": 0,
-                            "output_tokens": 100,
+                            "output_tokens": 200,
                         },
                     },
                 }
@@ -254,6 +254,131 @@ def _waste_pack_lines() -> list[str]:
                         "usage": {
                             "prompt_tokens": 500,
                             "completion_tokens": 200,
+                            "prompt_tokens_details": {"cached_tokens": 0},
+                        },
+                    },
+                }
+            )
+        )
+    # --- waste_pack v2 blocks (D5 milestone) ---
+    # D1 block: 25 short-completion opus-4-8 calls, unique prefixes, spaced 200s; day 1.
+    base = datetime(2026, 6, 10, 13, 0, 0, tzinfo=UTC)
+    for i in range(25):
+        ts = base + timedelta(seconds=200 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d1-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": "extraction",
+                    "request": {
+                        "max_tokens": 200,
+                        "system": f"D1-UNIQUE-{i} " * 60,
+                        "messages": [{"role": "user", "content": f"extract {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_d1_{i:03d}",
+                        "type": "message",
+                        "model": "claude-opus-4-8",
+                        "usage": {
+                            "input_tokens": 1500,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 60,
+                        },
+                    },
+                }
+            )
+        )
+    # D3 blocks: lean route (40 x prompt 1000) vs bloated route (20 x prompt 6000),
+    # same completion bin (350 tokens); day 2. Unique prefixes keep D2 silent.
+    for tag, count, prompt, hour in (("rag-lean", 40, 1000, 9), ("rag-bloated", 20, 6000, 16)):
+        base = datetime(2026, 6, 11, hour, 0, 0, tzinfo=UTC)
+        for i in range(count):
+            ts = base + timedelta(seconds=200 * i)
+            lines.append(
+                json.dumps(
+                    {
+                        "request_id": f"wp-d3-{tag}-{i:03d}",
+                        "ts": ts.isoformat(),
+                        "endpoint": "/v1/rag",
+                        "tag": tag,
+                        "request": {
+                            "max_tokens": 1024,
+                            "system": f"D3-{tag}-{i} " * 50,
+                            "messages": [{"role": "user", "content": f"answer {i}"}],
+                        },
+                        "response": {
+                            "id": f"msg_wp_d3_{tag}_{i:03d}",
+                            "type": "message",
+                            "model": "claude-haiku-4-5",
+                            "usage": {
+                                "input_tokens": prompt,
+                                "cache_creation_input_tokens": 0,
+                                "cache_read_input_tokens": 0,
+                                "output_tokens": 350,
+                            },
+                        },
+                    }
+                )
+            )
+    # D6 block: 12 small calls spaced 65s; even indices share one prefix (re-read
+    # signature >= 5) but same-hash calls sit 130s apart (D4 stays silent); day 3.
+    base = datetime(2026, 6, 12, 15, 0, 0, tzinfo=UTC)
+    for i in range(12):
+        ts = base + timedelta(seconds=65 * i)
+        text = "D6-REREAD-CONTEXT " * 250 if i % 2 == 0 else f"D6-STEP-{i} " * 250
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d6-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": "agent-7",
+                    "request": {
+                        "max_tokens": 256,
+                        "system": text,
+                        "messages": [{"role": "user", "content": f"step {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_d6_{i:03d}",
+                        "type": "message",
+                        "model": "claude-haiku-4-5",
+                        "usage": {
+                            "input_tokens": 1200,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 80,
+                        },
+                    },
+                }
+            )
+        )
+    # D5 block (OpenAI shape): 12 calls declaring max_tokens 8192 vs ~120-token
+    # completions; unique prefixes, spaced 200s; day 3.
+    base = datetime(2026, 6, 12, 13, 0, 0, tzinfo=UTC)
+    for i in range(12):
+        ts = base + timedelta(seconds=200 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d5-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/chat/completions",
+                    "tag": "generator",
+                    "request": {
+                        "max_tokens": 8192,
+                        "messages": [{"role": "user", "content": f"D5-UNIQUE-{i} " * 60}],
+                    },
+                    "response": {
+                        "id": f"chatcmpl_wp_d5_{i:03d}",
+                        "object": "chat.completion",
+                        "created": int(ts.timestamp()),
+                        "model": "gpt-5.6-luna",
+                        "usage": {
+                            "prompt_tokens": 900,
+                            "completion_tokens": 120,
                             "prompt_tokens_details": {"cached_tokens": 0},
                         },
                     },

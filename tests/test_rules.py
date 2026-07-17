@@ -99,16 +99,31 @@ class TestTRUL00Registry:
         assert [f.id for f in first] == [f.id for f in second]  # stable
         impacts = [f.monthly_cost_impact_usd for f in first]
         assert impacts == sorted(impacts, reverse=True)  # ranked by $ (FR-13)
-        assert {f.detector for f in first} == {"d2_missing_cache", "d4_retry_storm"}
+        assert {f.detector for f in first} == {
+            "d1_oversized_model",
+            "d2_missing_cache",
+            "d3_prompt_bloat",
+            "d4_retry_storm",
+            "d5_unbounded_max_tokens",
+            "d6_chatty_loop",
+        }
 
     def test_disable_flag(self, waste_pack: pd.DataFrame) -> None:
         settings = make_settings(rules_disabled=["d2_missing_cache"])
         findings = run_all(waste_pack, ctx_for(waste_pack, settings))
-        assert findings, "d4 must still run"
-        assert all(f.detector == "d4_retry_storm" for f in findings)
+        detectors = {f.detector for f in findings}
+        assert "d2_missing_cache" not in detectors
+        assert "d4_retry_storm" in detectors  # others still run
 
     def test_registry_order_is_declared_order(self) -> None:
-        assert [d.name for d in DETECTORS] == ["d2_missing_cache", "d4_retry_storm"]
+        assert [d.name for d in DETECTORS] == [
+            "d1_oversized_model",
+            "d2_missing_cache",
+            "d3_prompt_bloat",
+            "d4_retry_storm",
+            "d5_unbounded_max_tokens",
+            "d6_chatty_loop",
+        ]
 
 
 class TestTRULEV01Evidence:
@@ -127,8 +142,8 @@ class TestTRULEV01Evidence:
                 }
             # FR-22: no prompt/completion text anywhere in the finding
             blob = repr(f)
-            assert "CACHE-ME" not in blob
-            assert "RETRY-ME" not in blob
+            for marker in ("CACHE-ME", "RETRY-ME", "D1-UNIQUE", "D3-rag", "D6-REREAD", "D5-UNIQUE"):
+                assert marker not in blob, marker
 
     def test_finding_rejects_oversized_evidence(self) -> None:
         refs = tuple(
@@ -269,3 +284,249 @@ class TestTRULD4:
         assert len(D4RetryStorm().run(inside, ctx_for(inside))) == 1
         split = synth_frame([{"ts": base + timedelta(seconds=t)} for t in (0, 60, 121)])
         assert D4RetryStorm().run(split, ctx_for(split)) == []  # 121s exceeds anchor window
+
+
+# --- D5-milestone detectors (goldens from pricing_golden_NOTES.md, waste_pack v2) ---
+
+from tokenops_cost_auditor.services.rules.d1_oversized_model import (  # noqa: E402
+    QUALITY_CAVEAT,
+    D1OversizedModel,
+)
+from tokenops_cost_auditor.services.rules.d3_prompt_bloat import D3PromptBloat  # noqa: E402
+from tokenops_cost_auditor.services.rules.d5_unbounded_max_tokens import (  # noqa: E402
+    D5UnboundedMaxTokens,
+)
+from tokenops_cost_auditor.services.rules.d6_chatty_loop import D6ChattyLoop  # noqa: E402
+
+D1_GOLDEN_MONTHLY = 1.35
+D3_GOLDEN_MONTHLY = 0.50
+D6_GOLDEN_MONTHLY = 0.096
+
+
+class TestTRULD1:
+    def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
+        findings = D1OversizedModel().run(waste_pack, ctx_for(waste_pack))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.monthly_cost_impact_usd == pytest.approx(D1_GOLDEN_MONTHLY, abs=1e-12)
+        assert f.confidence is Confidence.ESTIMATED  # R-D1-MAP(c)
+        assert QUALITY_CAVEAT in f.fix_text  # R-D1-MAP(e)
+        assert "claude-sonnet-5" in f.fix_text  # one tier down, same provider
+
+    def test_02_silent_on_clean_optimal(self, clean_optimal: pd.DataFrame) -> None:
+        assert D1OversizedModel().run(clean_optimal, ctx_for(clean_optimal)) == []
+
+    def test_03_p50_threshold_boundary(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+
+        def bucket(completion: int) -> pd.DataFrame:
+            return synth_frame(
+                [
+                    {
+                        "model": "claude-opus-4-8",
+                        "ts": base + timedelta(seconds=400 * i),
+                        "prompt_tokens": 500,
+                        "completion_tokens": completion,
+                        "prefix_hash": f"u{i}" * 32,
+                    }
+                    for i in range(10)
+                ]
+            )
+
+        at = bucket(150)  # p50 == threshold: NOT below -> silent
+        assert D1OversizedModel().run(at, ctx_for(at)) == []
+        below = bucket(149)
+        assert len(D1OversizedModel().run(below, ctx_for(below))) == 1
+
+    def test_03_unmapped_frontier_informational(self) -> None:
+        """R-D1-MAP(f): frontier without a map entry -> informational, no savings."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        frame = synth_frame(
+            [
+                {
+                    "model": "claude-haiku-4-5",
+                    "ts": base + timedelta(seconds=400 * i),
+                    "completion_tokens": 50,
+                    "prefix_hash": f"u{i}" * 32,
+                }
+                for i in range(5)
+            ]
+        )
+        settings = make_settings(d1_frontier_models=["claude-haiku-4-5"])
+        findings = D1OversizedModel().run(frame, ctx_for(frame, settings))
+        assert len(findings) == 1
+        assert findings[0].id.startswith("D1-INFO-")
+        assert findings[0].monthly_cost_impact_usd == 0.0
+        assert QUALITY_CAVEAT in findings[0].fix_text
+
+    def test_03_sibling_models_never_bleed(self) -> None:
+        """Boundary rule: gpt-5.4-nano must not match the gpt-5.4 map key."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        frame = synth_frame(
+            [
+                {
+                    "provider": "openai",
+                    "model": "gpt-5.4-nano",
+                    "ts": base + timedelta(seconds=400 * i),
+                    "completion_tokens": 30,
+                    "prefix_hash": f"u{i}" * 32,
+                }
+                for i in range(5)
+            ]
+        )
+        assert D1OversizedModel().run(frame, ctx_for(frame)) == []
+
+    def test_03_cached_bucket_excluded(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        frame = synth_frame(
+            [
+                {
+                    "model": "claude-opus-4-8",
+                    "ts": base + timedelta(seconds=400 * i),
+                    "completion_tokens": 50,
+                    "cached_tokens": 800,
+                    "prefix_hash": f"u{i}" * 32,
+                }
+                for i in range(5)
+            ]
+        )
+        assert D1OversizedModel().run(frame, ctx_for(frame)) == []
+
+
+class TestTRULD3:
+    def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
+        findings = D3PromptBloat().run(waste_pack, ctx_for(waste_pack))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.monthly_cost_impact_usd == pytest.approx(D3_GOLDEN_MONTHLY, abs=1e-12)
+        assert f.confidence is Confidence.ESTIMATED
+        assert "rag-bloated" in f.fix_text
+
+    def test_02_silent_on_clean_optimal(self, clean_optimal: pd.DataFrame) -> None:
+        assert D3PromptBloat().run(clean_optimal, ctx_for(clean_optimal)) == []
+
+    def test_02_multiplier_boundary(self) -> None:
+        """p90 exactly at mult x median must NOT fire; just above must."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+
+        def frame(bloated_prompt: int) -> pd.DataFrame:
+            rows = [
+                {
+                    "tag": "lean",
+                    "ts": base + timedelta(seconds=400 * i),
+                    "prompt_tokens": 1000,
+                    "completion_tokens": 350,
+                    "prefix_hash": f"l{i}" * 32,
+                }
+                for i in range(30)
+            ] + [
+                {
+                    "tag": "fat",
+                    "ts": base + timedelta(seconds=400 * i + 50),
+                    "prompt_tokens": bloated_prompt,
+                    "completion_tokens": 350,
+                    "prefix_hash": f"f{i}" * 32,
+                }
+                for i in range(10)
+            ]
+            return synth_frame(rows)
+
+        at = frame(2000)  # corpus median 1000; p90 2000 == 2.0x -> silent
+        assert D3PromptBloat().run(at, ctx_for(at)) == []
+        above = frame(2001)
+        findings = D3PromptBloat().run(above, ctx_for(above))
+        assert len(findings) == 1
+        assert "fat" in findings[0].fix_text
+
+
+class TestTRULD5:
+    def test_01_informational_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
+        findings = D5UnboundedMaxTokens().run(waste_pack, ctx_for(waste_pack))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.monthly_cost_impact_usd == 0.0  # informational (LLD; flag off)
+        assert f.severity is Severity.LOW
+        assert "generator" in f.fix_text
+        assert "8192" in f.fix_text
+
+    def test_02_silent_on_clean_optimal(self, clean_optimal: pd.DataFrame) -> None:
+        assert D5UnboundedMaxTokens().run(clean_optimal, ctx_for(clean_optimal)) == []
+
+    def test_02_ratio_boundary_and_missing_max(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+
+        def frame(declared: float | None) -> pd.DataFrame:
+            return synth_frame(
+                [
+                    {
+                        "ts": base + timedelta(seconds=400 * i),
+                        "completion_tokens": 100,
+                        "declared_max_tokens": declared,
+                        "prefix_hash": f"u{i}" * 32,
+                    }
+                    for i in range(5)
+                ]
+            )
+
+        below = frame(399.0)  # < 4 x p95(100)
+        assert D5UnboundedMaxTokens().run(below, ctx_for(below)) == []
+        at = frame(400.0)  # >= 4x fires
+        assert len(D5UnboundedMaxTokens().run(at, ctx_for(at))) == 1
+        absent = frame(None)  # no declared max in logs -> nothing to flag
+        assert D5UnboundedMaxTokens().run(absent, ctx_for(absent)) == []
+
+
+class TestTRULD6:
+    def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
+        findings = D6ChattyLoop().run(waste_pack, ctx_for(waste_pack))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.monthly_cost_impact_usd == pytest.approx(D6_GOLDEN_MONTHLY, abs=1e-12)
+        assert "Agent loop suspected" in f.fix_text  # re-read signature fired
+        assert "agent-7" in f.fix_text
+
+    def test_02_silent_on_clean_optimal(self, clean_optimal: pd.DataFrame) -> None:
+        assert D6ChattyLoop().run(clean_optimal, ctx_for(clean_optimal)) == []
+
+    def test_03_loop_min_boundary(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+
+        def frame(n: int) -> pd.DataFrame:
+            return synth_frame(
+                [
+                    {
+                        "tag": "loop",
+                        "ts": base + timedelta(seconds=30 * i),
+                        "prompt_tokens": 1000,
+                        "completion_tokens": 50,
+                        "prefix_hash": f"u{i}" * 32,
+                    }
+                    for i in range(n)
+                ]
+            )
+
+        seven = frame(7)
+        assert D6ChattyLoop().run(seven, ctx_for(seven)) == []
+        eight = frame(8)
+        findings = D6ChattyLoop().run(eight, ctx_for(eight))
+        assert len(findings) == 1
+        assert "Agent loop suspected" not in findings[0].fix_text  # unique hashes
+
+    def test_03_session_gap_splits(self) -> None:
+        """A 15-min gap splits sessions; two runs of 5 small calls never fire."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        rows = []
+        for half in range(2):
+            start = base + timedelta(seconds=half * 2000)  # gap 2000s > 900s
+            rows.extend(
+                {
+                    "tag": "loop",
+                    "ts": start + timedelta(seconds=30 * i),
+                    "prompt_tokens": 1000,
+                    "completion_tokens": 50,
+                    "prefix_hash": f"h{half}-{i}" * 16,
+                }
+                for i in range(5)
+            )
+        frame = synth_frame(rows)
+        assert D6ChattyLoop().run(frame, ctx_for(frame)) == []

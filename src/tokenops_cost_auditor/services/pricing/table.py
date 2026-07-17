@@ -67,8 +67,9 @@ class PricingTable:
 
     def rate(self, provider: str, model: str, on_date: date) -> Rate:
         """Latest entry with effective_from <= on_date. Model matching: exact,
-        then longest key that prefixes the model id (handles dated snapshots
-        like claude-haiku-4-5-20251001)."""
+        else key + dated-snapshot suffix ('-2...'), longest key wins — handles
+        claude-haiku-4-5-20251001 without letting an unlisted sibling like
+        gpt-5.4-turbo silently take gpt-5.4's rates (boundary rule; see NOTES)."""
         provider = provider.lower()
         model = model.lower()
         rates = self._entries.get((provider, model))
@@ -76,7 +77,7 @@ class PricingTable:
             candidates = [
                 key_model
                 for (key_provider, key_model) in self._entries
-                if key_provider == provider and model.startswith(key_model)
+                if key_provider == provider and model.startswith(key_model + "-2")
             ]
             if not candidates:
                 raise PricingGapError(provider, model, on_date)

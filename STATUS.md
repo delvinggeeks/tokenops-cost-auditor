@@ -3,6 +3,28 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D5 — rules part 2 (complete, all green; G3 sweep next)
+
+Branch `d4-d5-detectors`. File map: services/rules/{d1_oversized_model,
+d3_prompt_bloat,d5_unbounded_max_tokens,d6_chatty_loop}.py; registry now runs
+D1..D6 in order; tests/test_import_guard.py (T-NFR-01, AST-based, self-testing);
+waste_pack v2 (147 anthropic + 17 openai lines, 6 engineered blocks + filler).
+Golden verdicts on waste_pack v2 — EXACTLY one finding per detector, all matching
+independent Decimal derivations (NOTES waste_pack v2 section): D1 1.35 / D2
+0.246784 (unchanged) / D3 0.50 / D4 0.0510 (unchanged) / D5 0.00 informational /
+D6 0.096; clean_optimal = zero findings across all six. R-D1-MAP implemented
+fully: config-seeded frontier map (dated comments), one-tier/same-provider,
+re-price-at-suggested-card savings, QUALITY_CAVEAT verbatim in every D1 finding,
+unmapped-frontier -> D1-INFO informational. NEW money-math defaults recorded in
+NOTES (D3 excess definition, D6 overhead=run-median prompt, D1 repricing
+equivalence). BEHAVIOR CHANGE flagged for gates: model-key matching in pricing
+table + D1 map tightened to exact-or-dated-suffix boundary rule (prevents
+gpt-5.4-nano taking gpt-5.4's card; G12 golden still exact). New config knobs:
+D5_MAX_RATIO, D6_SMALL_COMPLETION_T/RUN_WINDOW_S/SESSION_GAP_S/REREAD_MIN,
+D1 map seeds (.env.example updated, completeness test green). Boundary tests:
+p50 149/150, bloat 2.0x edge, D5 4x edge + absent max, LOOP_MIN 7/8, session-gap
+split, sibling-bleed guard, cached-bucket exclusion.
+
 ## D4 — rules part 1 (complete, all green; G3 fires at end of D5)
 
 Branch `d4-d5-detectors`. File map: services/rules/{findings,base,registry,

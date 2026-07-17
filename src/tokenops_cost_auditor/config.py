@@ -46,9 +46,35 @@ class Settings(BaseSettings):
 
     # Detector thresholds (docs/03-LLD.md §3; money-math defaults recorded in the
     # golden spreadsheet notes sheet per founder ruling R-Q6..Q12).
-    d1_short_completion_t: int = 150
-    d1_frontier_models: list[str] = []  # seeded at D5 with founder-verified list
-    d1_model_map: dict[str, str] = {}  # frontier -> suggested cheaper model, D5
+    d1_short_completion_t: int = 150  # R-D1-MAP(d): LLD default, p50 boundary
+    # R-D1-MAP (founder, 2026-07-17; sources = prices.yaml source_urls same date).
+    # Frontier models WITHOUT a mapped downgrade -> informational finding, no
+    # savings number (R-D1-MAP f). Extend this list for new frontier models before
+    # their map entry is ruled.
+    d1_frontier_models: list[str] = []
+    # Downgrade map: exactly ONE tier down, never chained, never cross-provider
+    # (R-D1-MAP a/b). Savings computed at the suggested model's four-rate card,
+    # confidence=estimated (R-D1-MAP c). Longest-key prefix match on model id.
+    d1_model_map: dict[str, str] = {
+        # Anthropic (rates verified 2026-07-17)
+        "claude-fable-5": "claude-opus-4-8",
+        "claude-opus-4-8": "claude-sonnet-5",
+        "claude-opus-4-7": "claude-sonnet-5",
+        "claude-opus-4-6": "claude-sonnet-5",
+        "claude-opus-4-1": "claude-opus-4-8",  # legacy uplift case
+        "claude-opus-4-0": "claude-opus-4-8",  # legacy uplift case (alias id)
+        "claude-opus-4": "claude-opus-4-8",  # legacy uplift (dated ids, boundary-safe)
+        "claude-sonnet-5": "claude-haiku-4-5",
+        "claude-sonnet-4-6": "claude-haiku-4-5",
+        # OpenAI (rates verified 2026-07-17)
+        "gpt-5.5-pro": "gpt-5.5",
+        "gpt-5.4-pro": "gpt-5.5",
+        "gpt-5.6-sol": "gpt-5.6-terra",
+        "gpt-5.5": "gpt-5.6-terra",
+        "gpt-5.6-terra": "gpt-5.6-luna",
+        "gpt-5.4": "gpt-5.6-luna",
+        "gpt-5.4-mini": "gpt-5.4-nano",
+    }
     d2_cache_min_repeats: int = 25
     d2_cache_min_prompt_tokens: int = 1024
     d2_suffix_haircut: float = 0.8  # R-Q5: cacheable = 0.8 x min(prompt_tokens) w/o hash
@@ -62,8 +88,13 @@ class Settings(BaseSettings):
     d4_window_s: int = 120
     d4_dup_min: int = 3
     d5_reserved_billing: bool = False
+    d5_max_ratio: float = 4.0  # LLD: flag when declared_max >= 4x completion p95
     d6_loop_min: int = 8
     d6_batch_sz: int = 5
+    d6_small_completion_t: int = 300  # LLD: loop calls are < 300 completion tokens
+    d6_run_window_s: int = 600  # LLD: run of small calls within 10 min
+    d6_session_gap_s: int = 900  # LLD: session = tag + 15-min gap split
+    d6_reread_min: int = 5  # LLD: same prefix_hash >= 5 in session = agent re-read
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
     rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
 
