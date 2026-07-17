@@ -37,9 +37,18 @@ class TestTPRC01RateLookup:
         assert (rate.input, rate.output) == (5.0, 25.0)
         assert (rate.cache_read, rate.cache_write) == (0.50, 6.25)
 
-    def test_openai_no_write_premium(self) -> None:
-        rate = TABLE.rate("openai", "gpt-5.6-terra", date(2026, 6, 15))
-        assert rate.cache_write == rate.input  # R-Q4: zero write premium
+    def test_openai_56_family_write_premium(self) -> None:
+        """Founder correction C1: GPT-5.6 family bills cache writes at 1.25x input."""
+        terra = TABLE.rate("openai", "gpt-5.6-terra", date(2026, 6, 15))
+        assert terra.cache_write == 3.125
+        sol = TABLE.rate("openai", "gpt-5.6-sol", date(2026, 6, 15))
+        assert sol.cache_write == 6.25
+        luna = TABLE.rate("openai", "gpt-5.6-luna", date(2026, 6, 15))
+        assert luna.cache_write == 1.25
+
+    def test_openai_54_family_no_write_premium(self) -> None:
+        rate = TABLE.rate("openai", "gpt-5.4-mini", date(2026, 6, 15))
+        assert rate.cache_write == rate.input  # zero write premium (non-5.6 families)
 
     def test_dated_snapshot_prefix_match(self) -> None:
         exact = TABLE.rate("anthropic", "claude-haiku-4-5", date(2026, 6, 20))
@@ -88,7 +97,7 @@ class TestTPRC04GoldenValues:
         EXACTLY at float precision."""
         with (FIXTURES / "pricing_golden.csv").open() as fh:
             cases = list(csv.DictReader(fh))
-        assert len(cases) == 12
+        assert len(cases) == 15
         rows = [
             {
                 "provider": c["provider"],
@@ -139,7 +148,11 @@ ROW = st.builds(
         "model": pm[1],
         "prompt_tokens": prompt,
         "cached_tokens": int(prompt * cached_frac),
-        "cache_write_tokens": 0 if pm[0] == "openai" else int(prompt * write_frac),
+        # non-5.6 OpenAI families have no write premium and no write counts;
+        # gpt-5.6-* and anthropic generate write tokens (G2 re-run finding 2)
+        "cache_write_tokens": (
+            int(prompt * write_frac) if pm[0] == "anthropic" or pm[1].startswith("gpt-5.6") else 0
+        ),
         "completion_tokens": completion,
         "ts": datetime(2026, 6, 10, 12, 0, tzinfo=UTC) + timedelta(days=day_offset),
     },

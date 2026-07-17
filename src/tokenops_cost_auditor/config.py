@@ -52,7 +52,11 @@ class Settings(BaseSettings):
     d2_cache_min_repeats: int = 25
     d2_cache_min_prompt_tokens: int = 1024
     d2_suffix_haircut: float = 0.8  # R-Q5: cacheable = 0.8 x min(prompt_tokens) w/o hash
-    d2_ttl_window_s: int = 300  # R-Q4: one cache write per TTL window per unique prefix
+    d2_ttl_window_s: int = 300  # R-Q4 fallback: one cache write per TTL window/prefix
+    # Founder correction C4 (2026-07-17): TTL per provider-family, not global.
+    # Keys match provider name or a model-id prefix; longest matching key wins;
+    # unmatched traffic falls back to d2_ttl_window_s.
+    d2_ttl_windows: dict[str, int] = {"anthropic": 300, "gpt-5.6": 1800}
     d2_no_window_haircut: float = 0.7  # R-Q4: haircut when windows cannot be estimated
     d3_bloat_mult: float = 2.0
     d4_window_s: int = 120
