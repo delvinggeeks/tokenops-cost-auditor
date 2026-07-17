@@ -157,7 +157,7 @@ Left sidebar nav (sections above), right-side on-page TOC (`toc.integrate` OFF,
 | MP-3 | API endpoint tables + verified request/response examples | D6 / D7 / D9 | page regenerates from openapi.json each CI run; grows as endpoints land |
 | MP-4 | Report Reference field-by-field against the real artifact | D6 (JSON) / D7 (PDF/web) | structure documented from spec now |
 | MP-5 | Architect-generated UML (components + audit sequence) embedded | post-G4 (end D7) | spec-derived diagram used meanwhile, labeled as such |
-| MP-6 | Performance numbers: 1M-row wall-clock + machine spec, per-stage timings, memory peak (scripts/bench.py + `bench` marker) | post-D6 runner; full 1M at D12 perf fixture | NFR-04 target may be STATED (spec); results only after measured runs |
+| MP-6 | Performance numbers: 1M-row wall-clock + machine spec, per-stage timings, memory peak (scripts/bench.py + `bench` marker) | post-D6 runner; full 1M at D12 perf fixture | NFR-04 target may be STATED (spec); results only after measured runs. FOUNDER PRECONDITION (R-SEQ-UAT1): at least one successful NIGHTLY perf run must exist before this page fills |
 | MP-7 | Determinism proof (same input → byte-identical findings JSON, repeat-run test) | D6 (render_json) | detector-level determinism exists implicitly; the published claim waits for the JSON-artifact test |
 | MP-8 | Detector efficacy table rows for D1/D3/D5/D6 + full-fixture precision statement | D5 (waste_pack v2 goldens) | D2/D4 rows publishable NOW from existing goldens |
 | MP-9 | Legal page content (ToS/Privacy/DPA-lite) | D8 | mechanism decision at D8: masters live in docs-site/legal/, web pages render the same source (no forking) |
