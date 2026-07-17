@@ -150,6 +150,24 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**WP-COMPREHEND (founder, 2026-07-18) — founder codebase-fluency kit.** Docs
+and drills only; ZERO application-code changes; parallel to the D13/D14
+sequence, blocks nothing. Deliverables: (1) CODE-TOUR.md — plain-language
+guided reading, ~12 modules in pipeline order, per module: two jargon-free
+sentences, FR/NFR served, one function to read first, proving test file;
+≤300 lines; every technical term defined inline on first use. (2)
+DEBUGGING-PLAYBOOK.md — 8 likely production failures, each: symptom → where
+to look (exact log event / SQL / healthz field) → local repro fixture →
+pinning test → STOP-and-escalate rule; three universal commands copy-paste.
+(3) TEACH protocol in CLAUDE.md item 8 ("TEACH: <module>" → teacher mode,
+3 comprehension questions, STATUS.md curriculum log; runner → rules →
+pricing, one/day). (4) Break-and-fix drills: 5-fault catalogue in runbook
+§8b, STAGING only, post-D13, one/week for 5 weeks, results logged in
+runbook. ACCEPTANCE BAR ("I can support customers"): founder can unassisted
+(a) trace any report finding to its detector code and test, (b) diagnose 4
+of 5 drill faults, (c) explain the audit pipeline aloud in plain language in
+under 5 minutes.
+
 **UAT-1 SIGN-OFF (founder, 2026-07-18).** Review sheet completed; both
 docs/05 §5 exit criteria PASS (zero embarrassing false positives; report
 readable by a non-founder CTO in <10 minutes). D13 unblocked per

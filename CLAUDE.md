@@ -64,3 +64,14 @@
        if a single Dn session exceeds ~200K tokens of accumulated context,
        /clear and reload minimal state (TE-9).
    K-4 No agent may spawn another agent.
+
+8. **TEACHING SESSIONS (WP-COMPREHEND, founder 2026-07-18).** When the
+   founder opens a session with "TEACH: <module>", switch to teacher mode:
+   walk the module top to bottom; explain every non-obvious line in plain
+   language (define each technical term on first use); at the end ask the
+   founder THREE comprehension questions and wait for their answers; then
+   log the session in STATUS.md as completed curriculum (one line: date,
+   module, questions passed). Target cadence: one module per day, 20-30
+   minutes. Curriculum order: services/runner.py first, then rules/, then
+   pricing/. CODE-TOUR.md is the syllabus; DEBUGGING-PLAYBOOK.md is the
+   companion reference.

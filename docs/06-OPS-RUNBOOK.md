@@ -114,6 +114,29 @@ spreadsheet diff in the same commit).
 | D6_REREAD_MIN | 5 | same prefix_hash >= N in session = re-read signature | hash-poor exports -> lower with care |
 | PREFIX_HASH_CHARS | 4096 | prefix identity span (R-Q6) | never per-customer; contract constant |
 
+## 8b. Break-and-fix drills (WP-COMPREHEND; after D13, STAGING ONLY — never prod)
+
+One scripted drill per week for 5 weeks. The operator (Claude Code session)
+introduces ONE catalogued fault on staging; the founder diagnoses using ONLY
+DEBUGGING-PLAYBOOK.md and logs — no AI assistance — then verifies the fix
+with the test suite. Acceptance bar: 4 of 5 diagnosed unassisted.
+
+Fault catalogue (introduce exactly as scripted; restore staging after):
+- DRILL-1 wedge the queue: set MAX_CONCURRENT_AUDITS=1 and start a
+  never-finishing audit (oversized fixture), then submit a real one.
+  (Playbook entry 2.)
+- DRILL-2 break a parser: corrupt 10% of rows in a staged upload so the
+  95% rule trips. (Entry 3 / entry 1.)
+- DRILL-3 rotate the webhook secret on ONE side only, then replay a valid
+  payment event. (Entry 6.)
+- DRILL-4 disable the ofelia purge job (comment it out, restart sidecar)
+  with a backdated audit present. (Entry 7.)
+- DRILL-5 stop postgres. (Entry 8.)
+
+Drill log (append: date · drill · diagnosed-unassisted? · time-to-diagnosis
+· notes):
+- (entries here)
+
 ## 8. Launch-week ops cadence
 
 Daily: digest email review (5 min), failed-audit triage, backup check.
