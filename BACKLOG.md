@@ -12,7 +12,7 @@ the architecture assigns WHERE things live, not WHEN they ship.
 
 ## WP-PLAT-0 — platform migration (R-PLATFORM-ARCH §6; week 3, post-D14)
 
-One gated Claude Code milestone: create witaura-platform monorepo (uv
+One gated Claude Code milestone: create witaura-ai-engineering-governance-platform monorepo (uv
 workspace), relocate this repo to apps/auditor, split
 pricing→wa-pricing / rules→wa-detectors / report→wa-report /
 config+obs+persistence-base→wa-core; traceability gains a package column;

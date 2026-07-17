@@ -152,7 +152,7 @@ UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
 **R-PLAT-DESIGN-EARLY (founder, 2026-07-18, VPS-wait instruction).** Platform
 design work brought forward while awaiting deploy infra: create the
-witaura-platform SKELETON repo (sibling directory, own git history) with the
+witaura-ai-engineering-governance-platform SKELETON repo (sibling directory, own git history) with the
 docs/11 §3 tree, per-package design READMEs, workspace pyproject stub, and
 the detailed WP-PLAT-0 migration design (module→package map, dependency
 rules, config seam options, acceptance procedure). ZERO v1 code moves; the
@@ -175,7 +175,7 @@ Hetzner CX32-class first (live price verified at build), migration cost
 engineered to near-zero by R-DEPLOYMENT-CONTRACT.
 
 **R-PLATFORM-ARCH (founder, 2026-07-18) — approved architecture, recorded
-verbatim as docs/11-PLATFORM-ARCHITECTURE.md.** WitAura Agentic Governance
+verbatim as docs/11-PLATFORM-ARCHITECTURE.md.** WitAura AI Engineering Governance
 Platform: ONE platform monorepo with uv workspace packages (ruled: NOT
 multi-repo) — packages/ (wa-core, wa-pricing, wa-detectors, wa-report,
 wa-harness), apps/ (auditor, controlplane, buildhealth, comprehend),
