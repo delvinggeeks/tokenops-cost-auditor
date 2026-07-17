@@ -75,7 +75,13 @@ class OpenAIJsonlParser:
             "prompt_tokens": usage.get("prompt_tokens"),
             "completion_tokens": usage.get("completion_tokens"),
             "cached_tokens": details.get("cached_tokens", 0),
-            "cache_write_tokens": 0,  # OpenAI does not bill cache writes separately
+            # OpenAI response usage does not expose cache-WRITE token counts, but
+            # the GPT-5.6 family bills writes at 1.25x input (founder correction C1).
+            # A wrapper-level cache_write_tokens field is honored when the customer's
+            # logger supplies it; otherwise 0 — a TRACKED GAP recorded in
+            # pricing_golden_NOTES.md (premium priced; engages via wrapper field or
+            # the generic CSV contract, which carries cache_write_tokens natively).
+            "cache_write_tokens": obj.get("cache_write_tokens", 0),
             "request_id": obj.get("request_id") or body.get("id"),
             "endpoint": obj.get("endpoint", ""),
             "tag": obj.get("tag") or obj.get("user") or "",
@@ -84,6 +90,7 @@ class OpenAIJsonlParser:
             "_text": _prompt_text(request),
         }
         known = {
+            "cache_write_tokens",
             "response",
             "request",
             "request_id",

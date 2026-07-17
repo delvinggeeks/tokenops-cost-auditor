@@ -20,6 +20,7 @@ by the founder against provider pricing pages BEFORE gate sweep G2 runs (R-Q3).
 |---|---|---|
 | cache_write rate semantics | Anthropic: 5-minute-TTL write rate; OpenAI GPT-5.6 family: 1.25x input, 30-min minimum cache life (founder correction C1); other OpenAI families: no write premium → cache_write = input rate | prices.yaml, R-Q4 |
 | D2 est_writes TTL windows | Per provider-family (founder correction C4): anthropic 300s, gpt-5.6 family 1800s, fallback 300s | config D2_TTL_WINDOWS |
+| TRACKED GAP: OpenAI cache-write counts | OpenAI response usage exposes cache READS only; the GPT-5.6 write premium engages when logs supply a wrapper-level cache_write_tokens field or via the generic CSV contract. Native OpenAI JSONL without that field under-counts 5.6 write spend (keeps estimates conservative floors). Revisit when OpenAI exposes a write-count usage field. | openai_jsonl.py (G2 re-run finding 1) |
 | Surcharges NOT modeled in v1 | OpenAI long-context (>272K: 2x input / 1.5x output); regional data-residency multipliers (OpenAI post-Mar-2026 +10%, Anthropic US-only 1.1x). Spend estimates are therefore conservative FLOORS — stated in the report methodology appendix (D7). | founder correction C3 |
 | Token semantics | prompt_tokens = TOTAL input (Anthropic input+cache_read+cache_creation unified by normalizer); cached_tokens = cache READ subset; cache_write_tokens = Anthropic cache_creation | normalizer.py, R-Q4 |
 | Per-call cost formula | (max(prompt−cached−write,0)·input + cached·cache_read + write·cache_write + completion·output)/1e6 | coster.py |
@@ -45,6 +46,8 @@ R = {  # input, output, cache_read, cache_write (USD/MTok)
  "claude-haiku-4-5":     (D("1"),    D("5"),   D("0.10"),  D("1.25")),
  "claude-fable-5":       (D("10"),   D("50"),  D("1.00"),  D("12.50")),
  "gpt-5.6-terra":        (D("2.5"),  D("15"),  D("0.25"),  D("3.125")),  # C1: 1.25x input
+ "gpt-5.6-sol":          (D("5"),    D("30"),  D("0.50"),  D("6.25")),   # C1: 1.25x input
+ "gpt-5.6-luna":         (D("1"),    D("6"),   D("0.10"),  D("1.25")),   # C1: 1.25x input
  "gpt-5.4-mini":         (D("0.75"), D("4.5"), D("0.075"), D("0.75")),
  "gpt-5.4-nano":         (D("0.20"), D("1.25"),D("0.02"),  D("0.20")),
  "gpt-5.3-codex":        (D("1.75"), D("14"),  D("0.175"), D("1.75")),

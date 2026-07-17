@@ -97,7 +97,7 @@ class TestTPRC04GoldenValues:
         EXACTLY at float precision."""
         with (FIXTURES / "pricing_golden.csv").open() as fh:
             cases = list(csv.DictReader(fh))
-        assert len(cases) == 13
+        assert len(cases) == 15
         rows = [
             {
                 "provider": c["provider"],
@@ -148,7 +148,11 @@ ROW = st.builds(
         "model": pm[1],
         "prompt_tokens": prompt,
         "cached_tokens": int(prompt * cached_frac),
-        "cache_write_tokens": 0 if pm[0] == "openai" else int(prompt * write_frac),
+        # non-5.6 OpenAI families have no write premium and no write counts;
+        # gpt-5.6-* and anthropic generate write tokens (G2 re-run finding 2)
+        "cache_write_tokens": (
+            int(prompt * write_frac) if pm[0] == "anthropic" or pm[1].startswith("gpt-5.6") else 0
+        ),
         "completion_tokens": completion,
         "ts": datetime(2026, 6, 10, 12, 0, tzinfo=UTC) + timedelta(days=day_offset),
     },

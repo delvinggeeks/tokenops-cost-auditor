@@ -12,3 +12,5 @@ G10,openai,gpt-5.4-nano,2026-06-15,100000,90000,0,10000,0.0163,(10000*0.20 + 900
 G11,openai,gpt-5.3-codex,2026-06-15,8000,8000,0,0,0.0014,(8000*0.175)/1e6 all-cached
 G12,anthropic,claude-haiku-4-5-20251001,2026-06-20,2048,1024,0,256,0.0024064,dated snapshot ID resolves via longest-prefix match to claude-haiku-4-5
 G13,openai,gpt-5.6-terra,2026-06-15,20000,5000,8000,1000,0.05875,5.6 write premium: (7000*2.5 + 5000*0.25 + 8000*3.125 + 1000*15)/1e6
+G14,openai,gpt-5.6-sol,2026-06-15,10000,2000,3000,500,0.05975,sol write premium: (5000*5 + 2000*0.50 + 3000*6.25 + 500*30)/1e6
+G15,openai,gpt-5.6-luna,2026-06-15,6000,1000,2000,400,0.008,luna write premium: (3000*1 + 1000*0.10 + 2000*1.25 + 400*6)/1e6
