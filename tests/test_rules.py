@@ -313,10 +313,23 @@ class TestTRULD4:
 
     def test_02_window_anchor_boundary(self) -> None:
         base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
-        inside = synth_frame([{"ts": base + timedelta(seconds=t)} for t in (0, 60, 120)])
+        # distinct request_ids: three separate calls (UAT-D5: shared id = one call)
+        inside = synth_frame(
+            [{"ts": base + timedelta(seconds=t), "request_id": f"r{t}"} for t in (0, 60, 120)]
+        )
         assert len(D4RetryStorm().run(inside, ctx_for(inside))) == 1
-        split = synth_frame([{"ts": base + timedelta(seconds=t)} for t in (0, 60, 121)])
+        split = synth_frame(
+            [{"ts": base + timedelta(seconds=t), "request_id": f"r{t}"} for t in (0, 60, 121)]
+        )
         assert D4RetryStorm().run(split, ctx_for(split)) == []  # 121s exceeds anchor window
+
+    def test_02_shared_request_id_never_a_storm(self) -> None:
+        """UAT-D5: logger echoes of ONE call (same request_id) are not retries."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        echoes = synth_frame(
+            [{"ts": base + timedelta(seconds=10 * i), "request_id": "msg_same"} for i in range(6)]
+        )
+        assert D4RetryStorm().run(echoes, ctx_for(echoes)) == []
 
 
 class TestEffectivePromptRateUATFix:

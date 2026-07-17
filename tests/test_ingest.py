@@ -335,3 +335,47 @@ class TestG2ReviewFindings:
         assert len(frame) == 1
         assert (frame["provider"] == "openai").all()
         assert [e.reason for e in report.errors] == ["missing value for required column 'provider'"]
+
+
+class TestUATD5DuplicateIdWarning:
+    def test_loud_warning_above_one_percent(self, tmp_path: Path) -> None:
+        """UAT-D5 safety net: >1% duplicate request_ids warns loudly at load."""
+        import json
+
+        lines = [
+            {
+                "created": 1750000000 + i,
+                "model": "gpt-5.5",
+                "usage": {"prompt_tokens": 100, "completion_tokens": 10},
+                "id": "req_same" if i < 50 else f"req_{i}",
+            }
+            for i in range(100)
+        ]
+        p = tmp_path / "dup.jsonl"
+        p.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
+        import structlog.testing
+
+        with structlog.testing.capture_logs() as logs:
+            frame, _ = load(p)
+        events = [entry for entry in logs if entry["event"] == "ingest.duplicate_request_ids"]
+        assert events and events[0]["duplicate_rows"] == 49  # 50 rows share one id
+
+    def test_no_warning_on_clean_export(self, tmp_path: Path) -> None:
+        import json
+
+        lines = [
+            {
+                "created": 1750000000 + i,
+                "model": "gpt-5.5",
+                "usage": {"prompt_tokens": 100, "completion_tokens": 10},
+                "id": f"req_{i}",
+            }
+            for i in range(100)
+        ]
+        p = tmp_path / "clean.jsonl"
+        p.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
+        import structlog.testing
+
+        with structlog.testing.capture_logs() as logs:
+            load(p)
+        assert not any(entry["event"] == "ingest.duplicate_request_ids" for entry in logs)
