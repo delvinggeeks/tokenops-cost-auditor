@@ -21,12 +21,15 @@ far more context than your other routes need is the bloat signature.
 
 ```text
 excess  = Σ max(prompt_tokens − corpus bin median, 0) over flagged-route rows
-savings = excess × input_rate × 0.5
+savings = excess × effective_billed_rate × 0.5
 ```
 
 The 0.5 safety factor bakes in the assumption that only half the excess is
-actually removable — some of that context is probably load-bearing.
-<!-- src: pricing_golden_NOTES.md D3 default of record -->
+actually removable — some of that context is probably load-bearing. Excess
+tokens are priced as they were actually billed: tokens served from provider
+cache count at the cache-read rate, never the full input rate — so bloat in a
+well-cached prompt is (correctly) reported as far cheaper than bloat paid at
+full price. <!-- src: pricing_golden_NOTES.md D3 default of record; effective_prompt_rate UAT-1 fix -->
 
 ## Worked example (golden fixture)
 

@@ -154,3 +154,27 @@ class TestD11RenderCap:
     def test_uncapped_report_has_no_note(self, waste_report: ReportModel) -> None:
         html = render_report_html(waste_report, template="report.html")
         assert "Showing the top" not in html
+
+
+class TestD11SavingsCap:
+    """UAT-1 dogfood fix: overlapping waste classes must never produce a
+    savings total above spend (228% claim / negative projection defect)."""
+
+    def test_headline_capped_at_monthly_spend(self, waste_report: ReportModel) -> None:
+        from tokenops_cost_auditor.services.ingest import load as load_fixture
+
+        frame, _ = load_fixture(FIXTURES / "waste_pack_anthropic.jsonl")
+        priced, unpriced = apply(TABLE, frame)
+        huge = [
+            replace(
+                waste_report.findings[0],
+                id=f"DX-{i}",
+                monthly_cost_impact_usd=waste_report.monthly_spend_usd,  # each ~= spend
+            )
+            for i in range(3)
+        ]
+        report = ReportModel.build("cap-test", priced, huge, unpriced, TABLE)
+        assert report.monthly_savings_usd <= report.monthly_spend_usd
+        assert report.monthly_optimized_usd >= 0.0
+        assert report.savings_pct <= 100.0
+        assert "capped at your observed monthly spend" in report.methodology

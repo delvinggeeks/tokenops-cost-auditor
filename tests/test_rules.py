@@ -319,6 +319,57 @@ class TestTRULD4:
         assert D4RetryStorm().run(split, ctx_for(split)) == []  # 121s exceeds anchor window
 
 
+class TestEffectivePromptRateUATFix:
+    """UAT-1 mini-milestone (D11): prompt-token savings priced as billed —
+    cache reads at cache_read rates, never flat input rate."""
+
+    def test_uncached_rows_equal_input_rate(self) -> None:
+        """Goldens invariant by construction: no cache activity -> input rate."""
+        from tokenops_cost_auditor.services.rules.findings import effective_prompt_rate
+
+        frame = synth_frame([{"prompt_tokens": 2000, "cached_tokens": 0}])
+        rate = TABLE.rate("anthropic", "claude-haiku-4-5", frame["ts"].iloc[0].date())
+        assert effective_prompt_rate(frame.iloc[0], rate) == rate.input
+
+    def test_cache_read_heavy_rows_price_near_read_rate(self) -> None:
+        from tokenops_cost_auditor.services.rules.findings import effective_prompt_rate
+
+        frame = synth_frame([{"prompt_tokens": 28000, "cached_tokens": 27000}])
+        rate = TABLE.rate("anthropic", "claude-haiku-4-5", frame["ts"].iloc[0].date())
+        eff = effective_prompt_rate(frame.iloc[0], rate)
+        blend = (1000 * rate.input + 27000 * rate.cache_read) / 28000
+        assert abs(eff - blend) < 1e-12
+        assert eff < rate.input / 2  # cache-heavy rows are far below input rate
+
+    def test_d6_agent_session_savings_shrink_with_cache(self) -> None:
+        """The same chatty run, cached vs uncached: cached savings must be a
+        small fraction (the 228%-savings dogfood defect)."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+
+        def run_frame(cached: int) -> pd.DataFrame:
+            return synth_frame(
+                [
+                    {
+                        "ts": base + timedelta(seconds=30 * i),
+                        "request_id": f"r{i}",
+                        "prompt_tokens": 28000,
+                        "cached_tokens": cached,
+                        "completion_tokens": 80,
+                        "prefix_hash": "h" * 64,
+                    }
+                    for i in range(10)
+                ]
+            )
+
+        uncached = run_frame(0)
+        cached = run_frame(27000)
+        f_uncached = D6ChattyLoop().run(uncached, ctx_for(uncached))
+        f_cached = D6ChattyLoop().run(cached, ctx_for(cached))
+        assert len(f_uncached) == 1 and len(f_cached) == 1
+        ratio = f_cached[0].monthly_cost_impact_usd / f_uncached[0].monthly_cost_impact_usd
+        assert ratio < 0.2  # cache-read pricing collapses the over-claim
+
+
 class TestD4UATDogfoodFixes:
     """UAT-1 mini-milestone (D11): agent-session traffic must not read as storms."""
 
