@@ -150,6 +150,22 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**R-PLATFORM-ARCH (founder, 2026-07-18) — approved architecture, recorded
+verbatim as docs/11-PLATFORM-ARCHITECTURE.md.** WitAura Agentic Governance
+Platform: ONE platform monorepo with uv workspace packages (ruled: NOT
+multi-repo) — packages/ (wa-core, wa-pricing, wa-detectors, wa-report,
+wa-harness), apps/ (auditor, controlplane, buildhealth, comprehend),
+exporters/, deploy/, ops/. Integration contracts C-1..C-7 (CallRecordFrame
+lingua franca; only wa-pricing computes cost; evidence citations mandatory
+platform-wide; FR-22 platform invariant; R-DEPLOYMENT-CONTRACT per app;
+shared account model; wa-harness gates + traceability for every module).
+Feature→module map in the doc §5 supersedes register-entry status — every
+strategy item has a tree address. WP-PLAT-0 MIGRATION: week 3, immediately
+AFTER D14 launch, never before first customers; v1 repo NOT restructured
+pre-launch; acceptance gate = suite green + byte-identical golden report
+JSON post-move; CLI/image/DB/product names unchanged (R-NAMING intact);
+tag platform-v1.0.0. Platform NAME activates at the day-45 gate per R-BRAND.
+
 **WP-COMPREHEND (founder, 2026-07-18) — founder codebase-fluency kit.** Docs
 and drills only; ZERO application-code changes; parallel to the D13/D14
 sequence, blocks nothing. Deliverables: (1) CODE-TOUR.md — plain-language

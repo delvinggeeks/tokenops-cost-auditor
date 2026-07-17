@@ -4,6 +4,23 @@ Per PRD §10 change control: scope additions during the 14-day build are rejecte
 default and parked here. Promotion requires a founder-written amendment in
 docs/00-PRD.md.
 
+PLATFORM NOTE (R-PLATFORM-ARCH, 2026-07-18): every item below now has a home
+address in the approved platform tree — see docs/11-PLATFORM-ARCHITECTURE.md
+§5 (feature→module map) and §6 (WP-PLAT-0 migration: week 3, post-D14, never
+before first customers). Triggers and promotion gates below remain in force;
+the architecture assigns WHERE things live, not WHEN they ship.
+
+## WP-PLAT-0 — platform migration (R-PLATFORM-ARCH §6; week 3, post-D14)
+
+One gated Claude Code milestone: create witaura-platform monorepo (uv
+workspace), relocate this repo to apps/auditor, split
+pricing→wa-pricing / rules→wa-detectors / report→wa-report /
+config+obs+persistence-base→wa-core; traceability gains a package column;
+ALL tests move with modules. ACCEPTANCE GATE: suite green + byte-identical
+report JSON on golden fixtures. CLI/image/DB/product names unchanged
+(R-NAMING). Gate charters re-pathed; harness moves to wa-harness. Tag
+platform-v1.0.0.
+
 ## Deliberately OUT — trigger register (R-API 2026-07-17; R-ENTERPRISE-READY + R-MARKETPLACE 2026-07-18)
 
 Recorded triggers, not build items. When a trigger fires, notify the founder;
