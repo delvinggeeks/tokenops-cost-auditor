@@ -3,6 +3,35 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D6-D7 — runner + reports complete (all green; G4 sweep next)
+
+Branch `d6-d7-runner-report`. D6 file map: persistence/{models,repo}.py + alembic
+migration 001 (six tables incl. idempotency_keys per FR-26; additive-only),
+services/runner.py (queued→processing→done|failed, NFR-13 slot admission,
+idempotent re-run, user-safe failures, audit_log events), services/report/
+{model,render_json}.py (ReportModel assembled ONCE — render layers never
+recompute; deterministic JSON; FR-28 pricing provenance; methodology carries
+C3 floors + R-Q4/R-Q5 haircuts + R-D1-MAP caveat), lifecycle/auditlog.py
+(INSERT-only), mail/base.py (port + log adapter), api/routes_upload.py
+(/api/v1 per FR-25; streaming 200MB cap; Idempotency-Key 201/200 per FR-26;
+queue position per NFR-13; pre-D8 auth stub X-User-Email non-prod only +
+pre-D9 payment-gate stub, both behind dependencies), NFR-12 user-else-IP
+limiter keying w/ Retry-After, NFR-14 envelope on all /api/* errors.
+D7 file map: report/signer.py (30-day signed URLs), report/render_pdf.py
+(weasyprint; render_report_html shared), web/templates/{_report_body,
+_report_style,report,pdf/report}.html (single shared body — web and PDF cannot
+diverge; headline savings number first; findings ranked; CSS bar charts with
+titles/labels; evidence tables counts-only; page-break rules), web/
+routes_report.py (GET /r/{token} + /r/{token}/pdf; NOT under /api/v1),
+cli.py + console script `tokenops-cost-auditor` (FR-04; offline pipeline,
+exit 0/2/3). Deps: python-multipart (approved). CI: weasyprint system libs in
+test job. LLD §5 deviation note for architect: API paths carry /api/v1 prefix
+per FR-25 founder amendment (docs/03 §5 predates R-API). Runner renders
+JSON+HTML+PDF, mails signed /r/ link. Tests incl. T-API-01..07, T-NFR-03/12,
+T-REP-01..08, T-LIF-04, T-NFR-11, T-CLI-01, postgres L2 (CI), determinism
+repeat-render. Dogfood path for UAT-1 ready: exporter → CLI → PDF (no auth
+needed) or API with stub header.
+
 ## D4-D5 — G3 SWEEP COMPLETE (vv PASS, spec-guard PASS, cold-reviewer PASS-WITH-NOTES)
 
 vv-engineer: 86 tests green, all 15 in-scope T-RUL/T-NFR IDs non-trivial, money-math

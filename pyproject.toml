@@ -18,6 +18,7 @@ dependencies = [
     "structlog",
     "slowapi",
     "pyyaml>=6.0.3",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
@@ -31,6 +32,9 @@ dev = [
     # test-only — T-NFR-01 forbids it inside services/rules and services/pricing.
     "httpx",
 ]
+
+[project.scripts]
+tokenops-cost-auditor = "tokenops_cost_auditor.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -68,7 +72,7 @@ ignore_missing_imports = true
 
 # no bundled type stubs; stub packages would be new deps (R-DEPS: ask first)
 [[tool.mypy.overrides]]
-module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*", "yaml"]
+module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*", "yaml", "weasyprint", "weasyprint.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -80,6 +84,8 @@ markers = [
 filterwarnings = [
     # third-party: starlette testclient's httpx deprecation — not actionable here
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+    # third-party: slowapi still calls asyncio.iscoroutinefunction on py3.14
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]

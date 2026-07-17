@@ -1,23 +1,58 @@
-"""FastAPI app factory, middleware, routers (docs/03-LLD.md §1)."""
+"""FastAPI app factory, middleware, routers (docs/03-LLD.md §1).
+
+FR-25: the product API mounts under /api/v1. NFR-14: every /api/* error renders
+the single envelope {error: {code, message, request_id}}. /healthz stays at the
+root (infrastructure endpoint, not part of the product API; docs/03 §5).
+"""
 
 import shutil
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
+from tokenops_cost_auditor.api.routes_upload import router as audits_router
 from tokenops_cost_auditor.config import Settings, get_settings
 from tokenops_cost_auditor.obs import errors as obs_errors
 from tokenops_cost_auditor.obs.logging import configure_logging, request_id_middleware
 from tokenops_cost_auditor.obs.ratelimit import limiter
-from tokenops_cost_auditor.persistence.repo import make_engine
+from tokenops_cost_auditor.persistence.repo import make_engine, make_session_factory
+from tokenops_cost_auditor.services.mail.base import LogMailAdapter
+from tokenops_cost_auditor.services.pricing.table import PricingTable
+from tokenops_cost_auditor.services.runner import AuditRunner
+from tokenops_cost_auditor.web.routes_report import router as report_router
 
 log = structlog.get_logger("tokenops_cost_auditor")
+
+ERROR_CODES = {
+    400: "bad_request",
+    401: "unauthorized",
+    402: "payment_required",
+    404: "not_found",
+    413: "payload_too_large",
+    422: "validation_error",
+    429: "rate_limited",
+    500: "internal_error",
+}
+
+
+def error_envelope(request: Request, status: int, message: str) -> JSONResponse:
+    """NFR-14: single JSON error envelope for all /api/v1 errors."""
+    return JSONResponse(
+        status_code=status,
+        content={
+            "error": {
+                "code": ERROR_CODES.get(status, f"http_{status}"),
+                "message": message,
+                "request_id": getattr(request.state, "request_id", ""),
+            }
+        },
+    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -33,18 +68,48 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TokenOps Cost Auditor", docs_url=None, redoc_url=None, lifespan=lifespan)
     app.state.settings = settings
     app.state.engine = make_engine(settings.database_url)
+    app.state.session_factory = make_session_factory(app.state.engine)
+    app.state.pricing_table = PricingTable.load()
+    app.state.mail = LogMailAdapter()
+    app.state.runner = AuditRunner(
+        settings=settings,
+        table=app.state.pricing_table,
+        engine=app.state.engine,
+        mail=app.state.mail,
+    )
     app.state.limiter = limiter
+    app.middleware("http")(request_id_middleware)
+    app.include_router(audits_router)  # FR-25: /api/v1 prefix set on the router
+    app.include_router(report_router)  # web report page (FR-15), not under /api
 
+    @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:
         assert isinstance(exc, RateLimitExceeded)
-        return _rate_limit_exceeded_handler(request, exc)
+        response = error_envelope(request, 429, f"rate limit exceeded: {exc.detail}")
+        # slowapi fills Retry-After / X-RateLimit-* from the view state (NFR-12)
+        if hasattr(request.state, "view_rate_limit"):
+            request.app.state.limiter._inject_headers(response, request.state.view_rate_limit)
+        return response
 
-    app.add_exception_handler(RateLimitExceeded, rate_limited)
-    app.middleware("http")(request_id_middleware)
+    @app.exception_handler(HTTPException)
+    async def http_error(request: Request, exc: Exception) -> Response:
+        assert isinstance(exc, HTTPException)
+        if request.url.path.startswith("/api/"):
+            return error_envelope(request, exc.status_code, str(exc.detail))
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: Exception) -> Response:
+        assert isinstance(exc, RequestValidationError)
+        if request.url.path.startswith("/api/"):
+            return error_envelope(request, 422, "request validation failed")
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
         obs_errors.capture_exception(exc)  # NFR-06; internals to logs only (LLD §8)
+        if request.url.path.startswith("/api/"):
+            return error_envelope(request, 500, "internal error")
         return JSONResponse(status_code=500, content={"error": "internal error"})
 
     @app.get("/healthz")
