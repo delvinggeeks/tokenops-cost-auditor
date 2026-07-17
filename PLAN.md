@@ -150,6 +150,11 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**UAT-1 SIGN-OFF (founder, 2026-07-18).** Review sheet completed; both
+docs/05 §5 exit criteria PASS (zero embarrassing false positives; report
+readable by a non-founder CTO in <10 minutes). D13 unblocked per
+R-SEQ-POST-SIGNOFF.
+
 **R-GTM-CONTROL (founder, 2026-07-18, batch 2 — copy revision on the existing
 D8 landing surface, not new scope).** Landing leads with the CONTROL narrative
 ("take control of AI spend"); the audit is framed explicitly as step one of a
