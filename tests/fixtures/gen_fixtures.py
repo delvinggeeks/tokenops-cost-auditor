@@ -188,6 +188,277 @@ def _claude_code_session(rng: random.Random, n_msgs: int) -> list[str]:
     return lines
 
 
+# --- D4-milestone fixtures: engineered waste + false-positive guard (docs/05 F5/F6) ---
+
+D2_PREFIX_TEXT = "CACHE-ME " * 600  # 5400 chars > PREFIX_HASH_CHARS: hash covers 4096
+D4_RETRY_TEXT = "RETRY-ME payload identical request body " * 4
+
+
+def _waste_pack_lines() -> list[str]:
+    """Engineered traffic: EACH detector fires with KNOWN golden savings
+    (derivation + expected values in tests/fixtures/pricing_golden_NOTES.md).
+    All timestamps span exactly 3 distinct UTC days (2026-06-10..12) so the
+    monthly extrapolation factor is exactly 10 (30/3)."""
+    lines: list[str] = []
+    # D2 block: 30 identical-prefix anthropic sonnet-5 calls, uncached, spaced 130s
+    # (gap > 120s keeps D4 silent); prompt 2000 >= 1024; day 1.
+    base = datetime(2026, 6, 10, 9, 0, 0, tzinfo=UTC)
+    for i in range(30):
+        ts = base + timedelta(seconds=130 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d2-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": "summarizer",
+                    "request": {
+                        "max_tokens": 256,
+                        "system": D2_PREFIX_TEXT,
+                        "messages": [{"role": "user", "content": "vary-" + str(i)}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_d2_{i:03d}",
+                        "type": "message",
+                        "model": "claude-sonnet-5",
+                        "usage": {
+                            "input_tokens": 2000,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 200,
+                        },
+                    },
+                }
+            )
+        )
+    # D4 block: 5 identical gpt-5.4-mini calls within 80s (cluster of 5 >= 3); day 2.
+    base = datetime(2026, 6, 11, 14, 0, 0, tzinfo=UTC)
+    for i in range(5):
+        ts = base + timedelta(seconds=20 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d4-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/chat/completions",
+                    "tag": "support-bot",
+                    "request": {
+                        "max_tokens": 512,
+                        "messages": [{"role": "user", "content": D4_RETRY_TEXT}],
+                    },
+                    "response": {
+                        "id": f"chatcmpl_wp_d4_{i:03d}",
+                        "object": "chat.completion",
+                        "created": int(ts.timestamp()),
+                        "model": "gpt-5.4-mini",
+                        "usage": {
+                            "prompt_tokens": 500,
+                            "completion_tokens": 200,
+                            "prompt_tokens_details": {"cached_tokens": 0},
+                        },
+                    },
+                }
+            )
+        )
+    # --- waste_pack v2 blocks (D5 milestone) ---
+    # D1 block: 25 short-completion opus-4-8 calls, unique prefixes, spaced 200s; day 1.
+    base = datetime(2026, 6, 10, 13, 0, 0, tzinfo=UTC)
+    for i in range(25):
+        ts = base + timedelta(seconds=200 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d1-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": "extraction",
+                    "request": {
+                        "max_tokens": 200,
+                        "system": f"D1-UNIQUE-{i} " * 60,
+                        "messages": [{"role": "user", "content": f"extract {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_d1_{i:03d}",
+                        "type": "message",
+                        "model": "claude-opus-4-8",
+                        "usage": {
+                            "input_tokens": 1500,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 60,
+                        },
+                    },
+                }
+            )
+        )
+    # D3 blocks: lean route (40 x prompt 1000) vs bloated route (20 x prompt 6000),
+    # same completion bin (350 tokens); day 2. Unique prefixes keep D2 silent.
+    for tag, count, prompt, hour in (("rag-lean", 40, 1000, 9), ("rag-bloated", 20, 6000, 16)):
+        base = datetime(2026, 6, 11, hour, 0, 0, tzinfo=UTC)
+        for i in range(count):
+            ts = base + timedelta(seconds=200 * i)
+            lines.append(
+                json.dumps(
+                    {
+                        "request_id": f"wp-d3-{tag}-{i:03d}",
+                        "ts": ts.isoformat(),
+                        "endpoint": "/v1/rag",
+                        "tag": tag,
+                        "request": {
+                            "max_tokens": 1024,
+                            "system": f"D3-{tag}-{i} " * 50,
+                            "messages": [{"role": "user", "content": f"answer {i}"}],
+                        },
+                        "response": {
+                            "id": f"msg_wp_d3_{tag}_{i:03d}",
+                            "type": "message",
+                            "model": "claude-haiku-4-5",
+                            "usage": {
+                                "input_tokens": prompt,
+                                "cache_creation_input_tokens": 0,
+                                "cache_read_input_tokens": 0,
+                                "output_tokens": 350,
+                            },
+                        },
+                    }
+                )
+            )
+    # D6 block: 12 small calls spaced 65s; even indices share one prefix (re-read
+    # signature >= 5) but same-hash calls sit 130s apart (D4 stays silent); day 3.
+    base = datetime(2026, 6, 12, 15, 0, 0, tzinfo=UTC)
+    for i in range(12):
+        ts = base + timedelta(seconds=65 * i)
+        text = "D6-REREAD-CONTEXT " * 250 if i % 2 == 0 else f"D6-STEP-{i} " * 250
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d6-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": "agent-7",
+                    "request": {
+                        "max_tokens": 256,
+                        "system": text,
+                        "messages": [{"role": "user", "content": f"step {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_d6_{i:03d}",
+                        "type": "message",
+                        "model": "claude-haiku-4-5",
+                        "usage": {
+                            "input_tokens": 1200,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 80,
+                        },
+                    },
+                }
+            )
+        )
+    # D5 block (OpenAI shape): 12 calls declaring max_tokens 8192 vs ~120-token
+    # completions; unique prefixes, spaced 200s; day 3.
+    base = datetime(2026, 6, 12, 13, 0, 0, tzinfo=UTC)
+    for i in range(12):
+        ts = base + timedelta(seconds=200 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-d5-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/chat/completions",
+                    "tag": "generator",
+                    "request": {
+                        "max_tokens": 8192,
+                        "messages": [{"role": "user", "content": f"D5-UNIQUE-{i} " * 60}],
+                    },
+                    "response": {
+                        "id": f"chatcmpl_wp_d5_{i:03d}",
+                        "object": "chat.completion",
+                        "created": int(ts.timestamp()),
+                        "model": "gpt-5.6-luna",
+                        "usage": {
+                            "prompt_tokens": 900,
+                            "completion_tokens": 120,
+                            "prompt_tokens_details": {"cached_tokens": 0},
+                        },
+                    },
+                }
+            )
+        )
+    # Benign filler (fires NOTHING): unique prefixes, prompt < 1024, spaced 200s; day 3.
+    base = datetime(2026, 6, 12, 10, 0, 0, tzinfo=UTC)
+    for i in range(20):
+        ts = base + timedelta(seconds=200 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"wp-ok-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": f"batch-{i % 4}",
+                    "request": {
+                        "max_tokens": 1024,
+                        "system": f"UNIQUE-PREFIX-{i} " * 40,
+                        "messages": [{"role": "user", "content": f"job {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_wp_ok_{i:03d}",
+                        "type": "message",
+                        "model": "claude-haiku-4-5",
+                        "usage": {
+                            "input_tokens": 800,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 300,
+                        },
+                    },
+                }
+            )
+        )
+    # NOTE: waste_pack is mixed-provider in spirit but must stay single-format for
+    # detect_format; both blocks use wrapper shape parseable by the ANTHROPIC parser?
+    # No — D4 block is OpenAI-shaped. waste_pack is loaded per-block in tests via
+    # two files. See main(): waste_pack_anthropic.jsonl + waste_pack_openai.jsonl.
+    return lines
+
+
+def _clean_optimal_lines() -> list[str]:
+    """F6 false-positive guard: healthy traffic, ZERO findings expected from every
+    detector (designed to stay silent through D5's detectors too: cached reads
+    present, unique prefixes, no bursts, mid-size completions, sane max_tokens)."""
+    lines: list[str] = []
+    base = datetime(2026, 6, 10, 8, 0, 0, tzinfo=UTC)
+    for i in range(60):
+        ts = base + timedelta(hours=(i * 71) % 65, seconds=301 * i)
+        lines.append(
+            json.dumps(
+                {
+                    "request_id": f"co-{i:03d}",
+                    "ts": ts.isoformat(),
+                    "endpoint": "/v1/messages",
+                    "tag": f"svc-{i % 3}",
+                    "request": {
+                        "max_tokens": 1024,
+                        "system": f"WELL-CACHED-PREFIX-{i % 3} " * 100,
+                        "messages": [{"role": "user", "content": f"task {i}"}],
+                    },
+                    "response": {
+                        "id": f"msg_co_{i:03d}",
+                        "type": "message",
+                        "model": "claude-sonnet-5",
+                        "usage": {
+                            "input_tokens": 400,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 1500,
+                            "output_tokens": 400,
+                        },
+                    },
+                }
+            )
+        )
+    return lines
+
+
 def main(outdir: Path) -> None:
     rng = random.Random(SEED)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -203,6 +474,15 @@ def main(outdir: Path) -> None:
     (outdir / "claude_code_session.jsonl").write_text(
         "\n".join(_claude_code_session(rng, 40)) + "\n"
     )
+    waste = _waste_pack_lines()
+    # split by provider shape: detect_format is per-file (see D2 milestone note)
+    (outdir / "waste_pack_anthropic.jsonl").write_text(
+        "\n".join(line for line in waste if '"type": "message"' in line) + "\n"
+    )
+    (outdir / "waste_pack_openai.jsonl").write_text(
+        "\n".join(line for line in waste if '"chat.completion"' in line) + "\n"
+    )
+    (outdir / "clean_optimal.jsonl").write_text("\n".join(_clean_optimal_lines()) + "\n")
     print(f"fixtures written to {outdir}")
 
 
