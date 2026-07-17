@@ -150,6 +150,21 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**R-DEPLOY-AUTOMATION (founder, 2026-07-18).** (1) WP-DEPLOY-1 (may land with
+D13 or immediately after): scripts/provision.sh + minimal Terraform module
+deploy/tf/ targeting Hetzner AND any generic Ubuntu host via provider
+variables — create/point at VM, harden (ufw, fail2ban, ssh-keys-only),
+install docker, clone repo at a given tag, write .env from template,
+compose up -d, run migrations, execute runbook smoke checklist, print
+healthz. ONE command from clean provider account to serving TLS. Seed of the
+R-MARKETPLACE IaC rung — provider-variable clean so the same structure
+extends to AWS/Azure/GCP. (2) CD trigger recorded in BACKLOG: auto-deploy-
+on-tag authorized only when (a) >1 app ships from the monorepo (post
+WP-PLAT-0) or (b) deploy frequency exceeds 1/week for a month; until then
+deploys are founder-initiated, one command, human-observed. (3) Provider:
+Hetzner CX32-class first (live price verified at build), migration cost
+engineered to near-zero by R-DEPLOYMENT-CONTRACT.
+
 **R-PLATFORM-ARCH (founder, 2026-07-18) — approved architecture, recorded
 verbatim as docs/11-PLATFORM-ARCHITECTURE.md.** WitAura Agentic Governance
 Platform: ONE platform monorepo with uv workspace packages (ruled: NOT

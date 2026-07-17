@@ -14,6 +14,13 @@ Oracle box with APP_ENV=staging.
 
 ## 2. Deploy procedure (target < 30 min, NFR-09)
 
+ONE-COMMAND PATH (WP-DEPLOY-1, R-DEPLOY-AUTOMATION): `deploy/tf` (Hetzner,
+creates the VM) or `scripts/provision.sh --host <ip> --domain <d> --tag <t>`
+(any Ubuntu host) executes steps 1-6 below automatically and prints the
+smoke results; step 7 (CHANGELOG entry) and external DNS/healthz
+verification stay manual. The numbered steps remain the reference and the
+manual fallback.
+
 1 provision VPS, hardened: ufw allow 22/80/443, fail2ban, non-root user,
 SSH keys only. 2 install docker+compose plugin. 3 git clone repo;
 `cp .env.example .env` fill secrets. 4 `docker compose up -d --build`.

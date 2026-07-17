@@ -41,6 +41,10 @@ promotion still requires a PRD amendment.
   procurement channel. [R-MARKETPLACE a; R-ENTERPRISE-READY c]
 - **Control-plane early access** — signup counts (landing CTA, R-GTM-CONTROL)
   are Phase-2 trigger evidence; weekly count in the daily digest.
+- **CD / auto-deploy-on-tag** (R-DEPLOY-AUTOMATION 2) — trigger: (a) >1 app
+  ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
+  1/week for a month. Until then deploys are founder-initiated, ONE command
+  (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
 
 Explicitly NOT building now (R-ENTERPRISE-READY d): SSO, marketplace
 listings, SOC2, security-questionnaire portal.
