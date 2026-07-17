@@ -3,7 +3,23 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D8-D9 — auth, landing, legal, payments, admin complete (all green; G5 next)
+## D8-D9 — G5 SWEEP COMPLETE (ux PASS-WITH-NOTES, cold FAIL→fixed→PASS-WITH-NOTES, spec-guard PASS-WITH-NOTES)
+
+G5 verdicts. ux-reviewer: PASS-WITH-NOTES — notes fixed same-day (jargon glossed,
+founder-approved differentiation line verbatim). cold-reviewer: FAIL with 5 findings,
+all remediated in 488b40c with regression pins — (1) credit double-spend race →
+claim_credit atomic UPDATE-where-unclaimed loop; (2) same-second magic-link lockout →
+float-epoch iat; (3) webhook parse exceptions 500 → try/except → None/"ignored";
+(4) admin actor honors X-Forwarded-For behind Caddy; (5) mark-paid rejects negative
+amounts. Re-run initially re-FAILed claiming `except A, B, C:` is a SyntaxError —
+WITHDRAWN as false positive: reviewer's ast.parse ran under pyenv 3.13; project pins
+Python 3.14 everywhere (pyproject/.python-version/Dockerfile/CI) where PEP 758 makes
+unparenthesized multi-except legal, and ruff format (py314) ENFORCES that style
+(reverts parenthesization). Verified under uv 3.14.5: py_compile OK, mypy 65 files
+clean, ruff clean. spec-guard: PASS-WITH-NOTES — FR-19 "download report" admin action
+was missing; ADDED (GET /admin/audits/{id}/report, PDF, audit-logged, T-ADM-05,
+traceability + test-plan updated, 1a7d882). Final: 160 passed + 1 CI-only skip.
+Merged to main; tags d8, d9.
 
 Branch `d8-d9-auth-payments`. D8: web/auth.py (magic tokens 15-min + sessions;
 SINGLE-USE via users.last_login_at — any earlier link dies on login, no
@@ -26,7 +42,7 @@ list/rerun/purge/mark-paid, all audit-logged). Migration 002 additive (payments,
 webhook_events, users.last_login_at). Architect G4 note DONE: repo-pattern
 helpers (create_audit/get_user_audit) — routes no longer touch ORM directly.
 Tests: T-AUTH-01..04, T-WEB-01, T-MAIL-01, T-PAY-01..07 (independent HMAC
-fixtures per R-PAY), T-ADM-01..04; existing API tests updated for credit
+fixtures per R-PAY), T-ADM-01..05; existing API tests updated for credit
 enforcement. Suite green; coverage 94.4%/100%/100%.
 
 ## D6-D7 — G4 SWEEP COMPLETE (architect PASS-WITH-NOTES + UML, vv PASS, ux PASS-WITH-NOTES)
