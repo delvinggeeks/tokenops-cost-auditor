@@ -24,11 +24,13 @@ class AuthTokenError(Exception):
 
 
 def issue_magic_token(secret_key: str, email: str) -> str:
-    payload = {"email": email.lower(), "iat": int(time.time())}
+    # float epoch: same-second re-issue after a login must remain usable
+    # (G5 cold-reviewer f.2); <= comparison still blocks same-token replay
+    payload = {"email": email.lower(), "iat": time.time()}
     return str(URLSafeTimedSerializer(secret_key, salt=MAGIC_SALT).dumps(payload))
 
 
-def verify_magic_token(secret_key: str, token: str, last_login_epoch: int | None) -> str:
+def verify_magic_token(secret_key: str, token: str, last_login_epoch: float | None) -> str:
     """Returns the email. last_login_epoch enforces single use: tokens issued
     at-or-before the last successful login are rejected."""
     serializer = URLSafeTimedSerializer(secret_key, salt=MAGIC_SALT)
@@ -38,7 +40,7 @@ def verify_magic_token(secret_key: str, token: str, last_login_epoch: int | None
         raise AuthTokenError("this sign-in link has expired — request a new one") from exc
     except BadSignature as exc:
         raise AuthTokenError("invalid sign-in link") from exc
-    if last_login_epoch is not None and int(payload["iat"]) <= last_login_epoch:
+    if last_login_epoch is not None and float(payload["iat"]) <= last_login_epoch:
         raise AuthTokenError("this sign-in link was already used — request a new one")
     return str(payload["email"])
 

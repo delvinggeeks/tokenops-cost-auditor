@@ -199,3 +199,14 @@ class TestTMAIL01Smtp:
         assert sent["tls"] is True
         assert sent["to"] == "cto@example.com"
         assert re.search(r"https://audit\.example\.com/auth/verify\?token=abc", str(sent["body"]))
+
+
+class TestG5F2SameSecondReissue:
+    def test_fresh_link_after_login_in_same_second_works(
+        self, client: TestClient, mail: MailRecorder
+    ) -> None:
+        """f.2: login and immediate re-request must not lock the user out."""
+        first = request_link(client, mail, "fast@example.com")
+        assert client.get(first, follow_redirects=False).status_code == 303
+        second = request_link(client, mail, "fast@example.com")  # same wall-clock second
+        assert client.get(second, follow_redirects=False).status_code == 303

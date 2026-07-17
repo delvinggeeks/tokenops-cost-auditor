@@ -31,7 +31,7 @@ from tokenops_cost_auditor.persistence.repo import (
 )
 from tokenops_cost_auditor.services.ingest.base import ALLOWED_EXTENSIONS, IngestError, check_file
 from tokenops_cost_auditor.services.lifecycle import auditlog
-from tokenops_cost_auditor.services.payments.base import unconsumed_credit
+from tokenops_cost_auditor.services.payments.base import claim_credit, unconsumed_credit
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE, verify_session
 
 router = APIRouter(prefix="/api/v1", tags=["audits"])
@@ -106,11 +106,13 @@ def create_audit(
                 + ", ".join(ALLOWED_EXTENSIONS),
             )
 
-        credit = unconsumed_credit(session, user.id)
-        if credit is None:  # race guard: gate passed but credit consumed meanwhile
-            raise HTTPException(status_code=402, detail="payment required before upload")
         audit = repo_create_audit(session, user.id)
-        credit.audit_id = audit.id  # consume: one payment = one audit (Q8)
+        # atomic claim: UPDATE-where-unclaimed, rowcount-checked — two concurrent
+        # uploads cannot double-spend one credit (G5 cold-reviewer f.1). On None
+        # the raised 402 discards this uncommitted session (audit never persists).
+        credit = claim_credit(session, user.id, audit.id)
+        if credit is None:
+            raise HTTPException(status_code=402, detail="payment required before upload")
         audit.paid_via = credit.provider
         upload_dir = Path(settings.upload_dir) / audit.id
         upload_dir.mkdir(parents=True, exist_ok=True)

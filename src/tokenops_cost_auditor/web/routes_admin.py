@@ -27,7 +27,14 @@ def admin_actor(request: Request) -> str:
     supplied = request.headers.get("X-Admin-Token", "")
     if not settings.admin_token or not secrets.compare_digest(supplied, settings.admin_token):
         raise HTTPException(status_code=404, detail="not found")
-    client = request.client.host if request.client else "unknown"
+    # behind Caddy the peer address is the proxy; XFF carries the client
+    # (spoofable only when NOT behind the proxy — acceptable for audit logging)
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    client = (
+        forwarded.split(",")[0].strip()
+        if forwarded
+        else (request.client.host if request.client else "unknown")
+    )
     return f"admin@{client}"  # IP-logged actor for audit_log
 
 
@@ -111,6 +118,8 @@ def mark_paid(
     """FR-18 manual fulfillment; comp grants use provider='comp', amount 0 (Q8)."""
     if provider not in ("manual", "comp", "razorpay", "stripe"):
         raise HTTPException(status_code=400, detail="unknown provider")
+    if amount < 0:  # G5 cold-reviewer f.5: a negative credit must not unlock uploads
+        raise HTTPException(status_code=400, detail="amount must be >= 0")
     with _session(request) as session:
         user = get_or_create_user(session, email)
         payment = grant_payment(session, user.id, provider, amount, currency)

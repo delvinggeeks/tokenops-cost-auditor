@@ -307,3 +307,64 @@ class TestTADM04ListView:
         assert page.status_code == 200
         assert audit_id in page.text
         assert "list@example.com" in page.text
+
+
+class TestG5ColdReviewFindings:
+    """Regression pins for G5 cold-reviewer findings 1/3/5."""
+
+    def test_atomic_claim_cannot_double_spend(self, papp: FastAPI) -> None:
+        """f.1: two sessions racing for ONE credit — exactly one wins."""
+        from tokenops_cost_auditor.persistence.repo import get_or_create_user
+        from tokenops_cost_auditor.services.payments.base import claim_credit, grant_payment
+
+        with papp.state.session_factory() as session:
+            user = get_or_create_user(session, "race@example.com")
+            grant_payment(session, user.id, "manual", 500.0, "USD")
+            session.commit()
+            user_id = user.id
+        s1 = papp.state.session_factory()
+        s2 = papp.state.session_factory()
+        try:
+            first = claim_credit(s1, user_id, "audit-A")
+            s1.commit()
+            second = claim_credit(s2, user_id, "audit-B")
+            s2.commit()
+            assert first is not None
+            assert second is None  # the same credit can never fund two audits
+        finally:
+            s1.close()
+            s2.close()
+
+    def test_signature_valid_garbage_payload_ignored_not_500(self, pclient: TestClient) -> None:
+        """f.3: shape-drifted but correctly signed payloads must not 500."""
+        body = b'{"event": "payment_link.paid", "created_at": "not-a-number"}'
+        resp = pclient.post(
+            "/api/v1/webhooks/razorpay",
+            content=body,
+            headers={"X-Razorpay-Signature": rzp_sign(body)},
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"status": "ignored"}
+        t = int(time.time())
+        sbody = b'{"type": "checkout.session.completed", "id": "evt_g", "data": {}}'
+        resp2 = pclient.post(
+            "/api/v1/webhooks/stripe",
+            content=sbody,
+            headers={"Stripe-Signature": stripe_sig(sbody, t)},
+        )
+        assert resp2.status_code == 200
+        assert resp2.json() == {"status": "ignored"}
+
+    def test_negative_mark_paid_rejected(self, pclient: TestClient) -> None:
+        """f.5: a negative 'credit' must never unlock uploads."""
+        resp = pclient.post(
+            "/admin/payments/mark-paid",
+            headers=ADMIN,
+            data={
+                "email": "neg@example.com",
+                "amount": "-500",
+                "currency": "USD",
+                "provider": "manual",
+            },
+        )
+        assert resp.status_code == 400

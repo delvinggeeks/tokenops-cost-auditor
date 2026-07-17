@@ -66,7 +66,7 @@ def verify(request: Request, token: str) -> HTMLResponse | RedirectResponse:
             # sqlite returns naive datetimes; they are UTC by contract (NFR-11) —
             # naive .timestamp() would wrongly assume LOCAL time
             last_login = last_login.replace(tzinfo=UTC)
-        last_login_epoch = int(last_login.timestamp()) if last_login else None
+        last_login_epoch = last_login.timestamp() if last_login else None
         try:
             email = verify_magic_token(settings.secret_key, token, last_login_epoch)
         except AuthTokenError as exc:  # expired OR already used (single-use, FR-17)

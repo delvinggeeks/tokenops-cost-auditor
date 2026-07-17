@@ -43,7 +43,14 @@ class RazorpayLinkAdapter:
         return hmac.compare_digest(expected, signature or "")
 
     def parse_event(self, body: bytes, now_epoch: int) -> WebhookPayment | None:
-        """None = valid signature but not a payment we act on (or stale, FR-27)."""
+        """None = valid signature but not a payment we act on, stale (FR-27), or a
+        payload shape we don't recognize (G5 cold-reviewer f.3 — never a 500)."""
+        try:
+            return self._parse(body, now_epoch)
+        except ValueError, KeyError, TypeError:
+            return None
+
+    def _parse(self, body: bytes, now_epoch: int) -> WebhookPayment | None:
         data = json.loads(body)
         if data.get("event") != "payment_link.paid":
             return None

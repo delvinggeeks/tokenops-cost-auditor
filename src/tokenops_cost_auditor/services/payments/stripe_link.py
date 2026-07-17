@@ -39,6 +39,14 @@ class StripeLinkAdapter:
         return hmac.compare_digest(expected, v1)
 
     def parse_event(self, body: bytes) -> WebhookPayment | None:
+        """None on unrecognized shapes too — a signature-valid but drifted payload
+        must never 500 back to the provider (G5 cold-reviewer f.3)."""
+        try:
+            return self._parse(body)
+        except ValueError, KeyError, TypeError:
+            return None
+
+    def _parse(self, body: bytes) -> WebhookPayment | None:
         data = json.loads(body)
         if data.get("type") != "checkout.session.completed":
             return None
