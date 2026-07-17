@@ -65,6 +65,11 @@ class ReportModel:
     methodology: str = METHODOLOGY
     data_handling: str = DATA_HANDLING
     generated_at: str | None = field(default=None)  # excluded from determinism
+    # Presentation-only cap for HTML/PDF renderers (UAT-1 dogfood fix, D11):
+    # an unbounded findings list let WeasyPrint lay out a ~30k-card document
+    # (18GB RSS). JSON always carries EVERY finding; web/PDF show the top N by
+    # impact plus an explicit "M more in report.json" line — never silent.
+    render_cap: int = 50
 
     @classmethod
     def build(

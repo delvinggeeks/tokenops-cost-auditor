@@ -2,6 +2,7 @@
 T-REP-08 (PDF pricing provenance) per docs/05 §3."""
 
 import time
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from tokenops_cost_auditor.services.ingest import load
 from tokenops_cost_auditor.services.pricing.coster import apply
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.report.model import ReportModel
+from tokenops_cost_auditor.services.report.render_json import render_json
 from tokenops_cost_auditor.services.report.render_pdf import render_pdf, render_report_html
 from tokenops_cost_auditor.services.report.signer import (
     SignedUrlError,
@@ -119,3 +121,36 @@ class TestWebReportRoute:
 
     def test_bad_token_404(self, client: TestClient) -> None:
         assert client.get("/r/not-a-real-token").status_code == 404
+
+
+class TestD11RenderCap:
+    """UAT-1 dogfood fix: unbounded findings lists must not reach WeasyPrint.
+    JSON keeps every finding; web/PDF show top render_cap with an explicit note."""
+
+    @pytest.fixture
+    def big_report(self, waste_report: ReportModel) -> ReportModel:
+        f0 = waste_report.findings[0]
+        many = tuple(
+            replace(f0, id=f"D9X-{i:03d}", monthly_cost_impact_usd=float(1000 - i))
+            for i in range(60)
+        )
+        return replace(waste_report, findings=many)
+
+    def test_html_capped_with_explicit_note(self, big_report: ReportModel) -> None:
+        html = render_report_html(big_report, template="report.html")
+        assert "Showing the top 50 of 60 findings" in html
+        assert html.count('class="finding ') == 50  # cards capped
+        assert "D9X-049" in html and "D9X-059" not in html  # ranked cut, not random
+
+    def test_json_always_complete(self, big_report: ReportModel, tmp_path: Path) -> None:
+        import json as jsonlib
+
+        path = tmp_path / "report.json"
+        render_json(big_report, path)
+        data = jsonlib.loads(path.read_text(encoding="utf-8"))
+        assert len(data["findings"]) == 60
+        assert "render_cap" not in data  # presentation constant never serialized
+
+    def test_uncapped_report_has_no_note(self, waste_report: ReportModel) -> None:
+        html = render_report_html(waste_report, template="report.html")
+        assert "Showing the top" not in html

@@ -319,6 +319,72 @@ class TestTRULD4:
         assert D4RetryStorm().run(split, ctx_for(split)) == []  # 121s exceeds anchor window
 
 
+class TestD4UATDogfoodFixes:
+    """UAT-1 mini-milestone (D11): agent-session traffic must not read as storms."""
+
+    def test_cache_active_rows_excluded(self) -> None:
+        """Cache-stable agent steps (identical shapes, seconds apart, cache reads
+        on every call) are session continuations, not retry storms."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        agent_session = synth_frame(
+            [
+                {
+                    "ts": base + timedelta(seconds=8 * i),
+                    "request_id": f"r{i}",
+                    "prompt_tokens": 28190,
+                    "cached_tokens": 28000,
+                    "completion_tokens": 40,
+                }
+                for i in range(12)
+            ]
+        )
+        assert D4RetryStorm().run(agent_session, ctx_for(agent_session)) == []
+
+    def test_cache_writes_also_excluded(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        writes = synth_frame(
+            [
+                {
+                    "ts": base + timedelta(seconds=8 * i),
+                    "request_id": f"r{i}",
+                    "prompt_tokens": 28190,
+                    "cache_write_tokens": 28000,
+                }
+                for i in range(5)
+            ]
+        )
+        assert D4RetryStorm().run(writes, ctx_for(writes)) == []
+
+    def test_unhashed_fingerprint_includes_completion(self) -> None:
+        """Same prompt size but different completions = different work, not
+        duplicates (prompt-only fingerprints collided on real agent traffic)."""
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        varied = synth_frame(
+            [
+                {
+                    "ts": base + timedelta(seconds=10 * i),
+                    "request_id": f"r{i}",
+                    "prefix_hash": None,
+                    "completion_tokens": 100 + i,  # all different
+                }
+                for i in range(6)
+            ]
+        )
+        assert D4RetryStorm().run(varied, ctx_for(varied)) == []
+        identical = synth_frame(
+            [
+                {
+                    "ts": base + timedelta(seconds=10 * i),
+                    "request_id": f"r{i}",
+                    "prefix_hash": None,
+                    "completion_tokens": 100,  # identical shape -> still caught
+                }
+                for i in range(6)
+            ]
+        )
+        assert len(D4RetryStorm().run(identical, ctx_for(identical))) == 1
+
+
 # --- D5-milestone detectors (goldens from pricing_golden_NOTES.md, waste_pack v2) ---
 
 from tokenops_cost_auditor.services.rules.d1_oversized_model import (  # noqa: E402
