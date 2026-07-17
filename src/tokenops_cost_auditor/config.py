@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     upload_dir: Path = Path("uploads")
     report_dir: Path = Path("reports")
     max_upload_mb: int = 200  # FR-01
+    max_concurrent_audits: int = 2  # NFR-13 (R-API): admission cap, D6 consumer
     purge_after_days: int = 7  # FR-21
     admin_token: str = ""  # empty = admin disabled
 

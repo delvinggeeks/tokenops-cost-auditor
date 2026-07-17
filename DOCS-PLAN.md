@@ -74,7 +74,8 @@ docs-site/
 │  ├─ overview.md                 Auth (magic link → session; admin token), rate limits
 │  │                              (NFR-03), upload constraints (200MB, formats), signed-
 │  │                              URL semantics (30-day expiry), error taxonomy from
-│  │                              docs/03 §8 with user-facing messages. Spec-derived.
+│  │                              docs/03 §8 with user-facing messages, and the NFR-14
+│  │                              uniform error envelope (R-API). Spec-derived.
 │  └─ endpoints.md                GENERATED from openapi.json: every docs/03 §5 endpoint,
 │                                 curl + Python httpx tabs. Skeleton now (only /healthz
 │                                 exists); MP-3 grows at D6 (audits), D7 (/r/), D9

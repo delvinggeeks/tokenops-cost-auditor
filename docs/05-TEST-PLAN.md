@@ -61,6 +61,17 @@ down; sentry hook called on unhandled error (mocked).
 T-PERF-01: perf fixture wall-clock bound.
 T-API-01..02: upload happy path; status polling transitions
 queued→processing→done.
+[amendment 2026-07-17, R-API:]
+T-API-03: every API route mounted under /api/v1; legacy paths 404.
+T-API-04..05: Idempotency-Key first submit 201, replay 200 with same
+audit_id; different users may reuse a key; keys purge with uploads.
+T-API-06: audits beyond MAX_CONCURRENT_AUDITS hold queued; status API
+reports queue position; positions advance as slots free.
+T-API-07: all /api/v1 error paths return {error:{code,message,request_id}}.
+T-PAY-06..07: webhook with stale timestamp (>5 min) rejected; duplicate
+event id acknowledged but not reprocessed (append-only dedup table).
+T-NFR-12: authenticated burst limited per user (not per IP); anonymous
+burst limited per IP; 429 carries Retry-After.
 T-WEB-01: landing contains verbatim data-policy string (FR-23).
 T-CLI-01: CLI produces PDF from F1.
 

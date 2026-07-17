@@ -118,6 +118,12 @@ under "Amendments" with date + reason.
   all dirs/files/code; spec strings updated accordingly (docs/01 FR-04 CLI name,
   docs/03 §1 tree `src/tokenops_cost_auditor/`, docs/04 coverage-rule paths,
   ux-reviewer charter path).
+- 2026-07-17 R-API (founder): API hardening in scope before the D6 API surface —
+  FR-25 (/api/v1 versioned routes), FR-26 (idempotent uploads), FR-27 (webhook
+  timestamp tolerance + event dedup), NFR-12 (user-else-IP rate-limit keying +
+  Retry-After), NFR-13 (MAX_CONCURRENT_AUDITS queue admission), NFR-14 (uniform
+  JSON error envelope). API keys, queues, orgs/SSO, SOC2 remain OUT with recorded
+  triggers (BACKLOG.md).
 - 2026-07-17 R-ICP (founder): primary ICP updated to agent-fleet engineering teams
   (Claude Code/Codex logs on disk) per docs/09b finding #2; log-exporter scripts are
   first-class onboarding deliverables — FR-24 added to docs/01 (Claude Code exporter,

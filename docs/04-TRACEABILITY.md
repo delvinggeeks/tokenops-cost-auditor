@@ -30,6 +30,9 @@ test; matrix checked in review before merge to main.
 | FR-22  | C4,C6 | rules/findings(EvidenceRef), persistence | T-LIF-04, T-RUL-EV-01 |
 | FR-23  | C1  | web/templates/landing                      | T-WEB-01 |
 | FR-24  | C2  | scripts/exporters/claude_code_export.py    | T-EXP-01..02 |
+| FR-25  | C1  | main.py router mounting, api/*             | T-API-03 |
+| FR-26  | C2  | api/routes_upload, persistence (idem keys) | T-API-04..05 |
+| FR-27  | C7  | api/routes_webhooks, persistence (events)  | T-PAY-06..07 |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 |
@@ -41,6 +44,9 @@ test; matrix checked in review before merge to main.
 | NFR-09 | Ops | docker-compose, Caddyfile, RUNBOOK         | T-OPS-03 (manual) |
 | NFR-10 | C  | runner via BackgroundTasks, status API      | T-API-02 |
 | NFR-11 | all | config, models (UTC), report display       | T-NFR-11 |
+| NFR-12 | C9  | obs/ratelimit (user-else-IP key)           | T-NFR-12 |
+| NFR-13 | C   | runner queue admission, status API          | T-API-06 |
+| NFR-14 | C1,C9 | api error handlers, obs/errors            | T-API-07 |
 | X-01..05 | — | reviewer checklist item                   | REV-X (PR template) |
 
 Coverage rule: `pytest --cov=src/tokenops_cost_auditor` ≥ 85% lines on services/*,

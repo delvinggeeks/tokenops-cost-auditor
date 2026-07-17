@@ -67,6 +67,15 @@ FR-19 (M) Admin panel (token-protected): list users/audits/status, re-run
 audit, mark-paid, trigger purge, download report.
 FR-20 (S) Transactional email: magic link, report-ready notification
 (SMTP/provider-agnostic port).
+FR-25 (M) [amendment 2026-07-17, R-API] All API routes live under /api/v1/
+(web pages unaffected).
+FR-26 (M) [amendment 2026-07-17, R-API] Upload accepts optional
+Idempotency-Key header; duplicate key for the same user returns the original
+audit (201 first time, 200 replays); keys retained 7 days alongside upload
+lifecycle.
+FR-27 (M) [amendment 2026-07-17, R-API] Payment webhooks enforce timestamp
+tolerance (5 min) and processed-event-id dedup (append-only table) in
+addition to signature verification.
 
 ## E. Data lifecycle & security
 
@@ -94,6 +103,15 @@ NFR-10 (S) Background processing via FastAPI BackgroundTasks; job status
 polling endpoint; no external queue in v1.
 NFR-11 (M) All timestamps UTC; currency USD internally, INR display via
 fixed configurable rate for invoices.
+NFR-12 (M) [amendment 2026-07-17, R-API] Rate limiting keyed per
+authenticated user where a session exists, per-IP otherwise; 429 responses
+include Retry-After.
+NFR-13 (M) [amendment 2026-07-17, R-API] Processing concurrency cap (config
+MAX_CONCURRENT_AUDITS, default 2); audits beyond cap hold in queued status;
+status API reflects queue position.
+NFR-14 (M) [amendment 2026-07-17, R-API] Single documented JSON error
+envelope for all /api/v1 errors {error: {code, message, request_id}};
+docs-site API reference renders it.
 
 ## G. Out of scope (recorded as requirements to NOT build)
 
