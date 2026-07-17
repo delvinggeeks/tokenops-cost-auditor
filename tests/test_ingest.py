@@ -356,7 +356,7 @@ class TestUATD5DuplicateIdWarning:
         import structlog.testing
 
         with structlog.testing.capture_logs() as logs:
-            frame, _ = load(p)
+            load(p)
         events = [entry for entry in logs if entry["event"] == "ingest.duplicate_request_ids"]
         assert events and events[0]["duplicate_rows"] == 49  # 50 rows share one id
 
