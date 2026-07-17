@@ -21,29 +21,42 @@ row carries a founder-verification tick, logged exactly like our
 
 --8<-- "docs-site/engineering/self-audit-data.md"
 
-## The UAT-1 story: our audit caught our own product lying
+## The defect log: our own gates keep catching us
 
-Before launch, the founder ran the audit on the real build sessions — 158,000
-calls across 36 days. The first run produced a report claiming **228% of
-spend as savings**, with a negative optimized projection. The audit was
-wrong, and being wrong about money is the one thing this product must never
-be.
+We publish our failures because the fixes are the credibility: the engine
+cannot hallucinate, but its authors can, and the verification discipline is
+what catches us.
 
-The cause: two detectors priced prompt-token savings at the full input rate,
-but ~95% of agent-session prompt tokens are billed as cache reads at a tenth
-of that. Three more defects surfaced in the same pass: agent sessions
-misread as retry storms, an unbounded findings list that put an 18 GB
-document through the PDF renderer, and no cap tying headline savings to
-observed spend.
-
-All four were fixed with regression tests pinned before sign-off; the
+**Defect one — the 228% savings claim.** Before launch, the founder ran the
+audit on the real build sessions. The first run claimed **228% of spend as
+savings** — a negative optimized projection. Two detectors priced
+prompt-token savings at the full input rate, but ~95% of agent-session
+prompt tokens are billed as cache reads at a tenth of that. Three more
+defects surfaced in the same pass: agent sessions misread as retry storms,
+an unbounded findings list that put an 18 GB document through the PDF
+renderer, and no cap tying headline savings to observed spend. All four were
+fixed with regression tests pinned before sign-off; the
 [methodology](../report/reading-a-report.md) now discloses the as-billed
-pricing rule and the savings cap. The final dogfood figures — 26.2% waste,
-$5,289/month estimated on $20.2k/month API-equivalent spend, audited in 13
-seconds — are what survived that process. We publish the failure because the
-fix is the credibility: the engine cannot hallucinate, but its authors can,
-and the golden-file discipline is what catches us.
-<!-- src: STATUS.md D11 dogfood paragraphs; pricing_golden_NOTES.md UAT-1 rows; UAT-1 founder sign-off 2026-07-18 -->
+pricing rule and the savings cap.
+<!-- src: pricing_golden_NOTES.md UAT-1 rows; UAT-1 founder sign-off 2026-07-18 -->
+
+**Defect two — our verification gate refused our own first ledger row.**
+The first self-audit row submitted for publication on this very page was
+REJECTED in founder verification: the log exporter was emitting one row per
+transcript *event* rather than one per completed API call, double-counting
+spend (3,106 rows for 1,304 unique calls — one call echoed ten times).
+Every figure from that run was discarded — the defective row never counts.
+The exporter now deduplicates by request id and prints its dedup arithmetic
+on every run; the ingest layer warns loudly on duplicate-heavy foreign logs;
+and the retry detector treats same-id rows as one call by construction.
+After the fix, measured waste went **up** (32.5% of a smaller, true spend) —
+honest denominators cut both ways.
+<!-- src: UAT-D5 founder verification refusal 2026-07-18; pricing_golden_NOTES.md UAT-D5 row -->
+
+Corrected dogfood figures, resubmitted for founder verification and
+publishable only once ticked in the ledger: 67,095 unique calls, ~$8,760
+per month API-equivalent spend, ~$2,850 per month estimated waste (32.5%).
+<!-- src: uat1 regenerated post-UAT-D5; pending founder tick per R-SELF-AUDIT c -->
 
 ## The intervention experiment
 

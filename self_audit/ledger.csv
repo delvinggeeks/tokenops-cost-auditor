@@ -1,2 +1,2 @@
 date,sessions,calls,observed_api_equiv_spend_usd,est_monthly_waste_usd,waste_pct,findings_by_detector,verified
-2026-07-17,1,3106,916.36,3674.99,26.7,"{""d3_prompt_bloat"": 10, ""d6_chatty_loop"": 4}",
+2026-07-17,1,1340,432.27,1966.27,30.3,"{""d3_prompt_bloat"": 11, ""d6_chatty_loop"": 2}",
