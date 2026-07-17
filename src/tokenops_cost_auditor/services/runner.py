@@ -31,6 +31,8 @@ from tokenops_cost_auditor.services.pricing import coster
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.report.model import ReportModel
 from tokenops_cost_auditor.services.report.render_json import render_json
+from tokenops_cost_auditor.services.report.render_pdf import render_pdf, render_report_html
+from tokenops_cost_auditor.services.report.signer import sign_report_url
 from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import Finding, observed_days
 from tokenops_cost_auditor.services.rules.registry import run_all
@@ -149,8 +151,13 @@ class AuditRunner:
             table=self.table,
             generated_at=datetime.now(UTC).isoformat(),
         )
-        report_path = Path(self.settings.report_dir) / audit_id / "report.json"
-        render_json(report, report_path)
+        report_dir = Path(self.settings.report_dir) / audit_id
+        render_json(report, report_dir / "report.json")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        (report_dir / "report.html").write_text(
+            render_report_html(report, template="report.html"), encoding="utf-8"
+        )
+        render_pdf(report, report_dir / "report.pdf")
 
         with factory() as session:
             audit = session.get(Audit, audit_id)
@@ -189,8 +196,8 @@ class AuditRunner:
                 {"findings": len(findings), "unpriced_models": len(unpriced)},
             )
             session.commit()
-        # report URL becomes a signed link at D7; path reference until then
-        self.mail.report_ready(user_email, f"/api/v1/audits/{audit_id}/status")
+        token = sign_report_url(self.settings.secret_key, audit_id)
+        self.mail.report_ready(user_email, f"/r/{token}")  # FR-15 signed link
         log.info("runner.done", audit_id=audit_id, findings=len(findings))
 
     def _fail(self, audit_id: str, user_safe_message: str) -> None:

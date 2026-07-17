@@ -25,6 +25,7 @@ from tokenops_cost_auditor.persistence.repo import make_engine, make_session_fac
 from tokenops_cost_auditor.services.mail.base import LogMailAdapter
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.runner import AuditRunner
+from tokenops_cost_auditor.web.routes_report import router as report_router
 
 log = structlog.get_logger("tokenops_cost_auditor")
 
@@ -79,6 +80,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.limiter = limiter
     app.middleware("http")(request_id_middleware)
     app.include_router(audits_router)  # FR-25: /api/v1 prefix set on the router
+    app.include_router(report_router)  # web report page (FR-15), not under /api
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:

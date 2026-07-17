@@ -1,0 +1,148 @@
+{# Shared report body — rendered by the web report page AND the PDF (ADR-4).
+   Render-only: every number comes from ReportModel; nothing is recomputed here
+   (T-REP-01). #}
+<header class="report-header">
+  <div class="brand">TokenOps Cost Auditor</div>
+  <div class="meta">
+    Audit <code>{{ report.audit_id }}</code>
+    {% if report.generated_at %} · generated {{ report.generated_at[:10] }}{% endif %}
+    · {{ report.observed_days }} day{{ "s" if report.observed_days != 1 }} of traffic
+    · {{ "{:,}".format(report.row_count) }} calls
+  </div>
+</header>
+
+<section class="exec-summary">
+  <div class="headline">
+    <div class="headline-number">${{ "%.2f"|format(report.monthly_savings_usd) }}</div>
+    <div class="headline-label">estimated monthly savings
+      ({{ "%.1f"|format(report.savings_pct) }}% of current spend)</div>
+  </div>
+  <div class="summary-cards">
+    <div class="card">
+      <div class="card-label">Current monthly spend (normalized)</div>
+      <div class="card-value">${{ "%.2f"|format(report.monthly_spend_usd) }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Optimized projection</div>
+      <div class="card-value">${{ "%.2f"|format(report.monthly_optimized_usd) }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Observed spend ({{ report.observed_days }}d window)</div>
+      <div class="card-value">${{ "%.2f"|format(report.total_spend_usd) }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Findings</div>
+      <div class="card-value">{{ report.findings|length }}</div>
+    </div>
+  </div>
+</section>
+
+<section class="section waterfall">
+  <h2>Savings waterfall — findings ranked by monthly impact</h2>
+  {% set max_impact = report.findings|map(attribute="monthly_cost_impact_usd")|max if report.findings else 0 %}
+  <table class="bars" aria-label="Savings by finding (USD per month)">
+    <thead><tr><th>Finding</th><th>Monthly impact (USD)</th></tr></thead>
+    <tbody>
+    {% for f in report.findings %}
+      <tr>
+        <td class="bar-label">{{ f.id }} · {{ f.detector.replace("_", " ") }}</td>
+        <td class="bar-cell">
+          <div class="bar" style="width: {{ (f.monthly_cost_impact_usd / max_impact * 100)|round(1) if max_impact else 0 }}%"></div>
+          <span class="bar-value">${{ "%.4f"|format(f.monthly_cost_impact_usd) }}</span>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="2">No waste findings — your traffic looks efficient.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section charts">
+  <h2>Spend by model</h2>
+  {% set max_model = report.spend_by_model|map(attribute="cost_usd")|max if report.spend_by_model else 0 %}
+  <table class="bars" aria-label="Observed spend by model (USD)">
+    <thead><tr><th>Model</th><th>Observed spend (USD)</th></tr></thead>
+    <tbody>
+    {% for row in report.spend_by_model %}
+      <tr>
+        <td class="bar-label">{{ row.model }} <span class="muted">({{ row.calls }} calls)</span></td>
+        <td class="bar-cell">
+          <div class="bar" style="width: {{ (row.cost_usd / max_model * 100)|round(1) if max_model else 0 }}%"></div>
+          <span class="bar-value">${{ "%.4f"|format(row.cost_usd) }}</span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Spend by day</h2>
+  {% set max_day = report.spend_by_day|map(attribute="cost_usd")|max if report.spend_by_day else 0 %}
+  <table class="bars" aria-label="Observed spend by UTC day (USD)">
+    <thead><tr><th>UTC day</th><th>Observed spend (USD)</th></tr></thead>
+    <tbody>
+    {% for row in report.spend_by_day %}
+      <tr>
+        <td class="bar-label">{{ row.day }}</td>
+        <td class="bar-cell">
+          <div class="bar" style="width: {{ (row.cost_usd / max_day * 100)|round(1) if max_day else 0 }}%"></div>
+          <span class="bar-value">${{ "%.4f"|format(row.cost_usd) }}</span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section findings">
+  <h2>Findings in detail</h2>
+  {% for f in report.findings %}
+  <article class="finding sev-{{ f.severity }}">
+    <div class="finding-head">
+      <span class="finding-id">{{ f.id }}</span>
+      <span class="pill severity">{{ f.severity }}</span>
+      <span class="pill confidence">{{ f.confidence }}</span>
+      <span class="finding-impact">${{ "%.4f"|format(f.monthly_cost_impact_usd) }}/month</span>
+    </div>
+    <p class="fix">{{ f.fix_text }}</p>
+    {% if f.evidence %}
+    <details class="evidence">
+      <summary>Evidence sample ({{ f.evidence|length }} of max 20 calls — token counts only, never text)</summary>
+      <table class="evidence-table">
+        <thead><tr><th>When (UTC)</th><th>Model</th><th>Tokens</th><th>Note</th></tr></thead>
+        <tbody>
+        {% for e in f.evidence %}
+          <tr><td>{{ e.ts }}</td><td>{{ e.model }}</td><td>{{ e.tokens }}</td><td>{{ e.note }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+
+<section class="section provenance">
+  <h2>Pricing data provenance</h2>
+  <p>
+    Rates from pricing table version <strong>{{ report.pricing_version }}</strong>,
+    human-verified {{ report.pricing_last_verified or "date unavailable" }}.
+    Each call is priced at the rate in effect at its timestamp.
+  </p>
+  {% if report.unpriced_models %}
+  <p class="unpriced"><strong>{{ report.unpriced_models|length }} unpriced model(s)</strong>
+    excluded from totals rather than guessed: {{ report.unpriced_models|join(", ") }}.</p>
+  {% else %}
+  <p>All models in your logs were priced (0 unpriced models).</p>
+  {% endif %}
+</section>
+
+<section class="section methodology">
+  <h2>Methodology</h2>
+  <p>{{ report.methodology }}</p>
+</section>
+
+<section class="section data-handling">
+  <h2>Data handling</h2>
+  <p>{{ report.data_handling }}</p>
+</section>
