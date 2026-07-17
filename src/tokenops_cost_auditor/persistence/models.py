@@ -54,6 +54,8 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # single-use magic links: tokens issued at/before this instant are dead (FR-17)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Audit(Base):
@@ -120,6 +122,35 @@ class AuditLogEntry(Base):
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     subject: Mapped[str] = mapped_column(String(120), nullable=False)
     detail: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)  # razorpay|stripe|manual|comp
+    ref: Mapped[str | None] = mapped_column(String(120))  # provider payment reference
+    amount: Mapped[float] = mapped_column(Float, nullable=False)  # major units
+    currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="paid")
+    # one payment = one audit credit (accepted default Q8): set when consumed
+    audit_id: Mapped[str | None] = mapped_column(ForeignKey("audits.id", ondelete="SET NULL"))
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class WebhookEvent(Base):
+    __tablename__ = "webhook_events"  # FR-27: append-only processed-event dedup
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)
+    event_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    detail: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+    __table_args__ = (UniqueConstraint("provider", "event_id", name="uq_webhook_provider_event"),)
 
 
 class IdempotencyKey(Base):

@@ -49,7 +49,7 @@ T-AUTH-01..04: magic link issue/consume/single-use/expiry; session cookie
 flags (HttpOnly/Secure).
 T-PAY-01..05: webhook signature valid/invalid; mark-paid unlocks upload;
 unpaid upload blocked (402); admin manual mark-paid.
-T-ADM-01..04: token required; rerun idempotent; purge action; list view.
+T-ADM-01..05: token required; rerun idempotent; purge action; list view; report download (PDF, audit-logged).
 T-LIF-01..03: purge selects only due audits; files removed; audit_log
 entry written; purged_at set.
 T-LIF-04: call_aggregates contain counts only.

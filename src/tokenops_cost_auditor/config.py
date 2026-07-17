@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = ""
+    app_base_url: str = (
+        ""  # absolute-link prefix for emails (FR-20), e.g. https://audit.example.com
+    )
 
     # Observability (NFR-06, env-gated)
     sentry_dsn: str = ""

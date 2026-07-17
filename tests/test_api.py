@@ -11,13 +11,23 @@ from sqlalchemy import select
 
 from tokenops_cost_auditor.obs.ratelimit import limiter, user_or_ip_key
 from tokenops_cost_auditor.persistence.models import Audit, AuditLogEntry, User
-from tokenops_cost_auditor.persistence.repo import queue_position
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, queue_position
+from tokenops_cost_auditor.services.payments.base import grant_payment
 from tokenops_cost_auditor.services.runner import AuditRunner
 
 FIXTURES = Path(__file__).parent / "fixtures"
 F1_BYTES = (FIXTURES / "openai_small.jsonl").read_bytes()
 ALICE = {"X-User-Email": "alice@example.com"}
 BOB = {"X-User-Email": "bob@example.com"}
+
+
+def credit(app: FastAPI, email: str, n: int = 1) -> None:
+    """FR-18 test helper: grant n paid audit credits (as admin mark-paid would)."""
+    with app.state.session_factory() as session:
+        user = get_or_create_user(session, email)
+        for _ in range(n):
+            grant_payment(session, user.id, "manual", 500.0, "USD")
+        session.commit()
 
 
 @pytest.fixture(autouse=True)
@@ -40,6 +50,7 @@ def upload(client: TestClient, headers: dict, key: str | None = None, data: byte
 
 class TestTAPI01UploadHappyPath:
     def test_upload_and_complete(self, client: TestClient, app: FastAPI, settings) -> None:
+        credit(app, "alice@example.com")
         resp = upload(client, ALICE)
         assert resp.status_code == 201
         audit_id = resp.json()["audit_id"]
@@ -51,7 +62,8 @@ class TestTAPI01UploadHappyPath:
         assert body["valid_pct"] == 100.0
         assert (Path(settings.report_dir) / audit_id / "report.json").exists()
 
-    def test_other_user_cannot_see_audit(self, client: TestClient) -> None:
+    def test_other_user_cannot_see_audit(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com")
         audit_id = upload(client, ALICE).json()["audit_id"]
         resp = client.get(f"/api/v1/audits/{audit_id}/status", headers=BOB)
         assert resp.status_code == 404
@@ -61,6 +73,7 @@ class TestTAPI02StatusTransitions:
     def test_lifecycle_logged_queued_processing_done(
         self, client: TestClient, app: FastAPI
     ) -> None:
+        credit(app, "alice@example.com")
         audit_id = upload(client, ALICE).json()["audit_id"]
         with app.state.session_factory() as session:
             actions = [
@@ -73,7 +86,8 @@ class TestTAPI02StatusTransitions:
             ]
         assert actions == ["audit.uploaded", "audit.processing", "audit.completed"]
 
-    def test_failed_below_95_pct(self, client: TestClient) -> None:
+    def test_failed_below_95_pct(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com")
         dirty = (FIXTURES / "mixed_dirty.jsonl").read_bytes()
         audit_id = upload(client, ALICE, data=dirty).json()["audit_id"]
         body = client.get(f"/api/v1/audits/{audit_id}/status", headers=ALICE).json()
@@ -91,7 +105,8 @@ class TestTAPI03VersionedPrefix:
 
 
 class TestTAPI0405Idempotency:
-    def test_replay_returns_original(self, client: TestClient) -> None:
+    def test_replay_returns_original(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com", n=2)
         first = upload(client, ALICE, key="k-123")
         assert first.status_code == 201
         assert first.json()["replayed"] is False
@@ -99,7 +114,9 @@ class TestTAPI0405Idempotency:
         assert second.status_code == 200
         assert second.json() == {"audit_id": first.json()["audit_id"], "replayed": True}
 
-    def test_key_is_per_user(self, client: TestClient) -> None:
+    def test_key_is_per_user(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com")
+        credit(app, "bob@example.com")
         a = upload(client, ALICE, key="shared-key")
         b = upload(client, BOB, key="shared-key")
         assert a.status_code == 201 and b.status_code == 201
@@ -161,12 +178,14 @@ class TestTAPI07ErrorEnvelope:
         assert resp.status_code == 401
         self.assert_envelope(resp.json(), "unauthorized")
 
-    def test_422_envelope_missing_file(self, client: TestClient) -> None:
+    def test_422_envelope_missing_file(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com")
         resp = client.post("/api/v1/audits", headers=ALICE)
         assert resp.status_code == 422
         self.assert_envelope(resp.json(), "validation_error")
 
-    def test_400_envelope_bad_extension(self, client: TestClient) -> None:
+    def test_400_envelope_bad_extension(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com")
         resp = client.post(
             "/api/v1/audits",
             headers=ALICE,
@@ -177,7 +196,8 @@ class TestTAPI07ErrorEnvelope:
 
 
 class TestTNFR03And12RateLimits:
-    def test_burst_hits_429_with_retry_after(self, client: TestClient) -> None:
+    def test_burst_hits_429_with_retry_after(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com", n=30)
         last = None
         for _ in range(11):
             last = upload(client, ALICE)
@@ -186,7 +206,9 @@ class TestTNFR03And12RateLimits:
         body = last.json()
         assert body["error"]["code"] == "rate_limited"
 
-    def test_limit_keyed_per_user_not_ip(self, client: TestClient) -> None:
+    def test_limit_keyed_per_user_not_ip(self, client: TestClient, app: FastAPI) -> None:
+        credit(app, "alice@example.com", n=30)
+        credit(app, "bob@example.com", n=2)
         for _ in range(11):
             resp = upload(client, ALICE)
         assert resp.status_code == 429

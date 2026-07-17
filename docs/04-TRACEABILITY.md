@@ -24,7 +24,7 @@ test; matrix checked in review before merge to main.
 | FR-16  | C5  | report (synthetic fixture)                 | T-REP-07 (S) |
 | FR-17  | C1  | web/auth (magic link)                      | T-AUTH-01..04 |
 | FR-18  | C7  | payments/*, api/routes_webhooks            | T-PAY-01..05 |
-| FR-19  | C1  | web/admin                                  | T-ADM-01..04 |
+| FR-19  | C1  | web/admin                                  | T-ADM-01..05 |
 | FR-20  | C8  | mail/*                                     | T-MAIL-01 (S) |
 | FR-21  | C6  | lifecycle/purge, lifecycle/auditlog        | T-LIF-01..03 |
 | FR-22  | C4,C6 | rules/findings(EvidenceRef), persistence | T-LIF-04, T-RUL-EV-01 |
