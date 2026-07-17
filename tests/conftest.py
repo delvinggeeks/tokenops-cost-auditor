@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.main import create_app
+from tokenops_cost_auditor.persistence.models import Base
 
 
 @pytest.fixture
@@ -27,6 +28,7 @@ def settings(tmp_path: Path) -> Settings:
 @pytest.fixture
 def app(settings: Settings) -> Iterator[FastAPI]:
     application = create_app(settings)
+    Base.metadata.create_all(application.state.engine)
     yield application
     application.state.engine.dispose()
 

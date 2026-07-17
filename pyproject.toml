@@ -18,6 +18,7 @@ dependencies = [
     "structlog",
     "slowapi",
     "pyyaml>=6.0.3",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
@@ -80,6 +81,8 @@ markers = [
 filterwarnings = [
     # third-party: starlette testclient's httpx deprecation — not actionable here
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+    # third-party: slowapi still calls asyncio.iscoroutinefunction on py3.14
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]
