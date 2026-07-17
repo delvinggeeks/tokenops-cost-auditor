@@ -60,6 +60,9 @@ class D4RetryStorm:
         if len(frame) == 0:
             return []
         work = frame[(frame["cached_tokens"] == 0) & (frame["cache_write_tokens"] == 0)].copy()
+        # UAT-D5: rows sharing a request_id are the SAME call (logger echoes,
+        # streaming events), never a retry — duplicates must not form clusters
+        work = work.drop_duplicates(subset=["request_id"], keep="first")
         if len(work) == 0:
             return []
         work["_identity"] = work["prefix_hash"].where(

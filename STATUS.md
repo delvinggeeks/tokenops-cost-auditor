@@ -3,6 +3,28 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## UAT-D5 — LEDGER ROW 1 REFUSED, EXPORTER DOUBLE-COUNTING FIXED, ROW REGENERATED (resubmitted)
+
+Founder-side verification REFUSED ledger row 1: exporter emitted one row per
+transcript EVENT not per completed call (3,106 rows vs 1,304 unique
+request_ids; one id ×10). Fix per ruling (branch uat-d5-exporter-dedup,
+409a4f5): exporter dedupes globally by request_id (max-complete usage wins,
+ties→latest; dedup summary printed every run); ingest warns loudly >1%
+duplicate ids (ingest.duplicate_request_ids); D4 drops duplicate ids before
+clustering (same id = same call). Regression: multi-event fixture (partial→
+complete usage + cross-file replay) + shared-id-never-a-storm test + warning
+tests. Goldens unaffected (NOTES row; estimators untouched); 206 passed.
+LEDGER ROW 1 REPLACED (defective row deleted, never counts): re-run dedup
+summary rows_in=3179 unique_out=1340 duplicates_dropped=1839 → $432.27
+observed API-equiv, est. $1,966.27/mo waste, 30.3%, verified='' —
+RESUBMITTED with dedup summary for founder tick. uat1 REGENERATED (session
+overlap): 159,571→67,095 unique calls (58% duplicates), $8,757.75/mo spend,
+$2,846.62/mo est. waste, 32.5% — waste share ROSE with the honest
+denominator. Docs self-audit page defect log now carries UAT-D5 alongside
+the 228% story ("our own verification gate refused our own first ledger
+row"); corrected figures marked pending-verification. Launch thread remains
+BLOCKED on a verified ledger row per R-SELF-AUDIT c.
+
 ## WP-SELF — BUILT (ledger seeded, page live behind publish gate; founder ticks pending)
 
 Branch `wp-self`. scripts/self_audit.py (exporter on THIS project → CLI audit

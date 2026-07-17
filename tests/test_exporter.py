@@ -60,3 +60,60 @@ class TestTEXP02NoTextInOutput:
         assert "SECRET-USER-PROMPT" not in text
         assert "SECRET-ASSISTANT-REPLY" not in text
         assert '"content"' not in text
+
+
+class TestUATD5DedupByRequestId:
+    """UAT-D5 (founder verification refusal): transcripts emit multiple events
+    per completed call; the exporter must emit exactly one row per request_id."""
+
+    def test_multi_event_transcript_dedupes_to_unique_ids(self, tmp_path: Path) -> None:
+        exporter = _load_exporter()
+        src = tmp_path / "sessions"
+        src.mkdir()
+        (src / "s1.jsonl").write_bytes((FIXTURES / "claude_code_multi_event.jsonl").read_bytes())
+        out = tmp_path / "export.jsonl"
+        count = exporter.export(src, out)
+        # fixture: 5 assistant events across exactly 3 unique message ids
+        assert count == 3
+        import json
+
+        rows = [json.loads(line) for line in out.read_text().splitlines()]
+        ids = [r["request_id"] for r in rows]
+        assert len(ids) == len(set(ids)) == 3
+
+    def test_max_complete_usage_wins(self, tmp_path: Path) -> None:
+        """msg_dup_001 appears twice: partial (output 0) then complete (output
+        45) — the complete tuple must be the one exported, counted once."""
+        exporter = _load_exporter()
+        src = tmp_path / "sessions"
+        src.mkdir()
+        (src / "s1.jsonl").write_bytes((FIXTURES / "claude_code_multi_event.jsonl").read_bytes())
+        out = tmp_path / "export.jsonl"
+        exporter.export(src, out)
+        import json
+
+        by_id = {
+            json.loads(line)["request_id"]: json.loads(line)
+            for line in out.read_text().splitlines()
+        }
+        assert by_id["msg_dup_001"]["response"]["usage"]["output_tokens"] == 45
+
+    def test_dedup_summary_printed(self, tmp_path: Path, capsys) -> None:
+        exporter = _load_exporter()
+        src = tmp_path / "sessions"
+        src.mkdir()
+        (src / "s1.jsonl").write_bytes((FIXTURES / "claude_code_multi_event.jsonl").read_bytes())
+        exporter.export(src, tmp_path / "export.jsonl")
+        captured = capsys.readouterr().out
+        assert "dedup: rows_in=5 unique_out=3 duplicates_dropped=2" in captured
+
+    def test_cross_file_duplicates_also_dedupe(self, tmp_path: Path) -> None:
+        """Session continuations replay messages across transcript files."""
+        exporter = _load_exporter()
+        src = tmp_path / "sessions"
+        src.mkdir()
+        payload = (FIXTURES / "claude_code_multi_event.jsonl").read_bytes()
+        (src / "s1.jsonl").write_bytes(payload)
+        (src / "s2.jsonl").write_bytes(payload)  # full replay in a second file
+        count = exporter.export(src, tmp_path / "export.jsonl")
+        assert count == 3  # still one row per unique call
