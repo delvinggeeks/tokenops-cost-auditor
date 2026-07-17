@@ -38,16 +38,18 @@ from tokenops_cost_auditor.services.rules.findings import (
 CHARS_PER_TOKEN = 4  # prefix-hash char->token approximation (R-Q6 companion)
 
 
-def _estimate_writes(bucket: pd.DataFrame, ttl_s: int) -> int | None:
-    """Distinct TTL windows (floor(epoch/ttl)) spanned by the bucket; None when not
-    estimable. Timedelta division keeps this independent of the frame's datetime
-    resolution (pandas 3.0 stores datetime64[us], not [ns])."""
+def _window_ids(bucket: pd.DataFrame, ttl_s: int) -> pd.Series | None:
+    """floor(epoch/ttl) window id per row; None when not estimable. Timedelta
+    division keeps this independent of datetime resolution (pandas 3.0 uses
+    datetime64[us]); tz-naive timestamps are assumed UTC (NFR-11) defensively —
+    the normalizer always emits tz-aware."""
     ts = bucket["ts"].dropna()
     if len(ts) == 0:
         return None
+    if ts.dt.tz is None:
+        ts = ts.dt.tz_localize("UTC")
     epoch = pd.Timestamp(0, tz="UTC")
-    windows = ((ts - epoch) // pd.Timedelta(seconds=ttl_s)).nunique()
-    return max(int(windows), 1)
+    return (ts - epoch) // pd.Timedelta(seconds=ttl_s)
 
 
 class D2MissingCache:
@@ -87,23 +89,35 @@ class D2MissingCache:
             else:
                 cacheable = s.d2_suffix_haircut * min_prompt  # R-Q5: 0.8 x min
 
+            ttl = ttl_window_s(s, provider, model)
+            ordered = bucket.sort_values("ts")
+            windows = _window_ids(ordered, ttl)
+            haircut = 1.0
+            if windows is None:
+                # R-Q4 fallback: one write (first row), 0.7 haircut on the estimate
+                is_write = pd.Series(False, index=ordered.index)
+                is_write.iloc[0] = True
+                haircut = s.d2_no_window_haircut
+            else:
+                # one write per TTL window: chronologically first call of each
+                # window writes the cache; the rest are reads
+                is_write = ~windows.duplicated()
+            if int((~is_write).sum()) <= 0:
+                continue  # every call is a cache write: nothing cacheable to read
+
+            # Per-row date rate lookup so buckets spanning a pricing
+            # effective-date boundary reprice correctly (G3 cold-reviewer f.1).
+            savings_obs = 0.0
             try:
-                rate = ctx.table.rate(provider, model, bucket["ts"].iloc[0].date())
+                for idx, row in ordered.iterrows():
+                    rate = ctx.table.rate(provider, model, row["ts"].date())
+                    if bool(is_write.loc[idx]):
+                        savings_obs -= cacheable * (rate.cache_write - rate.input) / 1e6
+                    else:
+                        savings_obs += cacheable * (rate.input - rate.cache_read) / 1e6
             except PricingGapError:
                 continue  # unpriced model: cost impact unknowable; skip bucket
-
-            ttl = ttl_window_s(s, provider, model)
-            est_writes = _estimate_writes(bucket, ttl)
-            haircut = 1.0
-            if est_writes is None:
-                est_writes = 1  # R-Q4 fallback: one write, 0.7 haircut on estimate
-                haircut = s.d2_no_window_haircut
-            reads = n - est_writes
-            if reads <= 0:
-                continue
-            gross = reads * cacheable * (rate.input - rate.cache_read) / 1e6
-            penalty = est_writes * cacheable * (rate.cache_write - rate.input) / 1e6
-            savings_obs = (gross - penalty) * haircut
+            savings_obs *= haircut
             if savings_obs <= 0:
                 continue
             results.append((savings_obs, hash_based, bucket, model))

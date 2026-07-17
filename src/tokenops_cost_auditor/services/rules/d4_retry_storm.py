@@ -66,7 +66,10 @@ class D4RetryStorm:
                 costs = cluster["cost_usd"].dropna()
                 if len(costs) == 0:
                     continue  # unpriced model: waste unknowable for this cluster
-                wasted += (len(cluster) - 1) * float(costs.mean())
+                # priced rows only, for BOTH count and mean: unpriced rows in a
+                # mixed cluster contribute no imputed waste (conservative;
+                # G3 cold-reviewer f.2). Cluster QUALIFICATION still uses all rows.
+                wasted += (len(costs) - 1) * float(costs.mean())
                 largest = max(largest, len(cluster))
             if wasted <= 0:
                 continue

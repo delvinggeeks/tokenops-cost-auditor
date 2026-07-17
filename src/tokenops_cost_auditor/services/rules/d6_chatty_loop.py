@@ -77,19 +77,20 @@ class D6ChattyLoop:
                     if saved_calls <= 0:
                         continue
                     overhead = float(run["prompt_tokens"].quantile(0.5))
-                    savings_obs = 0.0
                     try:
-                        # per-call input rate x the run-median overhead per saved call;
-                        # single-model runs reduce to saved x overhead x rate
-                        per_call_rates = [
+                        # order-independent and conservative for mixed-model runs:
+                        # every saved call is priced at the run's MINIMUM input
+                        # rate (G3 cold-reviewer f.3); single-model runs reduce
+                        # to saved x overhead x rate exactly
+                        min_rate = min(
                             ctx.table.rate(
                                 str(r["provider"]), str(r["model"]), r["ts"].date()
                             ).input
-                            for _, r in run.head(saved_calls).iterrows()
-                        ]
-                        savings_obs = sum(overhead * rate / 1e6 for rate in per_call_rates)
+                            for _, r in run.iterrows()
+                        )
                     except PricingGapError:
                         continue  # unpriced model: impact unknowable; skip run
+                    savings_obs = saved_calls * overhead * min_rate / 1e6
                     if savings_obs <= 0:
                         continue
                     results.append((savings_obs, run, str(tag), reread, n))

@@ -227,16 +227,49 @@ class TestTRULD2:
         base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
         frame = synth_frame([{"ts": base + timedelta(seconds=20 * i)} for i in range(25)])
         normal = D2MissingCache().run(frame, ctx_for(frame))[0]
-        monkeypatch.setattr(d2mod, "_estimate_writes", lambda bucket, ttl: None)
+        monkeypatch.setattr(d2mod, "_window_ids", lambda bucket, ttl: None)
         haircut = D2MissingCache().run(frame, ctx_for(frame))[0]
         # haiku rates: input 1, read 0.10, write 1.25; cacheable = 1024
         expected = 0.7 * ((25 - 1) * 1024 * 0.9 - 1 * 1024 * 0.25) / 1e6 * 30.0
         assert haircut.monthly_cost_impact_usd == pytest.approx(expected, abs=1e-12)
         assert haircut.monthly_cost_impact_usd != normal.monthly_cost_impact_usd
 
-    def test_estimate_writes_none_on_all_nat(self) -> None:
+    def test_window_ids_none_on_all_nat(self) -> None:
         frame = pd.DataFrame({"ts": pd.to_datetime([pd.NaT, pd.NaT], utc=True)})
-        assert d2mod._estimate_writes(frame, 300) is None
+        assert d2mod._window_ids(frame, 300) is None
+
+    def test_window_ids_tz_naive_assumed_utc(self) -> None:
+        """G3 cold-reviewer f.4: tz-naive timestamps must not crash the detector."""
+        frame = pd.DataFrame({"ts": pd.to_datetime(["2026-06-10 09:00:00", "2026-06-10 09:10:00"])})
+        ids = d2mod._window_ids(frame, 300)
+        assert ids is not None
+        assert ids.nunique() == 2
+
+    def test_rate_boundary_spanning_bucket_repriced_per_day(self) -> None:
+        """G3 cold-reviewer f.1: a bucket straddling the Sonnet-5 Sep-1 boundary
+        must price each day at its own card. Expected value independently derived:
+        25 calls/day at 20s spacing (span 480s = 2 TTL windows/day, writes = first
+        call of each window, reads = 23/day), cacheable = min(2000, 1024) = 1024:
+          Aug 31 (intro 2/0.20/2.50): 23x1.8 - 2x0.5  = 40.4 x 1024/1e6 = 0.0413696
+          Sep 01 (std   3/0.30/3.75): 23x2.7 - 2x0.75 = 60.6 x 1024/1e6 = 0.0620544
+        observed 0.103424; observed_days=2 -> monthly x15 = 1.55136."""
+        rows = []
+        days = (datetime(2026, 8, 31, 0, 0, tzinfo=UTC), datetime(2026, 9, 1, 0, 0, tzinfo=UTC))
+        for day in days:
+            rows.extend(
+                {
+                    "model": "claude-sonnet-5",
+                    "ts": day + timedelta(seconds=20 * i),
+                    "prompt_tokens": 2000,
+                    "completion_tokens": 400,
+                    "request_id": f"r-{day.day}-{i}",
+                }
+                for i in range(25)
+            )
+        frame = synth_frame(rows)
+        findings = D2MissingCache().run(frame, ctx_for(frame))
+        assert len(findings) == 1
+        assert findings[0].monthly_cost_impact_usd == pytest.approx(1.55136, abs=1e-12)
 
     def test_ttl_per_provider_family(self) -> None:
         s = make_settings()

@@ -74,6 +74,9 @@ class PricingTable:
         model = model.lower()
         rates = self._entries.get((provider, model))
         if rates is None:
+            # "-2" assumes 2000s-era date suffixes (e.g. -20251001). A non-date
+            # sibling id starting "-2" would false-match; accepted residual risk,
+            # revisit before year 3000 (G3 cold-reviewer f.5).
             candidates = [
                 key_model
                 for (key_provider, key_model) in self._entries
