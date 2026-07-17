@@ -102,13 +102,21 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
     elif backup_age > BACKUP_MAX_AGE_H:
         alerts.append(f"backup absent >{BACKUP_MAX_AGE_H}h (latest is {backup_age:.0f}h old)")
 
-    try:
-        usage = shutil.disk_usage(settings.upload_dir)
+    # uploads and backups may back onto different filesystems (named volume vs
+    # bind mount) — sample both, deduping filesystems by their total size+free
+    seen_fs: set[tuple[int, int]] = set()
+    for label, path in (("uploads", settings.upload_dir), ("backups", settings.backup_dir)):
+        try:
+            usage = shutil.disk_usage(path)
+        except OSError:
+            alerts.append(f"disk usage check failed for {label} ({path})")
+            continue
+        if (usage.total, usage.free) in seen_fs:
+            continue
+        seen_fs.add((usage.total, usage.free))
         pct = usage.used / usage.total * 100
         if pct > DISK_ALERT_PCT:
-            alerts.append(f"disk {pct:.0f}% full (> {DISK_ALERT_PCT}%)")
-    except OSError:
-        alerts.append(f"disk usage check failed for {settings.upload_dir}")
+            alerts.append(f"disk {pct:.0f}% full at {label} ({path}) (> {DISK_ALERT_PCT}%)")
 
     table = PricingTable.load()
     if table.last_verified is None:

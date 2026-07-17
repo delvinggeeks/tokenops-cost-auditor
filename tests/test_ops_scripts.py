@@ -38,7 +38,7 @@ class TestTOPS04PricingRefresh:
         assert candidates["found"]["claude-fable-5"] == [10.00, 50.00]
 
         lines = "\n".join(refresh.diff_lines("fixture://anthropic", candidates, known))
-        # table has sonnet-5 at intro 2.00/10.00; the page shows 3.00/15.00 -> mismatch
+        # fixture page shows sonnet-5 at 4.00/20.00 vs the table's latest row -> mismatch
         assert "claude-sonnet-5" in lines and "VERIFY BY HAND" in lines
         assert "claude-nova-6" in lines
         # fable-5 rates match the table -> must NOT be flagged

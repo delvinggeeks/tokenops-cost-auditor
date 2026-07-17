@@ -41,8 +41,9 @@ Alert conditions: healthz down 2 checks; any audit status=failed; disk
 
 Backup: scripts/backup.sh — pg_dump -Fc → /backups/tokenops_%F.dump,
 rotate 14 days, rclone copy to object storage (B2/R2 free tier).
-Reports/ directory rsynced same job. Uploads/ NOT backed up (they purge —
-data-policy consistency).
+Reports/ snapshotted same job as reports_%F.tar.gz (the postgres image has
+no rsync; the script uses rsync only if the base image ever gains it).
+Uploads/ NOT backed up (they purge — data-policy consistency).
 Restore drill (monthly, logged in this file): restore latest dump to
 staging postgres, run smoke audit, record time + result below.
 Restore log: (append entries here)
