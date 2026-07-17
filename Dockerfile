@@ -20,6 +20,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY alembic.ini ./
 COPY src ./src
+COPY scripts ./scripts
 RUN uv sync --frozen --no-dev
 
 # Non-root runtime user; uploads/reports stored outside web root (HLD §6)
