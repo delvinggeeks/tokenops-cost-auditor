@@ -124,6 +124,11 @@ source_urls, extracts candidate rates, produces a human-readable DIFF vs
 prices.yaml (new models, changed rates, unreachable pages). NEVER writes
 prices.yaml. Weekly per runbook §8; failures surface in digest.
 
+FR-30 (M) [amendment 2026-07-18, R-EQUIV-SPEND] Whenever metered-API
+billing cannot be assumed for the audited traffic (e.g. Claude Code exports),
+the report header and methodology carry verbatim: "Figures are API-equivalent
+token value; actual billing depends on your plan."
+
 ## G. Out of scope (recorded as requirements to NOT build)
 
 X-01 Live proxy/gateway. X-02 Policy/budget enforcement. X-03 Multi-org

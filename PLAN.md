@@ -150,6 +150,53 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**R-UAT1-FIXES-ACCEPTED (founder, 2026-07-18).** All four UAT-1 dogfood defect
+fixes accepted: D4 cache-active exclusion + completion-token fingerprint;
+top-50 bounded rendering with explicit note (JSON complete);
+effective_prompt_rate() tokens-priced-as-billed (golden blend recorded);
+headline savings capped at monthly spend with verbatim METHODOLOGY disclosure.
+
+**R-D6-AGG (founder, 2026-07-18).** D6 chatty-loop findings aggregate per
+session/tag: ONE finding per session, monthly impact summed over its runs,
+evidence sampled across constituent runs (≤20, counts only), run count stated
+in the finding text; report.json retains per-run detail under the aggregated
+finding. IDENTICAL per-session aggregation applies to D4. Golden updates
+follow money-math discipline (expected counts/impacts + spreadsheet
+derivations in the NOTES sheet).
+
+**R-EQUIV-SPEND (founder, 2026-07-18 → docs/01 FR-30).** Whenever metered-API
+billing cannot be assumed (e.g. Claude Code exports), the report header and
+methodology carry verbatim: "Figures are API-equivalent token value; actual
+billing depends on your plan." Also on the docs-site quickstart Claude Code
+exporter path.
+
+**R-SELF-AUDIT (founder, 2026-07-18) — WP-SELF, scheduled immediately after
+D13 deploy (before/alongside D14).** Ops-side only; engine and X-01..X-05
+untouched. (a) scripts/self_audit.py: exporter on THIS project's sessions →
+CLI audit → append one row per run to self_audit/ledger.csv (date, sessions,
+calls, observed API-equiv spend, findings by detector, est. monthly waste,
+waste %) + archive report.json; manual/local-scheduler only, NOT part of the
+product deployment. (b) docs-site "We audit ourselves" page (Engineering):
+cumulative audited build cost, per-milestone waste trendline (chart from the
+ledger at docs build; MEASUREMENT-PENDING until ≥3 ledger rows), the UAT-1
+story incl. the 228% defect caught pre-launch, and the intervention
+experiment (2-3 named UAT-1 recommendations applied to our own workflow,
+before/after deltas once ≥2 post-intervention milestones exist). Mandatory
+verbatim rails: the R-EQUIV-SPEND line; "n=1, uncontrolled — your logs are
+the real test"; link to run the same audit. (c) Ledger rows are
+money-adjacent: each published row requires a founder-verification tick,
+logged like golden files. (d) D14 launch assets cite ONLY ledger-verified
+numbers; the UAT-1 figures (26.2% waste, 13s on 158k calls, $5,289/mo est. on
+$20.2k/mo API-equivalent) usable WITH the equiv-spend framing.
+
+**R-SEQ-POST-SIGNOFF (founder, 2026-07-18).** UAT-1 sign-off OPEN (awaits the
+founder's completed review sheet + both docs/05 §5 exit-criteria checkboxes);
+D13 blocked until it lands. After the D6/D4 aggregation merges, uat1 review
+artifacts are REGENERATED so the founder's pass reviews shipping behavior.
+Post-sign-off sequence: D13 deploy per runbook §2 (incl. VPS-hardware perf
+validation + concurrency memory check: 2x max-size audits vs 8GB) →
+ops-engineer D13 gate → WP-SELF → D14 launch.
+
 **R-TOOLCHAIN (founder, 2026-07-17, harness amendment → docs/10 §2 TE-11 +
 all six agent charters).** Any gate check that executes, compiles, lints, or
 type-checks code MUST run through the project toolchain (`uv run ...` against

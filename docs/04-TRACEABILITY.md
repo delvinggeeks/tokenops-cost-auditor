@@ -37,6 +37,7 @@ publicly ("—" = internal-only, no public page needed).
 | FR-27  | C7  | api/routes_webhooks, persistence (events)  | T-PAY-06..07 | api/overview |
 | FR-28  | C5  | report/model, render_json, render_pdf      | T-REP-08 | concepts/pricing-data |
 | FR-29  | Ops | scripts/pricing_refresh.py                 | T-OPS-04 | concepts/pricing-data |
+| FR-30  | C5  | report/model (equiv-spend flag), _report_body | T-REP-09 | quickstart |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 | concepts/how-it-works, engineering/testing |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) | engineering/security |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 | api/overview |
