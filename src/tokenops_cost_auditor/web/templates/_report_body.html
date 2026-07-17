@@ -19,7 +19,8 @@
   </div>
   <div class="summary-cards">
     <div class="card">
-      <div class="card-label">Current monthly spend (normalized)</div>
+      <div class="card-label">Current monthly spend
+        <span class="muted">(your {{ report.observed_days }}-day window scaled to 30 days)</span></div>
       <div class="card-value">${{ "%.2f"|format(report.monthly_spend_usd) }}</div>
     </div>
     <div class="card">
@@ -45,7 +46,7 @@
     <tbody>
     {% for f in report.findings %}
       <tr>
-        <td class="bar-label">{{ f.id }} · {{ f.detector.replace("_", " ") }}</td>
+        <td class="bar-label">#{{ loop.index }} · {{ f.id }} · {{ f.detector.replace("_", " ") }}</td>
         <td class="bar-cell">
           <div class="bar" style="width: {{ (f.monthly_cost_impact_usd / max_impact * 100)|round(1) if max_impact else 0 }}%"></div>
           <span class="bar-value">${{ "%.4f"|format(f.monthly_cost_impact_usd) }}</span>
@@ -99,6 +100,7 @@
   {% for f in report.findings %}
   <article class="finding sev-{{ f.severity }}">
     <div class="finding-head">
+      <span class="rank muted">#{{ loop.index }} by impact</span>
       <span class="finding-id">{{ f.id }}</span>
       <span class="pill severity">{{ f.severity }}</span>
       <span class="pill confidence">{{ f.confidence }}</span>
