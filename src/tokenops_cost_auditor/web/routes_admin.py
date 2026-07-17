@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -61,6 +61,7 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
     return HTMLResponse(
         "<h1>TokenOps Cost Auditor — admin</h1>"
         "<p>Actions: POST /admin/audits/{id}/rerun · POST /admin/audits/{id}/purge · "
+        "GET /admin/audits/{id}/report · "
         "POST /admin/payments/mark-paid (email, amount, currency, provider)</p>"
         f"<table border=1 cellpadding=4><tr><th>audit</th><th>user</th><th>status</th>"
         f"<th>paid via</th><th>created</th><th>purge</th></tr>{rows}</table>"
@@ -104,6 +105,27 @@ def purge_audit(
         auditlog.append(session, actor, "audit.purged", audit_id, {"mode": "manual"})
         session.commit()
     return {"status": "purged", "audit_id": audit_id}
+
+
+@router.get("/audits/{audit_id}/report", response_model=None)
+def download_report(
+    request: Request, audit_id: str, actor: str = Depends(admin_actor)
+) -> FileResponse:
+    """FR-19 download report: the rendered PDF, without minting a signed URL."""
+    with _session(request) as session:
+        audit = session.get(Audit, audit_id)
+        if audit is None:
+            raise HTTPException(status_code=404, detail="audit not found")
+        pdf_path = Path(request.app.state.settings.report_dir) / audit_id / "report.pdf"
+        if not pdf_path.exists():
+            raise HTTPException(status_code=404, detail="report not rendered")
+        auditlog.append(session, actor, "report.admin_downloaded", audit_id)
+        session.commit()
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=f"tokenops-cost-audit-{audit_id[:8]}.pdf",
+    )
 
 
 @router.post("/payments/mark-paid")

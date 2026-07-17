@@ -1,4 +1,4 @@
-"""D9 tests — T-PAY-01..07 (webhooks, credits, FR-27) and T-ADM-01..04 (admin).
+"""D9 tests — T-PAY-01..07 (webhooks, credits, FR-27) and T-ADM-01..05 (admin).
 
 R-PAY ruling: webhook signature fixtures are computed INDEPENDENTLY of the
 adapters under test — raw hmac/hashlib lines below mirror the provider formulas
@@ -307,6 +307,34 @@ class TestTADM04ListView:
         assert page.status_code == 200
         assert audit_id in page.text
         assert "list@example.com" in page.text
+
+
+class TestTADM05DownloadReport:
+    def test_admin_downloads_pdf_and_action_is_logged(
+        self, pclient: TestClient, papp: FastAPI
+    ) -> None:
+        audit_id = seed_audit(papp, "openai_small.jsonl", email="dl@example.com")
+        papp.state.runner.run(audit_id)
+        resp = pclient.get(f"/admin/audits/{audit_id}/report", headers=ADMIN)
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "application/pdf"
+        assert resp.content[:5] == b"%PDF-"
+        with papp.state.session_factory() as session:
+            actions = [
+                e.action
+                for e in session.scalars(
+                    select(AuditLogEntry).where(AuditLogEntry.subject == audit_id)
+                )
+            ]
+        assert "report.admin_downloaded" in actions  # FR-20: admin action audit-logged
+
+    def test_unknown_audit_and_unrendered_report_404(
+        self, pclient: TestClient, papp: FastAPI
+    ) -> None:
+        assert pclient.get("/admin/audits/nonexistent/report", headers=ADMIN).status_code == 404
+        audit_id = seed_audit(papp, "openai_small.jsonl", email="dl2@example.com")
+        # queued but never run -> no PDF on disk yet
+        assert pclient.get(f"/admin/audits/{audit_id}/report", headers=ADMIN).status_code == 404
 
 
 class TestG5ColdReviewFindings:
