@@ -3,6 +3,25 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D14 GATES COMPLETE — spec-guard final sweep PASS-WITH-NOTES, ux re-check PASS-WITH-NOTES
+
+The program's last two gates ran pre-launch so D14 reduces to founder
+actions. spec-guard FINAL SWEEP: PASS-WITH-NOTES — 8-row traceability
+sample verified independently (FR-01/22/23/26/30, NFR-01/07/15 all cite
+existing tests), import-guard EXIT=0, FR-22 confirmed via toolchain (T-LIF-04
++ exporter no-text tests), launch drafts figure-inventory-clean with both
+rails + FR-23 verbatim, stats policy clean, ledger page leaks nothing
+(MEASUREMENT-PENDING, 1/3 verified). Notes closed: FR-30 date is the
+founder's IST ruling date (correct as given); X-scope full-surface re-grep
+run in main thread — only internal parser MODULE names match, no SDK/proxy/
+gateway/SSO/SPA markers anywhere. ux-reviewer scoped re-check (R-GTM-CONTROL
+c): PASS-WITH-NOTES — hero/CTA-hierarchy/coherence clean; note FIXED
+same-day: early-access support line tightened to promise-free copy ("The
+audit is step one. Leave your email for early access."), tests EXIT=0.
+EVERY GATE IN THE 14-DAY PROGRAM IS NOW CLOSED. Remaining = founder only:
+VPS deploy → re-validation → CHANGELOG; UAT-2 send/waive; launch-asset
+approval + URL fill; post.
+
 ## D14 PREP — launch drafts + UAT-2 kit ready (everything remaining is founder-action)
 
 Traceability self-check CLEAN pre-D14: every docs/01 FR/NFR has a matrix
