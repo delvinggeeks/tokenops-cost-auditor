@@ -102,3 +102,27 @@ class TestTLIF03AuditTrail:
         assert len(entries) == 1
         assert entries[0].actor == "system@purge"
         assert entries[0].detail == {"mode": "scheduled"}
+
+
+class TestFR26KeysPurgeWithUploads:
+    def test_idempotency_keys_deleted_when_audit_purges(self, app: FastAPI) -> None:
+        """FR-26: 7-day key retention shares the upload lifecycle (T-API-05)."""
+        from tokenops_cost_auditor.persistence.models import IdempotencyKey, User
+
+        audit_id = seed_audit(app, "openai_small.jsonl", email="keys@example.com")
+        app.state.runner.run(audit_id)
+        with app.state.session_factory() as session:
+            user = session.scalar(select(User).where(User.email == "keys@example.com"))
+            assert user is not None
+            session.add(IdempotencyKey(user_id=user.id, key="idem-1", audit_id=audit_id))
+            session.commit()
+        age_audit(app, audit_id, days=8)
+        with app.state.session_factory() as session:
+            assert purge_due(session, WINDOW_DAYS) == [audit_id]
+        with app.state.session_factory() as session:
+            remaining = list(
+                session.scalars(
+                    select(IdempotencyKey).where(IdempotencyKey.audit_id == audit_id)
+                )
+            )
+        assert remaining == []  # key gone with the upload
