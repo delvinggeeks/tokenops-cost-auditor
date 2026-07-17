@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pandas as pd
 import structlog
 from sqlalchemy import Engine, delete
 
@@ -38,8 +39,6 @@ from tokenops_cost_auditor.services.rules.findings import Finding, observed_days
 from tokenops_cost_auditor.services.rules.registry import run_all
 
 log = structlog.get_logger("tokenops_cost_auditor.runner")
-
-import pandas as pd  # noqa: E402
 
 
 def aggregate(priced: pd.DataFrame) -> list[dict[str, object]]:

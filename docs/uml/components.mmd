@@ -1,0 +1,124 @@
+%% components.mmd — TokenOps Cost Auditor component diagram
+%% Generated at G4 sweep (covers D6+D7) from docs/03-LLD.md §1 package layout
+%% and the actual import graph observed in .gates/d6-d7.diff + current
+%% src/tokenops_cost_auditor/ package tree. Architect gate duty per
+%% founder ruling R-Q1 (no gate fires at end of D6; emission lands here).
+%% D7-vs-D6 boundary: no structural change. D6 fixed the package boundaries
+%% (runner.py, report/model.py+render_json.py, lifecycle/auditlog.py,
+%% mail/base.py, api/routes_upload.py, persistence/{models,repo}.py). D7 only
+%% added renderers/consumers inside the existing report/ and web/ packages
+%% (render_pdf.py, signer.py, routes_report.py, templates) — no new package,
+%% no new service, no change to any D6 dependency arrow.
+%% services/payments/ is present (per LLD §1) but empty (only __init__.py)
+%% until D9. services/mail/smtp.py is not yet present — mail/base.py houses
+%% MailPort + a log adapter for now.
+
+graph TD
+  subgraph WEB["web/ (Jinja2, server-rendered — ADR-2)"]
+    web_routes["routes_report.py<br/>GET /r/{token}, /r/{token}/pdf"]
+    web_templates["templates/ (_report_body, _report_style,<br/>report.html, pdf/report.html)"]
+  end
+
+  subgraph API["api/ (/api/v1 — FR-25 / R-API)"]
+    api_upload["routes_upload.py<br/>POST /audits, GET /audits/{id}/status"]
+  end
+
+  subgraph CLI["cli.py (offline pipeline, FR-04)"]
+    cli_main["main() — console script<br/>tokenops-cost-auditor"]
+  end
+
+  subgraph SERVICES["services/"]
+    subgraph INGEST["ingest"]
+      ingest_base["base.py (detect_format)"]
+      ingest_parsers["openai_jsonl / anthropic_jsonl /<br/>generic_csv"]
+      ingest_norm["normalizer.py"]
+      ingest_val["validator.py"]
+    end
+    subgraph PRICING["pricing (no network/LLM libs — NFR-01 adjacent)"]
+      pricing_table["table.py"]
+      pricing_coster["coster.py"]
+    end
+    subgraph RULES["rules (no I/O, no network — NFR-01)"]
+      rules_registry["registry.py (D1..D6)"]
+      rules_findings["findings.py"]
+    end
+    subgraph REPORT["report"]
+      report_model["model.py<br/>ReportModel.build() — SOLE money-math<br/>assembly point (HLD C5)"]
+      report_json["render_json.py (serialize only)"]
+      report_pdf["render_pdf.py (weasyprint — ADR-4,<br/>serialize only)"]
+      report_signer["signer.py (itsdangerous signed URLs)"]
+    end
+    subgraph LIFECYCLE["lifecycle"]
+      lifecycle_auditlog["auditlog.py (append-only)"]
+    end
+    subgraph MAIL["mail"]
+      mail_base["base.py (MailPort + log adapter)"]
+    end
+    subgraph PAYMENTS["payments (empty until D9)"]
+      payments_stub["(no files yet)"]
+    end
+    runner["runner.py — AuditRunner<br/>(BackgroundTasks orchestration — ADR-5)"]
+  end
+
+  subgraph PERSISTENCE["persistence/"]
+    persist_models["models.py"]
+    persist_repo["repo.py (thin repositories +<br/>session factory)"]
+    persist_mig["migrations/ (alembic, additive-only)"]
+  end
+
+  subgraph OBS["obs/"]
+    obs_log["logging.py"]
+    obs_err["errors.py"]
+    obs_rate["ratelimit.py"]
+  end
+
+  %% API layer — sanctioned persistence access via repo.py + models.py
+  api_upload --> persist_repo
+  api_upload --> persist_models
+  api_upload --> ingest_base
+  api_upload --> lifecycle_auditlog
+  api_upload --> obs_rate
+  api_upload -. "BackgroundTasks.add_task" .-> runner
+
+  %% web layer — never touches persistence internals directly; goes
+  %% through report/signer.py only
+  web_routes --> report_signer
+  web_routes --> web_templates
+
+  %% runner orchestrates the full pipeline (3.1 in LLD)
+  runner --> persist_repo
+  runner --> persist_models
+  runner --> ingest_base
+  runner --> ingest_val
+  runner --> lifecycle_auditlog
+  runner --> mail_base
+  runner --> pricing_coster
+  runner --> pricing_table
+  runner --> report_model
+  runner --> report_json
+  runner --> report_pdf
+  runner --> report_signer
+  runner --> rules_registry
+  runner --> rules_findings
+  runner --> obs_err
+
+  %% report assembly — single money-math point, render layers serialize only
+  report_model --> pricing_coster
+  report_model --> pricing_table
+  report_model --> rules_findings
+  report_json --> report_model
+  report_pdf --> report_model
+  report_pdf --> web_templates
+
+  persist_repo --> persist_models
+  persist_mig --> persist_models
+  rules_registry --> rules_findings
+
+  %% CLI — offline pipeline, bypasses api/persistence entirely
+  cli_main --> ingest_base
+  cli_main --> pricing_coster
+  cli_main --> pricing_table
+  cli_main --> rules_registry
+  cli_main --> report_model
+  cli_main --> report_json
+  cli_main --> report_pdf
