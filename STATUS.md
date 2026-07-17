@@ -3,6 +3,17 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D11-12 vv GATE CLOSED — PASS-WITH-NOTES (after FAIL → fix → re-run)
+
+vv-engineer re-run: PASS-WITH-NOTES. Full suite re-verified by the gate
+itself with exit-code check (EXIT=0, 209 passed + 1 skip). Notes applied:
+UAT-1 fix commit hashes pinned into the D11 paragraph (488b40c, 39a2d31,
+8bed596); coordinator-side pass/fail extraction now exit-code-based (gate's
+process note — already fixed + memorized). STANDS: UAT-2 has NO evidence in
+the record — founder-executed (external design partner log set, docs/05 §5),
+not remediable by the build, awaiting founder decision (run it or rule it
+waived/deferred).
+
 ## PRE-LAUNCH CLOSEOUT + D11-12 vv GATE (FAIL → fixed; correction of record)
 
 Branch `pre-launch-closeout`. Non-VPS items closed: FR-26 gap — idempotency
@@ -140,7 +151,9 @@ below. D13 remains blocked on founder sign-off (R-SEQ-POST-SIGNOFF).
 
 ## D11 UAT-1 DOGFOOD FIXES — first real-data run found 4 defects, all fixed (sign-off still OPEN)
 
-Branch `d11-uat-fixes`. Founder ran the harness on real Claude Code logs
+Branch `d11-uat-fixes` (commits 488b40c = the four fixes below; 39a2d31 +
+8bed596 = effective-rate + savings cap; pinned per vv gate note).
+Founder ran the harness on real Claude Code logs
 (1.6GB transcripts → 59.6MB counts-only export, 158k rows / 13 sessions /
 36 days / $24.2k observed). FIRST RUN: killed after 25+ min at 18.4GB RSS.
 Defects found+fixed, each with regression pins: (1) D4 no-hash fingerprint
