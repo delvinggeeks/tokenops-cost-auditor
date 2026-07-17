@@ -80,6 +80,8 @@ jobs:
       - run: uv sync --frozen
       - name: API reference drift gate (MP-3)
         run: uv run python scripts/export_openapi.py --check
+      - name: self-audit ledger drift gate (WP-SELF)
+        run: uv run python scripts/render_self_audit.py --check
       - run: uv run mkdocs build --strict
       - uses: actions/upload-artifact@v4
         with:

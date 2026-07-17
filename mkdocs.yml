@@ -93,6 +93,7 @@ nav:
       - Integration: engineering/integration.md
       - Security: engineering/security.md
       - Performance: engineering/performance.md
+      - We audit ourselves: engineering/self-audit.md
   - Limits: limits.md
   - Legal:
       - Terms: legal/terms.md

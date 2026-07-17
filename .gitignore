@@ -36,3 +36,6 @@ backups/
 site/
 tests/fixtures/perf_1m.jsonl.gz
 uat1/
+
+# WP-SELF archives (ledger.csv IS committed; raw reports are not)
+self_audit/reports/
