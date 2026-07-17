@@ -2,17 +2,19 @@
 
 ## The problem
 
-Prompts grow. Few shrink. RAG pipelines that stuff every retrieved chunk into
-context, system prompts that accrete instructions, few-shot examples nobody
-re-evaluated — the output stays the same size while the input balloons.
+Prompts grow. Few shrink. Retrieval pipelines (RAG — systems that fetch
+documents and paste them into the prompt) that stuff every retrieved chunk
+into context, system prompts that accrete instructions, in-prompt examples
+("few-shot" samples) nobody re-evaluated — the output stays the same size
+while the input balloons.
 
 ## Detection
 
 Calls are grouped by route (`tag`/`endpoint`) and binned by completion size,
 so comparisons are like-for-like: a route is flagged when its 90th-percentile
-prompt is more than twice the corpus median prompt *for the same completion
-bin*. Producing the same-sized answer from far more context than your other
-routes need is the bloat signature.
+prompt is more than twice the median prompt across your whole log ("corpus
+median") *for the same completion bin*. Producing the same-sized answer from
+far more context than your other routes need is the bloat signature.
 <!-- src: docs/03 §3 D3 -->
 
 ## Savings estimate

@@ -3,7 +3,17 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D-DOCS — docs site built (gates next)
+## D-DOCS — GATES COMPLETE (ux PASS-WITH-NOTES, spec-guard PASS)
+
+Gate verdicts. ux-reviewer (charter extended to docs-site per DOCS-PLAN §5.6):
+PASS-WITH-NOTES — home value-prop/attribution/FR-23/nav/tabs/MP-blocks all
+clean; single note (RAG/few-shot/corpus-median jargon unglossed on
+prompt-bloat page) FIXED same-day. spec-guard: PASS — 10/10 claim spot check
+verified against sources (FR-23 x2, three attributed stats vs docs/09b, five
+golden dollar figures vs pricing_golden_NOTES.md), banned stats absent,
+MP blocks number-free (test-enforced), mkdocs-material dev-only, DOC column
+complete with existing targets, FR-22 hygiene clean. Merged to main; tag
+d-docs.
 
 Branch `d-docs`. MkDocs + Material (dev-only dep per DOCS-PLAN §1), 27 pages
 per approved page tree, mkdocs.yml strict + local palette (no CDNs/fonts/
