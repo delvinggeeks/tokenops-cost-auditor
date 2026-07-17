@@ -54,4 +54,6 @@ def cost(card, p, c, w, o):
 
 ## Founder verification log
 
-- (pending) 8–10 rows hand-verified against provider pricing pages: ____________
+- 2026-07-17: founder reviewed the 12 golden rows (rates, formulas, expected values,
+  and the three seeding decisions: 5-min cache_write, OpenAI zero write premium,
+  effective_from policy) as presented at the D3 stop and approved proceeding to G2.
