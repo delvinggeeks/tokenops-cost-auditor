@@ -51,3 +51,10 @@ class SmtpMailAdapter:
             "Your TokenOps Cost Auditor report is ready:\n\n"
             f"{self.base_url}{report_url}\n\nThe link expires in 30 days.",
         )
+
+    def send_digest(self, to_email: str, body: str) -> None:
+        """Founder ops digest (runbook §3; scripts/daily_digest.py)."""
+        subject = "TokenOps daily digest"
+        if "ALERTS:" in body:
+            subject += " — ALERTS"
+        self._send(to_email, subject, body)

@@ -6,10 +6,9 @@ from pathlib import Path
 from fastapi import FastAPI
 from sqlalchemy import select
 
+from test_runner import seed_audit
 from tokenops_cost_auditor.persistence.models import Audit, AuditLogEntry, CallAggregate
 from tokenops_cost_auditor.services.lifecycle.purge import purge_due
-
-from test_runner import seed_audit
 
 WINDOW_DAYS = 7
 
