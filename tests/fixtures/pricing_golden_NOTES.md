@@ -116,6 +116,7 @@ re-read signature 6 >= 5, "agent loop suspected"):
 | D3 excess definition | sum over flagged-route rows of max(prompt - corpus bin median, 0); x input rate x 0.5 safety factor (LLD) | d3_prompt_bloat.py |
 | D6 overhead tokens | run-median prompt_tokens (context re-sent per call); saved calls = n - ceil(n/BATCH_SZ) | d6_chatty_loop.py |
 | Model-key matching (pricing + D1 map) | exact, or key + "-2..." dated-snapshot suffix, longest key wins — prevents sibling bleed (gpt-5.4-nano never takes gpt-5.4's card) | table.py, d1_oversized_model.py |
+| D4 eligibility (UAT-1 dogfood fix, D11) | cache-active rows (cached_tokens>0 OR cache_write_tokens>0) excluded — agent-session continuations are not blind retries; no-hash fingerprint = (prompt_tokens, completion_tokens), was prompt-only. Estimator formula (n-1)×mean UNCHANGED; D4 golden 0.0510 unaffected (retry block: hashes present, no cache fields) — suite re-verified green same commit | d4_retry_storm.py |
 | D5 impact | 0.0 (informational) unless D5_RESERVED_BILLING; flag at declared p50 >= 4x completion p95 | d5_unbounded_max_tokens.py |
 
 ## Founder verification log
