@@ -1,0 +1,100 @@
+# TokenOps Cost Auditor — public docs (milestone D-DOCS, DOCS-PLAN.md).
+# No CDNs, no trackers, no external fonts (font: false); Material's assets are
+# self-contained and Mermaid renders via pymdownx.superfences (bundled).
+site_name: TokenOps Cost Auditor
+site_description: >-
+  Upload your LLM API logs, get a deterministic dollar-ranked waste audit.
+  Documentation for the product, the audit methodology, and the engineering
+  behind it.
+site_url: ""
+docs_dir: docs-site
+repo_url: ""
+strict: true
+
+theme:
+  name: material
+  font: false
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts:
+      - How it works: concepts/how-it-works.md
+      - Waste classes:
+          - concepts/waste-classes/index.md
+          - Oversized model: concepts/waste-classes/oversized-model.md
+          - Missing cache: concepts/waste-classes/missing-cache.md
+          - Prompt bloat: concepts/waste-classes/prompt-bloat.md
+          - Retry storms: concepts/waste-classes/retry-storms.md
+          - Unbounded max_tokens: concepts/waste-classes/unbounded-max-tokens.md
+          - Chatty agent loops: concepts/waste-classes/chatty-loops.md
+      - Pricing data: concepts/pricing-data.md
+      - Data handling: concepts/data-handling.md
+  - API:
+      - Overview: api/overview.md
+      - Endpoints: api/endpoints.md
+  - Reports:
+      - Reading a report: report/reading-a-report.md
+      - Worked example: report/worked-example.md
+  - Engineering:
+      - engineering/index.md
+      - Requirements: engineering/requirements.md
+      - Architecture: engineering/architecture.md
+      - Stack: engineering/stack.md
+      - Traceability: engineering/traceability.md
+      - Testing: engineering/testing.md
+      - Integration: engineering/integration.md
+      - Security: engineering/security.md
+      - Performance: engineering/performance.md
+  - Limits: limits.md
+  - Legal:
+      - Terms: legal/terms.md
+      - Privacy: legal/privacy.md
+      - DPA: legal/dpa.md

@@ -31,6 +31,7 @@ dev = [
     # httpx is required by fastapi.testclient (docs/05 L3 mandates TestClient);
     # test-only — T-NFR-01 forbids it inside services/rules and services/pricing.
     "httpx",
+    "mkdocs-material>=9.7.6",
 ]
 
 [project.scripts]
