@@ -3,6 +3,26 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D-DOCS — docs site built (gates next)
+
+Branch `d-docs`. MkDocs + Material (dev-only dep per DOCS-PLAN §1), 27 pages
+per approved page tree, mkdocs.yml strict + local palette (no CDNs/fonts/
+trackers), pymdownx snippets transclude docs/04 (traceability page) and
+docs/uml/*.mmd (architecture page). scripts/export_openapi.py generates
+api/endpoints.md from the app factory; --check drift gate + `mkdocs build
+--strict` + artifact upload added as CI `docs` job. docs/04 gained the DOC
+column (same commit as pages). MP register at build: RESOLVED with real repo
+numbers — MP-3 (20 endpoints generated), MP-5 (G4 UML embedded), MP-7
+(determinism via T-REP-03/08), MP-8+MP-10 (all six golden rows: D1 $1.35,
+D2 $0.246784, D3 $0.50, D4 $0.0510, D5 $0.00 informational, D6 $0.096),
+MP-9 (legal single-sourcing: web templates authoritative, docs mirror,
+drift-failing sync tests in tests/test_docs_site.py — clause structure +
+FR-23 + price). STILL PENDING (greppable MEASUREMENT-PENDING blocks):
+MP-1 e2e timing claim, MP-2 report screenshot, MP-6 perf numbers (founder
+precondition: ≥1 successful nightly perf run; none exists yet). Stats
+policy test-enforced (attributed 79/31/98 only; 40-60/73 banned). Suite
+177 passed + 1 CI skip; strict build zero warnings.
+
 ## D10 — G6 SWEEP COMPLETE (ops-engineer PASS-WITH-NOTES, vv PASS-WITH-NOTES)
 
 G6 verdicts. ops-engineer: PASS-WITH-NOTES — container_name/ofelia targets match,
