@@ -3,6 +3,23 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## BATCH-2 RULINGS 2026-07-18 APPLIED — registers + landing copy (zero build-scope change)
+
+Applied on main (255c6ae). R-GTM-CONTROL: landing leads with control
+narrative, audit = step one of prevention path (only purchasable product);
+early-access CTA verbatim "AI spend control — APIs, agents, and AI seats."
+— POST /early-access email capture into append-only audit_log (no new table,
+5/min limit), weekly count line in digest; T-WEB invariants (FR-23, one
+primary CTA, attributed stats) test-verified; ux-reviewer re-checks changed
+blocks at next scheduled gate. Registers: PLAN §0.1 gains R-GTM-CONTROL,
+R-ENTERPRISE-SEAT, R-DEPLOYMENT-CONTRACT, R-ENTERPRISE-READY+R-MARKETPLACE
+summary; BACKLOG.md rewritten — WP-P2-AGG three layers (day-45 PRD gate),
+deployment contract (6 clauses), trigger register additions (Entra-first
+SSO, Helm, marketplace+IaC, early-access counts), user-model principle,
+explicit NOT-building list, enterprise sales notes. Batch-1 verified in
+force, not re-applied. Suite 197 passed + 1 skip. Standing sequence
+unchanged: sign-off → D13 → ops gate → WP-SELF → D14.
+
 ## D11 RULINGS 2026-07-18 APPLIED — R-D6-AGG + FR-30 built; uat1 artifacts regenerated (sign-off OPEN)
 
 Branch `d11-agg-equiv`. Founder accepted all four UAT-1 fixes
