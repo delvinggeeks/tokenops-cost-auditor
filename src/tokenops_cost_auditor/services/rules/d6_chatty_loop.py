@@ -11,7 +11,8 @@ Savings (LLD: batchable x overhead x rate; overhead defined as a documented
 money-math default, see pricing_golden_NOTES.md):
     saved_calls = n - ceil(n / D6_BATCH_SZ)
     overhead_tokens = median prompt_tokens of the run (per-call context re-send)
-    savings = saved_calls x overhead_tokens x input_rate / 1e6
+    savings = saved_calls x overhead_tokens x effective_prompt_rate / 1e6
+    (effective = as billed: cache reads at cache_read rate — UAT-1 fix, D11)
 Confidence = estimated. Monthly impact = observed x 30/observed_days (Q7).
 """
 
@@ -26,6 +27,7 @@ from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     Finding,
+    effective_prompt_rate,
     make_evidence,
     monthly_factor,
     severity_for_impact,
@@ -79,13 +81,17 @@ class D6ChattyLoop:
                     overhead = float(run["prompt_tokens"].quantile(0.5))
                     try:
                         # order-independent and conservative for mixed-model runs:
-                        # every saved call is priced at the run's MINIMUM input
-                        # rate (G3 cold-reviewer f.3); single-model runs reduce
-                        # to saved x overhead x rate exactly
+                        # every saved call is priced at the run's MINIMUM
+                        # EFFECTIVE prompt rate (G3 cold-reviewer f.3; UAT-1
+                        # dogfood fix — cache-read-heavy agent context re-sends
+                        # were priced at flat input rate, ~10x over-claim);
+                        # uncached single-model runs reduce to saved x overhead
+                        # x input rate exactly
                         min_rate = min(
-                            ctx.table.rate(
-                                str(r["provider"]), str(r["model"]), r["ts"].date()
-                            ).input
+                            effective_prompt_rate(
+                                r,
+                                ctx.table.rate(str(r["provider"]), str(r["model"]), r["ts"].date()),
+                            )
                             for _, r in run.iterrows()
                         )
                     except PricingGapError:

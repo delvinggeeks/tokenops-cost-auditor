@@ -7,7 +7,9 @@ its prompt p90 > D3_BLOAT_MULT x corpus median of that bin.
 
 Savings (documented money-math default, see pricing_golden_NOTES.md):
     excess = sum over flagged rows of max(prompt_i - corpus_median(bin), 0)
-    savings = excess x input_rate(call) x 0.5 safety factor  (LLD §3)
+    savings = excess x effective_prompt_rate(call) x 0.5 safety factor
+    (effective = as billed: cache reads at cache_read rate — UAT-1 fix, D11;
+    uncached rows reduce to the LLD §3 input-rate formula exactly)
 Confidence = estimated (statistical norm, not verified content).
 Monthly impact = observed savings x 30/observed_days (Q7).
 """
@@ -22,6 +24,7 @@ from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     Finding,
+    effective_prompt_rate,
     make_evidence,
     monthly_factor,
     severity_for_impact,
@@ -60,7 +63,10 @@ class D3PromptBloat:
                     if excess <= 0:
                         continue
                     rate = ctx.table.rate(str(row["provider"]), str(row["model"]), row["ts"].date())
-                    savings_obs += excess * rate.input * SAFETY_FACTOR / 1e6
+                    # tokens are priced as the row was billed (cache reads at the
+                    # read rate) — flat input-rate pricing inflated cache-heavy
+                    # agent traffic ~10x (UAT-1 dogfood fix, D11)
+                    savings_obs += excess * effective_prompt_rate(row, rate) * SAFETY_FACTOR / 1e6
             except PricingGapError:
                 continue  # unpriced model in route: impact unknowable; skip
             if savings_obs <= 0:

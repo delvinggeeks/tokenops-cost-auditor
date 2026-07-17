@@ -1,8 +1,17 @@
 """Detector D4 — retry storms / duplicate calls (FR-10; docs/03-LLD.md §3).
 
+Eligibility (UAT-1 dogfood fix, D11): rows with ANY cache activity are
+excluded. A call that reads or writes provider cache is a session
+continuation, not a blind duplicate — cache-stable agent sessions repeat
+token shapes every few seconds, and treating those steps as retry storms was
+a false-positive factory on real Claude Code traffic. A true duplicate of a
+cached call also pays cache-read rates, so full-cost "waste" would be
+overstated anyway.
+
 Near-identical identity key: (tag, model, prefix_hash) when a hash exists
-(confidence = conservative), else (tag, model, prompt_tokens) (= estimated).
-Within each identity group (time-sorted), a cluster collects calls whose ts is
+(confidence = conservative), else (tag, model, prompt_tokens,
+completion_tokens) (= estimated; prompt-only collided massively on agent
+traffic). Within each identity group (time-sorted), a cluster collects calls whose ts is
 within D4_WINDOW_S of the CLUSTER START (anchor rule — deterministic). A cluster
 of >= D4_DUP_MIN near-identical calls is a storm: wasted = (n-1) x mean cost of
 the cluster's priced rows. One Finding per identity group (clusters aggregated);
@@ -45,9 +54,15 @@ class D4RetryStorm:
         s = ctx.settings
         if len(frame) == 0:
             return []
-        work = frame.copy()
+        work = frame[(frame["cached_tokens"] == 0) & (frame["cache_write_tokens"] == 0)].copy()
+        if len(work) == 0:
+            return []
         work["_identity"] = work["prefix_hash"].where(
-            work["prefix_hash"].notna(), "pt:" + work["prompt_tokens"].astype(str)
+            work["prefix_hash"].notna(),
+            "pt:"
+            + work["prompt_tokens"].astype(str)
+            + ":ct:"
+            + work["completion_tokens"].astype(str),
         )
         work["_hash_based"] = work["prefix_hash"].notna()
 

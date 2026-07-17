@@ -35,3 +35,4 @@ backups/
 # mkdocs build output (D-DOCS)
 site/
 tests/fixtures/perf_1m.jsonl.gz
+uat1/

@@ -70,6 +70,29 @@ def monthly_factor(days: int) -> float:
     return 30.0 / max(days, 1)
 
 
+def effective_prompt_rate(row: pd.Series, rate: object) -> float:
+    """USD per 1M prompt tokens as this row was ACTUALLY billed: uncached
+    tokens at the input rate, cache reads at the cache_read rate, cache writes
+    at the cache_write rate (R-Q4 total-prompt semantics).
+
+    Equals rate.input exactly for uncached traffic — the D3/D6 goldens are
+    invariant by construction. On cache-heavy agent traffic (the ICP), pricing
+    removed prompt tokens at the flat input rate inflated savings ~10x and
+    produced >100% savings claims (UAT-1 dogfood fix, D11; money-math default
+    recorded in pricing_golden_NOTES.md)."""
+    prompt = int(row["prompt_tokens"])
+    if prompt <= 0:
+        return float(rate.input)  # type: ignore[attr-defined]
+    cached = int(row["cached_tokens"])
+    written = int(row["cache_write_tokens"])
+    uncached = max(prompt - cached - written, 0)
+    return (
+        uncached * float(rate.input)  # type: ignore[attr-defined]
+        + cached * float(rate.cache_read)  # type: ignore[attr-defined]
+        + written * float(rate.cache_write)  # type: ignore[attr-defined]
+    ) / prompt
+
+
 def severity_for_impact(monthly_usd: float) -> Severity:
     if monthly_usd >= SEVERITY_HIGH_USD:
         return Severity.HIGH

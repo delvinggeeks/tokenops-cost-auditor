@@ -28,9 +28,15 @@ inflate:
 ```text
 saved_calls = n − ceil(n / 5)
 overhead    = run-median prompt tokens        (the re-sent context)
-savings     = saved_calls × overhead × min input rate in the run
+savings     = saved_calls × overhead × minimum effective billed rate in the run
 ```
-<!-- src: pricing_golden_NOTES.md D6 defaults; G3 fix: run-minimum rate -->
+
+"Effective billed rate" prices the re-sent context as it was actually paid
+for: context served from provider cache counts at the cache-read rate, not the
+full input rate. An agent loop that already caches well still wastes calls,
+but the report won't claim full-price savings for tokens you bought at a
+tenth of the price.
+<!-- src: pricing_golden_NOTES.md D6 defaults; G3 fix: run-minimum rate; effective_prompt_rate UAT-1 fix -->
 
 ## Worked example (golden fixture)
 

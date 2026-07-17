@@ -30,7 +30,11 @@ METHODOLOGY = (
     "prefix identity without hash evidence takes a 20% suffix haircut; prompt-bloat "
     "savings assume only half the excess is removable; model-downgrade savings are "
     "computed at the suggested model's published rates and model suitability "
-    "requires your own quality evaluation. Spend estimates are FLOORS: provider "
+    "requires your own quality evaluation; savings on prompt tokens are priced as "
+    "the tokens were actually billed (cache reads at cache-read rates, never the "
+    "full input rate). Waste classes can overlap on the same calls, so the "
+    "headline savings total is capped at your observed monthly spend; per-finding "
+    "figures are independent estimates. Spend estimates are FLOORS: provider "
     "long-context surcharges and regional data-residency multipliers are not "
     "modeled in v1. Evidence rows carry token counts and metadata only — never "
     "prompt or completion text."
@@ -65,6 +69,11 @@ class ReportModel:
     methodology: str = METHODOLOGY
     data_handling: str = DATA_HANDLING
     generated_at: str | None = field(default=None)  # excluded from determinism
+    # Presentation-only cap for HTML/PDF renderers (UAT-1 dogfood fix, D11):
+    # an unbounded findings list let WeasyPrint lay out a ~30k-card document
+    # (18GB RSS). JSON always carries EVERY finding; web/PDF show the top N by
+    # impact plus an explicit "M more in report.json" line — never silent.
+    render_cap: int = 50
 
     @classmethod
     def build(
@@ -79,7 +88,10 @@ class ReportModel:
         days = observed_days(priced)
         total = total_spend(priced)
         monthly_spend = total * monthly_factor(days)
-        monthly_savings = sum(f.monthly_cost_impact_usd for f in findings)
+        # Waste classes can overlap on the same calls; an uncapped sum produced a
+        # 228% savings claim and a negative optimized projection on real agent
+        # traffic (UAT-1 dogfood fix, D11). Capped and disclosed in METHODOLOGY.
+        monthly_savings = min(sum(f.monthly_cost_impact_usd for f in findings), monthly_spend)
         priced_rows = priced.dropna(subset=["cost_usd"])
         by_model: list[dict[str, object]] = [
             {

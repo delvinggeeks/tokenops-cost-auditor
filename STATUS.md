@@ -3,6 +3,31 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D11 UAT-1 DOGFOOD FIXES — first real-data run found 4 defects, all fixed (sign-off still OPEN)
+
+Branch `d11-uat-fixes`. Founder ran the harness on real Claude Code logs
+(1.6GB transcripts → 59.6MB counts-only export, 158k rows / 13 sessions /
+36 days / $24.2k observed). FIRST RUN: killed after 25+ min at 18.4GB RSS.
+Defects found+fixed, each with regression pins: (1) D4 no-hash fingerprint
+was prompt_tokens-only → agent sessions read as retry storms (3,744
+findings/20k rows); now (prompt,completion) AND cache-active rows excluded
+(session continuations, not blind retries). (2) Report rendering unbounded →
+WeasyPrint laid out ~30k finding cards (the 18GB); render_cap=50 top-by-impact
+in web/PDF with explicit "top N of M" note, JSON always complete. (3) THE BIG
+ONE: D3/D6 priced prompt-token savings at FLAT INPUT RATE — on cache-heavy
+agent traffic (~10× inflation) the report claimed $46,020/mo savings on
+$20,172/mo spend (228%, negative optimized projection). New shared
+effective_prompt_rate(): tokens priced AS BILLED (cache reads at cache_read
+rate); uncached rows reduce to input rate exactly → D3/D6 goldens UNCHANGED
+(0.50/0.096), spreadsheet blend in golden notes. (4) headline savings now
+capped at monthly spend, disclosed in METHODOLOGY; docs-site D3/D6 formulas
+updated to match code. FINAL DOGFOOD RUN: 13s end-to-end, $5,289/mo savings
+(26.2% of $20,200/mo), 965 findings (109 D3 + 856 D6), top D3 $173/mo,
+<synthetic> correctly unpriced, PDF 239KB. Suite 189 passed + 1 skip; mypy/
+ruff/strict-docs clean. OPEN QUESTION for founder review: 856 D6 findings =
+one per run — consider aggregating per session/tag (product call). UAT-1
+sign-off remains FOUNDER-ONLY; review artifacts in uat1/ (gitignored).
+
 ## D11-12 PREP — perf PASS + authorized items done (UAT sign-off gate OPEN)
 
 Branch `d11-12-prep`, merged to main WITHOUT milestone tag per

@@ -38,13 +38,19 @@
   </div>
 </section>
 
+{# Presentation cap (D11): findings are ranked, so web/PDF show the top
+   render_cap by impact; report.json always carries the complete list. #}
+{% set shown_findings = report.findings[:report.render_cap] %}
 <section class="section waterfall">
   <h2>Savings waterfall — findings ranked by monthly impact</h2>
   {% set max_impact = report.findings|map(attribute="monthly_cost_impact_usd")|max if report.findings else 0 %}
+  {% if report.findings|length > shown_findings|length %}
+  <p class="muted">Showing the top {{ shown_findings|length }} of {{ report.findings|length }} findings by monthly impact; the complete list is in <code>report.json</code>.</p>
+  {% endif %}
   <table class="bars" aria-label="Savings by finding (USD per month)">
     <thead><tr><th>Finding</th><th>Monthly impact (USD)</th></tr></thead>
     <tbody>
-    {% for f in report.findings %}
+    {% for f in shown_findings %}
       <tr>
         <td class="bar-label">#{{ loop.index }} · {{ f.id }} · {{ f.detector.replace("_", " ") }}</td>
         <td class="bar-cell">
@@ -97,7 +103,10 @@
 
 <section class="section findings">
   <h2>Findings in detail</h2>
-  {% for f in report.findings %}
+  {% if report.findings|length > shown_findings|length %}
+  <p class="muted">Top {{ shown_findings|length }} of {{ report.findings|length }} findings shown; every finding is in <code>report.json</code>.</p>
+  {% endif %}
+  {% for f in shown_findings %}
   <article class="finding sev-{{ f.severity }}">
     <div class="finding-head">
       <span class="rank muted">#{{ loop.index }} by impact</span>
