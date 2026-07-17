@@ -8,23 +8,32 @@ root (infrastructure endpoint, not part of the product API; docs/03 §5).
 import shutil
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from tokenops_cost_auditor.api.routes_upload import router as audits_router
+from tokenops_cost_auditor.api.routes_webhooks import router as webhooks_router
 from tokenops_cost_auditor.config import Settings, get_settings
 from tokenops_cost_auditor.obs import errors as obs_errors
 from tokenops_cost_auditor.obs.logging import configure_logging, request_id_middleware
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.repo import make_engine, make_session_factory
 from tokenops_cost_auditor.services.mail.base import LogMailAdapter
+from tokenops_cost_auditor.services.mail.smtp import SmtpMailAdapter
+from tokenops_cost_auditor.services.payments.razorpay_link import RazorpayLinkAdapter
+from tokenops_cost_auditor.services.payments.stripe_link import StripeLinkAdapter
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.runner import AuditRunner
+from tokenops_cost_auditor.web.routes_admin import router as admin_router
+from tokenops_cost_auditor.web.routes_auth import router as auth_router
+from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
 
 log = structlog.get_logger("tokenops_cost_auditor")
@@ -70,7 +79,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = make_engine(settings.database_url)
     app.state.session_factory = make_session_factory(app.state.engine)
     app.state.pricing_table = PricingTable.load()
-    app.state.mail = LogMailAdapter()
+    # FR-20: SMTP adapter is env-gated; log adapter otherwise (dev/test)
+    app.state.mail = (
+        SmtpMailAdapter(
+            settings.smtp_host,
+            settings.smtp_port,
+            settings.smtp_user,
+            settings.smtp_password,
+            settings.smtp_from,
+            settings.app_base_url,
+        )
+        if settings.smtp_host
+        else LogMailAdapter()
+    )
+    app.state.razorpay = RazorpayLinkAdapter(
+        settings.razorpay_payment_link_url, settings.razorpay_webhook_secret
+    )
+    app.state.stripe = StripeLinkAdapter(
+        settings.stripe_payment_link_url, settings.stripe_webhook_secret
+    )
+    app.state.jinja = Environment(
+        loader=FileSystemLoader(Path(__file__).parent / "web" / "templates"),
+        autoescape=select_autoescape(["html"]),
+    )
     app.state.runner = AuditRunner(
         settings=settings,
         table=app.state.pricing_table,
@@ -80,7 +111,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.limiter = limiter
     app.middleware("http")(request_id_middleware)
     app.include_router(audits_router)  # FR-25: /api/v1 prefix set on the router
+    app.include_router(webhooks_router)  # /api/v1/webhooks/* (FR-18/FR-27)
     app.include_router(report_router)  # web report page (FR-15), not under /api
+    app.include_router(auth_router)  # magic-link auth (FR-17)
+    app.include_router(pages_router)  # landing/upload/legal (FR-23)
+    app.include_router(admin_router)  # admin panel (FR-19)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:

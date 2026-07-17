@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{# Landing (FR-23; PRD §4 copy; R-ICP agent-fleet-first; stats per docs/09 §6 policy). #}
+{% block content %}
+<h1>Your agent fleet is burning tokens you can't see.</h1>
+<p class="muted" style="font-size:1.1rem">
+  Claude Code, Codex, and your production LLM features leave a paper trail — their logs.
+  Upload them and get back a report showing exactly where your API spend is wasted
+  and how to fix it. No SDK, no proxy, no integration.
+</p>
+
+<p><a class="cta" href="/upload">Upload logs — get your audit</a></p>
+
+<div class="policy">
+  Your data: “analyzed then deleted; nothing retained beyond 7 days; never used for training.”
+</div>
+
+<div class="panel">
+  <strong>What you get</strong>
+  <ul class="checks">
+    <li>A dollar-ranked list of waste findings — missing prompt caching, retry storms,
+        oversized models, prompt bloat, unbounded output caps, and chatty agent loops.</li>
+    <li>Every finding backed by evidence rows (token counts, never your prompt text)
+        and a concrete fix.</li>
+    <li>A client-ready PDF and a private web report, delivered from a deterministic
+        rules engine — no AI guesses anywhere in the math.</li>
+  </ul>
+</div>
+
+<div class="panel">
+  <strong>Why now</strong>
+  <p>79% of enterprises overran their AI budgets last year (DoiT/Sapio Research, 2026),
+     and 98% of FinOps teams now manage AI spend, up from 31% two years ago
+     (State of FinOps, 2026). Dashboards need integration and an operator.
+     Auto-routers pick a model — we find the other five kinds of waste, and prove
+     it in dollars.</p>
+</div>
+
+<div class="panel">
+  <strong>What we never do</strong>
+  <ul class="checks">
+    <li>No SDK to install, no proxy in your request path, no gateway migration.</li>
+    <li>No prompt or completion text is ever stored — the engine keeps token counts only.</li>
+    <li>No AI reads your logs: the analysis is deterministic rules, so it cannot hallucinate.</li>
+  </ul>
+</div>
+{% endblock %}

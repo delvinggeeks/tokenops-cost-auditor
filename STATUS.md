@@ -3,6 +3,32 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D8-D9 — auth, landing, legal, payments, admin complete (all green; G5 next)
+
+Branch `d8-d9-auth-payments`. D8: web/auth.py (magic tokens 15-min + sessions;
+SINGLE-USE via users.last_login_at — any earlier link dies on login, no
+consumed-token table), web/routes_auth.py (request/verify/logout; enumeration-
+safe response; 5/min limit), session cookie HttpOnly/Secure/SameSite=Lax
+(TTL Q11); api current_user now cookie-FIRST with X-User-Email as NON-PROD shim;
+templates base/landing/upload + legal/{terms,privacy,dpa} (FR-23 verbatim on
+landing+privacy+footer; ONE primary CTA; R-ICP agent-fleet headline; approved
+79%/98% stats only; auto-router differentiation line); mail/smtp.py env-gated
+(STARTTLS; APP_BASE_URL added to config for absolute links). NFR-11 BUG FOUND+
+FIXED: naive sqlite datetimes interpreted as local time in epoch math — now
+normalized to UTC by contract. D9: payments/{base,razorpay_link,stripe_link}
+(stdlib HMAC only; FR-27 razorpay tolerance via payload created_at — documented,
+signature carries no timestamp; stripe via t= param), api/routes_webhooks
+(/api/v1/webhooks/*; order: signature→tolerance→append-only webhook_events
+dedup→credit), FR-18 ENFORCED: one paid credit consumed per audit atomically,
+402 + payment links otherwise (Q8 comp = provider comp/amount 0);
+web/routes_admin (X-Admin-Token constant-time, 404 when unset, IP-logged actor,
+list/rerun/purge/mark-paid, all audit-logged). Migration 002 additive (payments,
+webhook_events, users.last_login_at). Architect G4 note DONE: repo-pattern
+helpers (create_audit/get_user_audit) — routes no longer touch ORM directly.
+Tests: T-AUTH-01..04, T-WEB-01, T-MAIL-01, T-PAY-01..07 (independent HMAC
+fixtures per R-PAY), T-ADM-01..04; existing API tests updated for credit
+enforcement. Suite green; coverage 94.4%/100%/100%.
+
 ## D6-D7 — G4 SWEEP COMPLETE (architect PASS-WITH-NOTES + UML, vv PASS, ux PASS-WITH-NOTES)
 
 architect: placement per LLD §1 clean; layering verified (ReportModel sole money

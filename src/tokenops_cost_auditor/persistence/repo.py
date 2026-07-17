@@ -42,6 +42,25 @@ def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | N
     return session.get(Audit, row.audit_id)
 
 
+def create_audit(session: Session, user_id: str) -> Audit:
+    """Repo-pattern creation (G4 architect note): routes never touch ORM directly."""
+    audit = Audit(user_id=user_id, status="queued")
+    session.add(audit)
+    session.flush()
+    return audit
+
+
+def get_user_audit(session: Session, audit_id: str, email: str) -> Audit | None:
+    """Audit visible only to its owner (404-equivalence for others)."""
+    audit = session.get(Audit, audit_id)
+    if audit is None:
+        return None
+    owner = session.get(User, audit.user_id)
+    if owner is None or owner.email != email.lower():
+        return None
+    return audit
+
+
 def processing_count(session: Session) -> int:
     return int(
         session.scalar(select(func.count()).select_from(Audit).where(Audit.status == "processing"))

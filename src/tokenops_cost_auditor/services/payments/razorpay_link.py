@@ -1,0 +1,63 @@
+"""Razorpay adapter (FR-18/FR-27): env-configured payment link + webhook
+verification with stdlib HMAC only (PLAN §0.2 PAYMENT-SDKS — no SDK).
+
+Signature: X-Razorpay-Signature = HMAC-SHA256(raw_body, webhook_secret), hex.
+FR-27 timestamp tolerance: Razorpay's signature carries no timestamp, so the
+event payload's created_at is checked against now +/- 300s (documented choice).
+Accepted event: payment_link.paid with notes.email identifying the purchaser.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+from dataclasses import dataclass
+
+TOLERANCE_S = 300  # FR-27
+
+
+@dataclass(frozen=True)
+class WebhookPayment:
+    event_id: str
+    email: str
+    amount: float  # major units
+    currency: str
+    ref: str
+
+
+class RazorpayLinkAdapter:
+    provider = "razorpay"
+
+    def __init__(self, payment_link_url: str, webhook_secret: str) -> None:
+        self._link = payment_link_url
+        self._secret = webhook_secret
+
+    def payment_link(self) -> str | None:
+        return self._link or None
+
+    def verify_signature(self, body: bytes, signature: str) -> bool:
+        if not self._secret:
+            return False
+        expected = hmac.new(self._secret.encode(), body, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, signature or "")
+
+    def parse_event(self, body: bytes, now_epoch: int) -> WebhookPayment | None:
+        """None = valid signature but not a payment we act on (or stale, FR-27)."""
+        data = json.loads(body)
+        if data.get("event") != "payment_link.paid":
+            return None
+        created_at = int(data.get("created_at") or 0)
+        if abs(now_epoch - created_at) > TOLERANCE_S:
+            return None  # FR-27: stale event
+        entity = data["payload"]["payment"]["entity"]
+        email = str(entity.get("notes", {}).get("email", "")).lower()
+        if not email:
+            return None
+        return WebhookPayment(
+            event_id=str(data.get("event_id") or entity["id"]),
+            email=email,
+            amount=int(entity["amount"]) / 100.0,  # paise -> INR
+            currency=str(entity.get("currency", "INR")),
+            ref=str(entity["id"]),
+        )

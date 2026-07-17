@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}DPA-lite · TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<h1>Data Processing Addendum (one-pager)</h1>
+<p class="muted">Effective 2026-07-17 · incorporated into the Terms for business customers</p>
+<div class="panel">
+<p><strong>Roles.</strong> You are the controller of the uploaded logs; we are the
+processor, acting only on your documented instruction: produce the audit report.</p>
+<p><strong>Scope of data.</strong> LLM API usage logs, which may contain prompt text.
+Processing is limited to parsing, token accounting, deterministic waste analysis, and
+report rendering.</p>
+<p><strong>Retention.</strong> Raw uploads: purged 7 days after report generation
+(automated, audit-logged). Derived aggregates and reports: retained for your access;
+deleted on request. No prompt/completion text persists beyond the raw file lifetime.</p>
+<p><strong>Subprocessors.</strong> Hosting provider (server + storage) and payment
+providers (Razorpay/Stripe — payment data only). No analytics or AI subprocessors
+touch your logs.</p>
+<p><strong>Security.</strong> TLS in transit, encrypted disk at rest, least-privilege
+access, append-only audit log of privileged actions, automated purge.</p>
+<p><strong>Incidents.</strong> We notify you without undue delay after becoming aware
+of a personal-data breach affecting your uploads.</p>
+<p><strong>Assistance & deletion.</strong> We support access/deletion requests and
+delete or return data at contract end. On-request purge is self-serve.</p>
+</div>
+{% endblock %}

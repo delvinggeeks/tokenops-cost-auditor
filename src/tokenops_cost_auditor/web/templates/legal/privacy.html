@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy · TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<h1>Privacy Policy</h1>
+<p class="muted">Effective 2026-07-17</p>
+<div class="policy">Your uploaded logs are “analyzed then deleted; nothing retained
+beyond 7 days; never used for training.”</div>
+<div class="panel">
+<p><strong>What we collect.</strong> Your email address (for sign-in links and report
+delivery), the log file you upload, payment references from our payment providers,
+and standard server logs (request IDs, IP addresses for security and rate limiting).</p>
+<p><strong>What happens to your logs.</strong> Uploads are stored encrypted at rest
+and processed by a deterministic rules engine on our own server — no AI model and no
+third party ever reads them. Raw uploads are automatically purged 7 days after your
+report is generated; every purge is written to an append-only audit log. What remains:
+token counts, per-day/per-model aggregates, your findings, and your report.</p>
+<p><strong>What we never store.</strong> Prompt or completion text is never written to
+our database — the engine keeps token counts and metadata only, and this is enforced
+by automated tests.</p>
+<p><strong>Sharing.</strong> No selling, no sharing with third parties, no training on
+your data. Payment processing happens at Razorpay/Stripe; they see payment details,
+never your logs.</p>
+<p><strong>Your controls.</strong> Ask us to purge your uploads at any time before the
+automatic purge; ask for deletion of your account and reports whenever you like.</p>
+<p><strong>Transport & storage.</strong> TLS in transit; encrypted disk at rest;
+secrets managed outside the codebase.</p>
+</div>
+{% endblock %}
