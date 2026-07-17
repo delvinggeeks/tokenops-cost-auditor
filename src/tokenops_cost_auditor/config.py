@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     )
     upload_dir: Path = Path("uploads")
     report_dir: Path = Path("reports")
+    backup_dir: Path = Path("backups")  # digest freshness check (runbook §3); dumps land here
     max_upload_mb: int = 200  # FR-01
     max_concurrent_audits: int = 2  # NFR-13 (R-API): admission cap, D6 consumer
     purge_after_days: int = 7  # FR-21
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
     app_base_url: str = (
         ""  # absolute-link prefix for emails (FR-20), e.g. https://audit.example.com
     )
+    digest_to: str = ""  # founder address for the daily ops digest; empty = stdout only
 
     # Observability (NFR-06, env-gated)
     sentry_dsn: str = ""

@@ -3,6 +3,44 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D10 — G6 SWEEP COMPLETE (ops-engineer PASS-WITH-NOTES, vv PASS-WITH-NOTES)
+
+G6 verdicts. ops-engineer: PASS-WITH-NOTES — container_name/ofelia targets match,
+mounts correct, compose valid, no postgres ports, FR-29 status-file paths agree,
+Dockerfile chown covers scripts/. Notes FIXED same-day: runbook §4 reworded
+(tar snapshot, not rsync — postgres image ships none), digest disk check now
+samples uploads AND backups filesystems (deduped). vv: PASS-WITH-NOTES —
+171 passed + 1 CI skip reproduced; coverage 93.7%/100%/100% (aggregate gate);
+T-LIF value-asserting incl. due-vs-not-due discrimination; T-OPS-04 byte-identical
+never-write assertion confirmed; no money-math files touched. Notes: stale fixture
+comment FIXED; purge.py main() CLI lines uncovered (78.4% file-level, acceptable —
+CLI exercised by ops drills; revisit only if per-file gates tighten). Restore
+drill evidence accepted (runbook §4 log). Merged to main; tag d10.
+
+Branch `d10-lifecycle-ops`. R-TOOLCHAIN recorded first (TE-11 in docs/10 §2 +
+CLAUDE.md verbatim copy + all six charters). lifecycle/purge.py (FR-21): due =
+report_ready_at + PURGE_AFTER_DAYS, created_at fallback for failed/never-rendered
+audits (decision: FR-23 "nothing retained beyond 7 days" must hold on failure
+paths); removes upload dir only, keeps reports+aggregates; audit_log actor
+system@purge {"mode":"scheduled"}; module CLI for ofelia. scripts/backup.sh
+(NFR-08): runs INSIDE postgres container (ofelia job-exec), pg_dump -Fc
+write-then-rename (no partials in freshness check), 14d rotation, reports
+snapshot (rsync-or-tar fallback), env-gated rclone offsite. ofelia.ini jobs
+wired: purge 02:00, backup 02:30, digest 03:00 UTC; compose pins
+container_name for both job targets, new backups volume (rw postgres, ro app),
+scripts+reports mounted ro into postgres; Dockerfile now COPYs scripts/.
+scripts/daily_digest.py (runbook §3): audits/failures/revenue/purges 24h +
+ALERTS (backup>26h or absent, disk>80%, pricing age NFR-15, refresh failures
+FR-29, failed audits); DIGEST_TO+BACKUP_DIR added to config+.env.example;
+SmtpMailAdapter.send_digest. scripts/pricing_refresh.py (FR-29): read-only —
+parses # source_url comments, heuristic candidate extraction, diff output
+(new ids / VERIFY-BY-HAND mismatches / unreachable); NEVER writes prices.yaml;
+status JSON to <report_dir>/.ops/pricing_refresh.json consumed by digest.
+Tests: T-LIF-01..03 (5), T-OPS-04 + digest (6); suite 171 passed + 1 CI skip;
+mypy/ruff clean. RESTORE DRILL T-OPS-01/02 EXECUTED with real postgres:17
+containers — logged in runbook §4 (88s, PASS, identical row counts, new smoke
+audit on restored db). Traceability rows for FR-21/29, NFR-08/15 pre-existed.
+
 ## D8-D9 — G5 SWEEP COMPLETE (ux PASS-WITH-NOTES, cold FAIL→fixed→PASS-WITH-NOTES, spec-guard PASS-WITH-NOTES)
 
 G5 verdicts. ux-reviewer: PASS-WITH-NOTES — notes fixed same-day (jargon glossed,

@@ -41,11 +41,25 @@ Alert conditions: healthz down 2 checks; any audit status=failed; disk
 
 Backup: scripts/backup.sh — pg_dump -Fc → /backups/tokenops_%F.dump,
 rotate 14 days, rclone copy to object storage (B2/R2 free tier).
-Reports/ directory rsynced same job. Uploads/ NOT backed up (they purge —
-data-policy consistency).
+Reports/ snapshotted same job as reports_%F.tar.gz (the postgres image has
+no rsync; the script uses rsync only if the base image ever gains it).
+Uploads/ NOT backed up (they purge — data-policy consistency).
 Restore drill (monthly, logged in this file): restore latest dump to
 staging postgres, run smoke audit, record time + result below.
 Restore log: (append entries here)
+
+- 2026-07-17 (D10 exit drill, T-OPS-01/02) — 07:59:14Z→08:00:42Z UTC (88s
+  total). Primary postgres:17 container: alembic 001+002 applied, smoke audit
+  on F1 fixture (openai_small.jsonl) ran to done ($3.233777785, PDF 55KB).
+  scripts/backup.sh executed INSIDE the container as ofelia would:
+  tokenops_2026-07-17.dump (28K, pg_dump -Fc) + reports_2026-07-17.tar.gz
+  (tar fallback path exercised — no rsync in postgres image). pg_restore
+  --no-owner into a fresh staging postgres:17: row counts identical
+  (audits=1, findings=8, audit_log=2, users=1) and a NEW smoke audit against
+  the RESTORED db completed status=done with identical spend (deterministic
+  engine). Result: PASS. Note: postgres containers accept connections during
+  initdb's temp-server phase — wait for two pg_isready checks 2s apart
+  before restoring.
 
 ## 5. Security ops
 

@@ -21,6 +21,7 @@ def settings(tmp_path: Path) -> Settings:
         database_url=f"sqlite:///{tmp_path / 'test.db'}",
         upload_dir=tmp_path / "uploads",
         report_dir=tmp_path / "reports",
+        backup_dir=tmp_path / "backups",
         _env_file=None,
     )
 

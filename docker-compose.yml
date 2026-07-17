@@ -12,15 +12,18 @@ x-logging: &logging
 services:
   app:
     build: .
+    container_name: tokenops-cost-auditor-app  # pinned: ofelia job-exec target
     restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://tokenops_cost_auditor:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/tokenops_cost_auditor
       UPLOAD_DIR: /data/uploads
       REPORT_DIR: /data/reports
+      BACKUP_DIR: /backups
     volumes:
       - uploads:/data/uploads
       - reports:/data/reports
+      - backups:/backups:ro # digest reads dump age only (runbook §3)
     expose:
       - "8000"
     depends_on:
@@ -36,6 +39,7 @@ services:
 
   postgres:
     image: postgres:17
+    container_name: tokenops-cost-auditor-postgres # pinned: ofelia job-exec target
     restart: unless-stopped
     environment:
       POSTGRES_USER: tokenops_cost_auditor
@@ -43,6 +47,9 @@ services:
       POSTGRES_DB: tokenops_cost_auditor
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - backups:/backups # backup.sh writes dumps + report snapshots here
+      - ./scripts:/scripts:ro # backup.sh (runbook §4)
+      - reports:/reports:ro # same-job reports snapshot (runbook §4)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tokenops_cost_auditor -d tokenops_cost_auditor"]
       interval: 10s
@@ -84,5 +91,6 @@ volumes:
   pgdata:
   uploads:
   reports:
+  backups:
   caddy_data:
   caddy_config:
