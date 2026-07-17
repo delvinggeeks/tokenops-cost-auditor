@@ -3,7 +3,19 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D10 — lifecycle + ops complete (all green; G6 next)
+## D10 — G6 SWEEP COMPLETE (ops-engineer PASS-WITH-NOTES, vv PASS-WITH-NOTES)
+
+G6 verdicts. ops-engineer: PASS-WITH-NOTES — container_name/ofelia targets match,
+mounts correct, compose valid, no postgres ports, FR-29 status-file paths agree,
+Dockerfile chown covers scripts/. Notes FIXED same-day: runbook §4 reworded
+(tar snapshot, not rsync — postgres image ships none), digest disk check now
+samples uploads AND backups filesystems (deduped). vv: PASS-WITH-NOTES —
+171 passed + 1 CI skip reproduced; coverage 93.7%/100%/100% (aggregate gate);
+T-LIF value-asserting incl. due-vs-not-due discrimination; T-OPS-04 byte-identical
+never-write assertion confirmed; no money-math files touched. Notes: stale fixture
+comment FIXED; purge.py main() CLI lines uncovered (78.4% file-level, acceptable —
+CLI exercised by ops drills; revisit only if per-file gates tighten). Restore
+drill evidence accepted (runbook §4 log). Merged to main; tag d10.
 
 Branch `d10-lifecycle-ops`. R-TOOLCHAIN recorded first (TE-11 in docs/10 §2 +
 CLAUDE.md verbatim copy + all six charters). lifecycle/purge.py (FR-21): due =
