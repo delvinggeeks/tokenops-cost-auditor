@@ -1,0 +1,66 @@
+/* Claude-docs-like palette (DOCS-PLAN §1): warm neutral, single clay accent,
+   local system font stack — no external fonts (no CDNs). */
+
+:root {
+  --md-primary-fg-color: #c96442;
+  --md-accent-fg-color: #c96442;
+  --md-typeset-a-color: #c96442;
+  --tokenops-font: "IBM Plex Sans", "Inter", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
+  --tokenops-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "SF Mono",
+    Menlo, Consolas, monospace;
+}
+
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #faf9f5;
+  --md-default-fg-color: #1a1a17;
+  --md-default-fg-color--light: #4a4a44;
+  --md-code-bg-color: #f1efe8;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1f1e1b;
+  --md-code-bg-color: #2a2926;
+  --md-typeset-a-color: #e08a68;
+  --md-accent-fg-color: #e08a68;
+}
+
+body,
+.md-typeset {
+  font-family: var(--tokenops-font);
+}
+
+.md-typeset code,
+.md-typeset pre {
+  font-family: var(--tokenops-mono);
+}
+
+/* generous spacing, slightly narrowed content column */
+.md-grid {
+  max-width: 58rem;
+}
+
+.md-typeset {
+  line-height: 1.65;
+}
+
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h2 {
+  margin-top: 2.2em;
+}
+
+/* header/nav stay on the warm palette */
+.md-header,
+.md-tabs {
+  background-color: #1a1a17;
+}
+
+/* MEASUREMENT-PENDING blocks: visually distinct (DOCS-PLAN §5.3) */
+.md-typeset .admonition.warning > .admonition-title {
+  font-weight: 700;
+}
