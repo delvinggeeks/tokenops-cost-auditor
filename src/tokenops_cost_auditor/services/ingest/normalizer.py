@@ -119,6 +119,19 @@ def _coerce_float(value: object) -> float | None:
     return None
 
 
+def _cache_field(data: dict[str, object], key: str) -> tuple[int | None, str | None]:
+    """Cache fields: absent means 0, but a PRESENT-yet-unparseable/negative value is
+    a row error, never a silent 0 — zeroed cache counts corrupt cost math and the
+    D2 missing-cache detector (G2 cold-reviewer finding 1)."""
+    value = data.get(key)
+    if value is None:
+        return 0, None
+    coerced = _coerce_int(value)
+    if coerced is None or coerced < 0:
+        return None, f"invalid {key}"
+    return coerced, None
+
+
 def normalize(rows: Iterable[RawRow], prefix_hash_chars: int = 4096) -> NormalizeResult:
     records: list[dict[str, object]] = []
     errors: list[RowError] = []
@@ -136,6 +149,9 @@ def normalize(rows: Iterable[RawRow], prefix_hash_chars: int = 4096) -> Normaliz
         prompt_tokens = _coerce_int(data.get("prompt_tokens"))
         completion_tokens = _coerce_int(data.get("completion_tokens"))
 
+        cached, cached_err = _cache_field(data, "cached_tokens")
+        cache_write, cache_write_err = _cache_field(data, "cache_write_tokens")
+
         reason: str | None = None
         if ts is None:
             reason = "missing or invalid timestamp"
@@ -145,13 +161,13 @@ def normalize(rows: Iterable[RawRow], prefix_hash_chars: int = 4096) -> Normaliz
             reason = "missing or invalid prompt_tokens"
         elif completion_tokens is None or completion_tokens < 0:
             reason = "missing or invalid completion_tokens"
+        elif cached_err or cache_write_err:
+            reason = cached_err or cache_write_err
         if reason is not None:
             errors.append(RowError(row.line_no, reason))
             continue
         assert ts is not None and prompt_tokens is not None and completion_tokens is not None
-
-        cached = _coerce_int(data.get("cached_tokens")) or 0
-        cache_write = _coerce_int(data.get("cache_write_tokens")) or 0
+        assert cached is not None and cache_write is not None
 
         text = data.get("_text")
         computed_hash: str | None = None

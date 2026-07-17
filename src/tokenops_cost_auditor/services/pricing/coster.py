@@ -81,12 +81,17 @@ def total_spend(frame: pd.DataFrame) -> float:
 
 
 def reconcile(frame: pd.DataFrame, total: float | None = None) -> None:
-    """NFR-07: the reported total reconciles to the sum of parts within ±0.5%.
+    """NFR-07: an EXTERNALLY-TRACKED total reconciles with this frame within ±0.5%.
 
-    `total` is the externally-tracked figure (what the runner persists as
-    audits.total_spend_usd); defaults to total_spend(frame). Compares it against
-    by-model and by-day aggregate sums. NaN-cost rows (unpriced models) are
-    excluded from every aggregate identically. Raises ValueError on violation.
+    `total` is the figure persisted/reported elsewhere (audits.total_spend_usd,
+    report exec-summary); this check catches drift between that figure and the
+    frame's recomputed aggregates. It does NOT independently validate the
+    cost_usd column itself — by-model/by-day sums over the same column are
+    algebraically its sum (modulo float ordering, which the tolerance absorbs);
+    correctness of cost_usd is owned by the golden-file and property tests.
+    With total=None it only asserts internal float-summation stability.
+    NaN-cost rows (unpriced models) are excluded from every aggregate
+    identically. Raises ValueError on violation.
     """
     if total is None:
         total = total_spend(frame)

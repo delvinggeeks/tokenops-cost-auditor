@@ -72,10 +72,16 @@ class GenericCsvParser:
             known = set(REQUIRED) | set(OPTIONAL)
             for line_no, row in enumerate(reader, start=2):  # 1 = header
                 clean = {(k or "").strip().lower(): v for k, v in row.items()}
+                provider = str(clean.get("provider") or "").strip().lower()
+                if not provider:
+                    # required-column VALUE missing: a row error, not a silent
+                    # "generic" default (G2 cold-reviewer finding 3)
+                    yield RawRow(line_no, None, "missing value for required column 'provider'")
+                    continue
                 data: dict[str, object] = {
                     key: clean.get(key) for key in known if clean.get(key) not in (None, "")
                 }
-                data["provider"] = (str(clean.get("provider", "")) or "generic").lower()
+                data["provider"] = provider
                 data["_text"] = None  # text is not part of the CSV contract (FR-22)
                 data["_extra"] = {
                     k: v

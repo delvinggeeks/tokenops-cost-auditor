@@ -185,3 +185,102 @@ class TestTING09Below95Aborts:
 
 def test_load_is_package_api() -> None:
     assert ingest.load is load
+
+
+class TestG2ReviewFindings:
+    """Regression pins for G2 cold-reviewer findings 1-3 (silent-zero paths)."""
+
+    def test_invalid_cached_tokens_is_row_error_not_zero(self) -> None:
+        rows = [
+            RawRow(
+                1,
+                {
+                    "provider": "openai",
+                    "model": "m",
+                    "ts": 1750000000,
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1,
+                    "cached_tokens": "not-a-number",
+                },
+            ),
+            RawRow(
+                2,
+                {
+                    "provider": "openai",
+                    "model": "m",
+                    "ts": 1750000000,
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1,
+                    "cache_write_tokens": -5,
+                },
+            ),
+        ]
+        result = normalize(rows)
+        assert len(result.frame) == 0
+        assert [e.reason for e in result.row_errors] == [
+            "invalid cached_tokens",
+            "invalid cache_write_tokens",
+        ]
+
+    def test_absent_cache_fields_default_zero(self) -> None:
+        rows = [
+            RawRow(
+                1,
+                {
+                    "provider": "openai",
+                    "model": "m",
+                    "ts": 1750000000,
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1,
+                },
+            )
+        ]
+        result = normalize(rows)
+        assert result.frame.loc[0, "cached_tokens"] == 0
+        assert result.frame.loc[0, "cache_write_tokens"] == 0
+
+    def test_anthropic_float_usage_accepted_invalid_rejected(self, tmp_path: Path) -> None:
+        import json
+
+        good = {
+            "response": {
+                "id": "m1",
+                "type": "message",
+                "model": "claude-sonnet-5",
+                "usage": {
+                    "input_tokens": 100.0,
+                    "cache_read_input_tokens": 50.0,
+                    "cache_creation_input_tokens": 0,
+                    "output_tokens": 10,
+                },
+            },
+            "ts": "2026-06-01T00:00:00Z",
+        }
+        bad = {
+            "response": {
+                "id": "m2",
+                "type": "message",
+                "model": "claude-sonnet-5",
+                "usage": {"input_tokens": "many", "output_tokens": 10},
+            },
+            "ts": "2026-06-01T00:00:00Z",
+        }
+        p = tmp_path / "a.jsonl"
+        p.write_text(json.dumps(good) + "\n" + json.dumps(bad) + "\n")
+        frame, report = load(p)
+        assert len(frame) == 1  # integral floats accepted, garbage rejected
+        assert frame.loc[0, "prompt_tokens"] == 150  # 100 + 50 read + 0 write
+        assert frame.loc[0, "cached_tokens"] == 50
+        assert [e.reason for e in report.errors] == ["missing or invalid prompt_tokens"]
+
+    def test_csv_blank_provider_is_row_error(self, tmp_path: Path) -> None:
+        p = tmp_path / "b.csv"
+        p.write_text(
+            "ts,provider,model,prompt_tokens,completion_tokens\n"
+            "2026-06-01T00:00:00Z,,m1,100,10\n"
+            "2026-06-01T00:00:00Z,openai,m1,100,10\n"
+        )
+        frame, report = load(p)
+        assert len(frame) == 1
+        assert (frame["provider"] == "openai").all()
+        assert [e.reason for e in report.errors] == ["missing value for required column 'provider'"]

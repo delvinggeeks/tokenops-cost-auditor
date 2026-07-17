@@ -3,7 +3,20 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D3 — pricing (complete; AWAITING founder golden-CSV verification before G2)
+## D2-D3 — G2 SWEEP COMPLETE (vv-engineer PASS-WITH-NOTES, cold-reviewer PASS-WITH-NOTES)
+
+Founder verified golden CSV 2026-07-17 (log in pricing_golden_NOTES.md), then G2 ran.
+vv: suite green, coverage 94.1%→94.5% services / 100% coster.py, golden discipline
+satisfied; note was a stale STATUS header (fixed here). cold-reviewer: money math
+verified against all 12 golden rows; 4 non-blocking findings, ALL FIXED in main
+thread same-day with regression tests (TestG2ReviewFindings): (1) present-but-invalid
+cached/cache_write_tokens now a row error, never silent 0; (2) anthropic parser
+accepts integral-float usage counts, rejects garbage via prompt_tokens invalidation;
+(3) generic CSV blank provider value = row error, not silent "generic" default;
+(4) reconcile() docstring now states exactly what it does/doesn't validate.
+Merged to main; tags d2, d3.
+
+## D3 — pricing (complete; founder-verified)
 
 Branch `d2-d3-ingest-pricing`. File map: services/pricing/{table.py,coster.py,
 data/prices.yaml}, tests/test_pricing.py, tests/fixtures/pricing_golden.csv +

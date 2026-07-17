@@ -24,8 +24,16 @@ from pathlib import Path
 from tokenops_cost_auditor.services.ingest.base import RawRow, iter_jsonl
 
 
-def _int0(value: object) -> int:
-    return value if isinstance(value, int) else 0
+def _intlike(value: object) -> int | None:
+    """int or integral float -> int; anything else (incl. bool) -> None.
+    Never silently zeroes a malformed count (G2 cold-reviewer finding 2)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return None
 
 
 class AnthropicJsonlParser:
@@ -65,11 +73,15 @@ class AnthropicJsonlParser:
         request = obj.get("request") if isinstance(obj.get("request"), dict) else {}
         assert isinstance(request, dict)
 
-        base_input = usage.get("input_tokens")
-        cache_read = _int0(usage.get("cache_read_input_tokens"))
-        cache_write = _int0(usage.get("cache_creation_input_tokens"))
+        base_input = _intlike(usage.get("input_tokens"))
+        cache_read = _intlike(usage.get("cache_read_input_tokens", 0))
+        cache_write = _intlike(usage.get("cache_creation_input_tokens", 0))
+        # Any malformed component invalidates the total -> normalizer rejects the
+        # row ("missing or invalid prompt_tokens") instead of undercounting.
         prompt_total = (
-            base_input + cache_read + cache_write if isinstance(base_input, int) else None
+            base_input + cache_read + cache_write
+            if base_input is not None and cache_read is not None and cache_write is not None
+            else None
         )
 
         known = {
