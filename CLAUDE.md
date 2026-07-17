@@ -46,6 +46,14 @@
         carry-over context. Never carry a full milestone's transcript.
    TE-10 FAIL FAST. A FAIL verdict stops the milestone; fixes happen in
         the main thread; the gate re-runs on the NEW diff only.
+   TE-11 PINNED TOOLCHAIN ONLY. [amendment 2026-07-17, R-TOOLCHAIN] Any
+        gate check that executes, compiles, lints, or type-checks code
+        MUST run through the project toolchain (`uv run ...` against the
+        pinned interpreter), never the sandbox/system python. A finding
+        produced by any other interpreter is invalid by definition. When
+        a reviewer and the main thread disagree on a toolchain-dependent
+        fact, the pinned-toolchain reproduction is authoritative; the
+        resolution is recorded in STATUS.md.
 
    K-1 Any agent exceeding its 15-tool-call budget self-terminates with
        PARTIAL verdict.

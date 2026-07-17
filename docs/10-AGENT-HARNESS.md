@@ -55,6 +55,14 @@ TE-9 MAIN THREAD HYGIENE. /clear (or new session) at each milestone
      carry-over context. Never carry a full milestone's transcript.
 TE-10 FAIL FAST. A FAIL verdict stops the milestone; fixes happen in
      the main thread; the gate re-runs on the NEW diff only.
+TE-11 PINNED TOOLCHAIN ONLY. [amendment 2026-07-17, R-TOOLCHAIN] Any
+     gate check that executes, compiles, lints, or type-checks code
+     MUST run through the project toolchain (`uv run ...` against the
+     pinned interpreter), never the sandbox/system python. A finding
+     produced by any other interpreter is invalid by definition. When
+     a reviewer and the main thread disagree on a toolchain-dependent
+     fact, the pinned-toolchain reproduction is authoritative; the
+     resolution is recorded in STATUS.md.
 
 Expected cost profile: gate sweep (4 agents x Sonnet x diff-only)
 ~ 50-150K tokens per milestone; 14-day build total well under one of

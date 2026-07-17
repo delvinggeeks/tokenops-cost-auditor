@@ -22,3 +22,11 @@ Checks:
 
 Output: VERDICT: PASS | PASS-WITH-NOTES | FAIL, numbered findings with
 file:line, max 300 words. PARTIAL + questions if budget exhausted.
+
+TOOLCHAIN (TE-11, R-TOOLCHAIN 2026-07-17): any check that executes,
+compiles, lints, or type-checks code MUST run through the project
+toolchain — `uv run ...` against the pinned interpreter (Python 3.14;
+pyproject/.python-version). A finding produced by the sandbox/system
+python or any other interpreter is invalid by definition. On a
+toolchain-dependent disagreement with the main thread, the
+pinned-toolchain reproduction is authoritative.
