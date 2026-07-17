@@ -3,7 +3,22 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D6-D7 — runner + reports complete (all green; G4 sweep next)
+## D6-D7 — G4 SWEEP COMPLETE (architect PASS-WITH-NOTES + UML, vv PASS, ux PASS-WITH-NOTES)
+
+architect: placement per LLD §1 clean; layering verified (ReportModel sole money
+assembly; renderers serialize only); ADR-1/2/3/4/5 conform; two disclosed
+founder-authorized deviations accepted; docs/uml/{components,audit-seq}.mmd
+EMITTED from the D6-D7 implementation (no D7-vs-D6 boundary change). Notes:
+repo-pattern applied inconsistently in routes_upload (tighten at D8 refactor);
+bar-width percentages are presentational only. vv: 127 passed + 1 designed skip,
+coverage 94.5%/100%/100%, no money-math files touched, envelope/idempotency/
+queue/signer tests all value-asserting; nit (pandas import placement) fixed.
+ux: headline savings in first view, charts titled+labeled, page-breaks, fluid
+layout all PASS; notes FIXED same-day: "normalized" label replaced with plain
+"scaled to 30 days" wording, #N-by-impact rank badges added to waterfall and
+finding cards. Merged to main; tags d6, d7. D-DOCS unblocked per R-SEQ-D6D7.
+
+## D6-D7 — runner + reports complete
 
 Branch `d6-d7-runner-report`. D6 file map: persistence/{models,repo}.py + alembic
 migration 001 (six tables incl. idempotency_keys per FR-26; additive-only),
