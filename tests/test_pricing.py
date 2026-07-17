@@ -43,6 +43,8 @@ class TestTPRC01RateLookup:
         assert terra.cache_write == 3.125
         sol = TABLE.rate("openai", "gpt-5.6-sol", date(2026, 6, 15))
         assert sol.cache_write == 6.25
+        luna = TABLE.rate("openai", "gpt-5.6-luna", date(2026, 6, 15))
+        assert luna.cache_write == 1.25
 
     def test_openai_54_family_no_write_premium(self) -> None:
         rate = TABLE.rate("openai", "gpt-5.4-mini", date(2026, 6, 15))
