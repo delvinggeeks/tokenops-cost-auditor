@@ -265,6 +265,11 @@ money-adjacent: each published row requires a founder-verification tick,
 logged like golden files. (d) D14 launch assets cite ONLY ledger-verified
 numbers; the UAT-1 figures (26.2% waste, 13s on 158k calls, $5,289/mo est. on
 $20.2k/mo API-equivalent) usable WITH the equiv-spend framing.
+[SUPERSEDED 2026-07-18, UAT-D5: that figure set is DEAD everywhere — the
+exporter double-counted events. Citable set, founder-approved post
+machine-check: $8,757.75/mo API-equivalent, $2,846.62/mo est. waste, 32.5%,
+67,095 unique calls from 159,571 events (58% duplicates), same equiv-spend
+framing. Ledger row 1 verified 2026-07-17 (golden-notes verification log).]
 
 **R-SEQ-POST-SIGNOFF (founder, 2026-07-18).** UAT-1 sign-off OPEN (awaits the
 founder's completed review sheet + both docs/05 §5 exit-criteria checkboxes);

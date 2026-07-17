@@ -126,6 +126,15 @@ re-read signature 6 >= 5, "agent loop suspected"):
 
 ## Founder verification log
 
+- 2026-07-17 | Founder verification: ledger row 1 (post-UAT-D5) —
+  dedup independently reproduced (1,304 unique ids on the pre-fix
+  snapshot, consistent with 1,340 post-session); observed spend
+  independently re-priced from the verified rate card to within 2.5%
+  (conservative direction, 1-hr cache-write rates unmodeled in the
+  hand check); model mix and unpriced-exclusion confirmed.
+  Row 1 (1,340 calls · $432.27 observed · $1,966.27/mo est. waste ·
+  30.3%) is VERIFIED for publication. | Lokesh Prasanna Kumar S
+
 - 2026-07-17 | Founder verification: all 12 rows arithmetic-recomputed
   independently (PASS). Rates cross-checked against provider pricing
   coverage same-day: Anthropic rows G01-G07,G12 confirmed incl. Sonnet-5

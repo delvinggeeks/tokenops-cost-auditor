@@ -3,6 +3,24 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## LEDGER ROW 1 VERIFIED — LAUNCH THREAD UNBLOCKED (pending only D13 physical deploy)
+
+Founder verification PASSED on the regenerated row (verbatim log line
+appended to the golden-notes founder verification log): dedup independently
+reproduced; spend independently re-priced within 2.5% conservative; model
+mix + unpriced-exclusion confirmed. Ledger row 1 ticked "Lokesh Prasanna
+Kumar S" — R-SELF-AUDIT rule 3 SATISFIED. Corrected UAT-1 figures APPROVED
+for citation ($8,757.75/mo API-equiv, $2,846.62/mo est. waste, 32.5%,
+67,095 unique calls of 159,571 events) — machine-side check printed to
+founder: headline $2,846.62 == sum of 295 findings exactly (cap not
+engaged, sum < spend), export file itself carries 0 duplicate ids,
+row_count == unique_out 67,095. DEAD-FIGURE SWEEP: docs-site/CODE-TOUR/
+PLAYBOOK/CHANGELOG/docs = zero references; PLAN R-SELF-AUDIT d annotated
+SUPERSEDED (it had authorized the dead set); STATUS D11 history paragraph
+annotated. Docs page still MEASUREMENT-PENDING for the trendline (1 of 3
+verified rows). LAUNCH: unblocked pending only D13 physical deploy
+(VPS/domain/SMTP — founder infra), then D14.
+
 ## UAT-D5 — LEDGER ROW 1 REFUSED, EXPORTER DOUBLE-COUNTING FIXED, ROW REGENERATED (resubmitted)
 
 Founder-side verification REFUSED ledger row 1: exporter emitted one row per
@@ -119,7 +137,9 @@ effective_prompt_rate(): tokens priced AS BILLED (cache reads at cache_read
 rate); uncached rows reduce to input rate exactly → D3/D6 goldens UNCHANGED
 (0.50/0.096), spreadsheet blend in golden notes. (4) headline savings now
 capped at monthly spend, disclosed in METHODOLOGY; docs-site D3/D6 formulas
-updated to match code. FINAL DOGFOOD RUN: 13s end-to-end, $5,289/mo savings
+updated to match code. FINAL DOGFOOD RUN [figures SUPERSEDED by UAT-D5 —
+exporter double-counting; citable set is in the UAT-D5 paragraph above]:
+13s end-to-end, $5,289/mo savings
 (26.2% of $20,200/mo), 965 findings (109 D3 + 856 D6), top D3 $173/mo,
 <synthetic> correctly unpriced, PDF 239KB. Suite 189 passed + 1 skip; mypy/
 ruff/strict-docs clean. OPEN QUESTION for founder review: 856 D6 findings =
