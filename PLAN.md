@@ -150,6 +150,15 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**R-PLAT-DESIGN-EARLY (founder, 2026-07-18, VPS-wait instruction).** Platform
+design work brought forward while awaiting deploy infra: create the
+witaura-platform SKELETON repo (sibling directory, own git history) with the
+docs/11 §3 tree, per-package design READMEs, workspace pyproject stub, and
+the detailed WP-PLAT-0 migration design (module→package map, dependency
+rules, config seam options, acceptance procedure). ZERO v1 code moves; the
+v1 repo remains authoritative and unrestructured; WP-PLAT-0 migration TIMING
+UNCHANGED (week 3, post-D14, never before first customers).
+
 **R-DEPLOY-AUTOMATION (founder, 2026-07-18).** (1) WP-DEPLOY-1 (may land with
 D13 or immediately after): scripts/provision.sh + minimal Terraform module
 deploy/tf/ targeting Hetzner AND any generic Ubuntu host via provider
