@@ -25,6 +25,13 @@ The auditor accepts three formats. Pick the tab that matches your stack.
     carries model, timestamp, the four usage token counts, and the session id
     as a `tag` — which lets the report break waste down per agent session.
 
+    One framing note, stated on the report itself: Claude Code runs on a
+    subscription plan, not metered API billing, so for these audits "Figures
+    are API-equivalent token value; actual billing depends on your plan."
+    The waste patterns are real either way — the dollar figures tell you what
+    the same traffic would cost at API rates.
+    <!-- src: FR-30 R-EQUIV-SPEND verbatim -->
+
 === "OpenAI / Anthropic JSONL"
 
     Export per-request usage records as JSONL, one JSON object per line, with

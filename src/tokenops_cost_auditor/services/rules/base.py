@@ -29,6 +29,21 @@ class Detector(Protocol):
     def run(self, frame: pd.DataFrame, ctx: DetectorContext) -> list[Finding]: ...
 
 
+def split_on_gap(group: pd.DataFrame, gap_s: int) -> list[pd.DataFrame]:
+    """Session splitter (R-D6-AGG): time-ordered rows split where the gap to
+    the previous row exceeds gap_s. Shared by D6 and D4 so 'session' means the
+    same thing in both aggregations."""
+    ordered = group.sort_values("ts")
+    out: list[pd.DataFrame] = []
+    start = 0
+    times = ordered["ts"].tolist()
+    for i in range(1, len(times) + 1):
+        if i == len(times) or (times[i] - times[i - 1]).total_seconds() > gap_s:
+            out.append(ordered.iloc[start:i])
+            start = i
+    return out
+
+
 def ttl_window_s(settings: Settings, provider: str, model: str) -> int:
     """Founder correction C4: TTL windows per provider-family, never one global.
     Longest matching key wins (keys match provider name or a model-id prefix);

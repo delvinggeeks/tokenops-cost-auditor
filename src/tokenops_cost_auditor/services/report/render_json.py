@@ -33,6 +33,7 @@ def report_to_dict(report: ReportModel) -> dict[str, object]:
             "monthly_savings_usd": report.monthly_savings_usd,
             "monthly_optimized_usd": report.monthly_optimized_usd,
             "savings_pct": report.savings_pct,
+            "equiv_spend": report.equiv_spend,  # FR-30
         },
         "spend_by_model": list(report.spend_by_model),
         "spend_by_day": list(report.spend_by_day),
@@ -45,6 +46,9 @@ def report_to_dict(report: ReportModel) -> dict[str, object]:
                 "monthly_cost_impact_usd": f.monthly_cost_impact_usd,
                 "fix_text": f.fix_text,
                 "evidence": [dataclasses.asdict(e) for e in f.evidence],
+                # R-D6-AGG: per-run/per-cluster breakdown of aggregated findings
+                # (counts and timestamps only, FR-22); null for others
+                "detail": f.detail,
             }
             for f in report.findings
         ],

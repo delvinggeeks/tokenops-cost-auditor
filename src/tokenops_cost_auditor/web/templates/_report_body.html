@@ -9,6 +9,10 @@
     · {{ report.observed_days }} day{{ "s" if report.observed_days != 1 }} of traffic
     · {{ "{:,}".format(report.row_count) }} calls
   </div>
+  {% if report.equiv_spend %}
+  {# FR-30 verbatim (R-EQUIV-SPEND) — subscription-plan traffic, e.g. Claude Code #}
+  <div class="meta equiv-note">Figures are API-equivalent token value; actual billing depends on your plan.</div>
+  {% endif %}
 </header>
 
 <section class="exec-summary">

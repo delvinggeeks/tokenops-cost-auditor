@@ -178,3 +178,44 @@ class TestD11SavingsCap:
         assert report.monthly_optimized_usd >= 0.0
         assert report.savings_pct <= 100.0
         assert "capped at your observed monthly spend" in report.methodology
+
+
+class TestTREP09EquivSpend:
+    """FR-30 (R-EQUIV-SPEND): subscription-plan traffic gets the verbatim
+    API-equivalent framing in header + methodology; metered traffic does not."""
+
+    EQUIV = "Figures are API-equivalent token value; actual billing depends on your plan."
+
+    def test_claude_code_export_sets_flag_note_and_methodology(self, tmp_path: Path) -> None:
+        import json
+
+        export = tmp_path / "cc_export.jsonl"
+        lines = [
+            {
+                "ts": 1750000000 + i * 60,
+                "endpoint": "claude-code",  # exporter-stamped (FR-24)
+                "tag": "sess-1",
+                "response": {
+                    "id": f"msg_{i}",
+                    "type": "message",
+                    "model": "claude-sonnet-5",
+                    "usage": {"input_tokens": 1200, "output_tokens": 80},
+                },
+            }
+            for i in range(3)
+        ]
+        export.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
+        frame, _ = load(export)
+        priced, unpriced = apply(TABLE, frame)
+        ctx = DetectorContext(Settings(_env_file=None), TABLE, observed_days(priced))
+        report = ReportModel.build("equiv-test", priced, run_all(priced, ctx), unpriced, TABLE)
+        assert report.equiv_spend is True
+        assert self.EQUIV in report.methodology
+        html = render_report_html(report, template="report.html")
+        assert self.EQUIV in html  # header note (FR-30)
+
+    def test_metered_traffic_has_no_note(self, waste_report: ReportModel) -> None:
+        assert waste_report.equiv_spend is False
+        assert self.EQUIV not in waste_report.methodology
+        html = render_report_html(waste_report, template="report.html")
+        assert self.EQUIV not in html

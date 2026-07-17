@@ -52,10 +52,24 @@ class Finding:
     confidence: Confidence
     fix_text: str
     evidence: tuple[EvidenceRef, ...] = field(default=())
+    # R-D6-AGG: per-run/per-cluster breakdown of an aggregated finding, carried
+    # into report.json only (renderers show the aggregate). Counts and
+    # timestamps only — FR-22 applies here exactly as it does to evidence.
+    detail: dict[str, object] | None = None
 
     def __post_init__(self) -> None:
         if len(self.evidence) > MAX_EVIDENCE:
             raise ValueError(f"evidence exceeds {MAX_EVIDENCE} items (FR-13/FR-22)")
+
+
+def sample_evidence_across(
+    chunks: list[pd.DataFrame], note: str, limit: int = MAX_EVIDENCE
+) -> tuple[EvidenceRef, ...]:
+    """R-D6-AGG: evidence for an aggregated finding samples ACROSS its
+    constituent runs/clusters instead of exhausting the cap on the first one."""
+    per_chunk = max(1, limit // max(len(chunks), 1))
+    sampled = pd.concat([c.head(per_chunk) for c in chunks]).sort_values("ts").head(limit)
+    return make_evidence(sampled, note=note, limit=limit)
 
 
 def observed_days(frame: pd.DataFrame) -> int:

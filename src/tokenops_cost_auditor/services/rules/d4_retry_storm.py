@@ -14,8 +14,13 @@ completion_tokens) (= estimated; prompt-only collided massively on agent
 traffic). Within each identity group (time-sorted), a cluster collects calls whose ts is
 within D4_WINDOW_S of the CLUSTER START (anchor rule — deterministic). A cluster
 of >= D4_DUP_MIN near-identical calls is a storm: wasted = (n-1) x mean cost of
-the cluster's priced rows. One Finding per identity group (clusters aggregated);
-severity HIGH if any cluster >= 10 (LLD rule), else MED.
+the cluster's priced rows.
+
+Aggregation (R-D6-AGG, founder 2026-07-18 — identical to D6): ONE finding per
+SESSION (same tag, split at gaps > D6_SESSION_GAP_S), waste summed over every
+storm cluster in the session, cluster count in the finding text, evidence
+sampled across clusters (<=20), per-cluster breakdown in Finding.detail
+(report.json only). Severity HIGH if any cluster >= 10 (LLD rule), else MED.
 Monthly impact = observed waste x 30/observed_days (Q7).
 """
 
@@ -23,13 +28,13 @@ from __future__ import annotations
 
 import pandas as pd
 
-from tokenops_cost_auditor.services.rules.base import DetectorContext
+from tokenops_cost_auditor.services.rules.base import DetectorContext, split_on_gap
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     Finding,
     Severity,
-    make_evidence,
     monthly_factor,
+    sample_evidence_across,
 )
 
 HIGH_SEVERITY_CLUSTER = 10  # LLD §3: high severity if any window >= 10
@@ -66,39 +71,59 @@ class D4RetryStorm:
         )
         work["_hash_based"] = work["prefix_hash"].notna()
 
-        results: list[tuple[float, bool, int, list[pd.DataFrame], str, str]] = []
-        for (tag, model, _identity), group in work.groupby(
-            ["tag", "model", "_identity"], sort=True
-        ):
-            if len(group) < s.d4_dup_min:
-                continue
-            storm_clusters = [c for c in _clusters(group, s.d4_window_s) if len(c) >= s.d4_dup_min]
-            if not storm_clusters:
-                continue
-            wasted = 0.0
-            largest = 0
-            for cluster in storm_clusters:
-                costs = cluster["cost_usd"].dropna()
-                if len(costs) == 0:
-                    continue  # unpriced model: waste unknowable for this cluster
-                # priced rows only, for BOTH count and mean: unpriced rows in a
-                # mixed cluster contribute no imputed waste (conservative;
-                # G3 cold-reviewer f.2). Cluster QUALIFICATION still uses all rows.
-                wasted += (len(costs) - 1) * float(costs.mean())
-                largest = max(largest, len(cluster))
-            if wasted <= 0:
-                continue
-            hash_based = bool(group["_hash_based"].iloc[0])
-            results.append((wasted, hash_based, largest, storm_clusters, str(tag), str(model)))
+        # R-D6-AGG: one result per SESSION — waste summed over its storm clusters
+        results: list[
+            tuple[float, bool, int, list[pd.DataFrame], list[dict[str, object]], str]
+        ] = []
+        for tag, tag_group in work.groupby("tag", sort=True):
+            for session in split_on_gap(tag_group, s.d6_session_gap_s):
+                wasted = 0.0
+                largest = 0
+                all_hash_based = True
+                session_clusters: list[pd.DataFrame] = []
+                cluster_details: list[dict[str, object]] = []
+                for (model, _identity), group in session.groupby(["model", "_identity"], sort=True):
+                    if len(group) < s.d4_dup_min:
+                        continue
+                    for cluster in _clusters(group, s.d4_window_s):
+                        if len(cluster) < s.d4_dup_min:
+                            continue
+                        costs = cluster["cost_usd"].dropna()
+                        if len(costs) == 0:
+                            continue  # unpriced model: waste unknowable for this cluster
+                        # priced rows only, for BOTH count and mean: unpriced rows
+                        # in a mixed cluster contribute no imputed waste
+                        # (conservative; G3 cold-reviewer f.2). Cluster
+                        # QUALIFICATION still uses all rows.
+                        cluster_waste = (len(costs) - 1) * float(costs.mean())
+                        if cluster_waste <= 0:
+                            continue
+                        wasted += cluster_waste
+                        largest = max(largest, len(cluster))
+                        all_hash_based &= bool(cluster["_hash_based"].iloc[0])
+                        session_clusters.append(cluster.drop(columns=["_identity", "_hash_based"]))
+                        cluster_details.append(
+                            {
+                                "model": str(model),
+                                "start_ts": cluster["ts"].min().isoformat(),
+                                "calls": len(cluster),
+                                "observed_waste_usd": cluster_waste,
+                            }
+                        )
+                if wasted <= 0:
+                    continue
+                results.append(
+                    (wasted, all_hash_based, largest, session_clusters, cluster_details, str(tag))
+                )
 
         results.sort(key=lambda r: -r[0])
         factor = monthly_factor(ctx.observed_days)
         findings: list[Finding] = []
-        for i, (wasted, hash_based, largest, storm_clusters, tag, model) in enumerate(
+        for i, (wasted, hash_based, largest, session_clusters, cluster_details, tag) in enumerate(
             results, start=1
         ):
-            n_calls = sum(len(c) for c in storm_clusters)
-            evidence_rows = pd.concat(storm_clusters).drop(columns=["_identity", "_hash_based"])
+            n_calls = sum(len(c) for c in session_clusters)
+            models = sorted({str(d["model"]) for d in cluster_details})
             findings.append(
                 Finding(
                     id=f"D4-{i:03d}",
@@ -107,13 +132,16 @@ class D4RetryStorm:
                     monthly_cost_impact_usd=wasted * factor,
                     confidence=Confidence.CONSERVATIVE if hash_based else Confidence.ESTIMATED,
                     fix_text=(
-                        f"Near-identical calls repeated in bursts on {model} "
-                        f"(tag '{tag}': {len(storm_clusters)} burst(s), {n_calls} calls, "
-                        f"largest burst {largest}). Add retry backoff with jitter, "
-                        "deduplicate in-flight requests, and cache the first response "
-                        "for identical inputs within the burst window."
+                        f"Near-identical calls repeated in bursts on {', '.join(models)} "
+                        f"(tag '{tag}': {len(session_clusters)} burst(s) in one session, "
+                        f"{n_calls} calls, largest burst {largest}). Add retry backoff "
+                        "with jitter, deduplicate in-flight requests, and cache the "
+                        "first response for identical inputs within the burst window."
                     ),
-                    evidence=make_evidence(evidence_rows, note="near-identical call in burst"),
+                    evidence=sample_evidence_across(
+                        session_clusters, note="near-identical call in burst"
+                    ),
+                    detail={"clusters": cluster_details},
                 )
             )
         return findings
