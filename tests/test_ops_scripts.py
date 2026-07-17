@@ -72,6 +72,7 @@ class TestDailyDigest:
 
         assert "Audits (24h): 1" in body
         assert "Purges (24h): 0" in body
+        assert "Control-plane early-access signups (7d): 0" in body  # R-GTM-CONTROL
         assert "no backup dump found" in body  # empty backup dir -> NFR-08 alert
 
     def test_fresh_backup_clears_alert_and_refresh_failure_surfaces(

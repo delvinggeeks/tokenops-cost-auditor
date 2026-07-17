@@ -150,6 +150,44 @@ perf fixture validation. UAT-1 itself is founder-executed by definition
 readable by a non-founder CTO in <10 minutes) CANNOT be self-certified. The
 UAT-1/UAT-2 sign-off gate stays OPEN until the founder's dogfood report lands.
 
+**R-GTM-CONTROL (founder, 2026-07-18, batch 2 — copy revision on the existing
+D8 landing surface, not new scope).** Landing leads with the CONTROL narrative
+("take control of AI spend"); the audit is framed explicitly as step one of a
+prevention path and remains the ONLY purchasable product. A control-plane
+early-access CTA (email capture only; no product promises, no dates) with
+verbatim copy "AI spend control — APIs, agents, and AI seats." Signup counts
+are Phase-2 trigger evidence; weekly count surfaces in the daily digest.
+ux-reviewer re-checks only the changed copy blocks at the next scheduled
+gate; no dedicated sweep.
+
+**R-ENTERPRISE-SEAT (founder, 2026-07-18, batch 2).** The aggregate-mode audit
+backlog item gains a second validated demand signal (enterprise seat-tool
+governance: Copilot Enterprise credits/seats scenario) and is scoped in
+BACKLOG.md as WP-P2-AGG with three layers (aggregate audit / policy-threshold
+recommendations mapped to native enforcement levers / governance retainer).
+Promotion still requires founder PRD amendment at the day-45 gate.
+
+**R-DEPLOYMENT-CONTRACT (founder, 2026-07-18, batch 2 — governs ALL
+Phase-2/enterprise design; full text in BACKLOG.md).** (1) single deployable
+artifact placeable in any customer zone by their platform team; (2) zero
+required egress — offline license files, telemetry opt-in only, no phone-home;
+(3) no assumptions about customer DNS/proxy/internet/reachability beyond
+documented component links; (4) bring-your-own Postgres/TLS/identity/storage;
+(5) versioned offline install bundles for air-gapped delivery;
+(6) auditability (append-only logs, deterministic outputs, published
+methodology) maintained as enterprise requirements.
+
+**R-ENTERPRISE-READY + R-MARKETPLACE (founder, 2026-07-18, batch 2).**
+Recorded in the BACKLOG.md trigger register: Entra ID first for SSO
+(SAML/OIDC, SCIM after; X-03 stands until first team customer); Phase-2
+control-plane deployment requirements per R-DEPLOYMENT-CONTRACT;
+CLI-inside-perimeter as the standing data-residency lead answer at all tiers;
+cloud deployment ladder compose → Helm → marketplace listings with IaC
+templates; user-model principle (employees are DATA SOURCES, never platform
+users; reader seats ~5-50; scaling = data volume + policy-decision
+throughput, never concurrent logins). Explicitly NOT building now: SSO,
+marketplace listings, SOC2, questionnaire portal.
+
 **R-UAT1-FIXES-ACCEPTED (founder, 2026-07-18).** All four UAT-1 dogfood defect
 fixes accepted: D4 cache-active exclusion + completion-token fingerprint;
 top-50 bounded rendering with explicit note (JSON complete);

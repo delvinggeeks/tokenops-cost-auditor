@@ -94,6 +94,17 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
     ]
     lines.append(f"Purges (24h): {len(purges)}")
 
+    # R-GTM-CONTROL: weekly early-access signups = Phase-2 trigger evidence
+    week_ago = now - timedelta(days=7)
+    signups = [
+        e
+        for e in session.scalars(
+            select(AuditLogEntry).where(AuditLogEntry.action == "early_access.signup")
+        )
+        if _as_utc(e.ts) >= week_ago
+    ]
+    lines.append(f"Control-plane early-access signups (7d): {len(signups)}")
+
     # alerts
     alerts: list[str] = []
     backup_age = _last_backup_age_h(Path(settings.backup_dir), now)

@@ -210,3 +210,40 @@ class TestG5F2SameSecondReissue:
         assert client.get(first, follow_redirects=False).status_code == 303
         second = request_link(client, mail, "fast@example.com")  # same wall-clock second
         assert client.get(second, follow_redirects=False).status_code == 303
+
+
+class TestRGTMControlLanding:
+    """R-GTM-CONTROL (founder 2026-07-18): control narrative + early-access CTA."""
+
+    def test_control_narrative_leads_and_audit_is_step_one(self, client: TestClient) -> None:
+        html = client.get("/").text
+        assert "Take control of your AI spend." in html
+        assert "step one" in html  # audit framed as step one of a prevention path
+        assert html.count('class="cta"') == 1  # audit stays the ONLY primary CTA
+
+    def test_early_access_cta_verbatim_no_promises(self, client: TestClient) -> None:
+        html = client.get("/").text
+        assert "AI spend control — APIs, agents, and AI seats." in html  # verbatim
+        assert 'action="/early-access"' in html
+        # no dates, no shipping promises in the block
+        assert "coming soon" not in html.lower() and "launching" not in html.lower()
+
+    def test_signup_recorded_in_audit_log(self, client: TestClient, app: FastAPI) -> None:
+        resp = client.post("/early-access", data={"email": "Buyer@Corp.com"})
+        assert resp.status_code == 200
+        assert "on the list" in resp.text
+        from sqlalchemy import select
+
+        from tokenops_cost_auditor.persistence.models import AuditLogEntry
+
+        with app.state.session_factory() as session:
+            rows = [
+                e
+                for e in session.scalars(
+                    select(AuditLogEntry).where(AuditLogEntry.action == "early_access.signup")
+                )
+            ]
+        assert len(rows) == 1 and rows[0].subject == "buyer@corp.com"
+
+    def test_invalid_email_rejected(self, client: TestClient) -> None:
+        assert client.post("/early-access", data={"email": "nope"}).status_code == 400

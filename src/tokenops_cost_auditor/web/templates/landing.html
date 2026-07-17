@@ -1,11 +1,14 @@
 {% extends "base.html" %}
-{# Landing (FR-23; PRD §4 copy; R-ICP agent-fleet-first; stats per docs/09 §6 policy). #}
+{# Landing (FR-23; PRD §4 copy; R-GTM-CONTROL 2026-07-18 control narrative;
+   R-ICP agent-fleet; stats per docs/09 §6 policy). Invariants (T-WEB-01):
+   FR-23 string verbatim; exactly ONE primary class="cta"; attributed stats only. #}
 {% block content %}
-<h1>Your agent fleet is burning tokens you can't see.</h1>
+<h1>Take control of your AI spend.</h1>
 <p class="muted" style="font-size:1.1rem">
   Claude Code, Codex, and your production LLM features leave a paper trail — their logs.
-  Upload them and get back a report showing exactly where your API spend is wasted
-  and how to fix it. No SDK, no proxy, no integration.
+  Step one of controlling that spend is knowing exactly where it leaks: upload your
+  logs and get back a dollar-ranked audit of the waste and how to prevent it.
+  No SDK, no proxy, no integration.
 </p>
 
 <p><a class="cta" href="/upload">Upload logs — get your audit</a></p>
@@ -22,7 +25,8 @@
         unbounded output caps, and chatty agent loops (agents re-sending the same
         context in bursts of small calls).</li>
     <li>Every finding backed by evidence rows (token counts, never your prompt text)
-        and a concrete fix.</li>
+        and a concrete fix — the audit is step one of a prevention path, not a
+        one-off dashboard.</li>
     <li>A client-ready PDF and a private web report, delivered from a deterministic
         rules engine — no AI guesses anywhere in the math.</li>
   </ul>
@@ -44,5 +48,16 @@
     <li>No prompt or completion text is ever stored — the engine keeps token counts only.</li>
     <li>No AI reads your logs: the analysis is deterministic rules, so it cannot hallucinate.</li>
   </ul>
+</div>
+
+<div class="panel">
+  {# R-GTM-CONTROL b: email capture only — no product promises, no dates. #}
+  <strong>AI spend control — APIs, agents, and AI seats.</strong>
+  <p class="muted">The audit finds the waste. Controlling it continuously is what
+     we're building next. Leave your email for early access.</p>
+  <form method="post" action="/early-access" class="early-access">
+    <input type="email" name="email" required placeholder="you@company.com" aria-label="Work email">
+    <button type="submit" class="cta-secondary">Request early access</button>
+  </form>
 </div>
 {% endblock %}
