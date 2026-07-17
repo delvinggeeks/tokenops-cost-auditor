@@ -18,7 +18,9 @@ by the founder against provider pricing pages BEFORE gate sweep G2 runs (R-Q3).
 
 | Default | Value | Where |
 |---|---|---|
-| cache_write rate semantics | Anthropic 5-minute-TTL write rate (matches D2_TTL_WINDOW_S=300); OpenAI: no write premium → cache_write = input rate | prices.yaml, R-Q4 |
+| cache_write rate semantics | Anthropic: 5-minute-TTL write rate; OpenAI GPT-5.6 family: 1.25x input, 30-min minimum cache life (founder correction C1); other OpenAI families: no write premium → cache_write = input rate | prices.yaml, R-Q4 |
+| D2 est_writes TTL windows | Per provider-family (founder correction C4): anthropic 300s, gpt-5.6 family 1800s, fallback 300s | config D2_TTL_WINDOWS |
+| Surcharges NOT modeled in v1 | OpenAI long-context (>272K: 2x input / 1.5x output); regional data-residency multipliers (OpenAI post-Mar-2026 +10%, Anthropic US-only 1.1x). Spend estimates are therefore conservative FLOORS — stated in the report methodology appendix (D7). | founder correction C3 |
 | Token semantics | prompt_tokens = TOTAL input (Anthropic input+cache_read+cache_creation unified by normalizer); cached_tokens = cache READ subset; cache_write_tokens = Anthropic cache_creation | normalizer.py, R-Q4 |
 | Per-call cost formula | (max(prompt−cached−write,0)·input + cached·cache_read + write·cache_write + completion·output)/1e6 | coster.py |
 | Negative-uncached guard | clip at 0 (malformed rows cannot produce negative cost) | coster.py |
@@ -42,7 +44,7 @@ R = {  # input, output, cache_read, cache_write (USD/MTok)
  "claude-sonnet-5-std":  (D("3"),    D("15"),  D("0.30"),  D("3.75")),
  "claude-haiku-4-5":     (D("1"),    D("5"),   D("0.10"),  D("1.25")),
  "claude-fable-5":       (D("10"),   D("50"),  D("1.00"),  D("12.50")),
- "gpt-5.6-terra":        (D("2.5"),  D("15"),  D("0.25"),  D("2.5")),
+ "gpt-5.6-terra":        (D("2.5"),  D("15"),  D("0.25"),  D("3.125")),  # C1: 1.25x input
  "gpt-5.4-mini":         (D("0.75"), D("4.5"), D("0.075"), D("0.75")),
  "gpt-5.4-nano":         (D("0.20"), D("1.25"),D("0.02"),  D("0.20")),
  "gpt-5.3-codex":        (D("1.75"), D("14"),  D("0.175"), D("1.75")),
@@ -54,6 +56,18 @@ def cost(card, p, c, w, o):
 
 ## Founder verification log
 
-- 2026-07-17: founder reviewed the 12 golden rows (rates, formulas, expected values,
-  and the three seeding decisions: 5-min cache_write, OpenAI zero write premium,
-  effective_from policy) as presented at the D3 stop and approved proceeding to G2.
+- 2026-07-17 | Founder verification: all 12 rows arithmetic-recomputed
+  independently (PASS). Rates cross-checked against provider pricing
+  coverage same-day: Anthropic rows G01-G07,G12 confirmed incl. Sonnet-5
+  intro->standard boundary (Aug31/Sep1) and 1.25x 5-min cache-write.
+  OpenAI rows G08-G10 confirmed. G11 (gpt-5.3-codex) arithmetic PASS,
+  rate plausible but not directly confirmed - source_url re-check
+  required. | Lokesh Prasanna Kumar S
+- 2026-07-17 (corrections applied): (C1) GPT-5.6 family cache_write = 1.25x input
+  (sol 6.25 / terra 3.125 / luna 1.25), 30-min minimum cache life; G13 added
+  exercising the terra write premium (independently computed 0.05875). Official
+  page's cache-writes column re-confirmed same day. Zero-write-premium default now
+  applies ONLY to GPT-5.5/5.4/5.3 families. (C2) gpt-5.3-codex re-verified against
+  source_url: explicitly listed, $1.75/$0.175/$14.00 — primary-source confidence
+  retained. (C3) methodology-floors note recorded (see defaults table). (C4) D2
+  est_writes TTL windows are per provider-family: anthropic 300s, gpt-5.6 1800s.
