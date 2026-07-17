@@ -55,7 +55,7 @@ class TestDocsSiteStatsPolicy:
         """docs/09 §6: 79/31/98 must carry attribution; 40-60% and 73% are banned."""
         for page in DOCS.rglob("*.md"):
             text = page.read_text(encoding="utf-8")
-            assert "40-60%" not in text and "40–60%" not in text, page
+            assert "40-60%" not in text and "40\u201360%" not in text, page  # en-dash variant
             assert "73%" not in text, page
             if "79%" in text or "98%" in text:
                 assert "DoiT" in text or "State of FinOps" in text, (
