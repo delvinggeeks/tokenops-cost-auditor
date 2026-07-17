@@ -3,6 +3,23 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D14 PREP — launch drafts + UAT-2 kit ready (everything remaining is founder-action)
+
+Traceability self-check CLEAN pre-D14: every docs/01 FR/NFR has a matrix
+row, zero orphan rows, all DOC-column targets exist as pages, every cited
+test family present in tests/. UAT2-KIT.md at repo root: copy-paste partner
+email (FR-23 verbatim, counts-only assurance), evidence-recording template,
+the two docs/05 §5 exit checkboxes — closes the vv gate's open finding the
+moment the founder sends it and records the result.
+launch/launch-assets-DRAFT.md: 8-post thread + HN post, APPROVAL-GATED —
+figure inventory restricted to the verified ledger row + approved corrected
+UAT-1 set, both rails verbatim wherever our numbers appear, attributed
+stats only, defect narrative leads (228% + UAT-D5 refusal), FR-23 verbatim
+in the pricing post; approval checklist at the bottom. REMAINING = founder
+only: (1) VPS/domain/SMTP → one-command deploy (deploy/tf or provision.sh)
+→ VPS re-validation → CHANGELOG; (2) UAT-2 send or waive ruling; (3)
+launch-asset approval; (4) D14 go → spec-guard final sweep → launch.
+
 ## D11-12 vv GATE CLOSED — PASS-WITH-NOTES (after FAIL → fix → re-run)
 
 vv-engineer re-run: PASS-WITH-NOTES. Full suite re-verified by the gate
