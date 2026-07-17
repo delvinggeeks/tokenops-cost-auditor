@@ -3,6 +3,21 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## PLATFORM SKELETON CREATED (R-PLAT-DESIGN-EARLY; v1 untouched, migration timing unchanged)
+
+Sibling repo ~/Desktop/witaura-platform @ f677161: docs/platform/
+{ARCHITECTURE (v1.0 verbatim), DEPLOYMENT-CONTRACT, MIGRATION-WP-PLAT-0}
++ design READMEs for 5 packages / 4 apps / exporters / deploy / ops +
+commented uv-workspace stub. ZERO product code moved; no CLAUDE.md there
+(ONE-harness rule — migrates at WP-PLAT-0). Migration design maps EVERY v1
+module to its target, fixes dependency rules, and defers exactly three
+seams to founder ruling at migration time (SEAM-1 config split — recommend
+plain-value params; SEAM-2 ratelimit → app; SEAM-3 app tables stay in
+auditor until a second app needs the account model). Acceptance gate =
+existing byte-identical-goldens tests; history-preserving merge planned so
+the founder-authored commit log survives. TokenOps production pendings:
+unchanged, founder-only (VPS deploy / UAT-2 / launch approval / post).
+
 ## D14 GATES COMPLETE — spec-guard final sweep PASS-WITH-NOTES, ux re-check PASS-WITH-NOTES
 
 The program's last two gates ran pre-launch so D14 reduces to founder
