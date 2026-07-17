@@ -14,10 +14,10 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from tokenops_cost_auditor.persistence.models import Audit
+from tokenops_cost_auditor.persistence.models import Audit, IdempotencyKey
 from tokenops_cost_auditor.services.lifecycle import auditlog
 
 ACTOR = "system@purge"
@@ -46,6 +46,9 @@ def purge_due(session: Session, purge_after_days: int, now: datetime | None = No
             shutil.rmtree(Path(audit.upload_path).parent, ignore_errors=True)
         audit.upload_path = None
         audit.purged_at = now
+        # FR-26: idempotency keys share the upload lifecycle — a replayed key
+        # after purge is a fresh upload, not a stale replay
+        session.execute(delete(IdempotencyKey).where(IdempotencyKey.audit_id == audit.id))
         auditlog.append(session, ACTOR, "audit.purged", audit.id, {"mode": "scheduled"})
         purged.append(audit.id)
     session.commit()

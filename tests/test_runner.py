@@ -175,6 +175,7 @@ class TestTREP03JsonSchema:
                 "monthly_cost_impact_usd",
                 "fix_text",
                 "evidence",
+                "detail",  # R-D6-AGG: per-run/cluster breakdown (null when not aggregated)
             }
 
 

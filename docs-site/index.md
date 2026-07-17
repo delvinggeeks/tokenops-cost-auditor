@@ -35,10 +35,11 @@ prove it in dollars. <!-- src: R-ICP ruling; landing differentiation line verbat
 - Evidence rows for every finding — token counts and timestamps, never your text.
 - Methodology and pricing provenance printed inside the report itself.
 
-!!! warning "MEASUREMENT-PENDING (MP-2)"
-    A sample report screenshot will appear here once one is captured from a
-    founder-approved dogfood audit. Until then, see
-    [Reading a report](report/reading-a-report.md) for the full structure.
+![First page of a sample audit report: executive summary with estimated monthly savings, spend cards, and the savings waterfall](assets/sample-report.png)
+
+The sample above is our engineered test fixture — the same synthetic traffic
+our golden tests pin to hand-derived dollar figures — not customer data.
+<!-- src: MP-2 resolved: waste_pack fixture report, page 1, rendered by the shipping engine -->
 
 ## What we never do
 
