@@ -1,0 +1,101 @@
+# D14 launch assets — DRAFT, FOUNDER APPROVAL REQUIRED
+
+Rules applied (R-SELF-AUDIT d): ONLY ledger-verified / founder-approved
+figures appear below — the verified ledger row 1 and the corrected UAT-1 set
+approved post machine-check. Equiv-spend framing attached wherever those
+figures appear. Stats policy: only attributed 79%/31%/98%. Nothing here
+publishes until the founder approves this file AND the D14 spec-guard sweep
+passes.
+
+Figure inventory (the ONLY numbers permitted in any asset):
+- Ledger row 1 (founder-verified): 1,340 calls · $432.27 observed ·
+  est. $1,966.27/mo waste · 30.3%
+- Corrected UAT-1 set (founder-approved, machine-checked): 67,095 unique
+  calls from 159,571 events (58% duplicates) · $8,757.75/mo API-equivalent ·
+  $2,846.62/mo est. waste · 32.5%
+- Defect narrative: the 228% claim our golden discipline caught; the ledger
+  row our own verification gate refused (UAT-D5)
+- Market stats (attributed only): 79% overran AI budgets (DoiT/Sapio, 2026);
+  even mature FinOps teams overspent 31% (same survey); 98% of FinOps teams
+  now manage AI spend (State of FinOps, 2026)
+- Mandatory rails, verbatim, wherever our own numbers appear:
+  "Figures are API-equivalent token value; actual billing depends on your
+  plan." · "n=1, uncontrolled — your logs are the real test."
+
+---
+
+## Asset 1 — launch thread (X/LinkedIn, ~8 posts)
+
+**1/** We built an AI-cost auditor, pointed it at the AI agents that built
+it, and it told us 32.5% of the token spend was waste.
+
+Then our own verification process rejected its first report. Twice. That's
+the story worth telling.
+
+**2/** The product: upload your LLM API logs → deterministic, dollar-ranked
+waste audit in 48h. No SDK, no proxy, nothing in your request path. Six
+waste classes: missing prompt caching, retry storms, oversized models,
+prompt bloat, unbounded output caps, chatty agent loops.
+
+**3/** First rejection: the audit of our own build sessions claimed 228% of
+spend as "savings." Impossible number. Root cause: we priced prompt-token
+savings at full input rate, but ~95% of agent-session tokens are billed as
+cache reads at a tenth of that. Fixed, regression-pinned, disclosed in the
+methodology.
+
+**4/** Second rejection: our first self-audit ledger row failed founder
+verification — the log exporter was counting one row per transcript EVENT,
+not per completed API call. 58% of rows were duplicates. The row was
+discarded; the exporter now prints its dedup arithmetic on every run.
+
+**5/** Why tell you this? Because an audit product's only real asset is
+arithmetic you can check. Every number traces to a versioned, human-verified
+rate card and a hand-derived golden test. When the numbers were wrong, the
+discipline caught them BEFORE launch — and the discipline is the product.
+
+**6/** The verified numbers, then: our build's own audited traffic —
+67,095 API calls, $8,757.75/mo API-equivalent spend, $2,846.62/mo estimated
+waste (32.5%). "Figures are API-equivalent token value; actual billing
+depends on your plan." And: n=1, uncontrolled — your logs are the real test.
+
+**7/** The industry context (attributed): 79% of enterprises overran their
+AI budgets last year (DoiT/Sapio, 2026); even mature FinOps teams overspent
+31%. 98% of FinOps teams now manage AI spend (State of FinOps, 2026) — with
+tools that need integration before they show you anything. Ours needs a log
+file.
+
+**8/** $500 flat (₹20,000), one audit, 48h, client-ready PDF. Your data:
+"analyzed then deleted; nothing retained beyond 7 days; never used for training." Docs — including our full methodology, our defect log, and the
+audit of ourselves — at <docs URL>. DM or <site URL> to start.
+
+---
+
+## Asset 2 — HN/forum post (show-don't-sell register)
+
+Title: We audit LLM token waste — our own tool's first report was wrong, and
+our verification gate refused it
+
+Body: We're building a zero-integration LLM cost auditor (upload logs → 
+deterministic dollar-ranked waste report; engine has zero LLM calls,
+enforced by an import-guard test — determinism is the feature). Before
+launch we pointed it at the Claude Code agents that built it. First report:
+228% of spend as "savings" — we priced cache-read tokens at full input rate.
+Second attempt: our founder-verification step rejected the first published
+ledger row because the exporter double-counted transcript events (58%
+duplicate rows). Both defects are now regression tests, and the defect log
+is published on the docs site next to the methodology, because for an audit
+product the discipline IS the product. Verified numbers from auditing
+ourselves: 67,095 calls, $8,757.75/mo API-equivalent, 32.5% estimated waste
+("API-equivalent token value; actual billing depends on your plan" — n=1,
+uncontrolled; your logs are the real test). Happy to answer anything about
+the detection math — every estimator's formula and haircuts are public.
+
+---
+
+## Approval checklist (founder)
+
+- [ ] Figures match the inventory above, nothing else numeric
+- [ ] Rails present wherever our numbers appear
+- [ ] FR-23 string verbatim in asset 1/8
+- [ ] URLs filled (site, docs) post-deploy
+- [ ] Tone: no hype; the defect story leads
