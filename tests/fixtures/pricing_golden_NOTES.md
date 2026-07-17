@@ -57,6 +57,29 @@ def cost(card, p, c, w, o):
     return (max(p-c-w,0)*i + c*cr + w*cw + o*out) / D(1_000_000)
 ```
 
+## waste_pack v1 golden derivations (D4 milestone; independent computation)
+
+Fixture: waste_pack_anthropic.jsonl + waste_pack_openai.jsonl (split per file-level
+format detection; tests concat the two priced frames). Combined frame spans exactly
+3 distinct UTC days (2026-06-10..12) -> monthly factor 30/3 = 10.
+
+**D2 block** (30 uncached claude-sonnet-5 calls, identical 5400-char prefix, prompt
+2000, spaced 130s from 2026-06-10T09:00:00Z; intro rates input 2 / read 0.20 /
+write 2.50; TTL 300s):
+- windows = |{floor(epoch/300)}| = 13 -> est_writes 13, reads 17
+- cacheable = min(2000, 4096//4) = 1024 (hash-verified prefix cap, R-Q5/R-Q6)
+- gross = 17 x 1024 x (2 - 0.20) / 1e6 = 0.0313344
+- penalty = 13 x 1024 x (2.50 - 2) / 1e6 = 0.006656
+- savings_obs = 0.0246784 -> **monthly = 0.246784** (severity low, conservative)
+
+**D4 block** (5 identical gpt-5.4-mini calls, 20s apart, prompt 500/completion 200):
+- per-call cost = (500 x 0.75 + 200 x 4.5)/1e6 = 0.001275
+- one cluster n=5 -> wasted_obs = 4 x 0.001275 = 0.0051 -> **monthly = 0.0510**
+  (severity med: largest cluster < 10; confidence conservative, hash identity)
+
+Severity thresholds for impact-scaled detectors: high >= $500/mo, med >= $50/mo
+(findings.py; D4 uses the LLD cluster>=10 rule instead).
+
 ## Founder verification log
 
 - 2026-07-17 | Founder verification: all 12 rows arithmetic-recomputed

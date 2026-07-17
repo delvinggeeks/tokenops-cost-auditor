@@ -3,6 +3,25 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D4 — rules part 1 (complete, all green; G3 fires at end of D5)
+
+Branch `d4-d5-detectors`. File map: services/rules/{findings,base,registry,
+d2_missing_cache,d4_retry_storm}.py; fixtures waste_pack_anthropic.jsonl +
+waste_pack_openai.jsonl (split per-file format detection; tests concat) +
+clean_optimal.jsonl; tests/test_rules.py (19 tests: T-RUL-00, T-RUL-EV-01,
+T-RUL-D2-01..03, T-RUL-D4-01..02). Golden derivations in pricing_golden_NOTES.md
+(waste_pack v1 section): D2 monthly 0.246784 (13 TTL windows/17 reads/cacheable
+1024), D4 monthly 0.0510 — both independently Decimal-computed; the independent
+calc CAUGHT a real bug (pandas 3.0 datetime64[us] broke nanosecond-based window
+math; fixed with Timedelta division). Decisions: one Finding per D2 bucket / per
+D4 identity group; D2 severity impact-scaled (high>=500,med>=50 — in NOTES), D4
+severity per LLD cluster>=10 rule; hash-verified cacheable capped at
+PREFIX_HASH_CHARS//4 tokens; R-Q4 0.7-haircut branch implemented + tested via
+window-estimation failure injection; TTL per provider-family wired (C4 consumer
+now exists — closes G2 re-run note 2/4). clean_optimal engineered to stay silent
+through D5 detectors too. rules_disabled config added (T-RUL-00). D5 next: D1/D3/
+D5/D6 detectors, waste_pack v2, T-NFR-01 import guard; then gate sweep G3.
+
 ## D2-D3 — G2 SWEEP COMPLETE (vv-engineer PASS-WITH-NOTES, cold-reviewer PASS-WITH-NOTES)
 
 Founder verified golden CSV 2026-07-17 (log in pricing_golden_NOTES.md), then G2 ran.

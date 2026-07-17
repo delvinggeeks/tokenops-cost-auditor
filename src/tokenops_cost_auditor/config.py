@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     d6_loop_min: int = 8
     d6_batch_sz: int = 5
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
+    rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
 
     # Report & sessions (founder-accepted defaults Q9/Q11)
     report_url_expiry_days: int = 30
