@@ -1,15 +1,14 @@
-# WitAura AI Engineering Governance Platform — Architecture v1.0
+# WitAura AI Agentic Engineering Governance Platform — Architecture v1.0
 
 Founder: Lokesh Prasanna Kumar S · 2026-07-18
-[Name corrected per founder 2026-07-18: "WitAura AI Engineering Governance
-Platform" (was "Agentic Governance") — applied throughout, incl. repo slug.]
+[Name corrected per founder 2026-07-18 (final): "WitAura AI Agentic Engineering Governance Platform" — applied throughout, incl. repo slug.]
 Status: APPROVED ARCHITECTURE. Governs how every feature from the
 strategy table becomes a first-class module of ONE platform.
 Companion to WITAURA-MASTER-STRATEGY.md (strategy, founder-side) and the
 product spec kit (build scope).
 
 Repo note: this document's permanent home is `docs/platform/` in the
-witaura-ai-engineering-governance-platform monorepo (created at WP-PLAT-0, §6). It is recorded here in
+witaura-ai-agentic-engineering-governance-platform monorepo (created at WP-PLAT-0, §6). It is recorded here in
 the v1 repo verbatim as the founder-authored document of record; the v1 repo
 is NOT restructured pre-launch (§6 timing rule).
 
@@ -47,7 +46,7 @@ Why (honest engineering tradeoff for a solo founder + agent builds):
 ## 3. The platform tree (target structure)
 
 ```
-witaura-ai-engineering-governance-platform/
+witaura-ai-agentic-engineering-governance-platform/
 ├── CLAUDE.md                  # one harness, one token economy
 ├── STATUS.md                  # one shared memory
 ├── docs/                      # platform-level spec kits, per-module
@@ -129,7 +128,7 @@ Timing: **week 3, immediately after D14 launch** — never before
 first customers. The v1 repo is NOT restructured pre-launch.
 
 Steps (one Claude Code milestone, gated):
-1. Create witaura-ai-engineering-governance-platform repo with the tree above; move the
+1. Create witaura-ai-agentic-engineering-governance-platform repo with the tree above; move the
    existing repo to apps/auditor + split packages/ out of
    src/tokenops_cost_auditor (pricing→wa-pricing, rules→wa-detectors,
    report→wa-report, config/obs/persistence base→wa-core) as uv
@@ -153,6 +152,5 @@ Steps (one Claude Code milestone, gated):
 - "Adopting into existing enterprise environments": deploy/ artifacts
   per app per cloud; CLI-inside-perimeter remains the universal
   data-residency answer.
-- The platform NAME on the masthead ("WitAura AI Engineering
-  Governance Platform") activates at the day-45 gate per R-BRAND — the
+- The platform NAME on the masthead ("WitAura AI Agentic Engineering Governance Platform") activates at the day-45 gate per R-BRAND — the
   architecture doesn't wait for the name.

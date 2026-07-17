@@ -5,7 +5,7 @@ read this instead of exploring the repo.
 
 ## PLATFORM SKELETON CREATED (R-PLAT-DESIGN-EARLY; v1 untouched, migration timing unchanged)
 
-Sibling repo ~/Desktop/witaura-ai-engineering-governance-platform @ f677161: docs/platform/
+Sibling repo ~/Desktop/witaura-ai-agentic-engineering-governance-platform @ f677161: docs/platform/
 {ARCHITECTURE (v1.0 verbatim), DEPLOYMENT-CONTRACT, MIGRATION-WP-PLAT-0}
 + design READMEs for 5 packages / 4 apps / exporters / deploy / ops +
 commented uv-workspace stub. ZERO product code moved; no CLAUDE.md there
