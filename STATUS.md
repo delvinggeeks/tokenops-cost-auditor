@@ -3,6 +3,25 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## PRE-LAUNCH CLOSEOUT + D11-12 vv GATE (FAIL → fixed; correction of record)
+
+Branch `pre-launch-closeout`. Non-VPS items closed: FR-26 gap — idempotency
+keys now purge with uploads (purge.py deletes keys for purged audits;
+T-API-05 pin in test_lifecycle) ; MP-2 resolved — sample-report screenshot
+on Home rendered from the SYNTHETIC waste_pack fixture (no customer data);
+overdue vv-engineer D11-12 UAT-evidence gate RUN: FAIL with one real finding
+— T-REP-03 schema test predated R-D6-AGG's Finding.detail key and had been
+FAILING SINCE a8c3aa5. CORRECTION OF RECORD: suite-green claims from
+R-D6-AGG merge through UAT-D5 (reported "193/197/199/206 passed") were
+produced by a grep that matched the "N passed" substring INSIDE pytest's
+"1 failed, N passed" line and masked the failure + exit code. Actual state
+was 1 failed throughout. Test updated for the detail key (schema change is
+the intended R-D6-AGG shape); suite now verified GREEN by exit code
+(PYTEST-EXIT=0, 209 passed + 1 skip). Verification procedure fixed
+(exit-code-preserving; lesson recorded in agent memory). Gate re-run below.
+vv also flags: UAT-2 (external design partner, docs/05 §5) has NO evidence
+in the record — founder-executed, still open, flagged to founder.
+
 ## LEDGER ROW 1 VERIFIED — LAUNCH THREAD UNBLOCKED (pending only D13 physical deploy)
 
 Founder verification PASSED on the regenerated row (verbatim log line
