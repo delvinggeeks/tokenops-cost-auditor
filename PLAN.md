@@ -284,7 +284,10 @@ only (TE-10). Never per-prompt, never per-file. No gate spawns another agent (K-
 - **D8** Auth + landing: `web/` auth routes (magic link signed 15-min single-use,
   session cookie HttpOnly/Secure/Lax), `mail/smtp.py`, templates landing (PRD §4 copy,
   FR-23 verbatim policy string) + ToS/Privacy/DPA-lite. Tests T-AUTH-01..04, T-WEB-01,
-  T-MAIL-01(S).
+  T-MAIL-01(S). Copy angles (founder-approved 2026-07-17): lead with the agent-fleet
+  story (R-ICP); differentiation line vs auto-routers (Copilot Auto etc.): "routers
+  pick a model; we find the other five kinds of waste — and prove it in dollars"
+  (routing addresses only D1; D2-D6 waste classes are untouched by routers).
 - **D9** Payments + admin: `payments/{base,razorpay_link,stripe_link}.py`,
   `api/routes_webhooks.py` (HMAC verify), `web/` admin (X-Admin-Token), migration 002
   (payments). Tests T-PAY-01..05, T-ADM-01..04.

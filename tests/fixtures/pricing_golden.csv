@@ -1,0 +1,13 @@
+case_id,provider,model,date,prompt_tokens,cached_tokens,cache_write_tokens,completion_tokens,expected_cost_usd,formula_note
+G01,anthropic,claude-opus-4-8,2026-06-15,1000,0,0,100,0.0075,(1000*5 + 100*25)/1e6
+G02,anthropic,claude-opus-4-8,2026-06-15,10000,8000,0,500,0.0265,(2000*5 + 8000*0.50 + 500*25)/1e6
+G03,anthropic,claude-opus-4-8,2026-06-15,10000,0,4000,0,0.055,(6000*5 + 4000*6.25)/1e6
+G04,anthropic,claude-sonnet-5,2026-07-01,100000,50000,10000,2000,0.135,intro: (40000*2 + 50000*0.20 + 10000*2.50 + 2000*10)/1e6
+G05,anthropic,claude-sonnet-5,2026-09-15,100000,50000,10000,2000,0.2025,standard: (40000*3 + 50000*0.30 + 10000*3.75 + 2000*15)/1e6
+G06,anthropic,claude-haiku-4-5,2026-06-20,2048,1024,0,256,0.0024064,(1024*1 + 1024*0.10 + 256*5)/1e6
+G07,anthropic,claude-fable-5,2026-06-20,1000000,0,0,100000,15.0,(1000000*10 + 100000*50)/1e6
+G08,openai,gpt-5.6-terra,2026-06-15,5000,2000,0,800,0.02,(3000*2.5 + 2000*0.25 + 800*15)/1e6
+G09,openai,gpt-5.4-mini,2026-06-15,1234,0,0,567,0.003477,(1234*0.75 + 567*4.5)/1e6
+G10,openai,gpt-5.4-nano,2026-06-15,100000,90000,0,10000,0.0163,(10000*0.20 + 90000*0.02 + 10000*1.25)/1e6
+G11,openai,gpt-5.3-codex,2026-06-15,8000,8000,0,0,0.0014,(8000*0.175)/1e6 all-cached
+G12,anthropic,claude-haiku-4-5-20251001,2026-06-20,2048,1024,0,256,0.0024064,dated snapshot ID resolves via longest-prefix match to claude-haiku-4-5

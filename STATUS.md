@@ -3,6 +3,54 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D2-D3 — G2 SWEEP COMPLETE (vv-engineer PASS-WITH-NOTES, cold-reviewer PASS-WITH-NOTES)
+
+Founder verified golden CSV 2026-07-17 (log in pricing_golden_NOTES.md), then G2 ran.
+vv: suite green, coverage 94.1%→94.5% services / 100% coster.py, golden discipline
+satisfied; note was a stale STATUS header (fixed here). cold-reviewer: money math
+verified against all 12 golden rows; 4 non-blocking findings, ALL FIXED in main
+thread same-day with regression tests (TestG2ReviewFindings): (1) present-but-invalid
+cached/cache_write_tokens now a row error, never silent 0; (2) anthropic parser
+accepts integral-float usage counts, rejects garbage via prompt_tokens invalidation;
+(3) generic CSV blank provider value = row error, not silent "generic" default;
+(4) reconcile() docstring now states exactly what it does/doesn't validate.
+Merged to main; tags d2, d3.
+
+## D3 — pricing (complete; founder-verified)
+
+Branch `d2-d3-ingest-pricing`. File map: services/pricing/{table.py,coster.py,
+data/prices.yaml}, tests/test_pricing.py, tests/fixtures/pricing_golden.csv +
+pricing_golden_NOTES.md. prices.yaml seeded from OFFICIAL pages fetched 2026-07-17
+(Anthropic pricing page incl. exact cache write/read columns; OpenAI
+developers.openai.com pricing) with effective_from + source_url per R-Q3; four rates
+per R-Q4 (cache_write = 5-min-TTL rate; OpenAI cache_write defaults to input = zero
+write premium). Sonnet-5 intro→standard boundary (2026-08-31/09-01) encoded and
+boundary-tested. Coster: unified total-prompt semantics, negative-uncached clipped,
+unknown model → NaN + unpriced list (audit continues). reconcile(frame, total)
+verifies persisted headline total vs by-model/by-day parts ±0.5% (NFR-07); property
+test (hypothesis, 200 examples). Golden values computed INDEPENDENTLY (Decimal
+arithmetic, generator preserved in NOTES). Coverage: coster.py 100%, services 94.1%.
+Fixtures regenerated with officially-priced OpenAI IDs (gpt-5.6-terra/5.4-mini/
+5.4-nano — original invented IDs had no published rates). Money-math defaults
+recorded in NOTES per R-Q6..12(a). D2_TTL_WINDOW_S=300 matches 5-min cache_write
+choice. Per founder ruling: G2 (vv-engineer, cold-reviewer) runs ONLY AFTER founder
+hand-verifies 8-10 golden rows.
+
+## D2 — ingest (complete, all green)
+
+Branch `d2-d3-ingest-pricing`. File map: services/ingest/{base,openai_jsonl,
+anthropic_jsonl,generic_csv,normalizer,validator,__init__}.py;
+scripts/exporters/claude_code_export.py (FR-24, R-ICP); fixtures F1-F4 + Claude Code
+session fixture + seeded generator. Decisions: per-file format detection (mixed-
+provider JSONL = format error, F3 is single-provider with mixed error KINDS);
+CallRecordFrame gains cache_write_tokens column (R-Q4; documented LLD §2 deviation —
+architect gate note for G4); unified prompt_tokens = TOTAL input semantics
+(OpenAI includes cached; Anthropic input+read+write summed); prefix_hash in-memory
+only, text keys stripped from raw_extra (FR-22); request_id synthesized r{line_no}
+when absent. Exporter emits Anthropic-shaped JSONL, counts only, sessionId as tag,
+endpoint "claude-code"; T-EXP-02 asserts no text survives. 28 tests (T-ING-01..09,
+T-EXP-01..02) green.
+
 ## D1 — scaffold (COMPLETE; G1 verdicts: ops-engineer PASS, spec-guard PASS-WITH-NOTES)
 
 G1 notes (non-blocking): re-diff .env.example vs config.py directly at D6; config.py

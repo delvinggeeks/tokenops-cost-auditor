@@ -17,6 +17,7 @@ dependencies = [
     "itsdangerous",
     "structlog",
     "slowapi",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
@@ -63,6 +64,11 @@ strict = true
 # optional, env-gated integration (NFR-06) — intentionally not a dependency
 [[tool.mypy.overrides]]
 module = "sentry_sdk"
+ignore_missing_imports = true
+
+# no bundled type stubs; stub packages would be new deps (R-DEPS: ask first)
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*", "yaml"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

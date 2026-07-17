@@ -29,6 +29,7 @@ test; matrix checked in review before merge to main.
 | FR-21  | C6  | lifecycle/purge, lifecycle/auditlog        | T-LIF-01..03 |
 | FR-22  | C4,C6 | rules/findings(EvidenceRef), persistence | T-LIF-04, T-RUL-EV-01 |
 | FR-23  | C1  | web/templates/landing                      | T-WEB-01 |
+| FR-24  | C2  | scripts/exporters/claude_code_export.py    | T-EXP-01..02 |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 |
