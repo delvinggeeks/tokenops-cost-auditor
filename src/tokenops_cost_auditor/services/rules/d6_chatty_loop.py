@@ -7,6 +7,12 @@ A run of >= D6_LOOP_MIN calls is batchable. Agent re-read signature: any
 prefix_hash occurring >= D6_REREAD_MIN times within the session — flagged as
 "agent loop suspected" in the finding text.
 
+Aggregation (R-D6-AGG, founder 2026-07-18): ONE finding per session — monthly
+impact summed over the session's qualifying runs, run count in the finding
+text, evidence sampled across runs (<=20), per-run breakdown carried in
+Finding.detail (report.json only). Dogfood context: per-run findings produced
+856 D6 rows on 13 real sessions.
+
 Savings (LLD: batchable x overhead x rate; overhead defined as a documented
 money-math default, see pricing_golden_NOTES.md):
     saved_calls = n - ceil(n / D6_BATCH_SZ)
@@ -23,27 +29,15 @@ import math
 import pandas as pd
 
 from tokenops_cost_auditor.services.pricing.table import PricingGapError
-from tokenops_cost_auditor.services.rules.base import DetectorContext
+from tokenops_cost_auditor.services.rules.base import DetectorContext, split_on_gap
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     Finding,
     effective_prompt_rate,
-    make_evidence,
     monthly_factor,
+    sample_evidence_across,
     severity_for_impact,
 )
-
-
-def _split_on_gap(group: pd.DataFrame, gap_s: int) -> list[pd.DataFrame]:
-    ordered = group.sort_values("ts")
-    out: list[pd.DataFrame] = []
-    start = 0
-    times = ordered["ts"].tolist()
-    for i in range(1, len(times) + 1):
-        if i == len(times) or (times[i] - times[i - 1]).total_seconds() > gap_s:
-            out.append(ordered.iloc[start:i])
-            start = i
-    return out
 
 
 def _runs(session: pd.DataFrame, small_t: int, window_s: int) -> list[pd.DataFrame]:
@@ -66,11 +60,15 @@ class D6ChattyLoop:
         if len(frame) == 0:
             return []
 
-        results: list[tuple[float, pd.DataFrame, str, bool, int]] = []
+        # R-D6-AGG: one result per SESSION (impact summed over qualifying runs)
+        results: list[tuple[float, list[pd.DataFrame], list[dict[str, object]], str, bool]] = []
         for tag, group in frame.groupby("tag", sort=True):
-            for session in _split_on_gap(group, s.d6_session_gap_s):
+            for session in split_on_gap(group, s.d6_session_gap_s):
                 hash_counts = session["prefix_hash"].dropna().value_counts()
                 reread = bool((hash_counts >= s.d6_reread_min).any())
+                session_savings = 0.0
+                session_runs: list[pd.DataFrame] = []
+                run_details: list[dict[str, object]] = []
                 for run in _runs(session, s.d6_small_completion_t, s.d6_run_window_s):
                     n = len(run)
                     if n < s.d6_loop_min:
@@ -99,13 +97,28 @@ class D6ChattyLoop:
                     savings_obs = saved_calls * overhead * min_rate / 1e6
                     if savings_obs <= 0:
                         continue
-                    results.append((savings_obs, run, str(tag), reread, n))
+                    session_savings += savings_obs
+                    session_runs.append(run)
+                    run_details.append(
+                        {
+                            "start_ts": run["ts"].min().isoformat(),
+                            "calls": n,
+                            "saved_calls": saved_calls,
+                            "observed_savings_usd": savings_obs,
+                        }
+                    )
+                if session_savings <= 0:
+                    continue
+                results.append((session_savings, session_runs, run_details, str(tag), reread))
 
         results.sort(key=lambda r: -r[0])
         factor = monthly_factor(ctx.observed_days)
         findings: list[Finding] = []
-        for i, (savings_obs, run, tag, reread, n) in enumerate(results, start=1):
-            monthly = savings_obs * factor
+        for i, (session_savings, session_runs, run_details, tag, reread) in enumerate(
+            results, start=1
+        ):
+            monthly = session_savings * factor
+            n_calls = sum(len(r) for r in session_runs)
             loop_note = (
                 "Agent loop suspected: the same prompt prefix recurs repeatedly in "
                 "this session (context re-read signature). "
@@ -120,13 +133,17 @@ class D6ChattyLoop:
                     monthly_cost_impact_usd=monthly,
                     confidence=Confidence.ESTIMATED,
                     fix_text=(
-                        f"{loop_note}Tag '{tag}' issued a burst of {n} small sequential "
-                        "calls that are batchable. Combine related items into one "
-                        f"request (batches of ~{ctx.settings.d6_batch_sz}) so shared "
-                        "context is sent once instead of per call; savings assume only "
-                        "the re-sent context (run-median prompt size) is eliminated."
+                        f"{loop_note}Tag '{tag}' issued {len(session_runs)} burst(s) of "
+                        f"small sequential calls in one session ({n_calls} calls total) "
+                        "that are batchable. Combine related items into one request "
+                        f"(batches of ~{ctx.settings.d6_batch_sz}) so shared context is "
+                        "sent once instead of per call; savings assume only the re-sent "
+                        "context (run-median prompt size) is eliminated."
                     ),
-                    evidence=make_evidence(run, note="small sequential call in burst"),
+                    evidence=sample_evidence_across(
+                        session_runs, note="small sequential call in burst"
+                    ),
+                    detail={"runs": run_details},
                 )
             )
         return findings

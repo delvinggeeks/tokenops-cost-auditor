@@ -680,3 +680,67 @@ class TestTRULD6:
             )
         frame = synth_frame(rows)
         assert D6ChattyLoop().run(frame, ctx_for(frame)) == []
+
+
+class TestRD6AGGSessionAggregation:
+    """R-D6-AGG (founder 2026-07-18): one finding per session for D6 and D4."""
+
+    def test_d6_two_runs_one_session_one_finding_summed(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        # two qualifying runs separated by 700s (> run window 600, < session gap 900)
+        rows = [
+            {"ts": base + timedelta(seconds=30 * i), "request_id": f"a{i}", "completion_tokens": 80}
+            for i in range(10)
+        ] + [
+            {
+                "ts": base + timedelta(seconds=1000 + 30 * i),
+                "request_id": f"b{i}",
+                "completion_tokens": 80,
+            }
+            for i in range(10)
+        ]
+        frame = synth_frame(rows)
+        findings = D6ChattyLoop().run(frame, ctx_for(frame))
+        assert len(findings) == 1  # one session -> ONE finding
+        detail = findings[0].detail
+        assert detail is not None and len(detail["runs"]) == 2  # per-run breakdown kept
+        run_sum = sum(r["observed_savings_usd"] for r in detail["runs"])
+        factor = 30.0  # single-day frame
+        assert abs(findings[0].monthly_cost_impact_usd - run_sum * factor) < 1e-9
+        assert "2 burst(s)" in findings[0].fix_text  # run count stated (R-D6-AGG)
+        # evidence sampled ACROSS runs, capped at 20
+        assert len(findings[0].evidence) <= 20
+        evidence_ts = {e.ts for e in findings[0].evidence}
+        first_run_ts = {(base + timedelta(seconds=30 * i)).isoformat() for i in range(10)}
+        assert evidence_ts - first_run_ts  # at least one ref from the second run
+
+    def test_d6_separate_sessions_stay_separate(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        rows = [
+            {"ts": base + timedelta(seconds=30 * i), "request_id": f"a{i}", "completion_tokens": 80}
+            for i in range(10)
+        ] + [
+            {
+                "ts": base + timedelta(seconds=3000 + 30 * i),  # 2100s gap > 900s
+                "request_id": f"b{i}",
+                "completion_tokens": 80,
+            }
+            for i in range(10)
+        ]
+        frame = synth_frame(rows)
+        assert len(D6ChattyLoop().run(frame, ctx_for(frame))) == 2
+
+    def test_d4_two_clusters_one_session_one_finding(self) -> None:
+        base = datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+        # two identical-call bursts 400s apart (same session, separate anchors)
+        rows = [
+            {"ts": base + timedelta(seconds=10 * i), "request_id": f"a{i}"} for i in range(4)
+        ] + [
+            {"ts": base + timedelta(seconds=400 + 10 * i), "request_id": f"b{i}"} for i in range(4)
+        ]
+        frame = synth_frame(rows)
+        findings = D4RetryStorm().run(frame, ctx_for(frame))
+        assert len(findings) == 1
+        detail = findings[0].detail
+        assert detail is not None and len(detail["clusters"]) == 2
+        assert "2 burst(s) in one session" in findings[0].fix_text

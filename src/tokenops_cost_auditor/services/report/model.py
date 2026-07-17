@@ -40,6 +40,10 @@ METHODOLOGY = (
     "prompt or completion text."
 )
 
+# FR-30 (R-EQUIV-SPEND, founder 2026-07-18) — verbatim; shown whenever metered-API
+# billing cannot be assumed for the audited traffic (e.g. Claude Code exports).
+EQUIV_SPEND_LINE = "Figures are API-equivalent token value; actual billing depends on your plan."
+
 DATA_HANDLING = (
     "Your uploaded log file is analyzed and then deleted: raw uploads are "
     "automatically purged 7 days after report generation, purge events are written "
@@ -69,6 +73,9 @@ class ReportModel:
     methodology: str = METHODOLOGY
     data_handling: str = DATA_HANDLING
     generated_at: str | None = field(default=None)  # excluded from determinism
+    # FR-30: metered-API billing cannot be assumed (subscription-plan traffic,
+    # e.g. Claude Code exports) — header note + methodology line rendered
+    equiv_spend: bool = False
     # Presentation-only cap for HTML/PDF renderers (UAT-1 dogfood fix, D11):
     # an unbounded findings list let WeasyPrint lay out a ~30k-card document
     # (18GB RSS). JSON always carries EVERY finding; web/PDF show the top N by
@@ -92,6 +99,8 @@ class ReportModel:
         # 228% savings claim and a negative optimized projection on real agent
         # traffic (UAT-1 dogfood fix, D11). Capped and disclosed in METHODOLOGY.
         monthly_savings = min(sum(f.monthly_cost_impact_usd for f in findings), monthly_spend)
+        # FR-30: Claude Code exports come from subscription plans, not metered API
+        equiv_spend = bool(len(priced) and (priced["endpoint"] == "claude-code").any())
         priced_rows = priced.dropna(subset=["cost_usd"])
         by_model: list[dict[str, object]] = [
             {
@@ -123,5 +132,7 @@ class ReportModel:
             ),
             provider_mix=",".join(sorted(priced["provider"].unique())) if len(priced) else "",
             row_count=len(priced),
+            methodology=METHODOLOGY + (" " + EQUIV_SPEND_LINE if equiv_spend else ""),
             generated_at=generated_at,
+            equiv_spend=equiv_spend,
         )
