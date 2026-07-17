@@ -3,6 +3,29 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D11-12 PREP — perf PASS + authorized items done (UAT sign-off gate OPEN)
+
+Branch `d11-12-prep`, merged to main WITHOUT milestone tag per
+R-D11-12-PARTIAL (D11-12 completes only when founder dogfood report lands;
+vv-engineer UAT-evidence gate then runs on the full since-d-docs range).
+T-PERF-01 EXECUTED MANUALLY per R-PERF-MANUAL: 1M rows in 94.3s wall-clock
+(bound 600s) — ingest 8.5s, price+reconcile 1.2s, detect 82.8s,
+assemble+render 1.9s; peak RSS 1771MB; 17,264 findings from planted waste;
+machine = Ryzen AI MAX+ 392 / 27GB / Ubuntu 24.04 (dev workstation — VPS
+re-verification noted on the docs page and due at D13). MP-6 FILLED in
+docs-site performance.md (spec stated; extrapolation avoided). F7 generator
+scripts/gen_perf_fixture.py (seeded, priced-OpenAI-only after 10k smoke
+caught openai/claude-* unpriced rows; fixture gitignored). Ingest
+enhancement: JSONL parsers now honor precomputed top-level prefix_hash
+(counts-only shipper contract, text wins when present) + tests. UAT-1
+harness scripts/uat1_harness.py (export → CLI → review sheet CSV with
+verdict/knob columns; smoke-tested on fixture sessions, D6 finding
+produced). Runbook §8a knob table (env var / default / effect / when to
+turn). Quickstart hardening: troubleshooting section + JSONL prefix_hash
+guidance. Suite 179 passed + 1 skip + perf deselected by default; strict
+docs build green. OPEN: UAT-1/UAT-2 sign-off is founder-only (docs/05 §5
+exit criteria cannot be self-certified) — awaiting dogfood report.
+
 ## D-DOCS — GATES COMPLETE (ux PASS-WITH-NOTES, spec-guard PASS)
 
 Gate verdicts. ux-reviewer (charter extended to docs-site per DOCS-PLAN §5.6):
