@@ -3,7 +3,14 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## D13 — DEPLOY REHEARSAL COMPLETE (UAT-1 SIGNED OFF; awaiting VPS infra for physical deploy)
+## D13 — GATE COMPLETE (ops-engineer PASS-WITH-NOTES; physical VPS deploy awaits founder infra)
+
+ops-engineer D13 gate: PASS-WITH-NOTES — runbook §2 steps 3-7 all evidenced
+(steps 1-2/DNS/SMTP correctly labeled VPS-only); concurrency evidence
+honestly framed as dev-workstation numbers pending VPS re-validation; no
+postgres ports, env-driven domain, non-root image, .env untracked; CHANGELOG
+format conforms; NO blockers for the real deploy when credentials land.
+Merged to main; tags d11+d12 (UAT milestones, sign-off recorded) and d13.
 
 UAT-1 SIGN-OFF recorded (PLAN §0.1): sheet reviewed, both docs/05 §5 exit
 criteria PASS. Branch `d13-deploy`. Runbook §2 executed end-to-end against
