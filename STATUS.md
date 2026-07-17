@@ -3,6 +3,21 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## WP-SELF — BUILT (ledger seeded, page live behind publish gate; founder ticks pending)
+
+Branch `wp-self`. scripts/self_audit.py (exporter on THIS project → CLI audit
+→ ledger.csv row with verified='' + archived report; archives gitignored,
+ledger committed). scripts/render_self_audit.py renders ONLY founder-verified
+rows into docs-site/engineering/self-audit-data.md (MEASUREMENT-PENDING
+below 3 rows; inline SVG trendline; CI --check drift gate). Page
+engineering/self-audit.md carries the three mandatory verbatim rails, the
+UAT-1 228%-defect story, and the intervention-experiment MP block. FIRST
+LEDGER ROW: 2026-07-17 — 1 session, 3,106 calls, $916.36 API-equiv observed,
+est. $3,674.99/mo waste (26.7%) — verified='' AWAITING FOUNDER TICK; nothing
+publishes until ticked (test-enforced publish gate). Suite 199 passed + 1
+skip; strict docs build green. Remaining before D14: founder ledger tick(s),
+physical VPS deploy (founder infra), D14 launch go.
+
 ## D13 — GATE COMPLETE (ops-engineer PASS-WITH-NOTES; physical VPS deploy awaits founder infra)
 
 ops-engineer D13 gate: PASS-WITH-NOTES — runbook §2 steps 3-7 all evidenced
