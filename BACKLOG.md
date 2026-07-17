@@ -16,6 +16,17 @@ promotion still requires a PRD amendment.
 - **Orgs/SSO** (X-03 stands) — trigger: first team customer.
 - **SOC2 track** — trigger: enterprise procurement blocker.
 
+## WP-P1.5 — pricing-watch pipeline (R-PRICING-AGENT; FIRST post-launch package, week 3-4)
+
+FR-29b, ops-side only: ofelia crawl 2x/week (source_urls + LiteLLM model-prices
+JSON cross-check tripwire); hashed raw snapshots; candidates ->
+pricing_candidates (pending_review); admin side-by-side diff + one-click approve;
+approval writes prices.yaml (effective_from + source), drafts golden-row
+suggestion, bumps last_verified. HARD RULES (founder): no auto-approval path in
+code; crawler zero write access to prices.yaml; LLM extraction only into
+candidate queue; disagreements flagged never auto-resolved; approvals
+audit-logged with founder as actor.
+
 ## Parked ideas
 
 - **Aggregate-mode audit** (2026-07-17, source: docs/09b §5.5): accept provider

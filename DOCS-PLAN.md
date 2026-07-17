@@ -64,7 +64,10 @@ docs-site/
 │  │  │                           golden example (REAL: $0.0510/mo fixture).
 │  │  ├─ unbounded-max-tokens.md  D5: informational finding semantics; MP-10 (D5).
 │  │  └─ chatty-loops.md          D6: agent re-read signature; MP-10 (D5).
-│  ├─ pricing-data.md             Versioned YAML table, effective_from ranges, four-rate
+│  ├─ pricing-data.md             TRUST FEATURE framing (R-PRICING-OPS): rates versioned,
+│  │                              effective-dated, human-verified; each call priced at the
+│  │                              rate in effect at its timestamp; live/scraped pricing
+│  │                              refused for money math by design. Four-rate
 │  │                              model, 5.6-family TTL difference (C1/C4), dated-snapshot
 │  │                              prefix matching, "unpriced model" report behavior.
 │  └─ data-handling.md            Lifecycle Mermaid (upload→analysis→report→7-day purge);

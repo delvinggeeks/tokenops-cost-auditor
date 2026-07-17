@@ -56,6 +56,9 @@ charts (by model, by day), savings waterfall, findings ranked by $ impact,
 methodology appendix, data-handling statement.
 FR-15 (M) Web report page (signed URL, expiring) mirroring the PDF.
 FR-16 (S) Shareable redacted sample report for marketing (synthetic data).
+FR-28 (M) [amendment 2026-07-17, R-PRICING-OPS] Every report (JSON + PDF
+methodology) prints pricing table version/last_verified and the count+list
+of unpriced models encountered.
 
 ## D. Accounts, payments, admin
 
@@ -112,6 +115,14 @@ status API reflects queue position.
 NFR-14 (M) [amendment 2026-07-17, R-API] Single documented JSON error
 envelope for all /api/v1 errors {error: {code, message, request_id}};
 docs-site API reference renders it.
+NFR-15 (M) [amendment 2026-07-17, R-PRICING-OPS] prices.yaml carries a
+top-level last_verified date; CI emits a loud warning (not failure) when
+it is >14 days old; daily digest includes pricing-table age.
+FR-29 (M) [amendment 2026-07-17, R-PRICING-OPS] scripts/pricing_refresh.py
+(ops tooling, NOT engine code; NFR-01 untouched): fetches documented
+source_urls, extracts candidate rates, produces a human-readable DIFF vs
+prices.yaml (new models, changed rates, unreachable pages). NEVER writes
+prices.yaml. Weekly per runbook §8; failures surface in digest.
 
 ## G. Out of scope (recorded as requirements to NOT build)
 

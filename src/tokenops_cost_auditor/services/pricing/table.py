@@ -40,6 +40,7 @@ class Rate:
 @dataclass(frozen=True)
 class PricingTable:
     version: str
+    last_verified: date | None
     # (provider, model) -> entries sorted ascending by effective_from
     _entries: dict[tuple[str, str], tuple[Rate, ...]]
 
@@ -63,7 +64,11 @@ class PricingTable:
                     )
                 rates.sort(key=lambda r: r.effective_from)
                 entries[(provider.lower(), model.lower())] = tuple(rates)
-        return cls(version=str(raw["version"]), _entries=entries)
+        return cls(
+            version=str(raw["version"]),
+            last_verified=raw.get("last_verified"),
+            _entries=entries,
+        )
 
     def rate(self, provider: str, model: str, on_date: date) -> Rate:
         """Latest entry with effective_from <= on_date. Model matching: exact,

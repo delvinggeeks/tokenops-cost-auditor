@@ -124,6 +124,15 @@ under "Amendments" with date + reason.
   Retry-After), NFR-13 (MAX_CONCURRENT_AUDITS queue admission), NFR-14 (uniform
   JSON error envelope). API keys, queues, orgs/SSO, SOC2 remain OUT with recorded
   triggers (BACKLOG.md).
+- 2026-07-17 R-PRICING-OPS (founder): NFR-15 (last_verified + CI staleness warning
+  + digest age), FR-28 (report prints pricing version + unpriced models), FR-29
+  (pricing_refresh.py read-only diff tooling; never writes prices.yaml). Docs-site
+  presents human-verified versioned pricing as a trust feature.
+- 2026-07-17 R-PRICING-AGENT (founder): WP-P1.5 pricing-watch pipeline recorded for
+  post-launch week 3-4 (BACKLOG.md); NOT in D1-D14 scope. Hard rules: no
+  auto-approval path in code; crawler has zero write access to prices.yaml;
+  LLM-assisted extraction only into the candidate queue; disagreements flagged,
+  never auto-resolved; every approval audit-logged with founder as actor.
 - 2026-07-17 R-ICP (founder): primary ICP updated to agent-fleet engineering teams
   (Claude Code/Codex logs on disk) per docs/09b finding #2; log-exporter scripts are
   first-class onboarding deliverables — FR-24 added to docs/01 (Claude Code exporter,

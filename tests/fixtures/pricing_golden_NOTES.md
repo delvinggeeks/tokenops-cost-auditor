@@ -135,3 +135,6 @@ re-read signature 6 >= 5, "agent loop suspected"):
   source_url: explicitly listed, $1.75/$0.175/$14.00 — primary-source confidence
   retained. (C3) methodology-floors note recorded (see defaults table). (C4) D2
   est_writes TTL windows are per provider-family: anthropic 300s, gpt-5.6 1800s.
+- 2026-07-17 | Founder review: D4/D5 golden derivations accepted;
+  detector-level values approved as engineered-fixture ground truth.
+  | Lokesh Prasanna Kumar S

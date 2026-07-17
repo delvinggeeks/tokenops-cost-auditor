@@ -72,6 +72,12 @@ T-PAY-06..07: webhook with stale timestamp (>5 min) rejected; duplicate
 event id acknowledged but not reprocessed (append-only dedup table).
 T-NFR-12: authenticated burst limited per user (not per IP); anonymous
 burst limited per IP; 429 carries Retry-After.
+[amendment 2026-07-17, R-PRICING-OPS:]
+T-REP-08: report JSON + PDF methodology carry pricing version/last_verified
+and unpriced-model count+list.
+T-NFR-15: pricing-age checker warns (never fails) when last_verified >14d.
+T-OPS-04: pricing_refresh diff logic on fixture pages (offline); output
+lists new/changed/unreachable; never writes prices.yaml.
 T-WEB-01: landing contains verbatim data-policy string (FR-23).
 T-CLI-01: CLI produces PDF from F1.
 

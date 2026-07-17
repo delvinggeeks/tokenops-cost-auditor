@@ -33,6 +33,8 @@ test; matrix checked in review before merge to main.
 | FR-25  | C1  | main.py router mounting, api/*             | T-API-03 |
 | FR-26  | C2  | api/routes_upload, persistence (idem keys) | T-API-04..05 |
 | FR-27  | C7  | api/routes_webhooks, persistence (events)  | T-PAY-06..07 |
+| FR-28  | C5  | report/model, render_json, render_pdf      | T-REP-08 |
+| FR-29  | Ops | scripts/pricing_refresh.py                 | T-OPS-04 |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 |
@@ -47,6 +49,7 @@ test; matrix checked in review before merge to main.
 | NFR-12 | C9  | obs/ratelimit (user-else-IP key)           | T-NFR-12 |
 | NFR-13 | C   | runner queue admission, status API          | T-API-06 |
 | NFR-14 | C1,C9 | api error handlers, obs/errors            | T-API-07 |
+| NFR-15 | Ops,C3 | pricing/data/prices.yaml, scripts/pricing_age.py, CI | T-NFR-15 |
 | X-01..05 | — | reviewer checklist item                   | REV-X (PR template) |
 
 Coverage rule: `pytest --cov=src/tokenops_cost_auditor` ≥ 85% lines on services/*,
