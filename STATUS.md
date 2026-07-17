@@ -3,6 +3,32 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D10 — lifecycle + ops complete (all green; G6 next)
+
+Branch `d10-lifecycle-ops`. R-TOOLCHAIN recorded first (TE-11 in docs/10 §2 +
+CLAUDE.md verbatim copy + all six charters). lifecycle/purge.py (FR-21): due =
+report_ready_at + PURGE_AFTER_DAYS, created_at fallback for failed/never-rendered
+audits (decision: FR-23 "nothing retained beyond 7 days" must hold on failure
+paths); removes upload dir only, keeps reports+aggregates; audit_log actor
+system@purge {"mode":"scheduled"}; module CLI for ofelia. scripts/backup.sh
+(NFR-08): runs INSIDE postgres container (ofelia job-exec), pg_dump -Fc
+write-then-rename (no partials in freshness check), 14d rotation, reports
+snapshot (rsync-or-tar fallback), env-gated rclone offsite. ofelia.ini jobs
+wired: purge 02:00, backup 02:30, digest 03:00 UTC; compose pins
+container_name for both job targets, new backups volume (rw postgres, ro app),
+scripts+reports mounted ro into postgres; Dockerfile now COPYs scripts/.
+scripts/daily_digest.py (runbook §3): audits/failures/revenue/purges 24h +
+ALERTS (backup>26h or absent, disk>80%, pricing age NFR-15, refresh failures
+FR-29, failed audits); DIGEST_TO+BACKUP_DIR added to config+.env.example;
+SmtpMailAdapter.send_digest. scripts/pricing_refresh.py (FR-29): read-only —
+parses # source_url comments, heuristic candidate extraction, diff output
+(new ids / VERIFY-BY-HAND mismatches / unreachable); NEVER writes prices.yaml;
+status JSON to <report_dir>/.ops/pricing_refresh.json consumed by digest.
+Tests: T-LIF-01..03 (5), T-OPS-04 + digest (6); suite 171 passed + 1 CI skip;
+mypy/ruff clean. RESTORE DRILL T-OPS-01/02 EXECUTED with real postgres:17
+containers — logged in runbook §4 (88s, PASS, identical row counts, new smoke
+audit on restored db). Traceability rows for FR-21/29, NFR-08/15 pre-existed.
+
 ## D8-D9 — G5 SWEEP COMPLETE (ux PASS-WITH-NOTES, cold FAIL→fixed→PASS-WITH-NOTES, spec-guard PASS-WITH-NOTES)
 
 G5 verdicts. ux-reviewer: PASS-WITH-NOTES — notes fixed same-day (jargon glossed,
