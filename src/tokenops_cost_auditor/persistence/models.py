@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy import (
     JSON,
     BigInteger,
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -165,3 +166,127 @@ class IdempotencyKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     __table_args__ = (UniqueConstraint("user_id", "key", name="uq_idem_user_key"),)
+
+
+# ---- v1.5 MONITOR (PLAN-V15 V-D1; migrations additive-only) ----
+
+
+class Source(Base):
+    __tablename__ = "sources"  # T2 ACCOUNT connections (R-CONNECT / PLAN-V15 §0 R-Q5)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)  # openai|anthropic
+    label: Mapped[str] = mapped_column(String(120), nullable=False)
+    # Fernet token (HKDF from SECRET_KEY). Decrypted ONLY in the pull path;
+    # revoke deletes this value. Never logged, never in repr (T-KEY-03).
+    credentials_encrypted: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)
+    # active | paused (downgrade, oldest-first — R-Q6) | revoked
+    schedule: Mapped[str] = mapped_column(String(16), default="daily")  # pull cadence
+    last_pull_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_audit_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SourceUsage(Base):
+    __tablename__ = "source_usage"  # T2 pulled aggregates — counts only (FR-22 tier law)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("sources.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    day: Mapped[object] = mapped_column(Date, nullable=False)
+    model: Mapped[str] = mapped_column(String(120), nullable=False)
+    calls: Mapped[int] = mapped_column(Integer, nullable=False)
+    prompt_tokens: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    completion_tokens: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    cached_tokens: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    cost_usd: Mapped[float | None] = mapped_column(Float)  # provider-reported when present
+    # docs/12 Stage-1 contract: pull id, endpoint, dedup stats — metadata only
+    provenance: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+    __table_args__ = (UniqueConstraint("source_id", "day", "model", name="uq_source_usage_bucket"),)
+
+
+class FindingFeedback(Base):
+    __tablename__ = "finding_feedback"  # L0 labeling pipeline (docs/12 Stage 3)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    audit_id: Mapped[str] = mapped_column(
+        ForeignKey("audits.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    finding_id: Mapped[str] = mapped_column(String(16), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(16), nullable=False)
+    # applied | dismissed | not_relevant
+    # Customer-reported figure; shown separately, NEVER in the verified headline (R-Q9)
+    savings_realized_usd: Mapped[float | None] = mapped_column(Float)
+    actor: Mapped[str] = mapped_column(String(120), nullable=False)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("audit_id", "finding_id", name="uq_feedback_finding"),)
+
+
+class AlertRule(Base):
+    __tablename__ = "alert_rules"  # WP-3 observe-and-alert ONLY (X-02 stands)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    rule: Mapped[str] = mapped_column(String(32), nullable=False)
+    # spend_spike_dod | waste_above_target | new_high_finding | soft_budget
+    threshold: Mapped[float | None] = mapped_column(Float)  # semantics per rule
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "rule", name="uq_alert_user_rule"),)
+
+
+class AlertEvent(Base):
+    __tablename__ = "alert_events"  # append-only fired-alert log
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    rule: Mapped[str] = mapped_column(String(32), nullable=False)
+    detail: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"  # WP-6; one per account (R-Q11)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)  # razorpay|stripe
+    plan: Mapped[str] = mapped_column(String(16), nullable=False, default="free")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="active")
+    # active | past_due (day 0-6) | read_only (day 7-20) | cancelled (day 21 → Free)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="USD")
+    external_ref: Mapped[str | None] = mapped_column(String(200))
+    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # dunning anchor
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Statement(Base):
+    __tablename__ = "statements"  # WP-4 Savings Statement archive
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    period: Mapped[str] = mapped_column(String(7), nullable=False)  # YYYY-MM
+    body_text: Mapped[str] = mapped_column(Text, nullable=False)  # dollars/counts only
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "period", name="uq_statement_period"),)
