@@ -3,6 +3,34 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D13 PHYSICAL DEPLOY — LIVE at https://tokenops.cloud (founder GO 2026-07-19; two defects found+fixed)
+
+Deployed via provision.sh one-command path to founder's Contabo VPS 4
+(4 vCPU / 7.8 GiB; hardening ran FIRST per founder order: keys-only, ufw,
+fail2ban). DNS apex+www+docs all serve with Let's Encrypt TLS; www 301s to
+apex; docs-site (new Caddy block + provision step 4c build+rsync) serves
+at docs.tokenops.cloud; Postmark SMTP live (mail.sent verified to founder
+Gmail); payments env-gated OFF. DEFECTS: (1) smoke's https://localhost
+probe has no Caddy site under a real DOMAIN → --resolve SNI probes
+(d33263b). (2) SEV: uvicorn multiprocess supervisor 5s keep-alive ping
+replaced CPU-saturated workers → in-flight audits orphaned stuck-in-
+processing ("Child process died" ×2 at t≈21min and t≈90s; OOMKilled=false;
+ping(timeout=5) confirmed in installed uvicorn source; workstation cores
+masked it, K-2 honored: 2 failed measurements → root-cause → ONE fix
+attempt). FIX: --workers 1 (no supervisor exists; NFR-13 governs audit
+concurrency) 8bd96a6, runbook §1 same commit, tag d13-live.1. POST-FIX
+RE-VALIDATION PASS: 2×195MB/1.3M-row concurrent 34m20s wall, peak app
+5.14 GiB + pg 150 MiB of 7.8 GiB, zero deaths (123 samples); single 1M
+624s peak 2.25 GiB; F1 upload→done→web report 200→PDF valid; perf audits
+purged. VPS ≈ 7-12× slower than workstation refs — completes correctly;
+MP-6 docs still cite workstation numbers with machine spec stated (VPS
+row = founder call). OPEN: DIGEST_TO unset; stuck-audit auto-recovery
+parked in BACKLOG (admin rerun is the manual path, proven today).
+ops-engineer GATE RE-RUN on the deploy diff + live endpoints: PASS —
+topology/secrets/cron/runbook§2 all conform, workers-1 matches runbook §1
+same-commit, live healthz/landing/docs/www verified externally; sole note
+non-blocking (DIGEST_TO founder decision).
+
 ## SELF-AUDIT LEDGER ROW 2 — VERIFIED (founder tick 2026-07-19)
 
 2026-07-19 run over all project sessions (130 files): dedup rows_in=3459

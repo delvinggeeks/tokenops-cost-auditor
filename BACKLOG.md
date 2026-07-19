@@ -45,6 +45,13 @@ promotion still requires a PRD amendment.
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
   (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
+- **Stuck-audit auto-recovery** (D13 deploy evidence 2026-07-19) — audits
+  orphaned in `processing` when the serving process dies (observed twice
+  under the uvicorn multi-worker ping-kill, fixed by --workers 1; a crash
+  or power loss can still orphan). Candidate: boot-time sweep marking stale
+  `processing` audits failed (or requeueing). Manual path today: admin
+  rerun (proven in the D13 recovery). Trigger: any recurrence in prod, or
+  the queue/workers item above being promoted.
 
 Explicitly NOT building now (R-ENTERPRISE-READY d): SSO, marketplace
 listings, SOC2, security-questionnaire portal.
