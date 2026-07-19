@@ -85,3 +85,42 @@ class TestAggregateFR22:
             for ev in f.evidence:
                 assert set(ev.__dataclass_fields__) == {"row_idx", "ts", "model", "tokens", "note"}
                 assert ev.note == "aggregate-bucket"
+
+
+class TestAggregateFalsePositiveGuard:
+    """T-AGG-06 (G-V1 vv f.4): empty and clean frames emit NOTHING."""
+
+    def test_06_empty_and_clean_frames(self) -> None:
+        settings = Settings(secret_key="x" * 64, database_url="sqlite://", _env_file=None)
+        table = PricingTable.load()
+        empty = pd.DataFrame(
+            columns=["day", "model", "calls", "prompt_tokens", "completion_tokens", "cached_tokens"]
+        )
+        assert run_aggregate_detectors(empty, "anthropic", table, settings, 1) == []
+        # Clean: unmapped-eligible traffic — long completions (no d1), zero
+        # caching anywhere (no d2 target to extend), identical prompt sizes
+        # across >=3 buckets (no d3 bloat).
+        clean = pd.DataFrame(
+            [
+                {
+                    "day": date(2026, 7, d),
+                    "model": "claude-haiku-4-5-20251001",
+                    "calls": 100,
+                    "prompt_tokens": 1_000_000,
+                    "completion_tokens": 50_000,
+                    "cached_tokens": 0,
+                }
+                for d in (1, 2, 3, 4)
+            ]
+        )
+        assert run_aggregate_detectors(clean, "anthropic", table, settings, 4) == []
+
+    def test_07_effective_prompt_rate_zero_prompt_guard(self) -> None:
+        # findings.py zero-prompt branch (money-math 100% gate, vv f.2)
+        from datetime import date as date_cls
+
+        from tokenops_cost_auditor.services.rules.findings import effective_prompt_rate
+
+        rate = PricingTable.load().rate("anthropic", "claude-sonnet-5", date_cls(2026, 7, 10))
+        row = pd.Series({"prompt_tokens": 0, "cached_tokens": 0, "cache_write_tokens": 0})
+        assert effective_prompt_rate(row, rate) == rate.input
