@@ -3,6 +3,24 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## G-V1 GATE COMPLETE — vv PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES · spec-guard PASS-WITH-NOTES (all notes closed same day)
+
+vv: suite green EXIT=0 pinned toolchain; 93.9% total; money-math same-
+commit discipline verified (07e70e6, 12ea389); notes CLOSED — T-AGG-06
+empty/clean false-positive guard committed, T-AGG-07 covers findings.py:99
+(money-math 100% restored) [77ab0b6]. cold-reviewer 4 findings CLOSED
+[b186ac8]: f.1 connect plan-cap race → user-row lock; f.2 dead
+delete-by-new-id removed + append-history semantics documented (weekly
+audit series IS the dashboard trend history; FR-21 derived-aggregates
+clause); f.3 unpriced-skip semantics documented (FR-28 surface; unpriced
+d1 target skips conservatively — engine stays pure); f.4 provenance
+latest-wins documented (PullStats log is history). spec-guard notes
+answered in-record: n.4 the never-logged guard IS executable
+(test_v15_foundations.py::TestKeyEncryption::test_03, its grep missed the
+method name); n.6 future-WP schema in V-D1 is per PLAN-V15 §1 V-D1
+foundations (inert, test-covered). M1 STOPPED for founder review per
+approval order; V-D4 dashboard next on go.
+
 ## v1.5 M1 BUILT (V-D1..V-D3, branch v15-m1) — at G-V1 gate
 
 Foundations: 7 additive tables (migration 003), HKDF/Fernet source-key
