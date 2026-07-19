@@ -96,6 +96,16 @@ else
 fi
 ENVSETUP
 
+echo "== [4c] docs-site: build locally, ship to host (docs.$DOMAIN) =="
+if command -v uv >/dev/null 2>&1 && [ -f "$(dirname "$0")/../mkdocs.yml" ]; then
+    (cd "$(dirname "$0")/.." && uv run mkdocs build -q)
+    rsync -az --delete -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new" \
+        "$(dirname "$0")/../site/" "$SSH_USER@$HOST:$APP_DIR/site/"
+    echo "docs-site shipped to $APP_DIR/site"
+else
+    echo "WARNING: uv or mkdocs.yml missing on deploy machine — docs.$DOMAIN will 404"
+fi
+
 echo "== [5/6] compose up + migrations (runbook §2 steps 4-5) =="
 "${SSH[@]}" bash -s <<UP
 set -euo pipefail
@@ -120,6 +130,8 @@ sleep 1
 docker compose logs app 2>&1 | grep -q "/auth/verify?token=" \
     && echo "- magic link issued (log adapter; arrives by email once SMTP_* is set)"
 docker compose logs ofelia 2>&1 | grep -c "New job registered" | xargs -I{} echo "- ofelia jobs registered: {}"
+curl -sk --resolve "docs.$DOMAIN:443:127.0.0.1" "https://docs.$DOMAIN/" -o /dev/null -w "- docs-site: %{http_code}\n"
+curl -sk --resolve "www.$DOMAIN:443:127.0.0.1" "https://www.$DOMAIN/" -o /dev/null -w "- www redirect: %{http_code}\n"
 SMOKE
 
 echo

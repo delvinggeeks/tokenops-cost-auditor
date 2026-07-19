@@ -68,6 +68,7 @@ services:
       DOMAIN: ${DOMAIN:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/docs:ro # docs-site build output (provision.sh 4c); empty = 404
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

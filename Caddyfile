@@ -13,3 +13,26 @@
 
 	reverse_proxy app:8000
 }
+
+# www → apex. The www A record exists; without this block Caddy has no cert
+# for the name and browsers see a TLS error instead of the product.
+www.{$DOMAIN:localhost} {
+	redir https://{$DOMAIN:localhost}{uri} permanent
+}
+
+# Public docs-site (mkdocs build output; shipped to ./site by provision.sh
+# step 4c and bind-mounted read-only — empty dir just 404s until shipped).
+docs.{$DOMAIN:localhost} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	root * /srv/docs
+	file_server
+}
