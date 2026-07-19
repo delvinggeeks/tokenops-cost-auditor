@@ -5,7 +5,11 @@
 One VPS (4 vCPU / 8GB / 80GB SSD; Hetzner CX32-class or Oracle ARM
 free-tier for staging). docker-compose stack:
 - caddy (ports 80/443, auto-TLS, reverse proxy → app:8000)
-- app (uvicorn, 2 workers; volume mounts uploads/, reports/)
+- app (uvicorn, single worker — multi-worker uvicorn's keep-alive ping kills
+  CPU-saturated workers on small VPS cores and orphans in-flight audits
+  (D13 re-validation 2026-07-19); audit concurrency = MAX_CONCURRENT_AUDITS.
+  Multi-worker returns only with the queue/workers BACKLOG item.
+  Volume mounts uploads/, reports/)
 - postgres:17 (compose-internal network only; volume pgdata)
 - cron sidecar (ofelia or host crontab): purge daily 02:00 UTC,
   backup daily 02:30 UTC.

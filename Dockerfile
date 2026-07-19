@@ -35,5 +35,10 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 EXPOSE 8000
 
-# runbook §1: uvicorn, 2 workers
-CMD ["uvicorn", "tokenops_cost_auditor.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# runbook §1: uvicorn, single worker. With --workers >1 uvicorn's multiprocess
+# supervisor pings workers (5s pipe timeout, supervisors/multiprocess.py) and
+# REPLACES any that miss it — CPU-saturated audit threads on small VPS cores
+# miss the ping and the kill orphans in-flight audits (D13 re-validation,
+# 2026-07-19, "Child process died" ×2 with zero OOM). Single worker = no
+# supervisor; audit concurrency is governed by MAX_CONCURRENT_AUDITS (NFR-13).
+CMD ["uvicorn", "tokenops_cost_auditor.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
