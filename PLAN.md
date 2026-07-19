@@ -362,6 +362,53 @@ immediately after. [Superseded on sequencing 2026-07-20: GRAND ORDER v2
 delivers R-LAUNCH-POLISH + R-ONBOARD as v1.5 WP-7 and folds the Connect
 build into v1.5 WP-1 — see the GRAND ORDER v2 block below.]
 
+**R-DESIGN (founder, 2026-07-20) — UI/UX constitution, binding on v1.5
+WP-2/WP-7 and every future platform surface.** Claude Code reads the
+frontend-design skill before any template work; the ruling sets direction,
+the skill sets craft. (1) PHILOSOPHY "the auditor's aesthetic": premium
+audit report, not startup toy — calm, dense-but-ordered, numbers-first;
+Stripe clarity + Big-4 gravity. BANNED: purple-gradient AI clichés,
+glassmorphism, emoji in product UI, decorative illustration, dark-pattern
+urgency. (2) TOKENS (one wa-design.css across landing/app/docs/PDF): serif
+display numerals; clean sans UI; tabular-nums wherever money appears; warm
+paper neutrals; ONE accent chosen once; semantic colors only beyond it
+(green=verified savings, amber=estimate, red=waste/alert); money figures
+are the most visually weighted objects on every screen; 8px grid; ~1100px
+max content width; 1px-bordered cards; dark mode deferred (BACKLOG).
+(3) THREE-SECOND RULE as acceptance test on every screen (what is this
+screen · the one number · my next action); ux-reviewer charter AMENDED to
+test exactly these; clarity overrides delight. (4) WORKFLOW SPECS a-i
+verbatim in the founder order (first-run 3-step never-blank dashboard,
+<3min to first audit; owner hierarchy verified-savings hero → trends →
+top findings with inline L0 → sources health; finding card = one component
+three renderers; web report executive strip + collapsible methodology,
+CFO-printable; emails text-first number-in-subject one-CTA; settings
+boring-on-purpose double-confirmed destructive; landing hero = bill-shock
+question + REAL dashboard screenshot (screenshot truth, never mock), trust
+strip linking proofs; empty/error/loading designed; WCAG AA floor).
+(5) PROCESS: WP-2 begins with static HTML mockups (dashboard + finding
+card + first-run, no logic) gated by ux-reviewer against the three-second
+rule BEFORE wiring; PDF inherits wa-design.css print styles at WP-7.
+
+**R-DESIGN-ADDENDUM (founder, 2026-07-20) — experience elevation; amends
+R-DESIGN §1-2, all else stands.** (1) "Precision luxury": crisp layered
+depth — multi-tier soft shadows on elevation (2-4 tiers), 1px inner-border
+highlights, subtle surface tinting, large confident serif numerals; depth
+= crisp layers NOT embossed neumorphism (banned: low-contrast emboss,
+blurred-blob backgrounds). (2) MOTION (CSS-first, 150-250ms ease-out,
+respects prefers-reduced-motion): NUMBER MOMENTS signature — hero
+verified-savings counts up on load (600ms, once); marking Applied flows
+the $ into the headline; card hover lift; evidence expanders spring;
+audit progress = live pipeline strip with human status lines; htmx swaps
+150ms fade + 4px rise; charts draw-in; press scale(0.98); success
+checkmark draw; no toast storms. 3D BUDGET: exactly ONE hero element on
+the landing page (CSS-perspective tilting dashboard screenshot), NOWHERE
+in-app. (3) WOW-PER-WORKFLOW: one designed delight per flow, named.
+(4) ACCEPTANCE: ux-reviewer checklist — every gated surface names its
+delight and proves contrast + reduced-motion compliance; three-second
+rule overrides on conflict. Scope note: R-DESIGN + addendum are DIRECTION
+for surfaces inside frozen v1.5 scope — zero new features, zero dates.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

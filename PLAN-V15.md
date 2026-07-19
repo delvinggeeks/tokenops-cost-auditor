@@ -55,6 +55,15 @@ any default interacting with X-scope, FR-22, or the honesty law is
 ESCALATED, never defaulted. Chosen defaults are listed in STATUS at the
 end of M1.
 
+**R-DESIGN + R-DESIGN-ADDENDUM (founder, 2026-07-20; full text PLAN
+§0.1).** Binding on WP-2/WP-7 and all future surfaces: auditor's
+aesthetic + precision-luxury elevation, one wa-design.css token sheet,
+three-second rule as ux acceptance, workflow specs a-i, motion system
+with number moments, WP-2 starts with static mockups (dashboard +
+finding card + first-run) gated by ux-reviewer BEFORE wiring. G-V1 stop
+deliverables amended to include the mockup set for founder
+three-second-rule review. Zero scope/date change.
+
 Laws in force, unchanged: TE-1..TE-11 token economy; K-1..K-4 kill switches;
 golden money-math discipline (engine untouched — byte-identical goldens are a
 standing regression gate); FR-22 counts-only at every tier's door; X-05

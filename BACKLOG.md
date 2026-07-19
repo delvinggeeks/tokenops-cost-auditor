@@ -27,7 +27,13 @@ Recorded triggers, not build items. When a trigger fires, notify the founder;
 promotion still requires a PRD amendment.
 
 - **API keys / programmatic access** — trigger: first customer request.
-  Treat the request itself as a BUYING SIGNAL and notify the founder immediately.
+  Treat the request itself as a BUYING SIGNAL and notify the founder
+  immediately. [R-APIKEYS 2026-07-20, build detail when fired: keys issued
+  in Settings, hashed at rest, per-key scopes (submit/read), per-key rate
+  limits riding the existing NFR-12 limiter, usage counted per key (the
+  metering seed for future usage-based pricing), revocation instant,
+  every key event audit-logged. Until then: sessions + CLI cover all
+  real users.]
 - **Queue/workers (replacing BackgroundTasks + NFR-13 cap)** — trigger: the
   MAX_CONCURRENT_AUDITS cap regularly saturated (queue depth alerts in digest).
 - **Orgs/SSO** (X-03 stands) — trigger: first team customer.
@@ -45,6 +51,19 @@ promotion still requires a PRD amendment.
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
   (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
+- **Dark mode** (R-DESIGN 2026-07-20 §2) — deferred by the design
+  constitution; wa-design.css tokens are structured to admit it later.
+- **RAG waste pattern pack** (R-RAG 2026-07-20) — D2/D3 sub-findings
+  specialized for retrieval traffic: cache-breaking chunk placement,
+  over-retrieval signature, embedding/re-index spend line. Trigger:
+  >=2 customers show RAG-dominant traffic. Boundary: economics only;
+  every RAG finding carries the quality-validation caveat.
+- **Provider/tool expansion queue** (R-AGNOSTIC 2026-07-20) —
+  pull-sequenced, never speculative; each addition = pricing rows with
+  founder-verified goldens and/or ONE adapter into an existing tier.
+  Seeded order: Gemini, Bedrock, Azure-OpenAI (T2); Copilot admin
+  exports (AGG); per-tool T1 parsers on first customer request each.
+  No per-tool forks — frame contract keeps everything provider-neutral.
 - **Stuck-audit auto-recovery** (D13 deploy evidence 2026-07-19) — audits
   orphaned in `processing` when the serving process dies (observed twice
   under the uvicorn multi-worker ping-kill, fixed by --workers 1; a crash

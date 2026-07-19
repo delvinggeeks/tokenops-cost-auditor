@@ -25,6 +25,16 @@ tier (reports state which detectors a tier can and cannot feed).
   Any customer with existing OTel instrumentation points an exporter at
   us with zero custom code. Spec after the first 3 customer
   conversations; constraint recorded now (R-STANDARDS).
+  [R-AGENTIC-DIMENSIONS 1 (founder 2026-07-20): the T4 mapping spec must
+  preserve agent-dimension attributes from GenAI semconv spans
+  (agent/operation identity, trace linkage) so CallRecordFrame supports
+  cost-per-agent / per-task / per-chain attribution; per-agent findings
+  become standard report sections at T4 build time.]
+  [R-RAG 1 (founder 2026-07-20): the T4 mapping spec preserves vector-DB
+  query spans (GenAI semconv) so cost-per-pipeline-stage and
+  per-knowledge-base attribution become report dimensions at T4 build
+  time. RAG boundary: economics only — every RAG finding carries the
+  quality-validation caveat.]
 - **T5 GATEWAY** — in-VPC control plane (Phase 2; X-01/X-02 intact for
   the audit product; deployment contract applies).
 
@@ -48,8 +58,25 @@ prints its training-population size.**
   Applied/Dismissed labels; shadow-mode first.
 - **L3** (n>=50 + 6mo history): predictive spend forecasts + agent-session
   anomaly detection before the invoice; alert-only.
+  [R-AGENTIC-DIMENSIONS 3: anomaly detection explicitly scoped to fire
+  MID-CYCLE (before the invoice); alert-only until the control-plane era.]
 - **L4** (control-plane era): policy learning from cross-customer fix
   outcomes; enforcement always human-approved.
+  [R-AGENTIC-DIMENSIONS 2 — control-plane policy grammar principle:
+  policies are human-approved once, machine-enforced continuously, every
+  enforcement action audit-logged, policy changes always human-gated.
+  This is the platform's definition of "autonomous mode."]
+
+## R-AGNOSTIC (founder, 2026-07-20) — provider/tool expansion law
+
+Multi-provider/multi-tool expansion is pull-sequenced, never speculative:
+each addition = (a) a pricing-table extension with founder-verified golden
+rows, and/or (b) ONE adapter into an existing tier (T1 parser / T2
+usage-API / T4 already-free / AGG seat-export). Priority order seeded:
+Gemini, Bedrock, Azure-OpenAI (T2 class); Copilot admin exports (AGG
+class); per-tool T1 parsers on first customer request each. Detectors,
+reports, and the flywheel are provider-neutral by the frame contract —
+no per-tool forks, ever.
 
 ## FOUR MOATS (verbatim)
 
