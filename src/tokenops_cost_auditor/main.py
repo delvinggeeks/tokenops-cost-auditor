@@ -35,6 +35,7 @@ from tokenops_cost_auditor.web.routes_admin import router as admin_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
+from tokenops_cost_auditor.web.routes_sources import router as sources_router
 
 log = structlog.get_logger("tokenops_cost_auditor")
 
@@ -116,6 +117,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router)  # magic-link auth (FR-17)
     app.include_router(pages_router)  # landing/upload/legal (FR-23)
     app.include_router(admin_router)  # admin panel (FR-19)
+    app.include_router(sources_router)  # T2 connect/revoke (v1.5 WP-1)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:

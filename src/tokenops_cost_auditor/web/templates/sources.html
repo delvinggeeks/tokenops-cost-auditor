@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Connected sources — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<h1>Connected sources</h1>
+<p>
+  Plan <strong>{{ plan }}</strong> — {{ sources | selectattr("status", "equalto", "active") | list | length }}/{{ limit }}
+  active connection{{ "s" if limit != 1 else "" }}.
+  A connection pulls <em>usage counts only</em> from your provider's official
+  admin API: token totals per day and model. No prompt or completion text
+  exists in that API, and none is ever stored here.
+</p>
+
+{% if sources %}
+<table>
+  <thead><tr><th>Provider</th><th>Label</th><th>Status</th><th>Last pull</th><th>Last audit</th><th></th></tr></thead>
+  <tbody>
+  {% for s in sources %}
+    <tr>
+      <td>{{ s.provider }}</td>
+      <td>{{ s.label }}</td>
+      <td>{{ s.status }}</td>
+      <td>{{ s.last_pull_at.date().isoformat() if s.last_pull_at else "—" }}</td>
+      <td>{{ s.last_audit_at.date().isoformat() if s.last_audit_at else "—" }}</td>
+      <td>
+        <form method="post" action="/sources/{{ s.id }}/revoke">
+          <button type="submit">Revoke</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No sources connected yet.</p>
+{% endif %}
+
+<h2>Connect a provider</h2>
+<form method="post" action="/sources">
+  <label>Provider
+    <select name="provider">
+      {% for p in providers %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Label <input name="label" placeholder="e.g. production org" maxlength="120"></label>
+  <label>Admin API key <input name="api_key" type="password" autocomplete="off" required></label>
+  <button type="submit">Connect</button>
+</form>
+<p><small>The key is encrypted at rest, revocable here at any time, and never
+appears in logs or pages. Revoking deletes the stored key immediately.</small></p>
+{% endblock %}
