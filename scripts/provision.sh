@@ -122,10 +122,12 @@ echo "== [6/6] smoke checklist (runbook §2 step 6) =="
 set -euo pipefail
 cd "$APP_DIR"
 echo "- healthz:"
-curl -sk https://localhost/healthz; echo
-curl -sk https://localhost/ | grep -q "Take control of your AI spend." \
+# SNI must match a configured site: probe the real domain resolved to loopback
+# (plain https://localhost has no site block once DOMAIN is a real hostname).
+curl -sk --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/healthz"; echo
+curl -sk --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q "Take control of your AI spend." \
     && echo "- landing: OK (control narrative served)"
-curl -sk -X POST https://localhost/auth/magic-link -d "email=deploy-smoke@example.com" -o /dev/null -w "- magic-link request: %{http_code}\n"
+curl -sk --resolve "$DOMAIN:443:127.0.0.1" -X POST "https://$DOMAIN/auth/magic-link" -d "email=deploy-smoke@example.com" -o /dev/null -w "- magic-link request: %{http_code}\n"
 sleep 1
 docker compose logs app 2>&1 | grep -q "/auth/verify?token=" \
     && echo "- magic link issued (log adapter; arrives by email once SMTP_* is set)"
