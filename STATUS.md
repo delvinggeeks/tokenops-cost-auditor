@@ -3,6 +3,24 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## GRAND CONSOLIDATED ORDER v2 APPLIED (founder 2026-07-20) — STOPPED at PLAN-V15 approval gate
+
+Part A: vision recorded verbatim PLAN §0.0. Part B: docs/12-FLYWHEEL.md
+created (T1-T5 one-contract tiers, LLM-free label factory, L0-L4 honesty
+law, four moats verbatim, R-STANDARDS); docs-site Standards page written
+promise-free, shipped LIVE to docs.tokenops.cloud. Part C: verified
+already applied in 82024a1 (digest set+proven, NFR-04 amendment+VPS
+benchmarks live, ledger ritual audited) — NOT redone; digest-arrival
+confirmation pending founder inbox 03:00 UTC. Part D: recorded in PLAN
+§0.1 + PRD Amendments; docs/01 amendments applied (X-05 relaxed to
+SSR+htmx for v1.5; FR-22 extended to connector/streamed tiers; FR-31
+added) with traceability rows same commit. R-CONNECT §4 + R-PAINMOMENT
+notes updated (polish/onboard now delivered inside v1.5 WP-7).
+FIRST TASK DONE: PLAN-V15.md written — 10 milestones over 14 days,
+4 gates (G-V1..4), ~40 new test IDs, 18 numbered ambiguity questions,
+risks. HARD STOP honored: no application code; awaiting founder approval
+of PLAN-V15 + rulings on its §4 questions.
+
 ## D13 FOLLOW-UP RULINGS APPLIED (founder 2026-07-20)
 
 (1) DIGEST_TO=lokesh@tokenops.cloud set on the box, app recreated; manual
