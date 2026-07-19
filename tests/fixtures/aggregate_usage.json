@@ -1,0 +1,15 @@
+{
+  "provider": "anthropic",
+  "observed_days": 10,
+  "comment": "Hand-derived golden fixture for T2 aggregate estimators (PLAN-V15 R-Q1). Derivations in pricing_golden_NOTES.md. Rates on 2026-07: opus-4-8 5.0/25.0/cr 0.5; sonnet-5 2.0/10.0/cr 0.2; haiku-4-5 1.0/5.0/cr 0.1.",
+  "buckets": [
+    {"day": "2026-07-01", "model": "claude-opus-4-8", "calls": 100, "prompt_tokens": 1000000, "completion_tokens": 10000, "cached_tokens": 0},
+    {"day": "2026-07-02", "model": "claude-opus-4-8", "calls": 50, "prompt_tokens": 500000, "completion_tokens": 5000, "cached_tokens": 100000},
+    {"day": "2026-07-01", "model": "claude-sonnet-5", "calls": 100, "prompt_tokens": 2000000, "completion_tokens": 30000, "cached_tokens": 1000000},
+    {"day": "2026-07-02", "model": "claude-sonnet-5", "calls": 100, "prompt_tokens": 2000000, "completion_tokens": 30000, "cached_tokens": 0},
+    {"day": "2026-07-01", "model": "claude-haiku-4-5-20251001", "calls": 100, "prompt_tokens": 1000000, "completion_tokens": 20000, "cached_tokens": 0},
+    {"day": "2026-07-02", "model": "claude-haiku-4-5-20251001", "calls": 100, "prompt_tokens": 1000000, "completion_tokens": 20000, "cached_tokens": 0},
+    {"day": "2026-07-03", "model": "claude-haiku-4-5-20251001", "calls": 100, "prompt_tokens": 1000000, "completion_tokens": 20000, "cached_tokens": 0},
+    {"day": "2026-07-04", "model": "claude-haiku-4-5-20251001", "calls": 100, "prompt_tokens": 2500000, "completion_tokens": 20000, "cached_tokens": 500000}
+  ]
+}
