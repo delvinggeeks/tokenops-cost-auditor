@@ -26,11 +26,13 @@ Figure inventory (the ONLY numbers permitted in any asset):
 
 ## Asset 1 — launch thread (X/LinkedIn, ~8 posts)
 
-**1/** We built an AI-cost auditor, pointed it at the AI agents that built
-it, and it told us 32.5% of the token spend was waste.
+**1/** Just got an AI bill you can't explain? That moment is exactly what
+we build for: upload your LLM logs, get back a dollar-ranked list of what
+was waste.
 
-Then our own verification process rejected its first report. Twice. That's
-the story worth telling.
+We pointed it at the AI agents that built it: 32.5% waste. Then our own
+verification process rejected its first report. Twice. That's the story
+worth telling.
 
 **2/** The product: upload your LLM API logs → deterministic, dollar-ranked
 waste audit in 48h. No SDK, no proxy, nothing in your request path. Six
@@ -92,10 +94,25 @@ the detection math — every estimator's formula and haircuts are public.
 
 ---
 
+## Distribution — trigger-moment targeting (R-PAINMOMENT, founder 2026-07-20)
+
+Outreach targets TRIGGER MOMENTS, not cold personas:
+
+a. **Search-and-reply, not broadcast**: find X/Reddit/HN posts complaining
+   about OpenAI/Anthropic/Claude Code bills; reply with the free audit
+   offer. Replies follow the same rules as the assets: figure inventory
+   only, rails attached, no hype, no Connect claims.
+b. **Model-release weeks**: cost profiles shift when providers ship new
+   models/prices — audit demand spikes; time outreach pushes to those
+   windows (pricing-watch WP-P1.5 will surface them once live).
+c. **Hook discipline**: the thread hook leads with the bill-shock scenario,
+   not the category (applied to Asset 1 post 1/).
+
 ## Approval checklist (founder)
 
 - [ ] Figures match the inventory above, nothing else numeric
 - [ ] Rails present wherever our numbers appear
 - [ ] FR-23 string verbatim in asset 1/8
 - [ ] URLs filled (site, docs) post-deploy
-- [ ] Tone: no hype; the defect story leads
+- [ ] Tone: no hype; hook = bill-shock moment (R-PAINMOMENT), then the
+      defect story leads the body

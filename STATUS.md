@@ -3,6 +3,18 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## R-PAINMOMENT APPLIED (founder 2026-07-20) — trigger-moment GTM; thread hook now bill-shock-first
+
+PLAN §0.1 ruling recorded. launch-assets-DRAFT: Asset 1 post 1/ rewritten
+to open with the bill-shock scenario (category label dropped from the
+hook; defect story still leads the body — checklist line updated); new
+"Distribution — trigger-moment targeting" section (search-and-reply on
+bill complaints with the free audit offer, model-release-week timing,
+hook discipline). Figure inventory / rails / FR-23 untouched — draft
+remains APPROVAL-GATED. Landing hero A/B ("Just got an AI bill you can't
+explain?" vs current) parked as a polish-time task — R-LAUNCH-POLISH
+contents still not received. No product change made, per the ruling.
+
 ## R-CONNECT APPLIED (founder 2026-07-19) — WP-P2-AGG promoted to Connect flows; WP-COLLECTOR registered
 
 Paperwork recorded idempotently: PRD Amendments entry (docs/00), PLAN §0.1

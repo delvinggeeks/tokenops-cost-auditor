@@ -344,6 +344,16 @@ with Connect flows honestly ABSENT from claims → AGG build starts
 immediately after. [Main-thread note: R-LAUNCH-POLISH and R-ONBOARD
 contents not yet received as of this recording.]
 
+**R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
+outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
+complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply
+with the free audit, not broadcast; (b) model-release weeks (cost profiles
+shift — audit demand spikes); (c) the thread's hook leads with the
+bill-shock scenario, not the category. Landing hero line test at polish:
+"Just got an AI bill you can't explain?" variant vs current. No product
+change. [Applied: Asset 1 hook rewritten + distribution section added to
+launch/launch-assets-DRAFT.md; hero test parked for R-LAUNCH-POLISH.]
+
 ### 0.2 Standing decisions
 
 **PY-VERSION: Python 3.14** (kickoff permits 3.14 if pandas/pyarrow/weasyprint/psycopg
