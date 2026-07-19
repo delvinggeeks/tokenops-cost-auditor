@@ -3,18 +3,19 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## SELF-AUDIT LEDGER ROW 2 — CANDIDATE, AWAITING FOUNDER VERIFICATION (R-SELF-AUDIT c)
+## SELF-AUDIT LEDGER ROW 2 — VERIFIED (founder tick 2026-07-19)
 
 2026-07-19 run over all project sessions (130 files): dedup rows_in=3459
 unique_out=1478 duplicates_dropped=1981; 1,478 unique calls, $512.92
 API-equiv observed, $1,525.61/mo est. waste (29.7% of $5,129.24/mo),
 findings {d3_prompt_bloat: 11, d6_chatty_loop: 3}. Machine checks printed
-back: headline == Σ14 findings exactly; spend cap not engaged; equiv_spend
-flag true; export duplicate request_ids = 0. Row appended with verified=""
-— renders NOWHERE until the founder replaces it with their name;
-verification log line goes to pricing_golden_NOTES.md on tick. Report JSON
-archived (gitignored) at self_audit/reports/2026-07-19_report.json.
-Trendline still MEASUREMENT-PENDING (needs 3 verified rows).
+back and accepted: headline == Σ14 findings exactly; spend cap not
+engaged; equiv_spend flag true; export duplicate request_ids = 0.
+Founder VERIFIED same day — name in ledger row, verification log line in
+pricing_golden_NOTES.md (golden discipline). 2/3 verified rows; trendline
+stays MEASUREMENT-PENDING until row 3. Trend vs row 1: 1,340→1,478 calls,
+30.3%→29.7% — stable. Report JSON archived (gitignored) at
+self_audit/reports/2026-07-19_report.json.
 
 ## PLATFORM SKELETON CREATED (R-PLAT-DESIGN-EARLY; v1 untouched, migration timing unchanged)
 

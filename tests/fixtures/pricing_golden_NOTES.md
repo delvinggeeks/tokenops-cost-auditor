@@ -134,6 +134,16 @@ re-read signature 6 >= 5, "agent loop suspected"):
   hand check); model mix and unpriced-exclusion confirmed.
   Row 1 (1,340 calls · $432.27 observed · $1,966.27/mo est. waste ·
   30.3%) is VERIFIED for publication. | Lokesh Prasanna Kumar S
+- 2026-07-19 | Founder verification: ledger row 2 — machine checks
+  reviewed and accepted: exporter dedup summary rows_in=3459
+  unique_out=1478 duplicates_dropped=1981 (130 session files); headline
+  equals Σ of its 14 findings exactly ($1,525.61); spend cap not engaged
+  ($1,525.61 < $5,129.24/mo); equiv_spend flag true (API-equivalent rail
+  applies); export duplicate request_ids = 0. `sessions` column noted as
+  unique-export-tag count (1 per project), consistent with row 1
+  semantics. Row 2 (1,478 calls · $512.92 observed · $1,525.61/mo est.
+  waste · 29.7%) is VERIFIED for publication. Trendline remains
+  MEASUREMENT-PENDING until 3 verified rows. | Lokesh Prasanna Kumar S
 
 - 2026-07-17 | Founder verification: all 12 rows arithmetic-recomputed
   independently (PASS). Rates cross-checked against provider pricing
