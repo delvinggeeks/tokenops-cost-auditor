@@ -326,6 +326,24 @@ co-author trailers; no AI references in commit metadata.
 re-run before build start; report lands in docs/09b-MARKET-RESEARCH-REFRESH.md with a
 marked recommendations section; PRD amendments remain founder-written (change control).
 
+**R-CONNECT (founder, 2026-07-19) — supersedes the WP-P2-AGG tripwire; PRD
+amendment recorded (docs/00 Amendments).** (1) WP-P2-AGG PROMOTED to
+immediate post-polish build (est. 1-2 wks): "Connect OpenAI" / "Connect
+Anthropic" flows — customer pastes an org/admin API key; usage pulled
+server-side via the official Usage/Admin APIs; reduced detector set as
+documented since D1; key handling: encrypted at rest, revocable, never
+logged; UI parity with the upload flow. (2) WP-COLLECTOR registered (next
+after AGG): pipx-installable watcher for Claude Code transcript dirs —
+dedup per UAT-D5 law, counts-only by construction, scheduled ship to the
+API (FR-26 idempotency); one command, zero code changes; the enterprise
+fleet onboarding. (3) SDK/proxy remains Phase-2 control plane — X-01/X-02
+intact for the audit product; recorded rationale: in-path components live
+in the customer's VPC per the deployment contract, post-trust.
+(4) Sequence: R-LAUNCH-POLISH + R-ONBOARD → walkthrough → launch thread
+with Connect flows honestly ABSENT from claims → AGG build starts
+immediately after. [Main-thread note: R-LAUNCH-POLISH and R-ONBOARD
+contents not yet received as of this recording.]
+
 ### 0.2 Standing decisions
 
 **PY-VERSION: Python 3.14** (kickoff permits 3.14 if pandas/pyarrow/weasyprint/psycopg

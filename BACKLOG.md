@@ -95,20 +95,33 @@ code; crawler zero write access to prices.yaml; LLM extraction only into
 candidate queue; disagreements flagged never auto-resolved; approvals
 audit-logged with founder as actor.
 
-## WP-P2-AGG — aggregate-mode audit + seat governance (R-ENTERPRISE-SEAT 2026-07-18)
+## WP-P2-AGG — PROMOTED (R-CONNECT 2026-07-19; PRD amendment recorded): Connect flows, immediate post-polish build (est. 1-2 wks)
 
-Two validated demand signals: (1) customers with zero request logging
-(docs/09b §5.5, 2026-07-17); (2) enterprise seat-tool governance — Copilot
-Enterprise credits/seats scenario (2026-07-18). Three layers:
+[R-CONNECT supersedes the day-45 tripwire below. Build starts immediately
+after the R-CONNECT §4 sequence completes (polish → onboard → walkthrough →
+launch thread, Connect flows honestly ABSENT from launch claims).]
 
-a. **Aggregate audit**: accept provider/admin usage exports (time-bucketed
-   aggregates, no per-request rows) with a reduced detector set (D2
-   missing-cache via cached-token fields + model-mix analysis).
-b. **Policy-threshold recommendations** mapped to the provider's NATIVE
-   enforcement levers (the product recommends thresholds; the provider's own
-   admin controls enforce — X-02 stands, we never enforce).
-c. **Governance retainer** (recurring review of aggregate exports + threshold
-   tuning).
+Promoted scope: **"Connect OpenAI" / "Connect Anthropic" flows** — customer
+pastes an org/admin API key; we pull usage server-side via the official
+Usage/Admin APIs; reduced detector set as documented since D1 (D2
+missing-cache via cached-token fields + model-mix analysis); key handling:
+encrypted at rest, revocable, never logged; UI parity with the upload flow.
 
-Out of frozen v1 scope; promotion requires founder PRD amendment at the
-day-45 gate.
+Original demand signals (kept for the record): (1) customers with zero
+request logging (docs/09b §5.5, 2026-07-17); (2) enterprise seat-tool
+governance — Copilot Enterprise credits/seats scenario (2026-07-18).
+Layers b (policy-threshold recommendations mapped to the provider's NATIVE
+enforcement levers — X-02 stands, we never enforce) and c (governance
+retainer) remain Phase-2, unpromoted.
+
+## WP-COLLECTOR — registered next after WP-P2-AGG (R-CONNECT 2026-07-19)
+
+pipx-installable watcher for Claude Code transcript dirs: dedup per UAT-D5
+law (by request_id, max-complete usage wins, summary printed), counts-only
+by construction (FR-22 — no text ever read into the payload), scheduled
+ship to the API using FR-26 idempotent uploads. One command, zero code
+changes on the customer side. This is the enterprise fleet onboarding.
+
+SDK/proxy note (R-CONNECT 3): remains Phase-2 control plane — X-01/X-02
+intact for the audit product; recorded rationale: in-path components live
+in the customer's VPC per the deployment contract, post-trust.

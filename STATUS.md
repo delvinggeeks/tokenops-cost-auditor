@@ -3,6 +3,19 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## R-CONNECT APPLIED (founder 2026-07-19) — WP-P2-AGG promoted to Connect flows; WP-COLLECTOR registered
+
+Paperwork recorded idempotently: PRD Amendments entry (docs/00), PLAN §0.1
+ruling block, BACKLOG WP-P2-AGG rewritten as PROMOTED (Connect
+OpenAI/Anthropic, key handling encrypted/revocable/never-logged, UI parity;
+layers b/c stay Phase-2) + WP-COLLECTOR section (pipx watcher, UAT-D5 dedup
+law, counts-only, FR-26 idempotent ship). X-01/X-02 rationale recorded (in-
+path components live in customer VPC post-trust). Launch-claims check:
+grep of launch assets + web templates shows ZERO Connect references —
+"honestly absent" already holds. Build does NOT start until the R-CONNECT
+§4 sequence completes; R-LAUNCH-POLISH and R-ONBOARD contents NOT YET
+RECEIVED — awaiting founder text before any polish/onboard work.
+
 ## D13 PHYSICAL DEPLOY — LIVE at https://tokenops.cloud (founder GO 2026-07-19; two defects found+fixed)
 
 Deployed via provision.sh one-command path to founder's Contabo VPS 4

@@ -138,3 +138,18 @@ under "Amendments" with date + reason.
   first-class onboarding deliverables — FR-24 added to docs/01 (Claude Code exporter,
   D2); D8 landing copy leads with the agent-fleet story; marketing stats restricted to
   attributed 79%/98% figures until dogfood numbers exist (docs/09 §6 amended).
+- 2026-07-19 R-CONNECT (founder) — supersedes the WP-P2-AGG tripwire:
+  (1) WP-P2-AGG PROMOTED to immediate post-polish build (est. 1-2 wks):
+  "Connect OpenAI" / "Connect Anthropic" flows — customer pastes an org/admin
+  API key; usage pulled server-side via the official Usage/Admin APIs; reduced
+  detector set as documented since D1; key handling encrypted at rest,
+  revocable, never logged; UI parity with the upload flow. (2) WP-COLLECTOR
+  registered (next after AGG): pipx-installable watcher for Claude Code
+  transcript dirs — dedup per UAT-D5 law, counts-only by construction,
+  scheduled ship to the API (FR-26 idempotency); one command, zero code
+  changes; the enterprise fleet onboarding. (3) SDK/proxy remains Phase-2
+  control plane — X-01/X-02 intact for the audit product; in-path components
+  live in the customer's VPC per the deployment contract, post-trust.
+  (4) Sequence: R-LAUNCH-POLISH + R-ONBOARD → walkthrough → launch thread
+  with Connect flows honestly absent from claims → AGG build starts
+  immediately after.
