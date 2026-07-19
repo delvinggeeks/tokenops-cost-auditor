@@ -29,7 +29,7 @@ publicly ("—" = internal-only, no public page needed).
 | FR-19  | C1  | web/admin                                  | T-ADM-01..05 | — |
 | FR-20  | C8  | mail/*                                     | T-MAIL-01 (S) | — |
 | FR-21  | C6  | lifecycle/purge, lifecycle/auditlog        | T-LIF-01..03 | concepts/data-handling |
-| FR-22  | C4,C6 | rules/findings(EvidenceRef), persistence | T-LIF-04, T-RUL-EV-01 | concepts/data-handling |
+| FR-22  | C4,C6 | rules/findings(EvidenceRef), persistence; extended to connector/streamed tiers (founder 2026-07-20, GRAND ORDER v2 — v1.5 connectors must add tier tests) | T-LIF-04, T-RUL-EV-01 | concepts/data-handling |
 | FR-23  | C1  | web/templates/landing                      | T-WEB-01 | index, legal/privacy |
 | FR-24  | C2  | scripts/exporters/claude_code_export.py    | T-EXP-01..02 | quickstart |
 | FR-25  | C1  | main.py router mounting, api/*             | T-API-03 | api/overview |
@@ -38,6 +38,7 @@ publicly ("—" = internal-only, no public page needed).
 | FR-28  | C5  | report/model, render_json, render_pdf      | T-REP-08 | concepts/pricing-data |
 | FR-29  | Ops | scripts/pricing_refresh.py                 | T-OPS-04 | concepts/pricing-data |
 | FR-30  | C5  | report/model (equiv-spend flag), _report_body | T-REP-09 | quickstart |
+| FR-31  | v1.5 | PLANNED (GRAND ORDER v2, WP-2 dashboard "My audits"; purged rows metadata-only) | test IDs assigned in PLAN-V15 | — |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 | concepts/how-it-works, engineering/testing |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) | engineering/security |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 | api/overview |

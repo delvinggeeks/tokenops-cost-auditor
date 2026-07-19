@@ -153,3 +153,24 @@ under "Amendments" with date + reason.
   (4) Sequence: R-LAUNCH-POLISH + R-ONBOARD → walkthrough → launch thread
   with Connect flows honestly absent from claims → AGG build starts
   immediately after.
+- 2026-07-20 GRAND CONSOLIDATED ORDER v2 (founder): platform vision recorded
+  (PLAN §0.0 — WitAura AI Agentic Engineering Governance Platform ecosystem;
+  buyer = business owner; proof = verified savings; three rings strictly
+  sequenced); intelligence flywheel recorded (docs/12-FLYWHEEL.md — five
+  ingestion tiers T1-T5 on one CallRecordFrame/AggregateFrame contract,
+  deterministic LLM-free judgment as label factory, learning ladder L0-L4
+  under the honesty law, four moats, R-STANDARDS: OTel GenAI semconv ingest
+  constraint + FOCUS-aligned export, docs-site Standards page). v1.5
+  "MONITOR" SCOPE FROZEN, 14 working days, WP-1..7 (Connect primary
+  onboarding; owner-lens dashboard R-OWNER-LENS + FR-31; proactive re-audits
+  + alerts observe-and-alert-only + L0 feedback capture; Savings Statement;
+  settings; Razorpay+Stripe subscriptions Free/$99 Pro/$299 Team/one-shot
+  $500 kept; polish+onboard delivering R-LAUNCH-POLISH + R-ONBOARD, hero A/B
+  per R-PAINMOMENT). Requirement amendments: X-05 relaxed ONLY to SSR+htmx
+  for v1.5; FR-22 extended to connector-pulled and streamed data; FR-31
+  added. Hard conditions: scope frozen (additions = one BACKLOG line); day
+  14 ships whatever exists; founder walkthrough of the live product during
+  the build; at completion launch assets refresh (figure inventory only,
+  rails attached), thread posts, day-45 revenue gate restarts from that
+  date. First task: PLAN-V15.md, then STOP for founder approval — no
+  application code before approval.

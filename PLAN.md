@@ -8,6 +8,23 @@ Author: Lokesh Prasanna Kumar S. Date: 2026-07-17.
 
 ## 0. Decisions of record
 
+### 0.0 Platform vision (founder, 2026-07-20, GRAND CONSOLIDATED ORDER v2 — verbatim)
+
+WitAura AI Agentic Engineering Governance Platform — an ecosystem, not a
+report tool: INPUT (any form a customer's LLM usage exists) -> ANALYZE
+(deterministic, evidence-cited) -> REPORT (dollar-ranked) -> ACT (fixes +
+feedback) -> PREVENT (alerts, budgets, later real-time control) -> IMPROVE
+(models learning from accumulated customer data). Buyer = the BUSINESS
+OWNER; proof = VERIFIED SAVINGS; goal = the platform sits in the customer's
+daily operations and justifies its subscription with money it demonstrably
+saved. Three rings, strictly sequenced: SPEND (audit -> control plane),
+DISCIPLINE (Build Health), COMPREHENSION (codebase retrofit). TokenOps Cost
+Auditor (live) is ring one's wedge; v1.5 (Part D) converts it into the
+recurring ecosystem product and starts the data flywheel.
+
+[Companion: docs/12-FLYWHEEL.md (Part B — ingestion tiers, deterministic
+judgment, learning ladder, four moats, R-STANDARDS).]
+
 ### 0.1 Founder rulings on §4 questions (2026-07-17, binding)
 
 **R-Q1/Q2 GATE CADENCE — CONFIRMED by founder at D1 stop.** Gates fire only at
@@ -341,8 +358,9 @@ intact for the audit product; recorded rationale: in-path components live
 in the customer's VPC per the deployment contract, post-trust.
 (4) Sequence: R-LAUNCH-POLISH + R-ONBOARD → walkthrough → launch thread
 with Connect flows honestly ABSENT from claims → AGG build starts
-immediately after. [Main-thread note: R-LAUNCH-POLISH and R-ONBOARD
-contents not yet received as of this recording.]
+immediately after. [Superseded on sequencing 2026-07-20: GRAND ORDER v2
+delivers R-LAUNCH-POLISH + R-ONBOARD as v1.5 WP-7 and folds the Connect
+build into v1.5 WP-1 — see the GRAND ORDER v2 block below.]
 
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
@@ -352,7 +370,45 @@ shift — audit demand spikes); (c) the thread's hook leads with the
 bill-shock scenario, not the category. Landing hero line test at polish:
 "Just got an AI bill you can't explain?" variant vs current. No product
 change. [Applied: Asset 1 hook rewritten + distribution section added to
-launch/launch-assets-DRAFT.md; hero test parked for R-LAUNCH-POLISH.]
+launch/launch-assets-DRAFT.md; hero test lands in v1.5 WP-7 (GRAND ORDER
+v2 delivers R-LAUNCH-POLISH there).]
+
+**GRAND CONSOLIDATED ORDER v2 (founder, 2026-07-20, FINAL).** Supersedes
+and DELIVERS pending R-LAUNCH-POLISH + R-ONBOARD (inside v1.5 WP-7).
+Part A: platform vision recorded verbatim at §0.0. Part B: intelligence
+flywheel recorded at docs/12-FLYWHEEL.md (tiers T1-T5 on one frame
+contract with per-tier honest detector coverage; LLM-free engine as label
+factory; learning ladder L0-L4 under the HONESTY LAW — no model ships
+below its data threshold, every output prints training-population size;
+four moats verbatim; R-STANDARDS: OTel GenAI semconv T4 constraint +
+FOCUS-aligned export recorded now, spec'd at T4 build; docs-site Standards
+page added). Part C: all three follow-ups were already applied 2026-07-20
+(commit 82024a1) — verified, not redone; digest-arrival confirmation
+pending founder inbox. Part D: v1.5 "MONITOR" SCOPE FROZEN — 14 working
+days, WP-1 Connect (primary onboarding, executes promoted R-CONNECT),
+WP-2 dashboard + R-OWNER-LENS (owner view PRIMARY: verified-savings
+headline from L0 deltas, spend/waste trends, top findings by $, sources
+status, next-audit countdown; engineering tab SECONDARY; FR-31 folded in),
+WP-3 proactive re-audits + alerts (observe-and-alert ONLY — X-02
+enforcement forbidden) + L0 feedback capture (mandatory), WP-4 Savings
+Statement (monthly CFO-forwardable; deltas verified, estimates labeled),
+WP-5 settings, WP-6 subscriptions (Razorpay + Stripe; Free 1 one-shot /
+Pro $99/mo 1 source / Team $299/mo 5 sources / one-shot $500 kept; FR-27
+dedup rails; dunning), WP-7 polish + onboard (landing visual pass, hero =
+dashboard + sample-report screenshots, /sample FR-16, guided get-your-logs
+tabs with counts-only reassurance, report web visual pass, owner-aimed
+copy, hero A/B per R-PAINMOMENT, pricing framed against the Savings
+Statement; ux-reviewer gates every changed surface). X-05 relaxed ONLY to
+SSR + htmx (docs/01 §G amendment); FR-22 extended to connector/streamed
+data; FR-31 added. LAWS unchanged (vv + cold-reviewer per milestone group,
+spec-guard traceability, golden discipline, TE incl. TE-11, K-2). HARD
+CONDITIONS: (a) scope frozen — additions = one BACKLOG line; (b) day 14
+ships whatever exists; (c) founder walkthrough of the CURRENT live product
+during the build; (d) at completion: launch-asset refresh (figure
+inventory only, rails attached), public thread posts, day-45 revenue gate
+restarts from that launch date. FIRST TASK then STOP: PLAN-V15.md
+(day-by-day WPs, test IDs, gate schedule, numbered ambiguities); no
+application code until founder approves PLAN-V15.
 
 ### 0.2 Standing decisions
 

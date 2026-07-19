@@ -86,7 +86,11 @@ FR-21 (M) Raw uploads auto-purged 7 days after report generation (daily
 cron); purge events written to append-only audit_log. Derived aggregates
 (no prompt content) retained.
 FR-22 (M) No prompt/completion TEXT is ever persisted beyond raw file
-lifetime; CallRecord stores counts/metadata only.
+lifetime; CallRecord stores counts/metadata only. [Founder amendment
+2026-07-20, GRAND ORDER v2: extends verbatim to connector-pulled and
+streamed data — the counts-only law applies at every ingestion tier's
+door, including the OTLP path where prompt-content attributes are dropped
+at ingest.]
 FR-23 (M) Landing page states data policy verbatim: "analyzed then
 deleted; nothing retained beyond 7 days; never used for training."
 NFR-01 (M) Analysis engine contains zero LLM/API inference calls.
@@ -134,8 +138,19 @@ billing cannot be assumed for the audited traffic (e.g. Claude Code exports),
 the report header and methodology carry verbatim: "Figures are API-equivalent
 token value; actual billing depends on your plan."
 
+FR-31 (M, v1.5) [founder amendment 2026-07-20, GRAND ORDER v2 / WP-2]
+"My audits" history view for logged-in users, folded into the /dashboard.
+Purged audits (FR-21) appear as metadata-only rows (counts, dates, status
+— never content).
+
 ## G. Out of scope (recorded as requirements to NOT build)
 
 X-01 Live proxy/gateway. X-02 Policy/budget enforcement. X-03 Multi-org
 RBAC/SSO. X-04 LLM-generated narrative in reports. X-05 SPA frontend.
 Violation of X-items in code review = reject PR.
+
+[Founder amendment 2026-07-20, GRAND ORDER v2: for the v1.5 MONITOR build,
+X-05 is relaxed ONLY to server-side rendering + htmx partials — no SPA
+framework, no frontend build step. X-01/X-02 stand for the audit product
+(alert-only budget observation in v1.5 is NOT enforcement; enforcement
+remains forbidden). X-03/X-04 unchanged.]
