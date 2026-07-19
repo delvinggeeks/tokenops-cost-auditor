@@ -6,9 +6,14 @@ call records, and the upload builder would misreport bucket counts as call
 counts. Same dataclass, same renderer, same persistence tables — only the
 assembly respects aggregate semantics: row_count = SUM of provider-reported
 calls; spend is the as-billed bucket cost at the verified rate card;
-unpriced models are listed, never guessed (FR-28 discipline). Inactive
+unpriced models are listed, never guessed (FR-28 discipline; a model
+unpriced here is the same model the estimators skipped — one FR-28
+surface). An unpriced DOWNGRADE TARGET makes d1 skip conservatively and
+does not appear in unpriced_models (it carries no usage). Inactive
 detectors (D4/D5/D6) land in report.coverage as labeled rows carrying NO
-savings number, each with the one-line upgrade path (R-Q1 law).
+savings number, each with the one-line upgrade path (R-Q1 law). Every run
+creates a NEW audit: the weekly series is deliberate history for the
+dashboard trend, not an idempotent overwrite.
 """
 
 from __future__ import annotations
@@ -19,7 +24,7 @@ from typing import cast
 
 import pandas as pd
 import structlog
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
@@ -163,9 +168,12 @@ def run_source_audit(
         coverage=coverage_rows(),
     )
 
-    # Same persistence shape as the upload runner (idempotent re-run)
-    session.execute(delete(FindingRow).where(FindingRow.audit_id == audit.id))
-    session.execute(delete(CallAggregate).where(CallAggregate.audit_id == audit.id))
+    # Each scheduled run creates a NEW audit deliberately: the weekly series
+    # is the dashboard's trend history (WP-2). Growth is bounded by cadence
+    # (52 audits/source/year x the window's bucket rows); FR-21's "derived
+    # aggregates retained" clause covers these. (G-V1 cold-reviewer f.2:
+    # the previous delete-by-new-id lines were dead code and implied an
+    # idempotent overwrite that was never the semantics — removed.)
     for f in findings:
         session.add(
             FindingRow(

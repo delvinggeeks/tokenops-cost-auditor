@@ -85,6 +85,9 @@ def run_pull(
         else:
             for field_name in ("calls", "prompt_tokens", "completion_tokens", "cached_tokens"):
                 setattr(existing, field_name, b[field_name])
+            # Latest-wins by design (G-V1 cold-reviewer f.4): the row always
+            # reflects its most recent fetch; pull history lives in the
+            # PullStats summary logged on every pull, not per row.
             existing.provenance = provenance
             stats.updated_existing += 1
     source.last_pull_at = utcnow()

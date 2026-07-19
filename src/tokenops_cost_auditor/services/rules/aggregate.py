@@ -9,6 +9,13 @@ logs" rows via INACTIVE_ON_AGGREGATE — no savings number is ever emitted
 for them here (R-Q1 law). All aggregate findings carry
 confidence=ESTIMATED.
 
+Unpriced models (PricingGapError) are skipped conservatively and WITHOUT
+logging — this module stays pure (no I/O). Any usage model skipped here is
+also unpriced in the caller's spend pass and therefore surfaces in
+report.unpriced_models (FR-28); the one silent corner is an unpriced d1
+DOWNGRADE TARGET, which skips the finding entirely (never invent a number)
+— noted in source_audit.py's docstring. (G-V1 cold-reviewer f.3.)
+
 Money math: each estimator has a hand-derived golden in
 tests/test_aggregate_rules.py against tests/fixtures/aggregate_usage.json,
 with the spreadsheet derivation in tests/fixtures/pricing_golden_NOTES.md

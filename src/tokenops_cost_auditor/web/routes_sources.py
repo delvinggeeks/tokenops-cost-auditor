@@ -85,6 +85,10 @@ def connect_source(
         user = get_or_create_user(session, user_email)
         plan = user_plan(session, user.id)
         limit = settings.plan_source_limits.get(plan, 0)
+        # Lock the user row so concurrent connects serialize on the count
+        # (G-V1 cold-reviewer f.1: read-then-insert raced past the plan cap).
+        # Row lock on Postgres; no-op on SQLite.
+        session.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
         active = (
             session.execute(
                 select(Source).where(Source.user_id == user.id, Source.status == "active")
