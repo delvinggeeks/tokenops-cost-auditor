@@ -1,9 +1,59 @@
 # PLAN-V15.md — v1.5 "MONITOR" build plan (GRAND CONSOLIDATED ORDER v2, Part D)
 
-Status: **DRAFT — awaiting founder approval. No application code before approval.**
+Status: **APPROVED by founder 2026-07-20, with rulings recorded in §0.**
 Scope: FROZEN by GRAND ORDER v2 (founder, 2026-07-20). 14 working days.
 Governing docs: docs/00-07, 09, 10, 12; PLAN.md §0.0-0.1 (vision + order).
 Author: Lokesh Prasanna Kumar S. Date: 2026-07-20.
+
+## 0. Decisions of record (founder rulings at approval, 2026-07-20)
+
+**R-Q1 — T2 reduced detector set.** ACTIVE on T2: D1 (aggregate variant:
+model-mix vs avg completion size per bucket), D2 (via the providers'
+cached-token fields), D3 (aggregate prompt-size averages, coarse —
+confidence=estimated). INACTIVE on T2: D4, D5, D6 — each appears in T2
+reports as a labeled "requires per-request logs" row with a one-line
+upgrade path to upload/collector (honest coverage per docs/12, and a
+built-in upsell). NEVER emit a savings number from a detector the tier
+cannot support. New aggregate estimators are money math: golden files +
+spreadsheet derivation in the NOTES sheet, same commit (CLAUDE.md rule 4).
+
+**R-Q5/Q6 — plan source accounting.** A "source" = one active provider
+org connection. Free = 1 one-shot FILE audit only (no connections, no
+scheduler, no card required). Pro = 1 connected source + weekly scheduled
+audits + unlimited manual file uploads (fair-use note in ToS). Team = 5
+connected sources. Swapping = revoke + connect (active-connection count
+is what is limited). Downgrade below current source count: extra sources
+auto-paused oldest-first, never deleted.
+
+**R-Q9 — VERIFIED headline formula (money math; golden discipline).**
+verified_savings(month) = Σ over findings with status=Applied of
+max(0, baseline_monthly_impact − recomputed_impact_same_detector_and_route),
+counted ONLY after ≥1 post-application audit covering ≥7 days of data;
+per-finding verified amount capped at its original estimate. Manual
+savings-realized entries are shown separately, labeled
+"customer-reported", NEVER in the verified headline. Unapplied findings
+appear as "identified", never as savings. Spreadsheet derivation for the
+formula's fixture in the NOTES sheet.
+
+**R-Q11/Q12 — payments routing + dunning.** Razorpay for India-billing
+customers (INR price list FIXED IN CONFIG: Pro ₹8,999/mo, Team ₹26,999/mo
+— display both); Stripe for everyone else (USD). One subscription per
+account; currency chosen at checkout by billing country. Dunning: day 0 =
+email + provider smart retries; day 7 = account read-only (dashboard
+visible, scheduled audits paused, connections kept); day 21 =
+subscription cancelled, account reverts to Free; data lifecycle unchanged
+(normal purge rules — cancellation never triggers extra deletion).
+
+**R-WALKTHROUGH.** Day-3 slot ACCEPTED as scheduled — founder held to it;
+the walkthrough punch list becomes fix items inside this build, never new
+scope.
+
+**Remaining questions (Q2,3,4,7,8,10,13,14,15,17,18 + unruled parts of
+Q11).** Defaults accepted under two standing guardrails: any default
+touching money math is recorded in the golden NOTES sheet with rationale;
+any default interacting with X-scope, FR-22, or the honesty law is
+ESCALATED, never defaulted. Chosen defaults are listed in STATUS at the
+end of M1.
 
 Laws in force, unchanged: TE-1..TE-11 token economy; K-1..K-4 kill switches;
 golden money-math discipline (engine untouched — byte-identical goldens are a
