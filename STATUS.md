@@ -3,6 +3,23 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## D13 FOLLOW-UP RULINGS APPLIED (founder 2026-07-20)
+
+(1) DIGEST_TO=lokesh@tokenops.cloud set on the box, app recreated; manual
+digest run SENT (mail.sent logged) — it surfaced a real NFR-08 alert ("no
+backup dump found"), so the backup job was run manually (pg dump 4.0M +
+reports tar 5.6M) and the digest re-run is alert-free; scheduled digest
+03:00 UTC daily. (2) NFR-04 founder amendment recorded in docs/01 (bound
+restated <=11 min/660s on the 4-vCPU class; VPS measured 624s — honest
+number published, spec amended, never the reverse); docs-site performance
+page gained the production-hardware section (624s/2.25GiB single; 34m20s/
+5.14GiB 2x-concurrent; Contabo spec stated) and was REBUILT AND SHIPPED to
+docs.tokenops.cloud (live-verified); traceability NFR-04 row updated same
+commit. (3) Ledger row 2 ritual audited: tick applied only AFTER the
+founder's explicit VERIFIED message, log line signed in the same commit
+(7112519) — stands; offer open to revert to pending if the founder wants
+row-1-depth independent re-pricing added.
+
 ## R-PAINMOMENT APPLIED (founder 2026-07-20) — trigger-moment GTM; thread hook now bill-shock-first
 
 PLAN §0.1 ruling recorded. launch-assets-DRAFT: Asset 1 post 1/ rewritten

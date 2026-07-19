@@ -41,7 +41,7 @@ publicly ("—" = internal-only, no public page needed).
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 | concepts/how-it-works, engineering/testing |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) | engineering/security |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 | api/overview |
-| NFR-04 | C2..C4 | runner (perf fixture 1M rows)           | T-PERF-01 | engineering/performance |
+| NFR-04 | C2..C4 | runner (perf fixture 1M rows); bound amended to 660s on 4-vCPU class (founder 2026-07-20, D13 VPS measured 624s) | T-PERF-01 + D13 VPS re-validation (CHANGELOG 2026-07-19) | engineering/performance |
 | NFR-05 | C9  | obs/logging, /healthz                      | T-OBS-01..02 | engineering/integration |
 | NFR-06 | C9  | obs/errors                                 | T-OBS-03 | — |
 | NFR-07 | C3  | pricing/coster reconcile                   | T-PRC-05 (property) | engineering/testing |

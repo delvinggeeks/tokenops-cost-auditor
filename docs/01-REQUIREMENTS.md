@@ -95,7 +95,12 @@ NFR-03 (M) Rate limiting on upload + auth endpoints.
 
 ## F. Performance, reliability, observability, ops
 
-NFR-04 (M) 1M-row JSONL processed < 10 min on single 4-vCPU VPS.
+NFR-04 (M) 1M-row JSONL processed <= 11 min (660 s) on the reference
+  single 4-vCPU VPS class. [Founder amendment 2026-07-20, D13 deploy: the
+  production box (Contabo 4 vCPU / 7.8 GiB) measured 624 s end-to-end via
+  the live HTTPS path — 4% over the original 600 s bound. We publish the
+  honest number and amend the spec, never the reverse. Workstation-class
+  reference (94.3 s) unchanged in docs benchmarks.]
 NFR-05 (M) Structured JSON logging w/ request IDs; /healthz endpoint.
 NFR-06 (M) Error tracking hook (Sentry-compatible, env-gated).
 NFR-07 (M) Cost math reconciliation property tests (±0.5%).
