@@ -3,6 +3,36 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## v1.5 M1 BUILT (V-D1..V-D3, branch v15-m1) — at G-V1 gate
+
+Foundations: 7 additive tables (migration 003), HKDF/Fernet source-key
+encryption (decrypt only in pull path; revoke deletes ciphertext;
+never-logged guard T-KEY-03), v1.5 config knobs + .env.example. WP-1: T2
+aggregate estimators per R-Q1 (d1/d2/d3 variants, hand-derived goldens
+13.365/4.32/2.16/1.296/3.69, derivations in golden NOTES same commit;
+d4/d5/d6 NEVER emit on aggregates — labeled upgrade-path coverage rows);
+OpenAI+Anthropic usage clients (fixture-driven, documented mapping,
+injectable SupportsGet); pull.py idempotent upsert with PullStats summary
+logged every pull; source_audit.py account-tier reports (tier+coverage
+keys added to report JSON, T-REP-03 updated same commit; row_count = Σ
+provider calls; equiv_spend=false); connect/revoke SSR UI (plan-gated
+R-Q5/Q6, key never rendered). WP-3a: ofelia hourly connector-tick
+(no-overlap) → due daily pulls + weekly audits from last_*_at stamps,
+re-entrant, per-source error isolation. Suite 96 green exit-code-checked;
+ruff+mypy clean. ACCEPTED DEFAULTS (per approval order; guardrails
+honored): Q2 backfill 30d; Q3 ofelia-tick→due-queue; Q4 cryptography dep
++ httpx promoted dev→runtime (unasked, recorded); Q10 alert threshold
+knobs seeded (spend-spike DoD 30%, waste target 25%; delivery lands
+V-D5); money-math defaults (D2-agg target = account's own best bucket
+share; D3-agg needs ≥3 buckets) recorded in golden NOTES. DEFERRED to
+their milestones: Q7 statement anchor (V-D6), Q8 savings-realized
+enforcement (V-D5), Q13 htmx vendoring (V-D4), Q14 FR-31 retention
+(V-D4), Q15 hero A/B (V-D9), Q17 early-access untouched, Q18 day-45
+metric = MRR + one-shot combined (paperwork). Nothing escalated: no
+default touched X-scope/FR-22/honesty law. NEXT: G-V1 verdicts, then
+STOP for founder review; V-D4 dashboard after. Walkthrough (R-WALKTHROUGH)
+scheduled day 3 — founder held to it.
+
 ## GRAND CONSOLIDATED ORDER v2 APPLIED (founder 2026-07-20) — STOPPED at PLAN-V15 approval gate
 
 Part A: vision recorded verbatim PLAN §0.0. Part B: docs/12-FLYWHEEL.md
