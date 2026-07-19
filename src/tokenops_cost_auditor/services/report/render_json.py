@@ -54,6 +54,9 @@ def report_to_dict(report: ReportModel) -> dict[str, object]:
         ],
         "methodology": report.methodology,
         "data_handling": report.data_handling,
+        # v1.5 (R-Q1): ingestion tier + honest per-tier detector coverage
+        "tier": report.tier,
+        "coverage": list(report.coverage),
     }
 
 
