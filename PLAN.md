@@ -538,6 +538,26 @@ provider OAuth adoption tripwire — the day OpenAI/Anthropic ship OAuth for
 usage scopes it promotes immediately as the sign-in path; until then the
 wizard IS the state of the art.
 
+**R-STMT-MONTH (founder, 2026-07-22) — ratifies the V-D6 default as LAW.**
+Verified savings credit to the month of the PROVING audit; pending belongs
+to the month the fix was applied. Rationale adopted verbatim: a sent
+statement is an archived artifact and must be true when written, never
+restated. The single compute() with a period filter is confirmed as the
+ONLY implementation — a second copy of that formula is forbidden forever.
+
+**R-COVERAGE-DEBT (founder, 2026-07-22).** services/mail/smtp.py (83.8%)
+and services/lifecycle/purge.py (78.9%) CARRY as recorded debt — declining
+to expand a frozen milestone was the correct call. Close them inside
+V-D10's final sweep ONLY if the day has slack; otherwise they transfer to
+BACKLOG with their numbers. Debt recorded beats scope creep every time.
+
+**R-WIZ-DEGRADE (founder, 2026-07-22) — answers the V-D9 wizard question.**
+Graceful degrade APPROVED: a provider unreachable at validation means the
+key is saved with a plain-words "we couldn't reach your provider just now;
+we'll validate on the first pull" state plus a retry affordance. Hard-fail
+REJECTED — a customer's first minute must never hang on OpenAI's status
+page. T-WIZ-05 covers the degrade path.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

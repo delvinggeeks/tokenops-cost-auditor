@@ -60,6 +60,9 @@ class User(Base):
     # v1.5 V-D4g: guided-tour dismissal, server-side so it survives devices;
     # "Replay tour" clears it (R-DESIGN-V3 §2a).
     tour_dismissed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # v1.5 V-D7 email preference. Transactional mail (magic links,
+    # report-ready) is never opt-out; this covers the monthly statement.
+    statement_emails: Mapped[bool | None] = mapped_column(Boolean)
 
 
 class Audit(Base):

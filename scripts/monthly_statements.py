@@ -45,6 +45,9 @@ def main() -> int:
             # Per-user isolation: one bad address or build must not cost every
             # later user their statement (V-D6 cold-review f.4).
             try:
+                if user.statement_emails is False:  # NULL = opted in
+                    skipped += 1
+                    continue
                 doc = statements.build(session, user, year, month)
                 row = statements.archive(session, user, doc)
                 session.flush()

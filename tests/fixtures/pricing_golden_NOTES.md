@@ -184,7 +184,8 @@ baseline in force when the customer acted). Traffic evidence for R2 reads
 call_aggregates for the audit; a finding with no route recorded can never
 be credited on disappearance (conservative by construction).
 
-### Statement month-credit rule (V-D6, 2026-07-22) — money-math default
+### Statement month-credit rule (V-D6, 2026-07-22) — RATIFIED AS LAW
+### (R-STMT-MONTH, founder 2026-07-22; was a recorded default)
 
 R-Q9 says verified_savings(MONTH); it does not say which month a saving
 lands in when the fix ships in one month and the proving audit runs in the

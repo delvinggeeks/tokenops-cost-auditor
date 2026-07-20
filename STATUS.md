@@ -3,6 +3,30 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D7 BUILT (founder GO 2026-07-22) — Settings, boring on purpose; at gate
+
+Rulings recorded first: R-STMT-MONTH (V-D6 default ratified as law — single
+compute(), a second copy forbidden forever), R-COVERAGE-DEBT (smtp/purge
+carry; close in V-D10 only if slack), R-WIZ-DEGRADE (graceful degrade
+approved for the wizard; T-WIZ-05 added to V-D9).
+BUILT: one grouped Settings page (R-DESIGN §4f) — account facts, email
+preference, connected sources with revoke, data controls, billing link.
+Email: a statement-email toggle (migration 007, NULL = opted in) honoured
+by the monthly job; the page states plainly that sign-in links and
+report-ready mail always send, because they are how the product works.
+DATA CONTROLS: "delete my uploads now" states its consequences in words
+BEFORE asking, then requires the exact typed phrase; a near-miss deletes
+nothing. REFACTOR FOUND A REAL GAP: the admin manual purge had drifted
+from the scheduled one — it never deleted the FR-26 idempotency keys.
+Extracted ONE purge_one() primitive now shared by scheduled, admin and
+customer paths, which closes that gap and is pinned by a regression.
+Purge is account-scoped (another account's uploads untouched, tested) and
+idempotent. 10 tests (T-SET-01..03 + scoping/idempotence/primitive).
+purge.py 77.5%→80.0%: every remaining uncovered line is the pre-existing
+CLI main(), i.e. exactly the debt the founder ruled to carry — no new
+uncovered code. Suite green and deterministic; total 95.4%.
+NEXT: gate verdicts, then STOP.
+
 ## V-D6 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
 
 vv: coverage TOTAL 95.4%, statements/build.py AND dashboard/savings.py both

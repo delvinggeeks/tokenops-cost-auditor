@@ -37,20 +37,39 @@ def due_audits(session: Session, purge_after_days: int, now: datetime) -> list[A
     return [a for a in candidates if _as_utc(a.report_ready_at or a.created_at) <= cutoff]
 
 
+def purge_one(
+    session: Session,
+    audit: Audit,
+    actor: str = ACTOR,
+    mode: str = "scheduled",
+    now: datetime | None = None,
+) -> bool:
+    """Purge ONE audit's raw upload. The single definition of what purging
+    means (FR-21 + FR-26), so the scheduled, admin and customer-initiated
+    paths cannot drift — the manual path previously skipped the idempotency
+    keys the scheduled path deletes. Does not commit; the caller does.
+    Returns False if there was nothing left to purge."""
+    if audit.upload_path is None and audit.purged_at is not None:
+        return False
+    if audit.upload_path:
+        shutil.rmtree(Path(audit.upload_path).parent, ignore_errors=True)
+    audit.upload_path = None
+    audit.purged_at = now or datetime.now(UTC)
+    # FR-26: idempotency keys share the upload lifecycle — a replayed key
+    # after purge is a fresh upload, not a stale replay
+    session.execute(delete(IdempotencyKey).where(IdempotencyKey.audit_id == audit.id))
+    auditlog.append(session, actor, "audit.purged", audit.id, {"mode": mode})
+    return True
+
+
 def purge_due(session: Session, purge_after_days: int, now: datetime | None = None) -> list[str]:
     """Purge every due audit; returns purged audit ids. Commits once at the end."""
     now = now or datetime.now(UTC)
-    purged: list[str] = []
-    for audit in due_audits(session, purge_after_days, now):
-        if audit.upload_path:
-            shutil.rmtree(Path(audit.upload_path).parent, ignore_errors=True)
-        audit.upload_path = None
-        audit.purged_at = now
-        # FR-26: idempotency keys share the upload lifecycle — a replayed key
-        # after purge is a fresh upload, not a stale replay
-        session.execute(delete(IdempotencyKey).where(IdempotencyKey.audit_id == audit.id))
-        auditlog.append(session, ACTOR, "audit.purged", audit.id, {"mode": "scheduled"})
-        purged.append(audit.id)
+    purged = [
+        audit.id
+        for audit in due_audits(session, purge_after_days, now)
+        if purge_one(session, audit, mode="scheduled", now=now)
+    ]
     session.commit()
     return purged
 
