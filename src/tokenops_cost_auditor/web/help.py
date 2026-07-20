@@ -94,6 +94,19 @@ def _render_thresholds(text: str, settings: Settings) -> str:
         return text
 
 
+def wizard(provider: str) -> dict[str, str]:
+    """Connect-wizard copy. Same registry as everything else, so the jargon
+    guard and T-HELP coverage apply (R-MAGIC-CONNECT §3)."""
+    entry = _raw()["wizard"].get(provider)
+    if entry is None:
+        raise KeyError(f"help registry has no wizard copy for '{provider}'")
+    return dict(entry)
+
+
+def wizard_providers() -> list[str]:
+    return list(_raw()["wizard"])
+
+
 def guide_page(slug: str) -> dict[str, str]:
     entry = _raw()["guide_pages"].get(slug)
     if entry is None:

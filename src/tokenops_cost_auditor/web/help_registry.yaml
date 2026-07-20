@@ -157,6 +157,28 @@ detectors:
     verify: "Your next audit sees fewer, larger calls on that route and prices the difference."
     methodology_url: "/methodology/#d6-chatty-loop"
 
+wizard:
+  openai:
+    provider_name: "OpenAI"
+    step1_title: "Open your OpenAI usage keys page"
+    step1_body: "You need a read-only key to your usage reports. On the page that opens, create a key and tick the box that lets it read usage — nothing else."
+    console_url: "https://platform.openai.com/settings/organization/admin-keys"
+    permission_hint: "Tick: read usage reports"
+    step2_title: "Paste the key here"
+    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
+    step3_title: "That's it — nothing else to do, ever."
+    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+  anthropic:
+    provider_name: "Anthropic"
+    step1_title: "Open your Anthropic key settings"
+    step1_body: "You need a read-only key to your usage reports. Create one on the page that opens and give it permission to read usage — nothing else."
+    console_url: "https://console.anthropic.com/settings/admin-keys"
+    permission_hint: "Choose: read-only usage access"
+    step2_title: "Paste the key here"
+    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
+    step3_title: "That's it — nothing else to do, ever."
+    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+
 guide_pages:
   how-it-works:
     title: "How TokenOps works"

@@ -1,0 +1,92 @@
+{% extends "app/_shell.html" %}
+{% block title %}Connect {{ copy.provider_name }} — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+  <section class="widget w-8">
+    {# Breadcrumbs: the step's purpose stated in a sentence (R-DESIGN-V3 §2d) #}
+    <div class="steps-bar" aria-label="Connect {{ copy.provider_name }}, step 1 of 3">
+      <span class="cur"><span class="step-n">1</span></span>
+      <span class="cur lbl">Get a read-only key from {{ copy.provider_name }}</span>
+      <span class="step-n">2</span><span class="lbl">Paste it here</span>
+      <span class="step-n">3</span><span class="lbl">We take it from there</span>
+    </div>
+
+    {% if at_limit %}
+      <div class="empty">
+        <p>Your plan includes {{ limit }} connected source{{ "" if limit == 1 else "s" }},
+          and {{ limit }} {{ "is" if limit == 1 else "are" }} already in use. Revoke one
+          first, or move up a plan.</p>
+        <a class="btn" href="/settings">Manage sources</a>
+        <a class="btn btn-quiet" href="/billing">Compare plans</a>
+      </div>
+    {% else %}
+      <h2>{{ copy.step1_title }}</h2>
+      <p>{{ copy.step1_body }}</p>
+      <p>
+        <a class="btn btn-primary" href="{{ copy.console_url }}" target="_blank"
+           rel="noopener noreferrer">
+          Open {{ copy.provider_name }}'s key page</a>
+        <small class="muted">Opens in a new tab — come back here when you have the key.</small>
+      </p>
+
+      {# Annotated illustration of the exact control to use. Drawn, not a
+         screenshot binary, so it stays in version control and cannot rot
+         silently against a stale image. #}
+      <figure style="margin: var(--s3) 0;">
+        <svg viewBox="0 0 520 150" width="100%" role="img"
+             aria-label="The permission checkbox to tick when creating the key">
+          <rect x="1" y="1" width="518" height="148" rx="6" fill="var(--surface)"
+                stroke="var(--rule)"/>
+          <text x="20" y="30" class="axis-label" font-size="12">Create new key</text>
+          <line x1="20" y1="42" x2="500" y2="42" stroke="var(--rule)"/>
+          <text x="20" y="66" font-size="12" fill="var(--ink-soft)">Name</text>
+          <rect x="120" y="52" width="200" height="20" rx="3" fill="var(--surface-tint)"
+                stroke="var(--rule)"/>
+          <text x="20" y="100" font-size="12" fill="var(--ink-soft)">Permissions</text>
+          <rect x="120" y="88" width="14" height="14" rx="3" fill="var(--verified-bg)"
+                stroke="var(--verified)" stroke-width="2"/>
+          <path d="M123 95l3 3 6-6" stroke="var(--verified)" stroke-width="2" fill="none"/>
+          <text x="144" y="100" font-size="12" font-weight="600">{{ copy.permission_hint }}</text>
+          <rect x="112" y="80" width="300" height="30" rx="4" fill="none"
+                stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="424" y="100" font-size="11" fill="var(--accent)">this one</text>
+        </svg>
+        <figcaption class="muted" style="font-size:13px">
+          That single permission is all we need — and all we can use.</figcaption>
+      </figure>
+
+      <h2>{{ copy.step2_title }}</h2>
+      <p>{{ copy.step2_body }}</p>
+      <form hx-post="/sources/connect/{{ provider }}/validate"
+            hx-target="#verdict" hx-swap="innerHTML" hx-indicator="#checking">
+        <label>Your read-only key
+          <input name="api_key" type="password" autocomplete="off" required
+                 style="width:100%; max-width:34em" aria-label="Your read-only usage key">
+        </label>
+        <p style="margin-top: var(--s2);">
+          <button class="btn btn-primary" type="submit">Check and connect</button>
+          <span id="checking" class="htmx-indicator muted">Checking with
+            {{ copy.provider_name }}…</span>
+        </p>
+      </form>
+      <div id="verdict" aria-live="polite"></div>
+    {% endif %}
+    <div class="provenance">The key is encrypted the moment it arrives, never written to
+      logs, and deleted the moment you revoke it.</div>
+  </section>
+
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
+      <h2>What we can and can't see</h2>
+    </div>
+    <p><strong>We can see:</strong> how many calls you made, which models, and how many
+      tokens — the same counts on your bill.</p>
+    <p><strong>We can never see:</strong> your prompts, your completions, or your
+      customers' data. We can't make calls on your account either.</p>
+    <p class="muted">Prefer not to connect anything? You can upload a log file instead
+      and get all six detectors.</p>
+    <a class="btn btn-quiet" href="/upload">Upload a file instead</a>
+  </section>
+</div>
+{% endblock %}

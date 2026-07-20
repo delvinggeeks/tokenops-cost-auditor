@@ -35,6 +35,12 @@
 {% endif %}
 
 <h2>Connect a provider</h2>
+<p>
+  <a class="btn btn-primary" href="/sources/connect/openai">Connect OpenAI</a>
+  <a class="btn btn-primary" href="/sources/connect/anthropic">Connect Anthropic</a>
+  <small class="muted">Guided — we show you exactly which key to make.</small>
+</p>
+<details style="margin-top:1rem"><summary>Paste a key directly</summary>
 <form method="post" action="/sources">
   <label>Provider
     <select name="provider">
@@ -47,4 +53,5 @@
 </form>
 <p><small>The key is encrypted at rest, revocable here at any time, and never
 appears in logs or pages. Revoking deletes the stored key immediately.</small></p>
+</details>
 {% endblock %}

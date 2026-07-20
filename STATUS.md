@@ -3,6 +3,28 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D9 IN PROGRESS — Connect wizard built (T-WIZ-01..05 green); polish pass next
+
+R-NORMALIZE-AT-EVERY-DOOR + R-BATCH-SEND-ISOLATION recorded as permanent
+laws, each naming the defect that produced it. WIZARD (R-MAGIC-CONNECT):
+3 steps per provider — deep-link to the exact console screen with an
+annotated SVG of the permission box (drawn, not a screenshot binary, so it
+cannot rot silently in version control), live server-side validation, and a
+done-state that promises nothing further. Three verdicts in plain words:
+connected (read-only, states what we can NEVER see), can't-read-usage
+(saves nothing), unreachable (R-WIZ-DEGRADE: SAVES the key, says so, offers
+retry — a 6s timeout so a customer's first minute never hangs on a
+provider's status page). On success an immediate pull+audit runs in a
+background thread so the dashboard fills THIS session; a failure there is
+invisible because the tick remains the guarantee. Wizard copy lives in the
+help registry like every other string — and the T-WIZ-04 jargon guard
+promptly caught MY OWN copy ("Anthropic admin keys page"), which is exactly
+what the law is for; fixed the copy, not the test. Plan gate explains at
+the START rather than failing after a paste. 12 tests; validate.py 94.7%;
+suite green and deterministic; total 95.5%.
+REMAINING for V-D9: /sample, guided get-your-logs tabs, landing hero A/B,
+report visual pass, pricing framing — then the gates.
+
 ## V-D8 GATE CLOSED — cold-reviewer FAIL→FIXED · vv FAIL→FIXED (both re-verified)
 
 The founder's instruction to attack money paths paid for itself twice over.
