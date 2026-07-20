@@ -138,6 +138,7 @@ def compute(
 
     for key, (finding, fb) in applied.items():
         settled.add(key)
+        applied_month = (_aware(fb.ts).year, _aware(fb.ts).month)
         qualifying = [
             a
             for a in audits
@@ -145,7 +146,11 @@ def compute(
             and (a.observed_days or 0) >= MIN_VERIFY_DAYS  # and covers >= 7 days
         ]
         if not qualifying:
-            pending_count += 1
+            # Pending belongs to the month the fix was applied — reporting it
+            # in an unrelated month would contradict the rest of a
+            # period-scoped statement (V-D6 cold-review f.1).
+            if period is None or applied_month == period:
+                pending_count += 1
             continue
         check = qualifying[-1]  # the most recent qualifying audit
         by_key = {
@@ -158,9 +163,18 @@ def compute(
         elif _route_had_traffic(session, check, finding.route):
             recomputed = 0.0  # R2: gone, and the route was still running — fixed
         else:
-            pending_count += 1  # R2: gone, but no traffic to attribute it to
+            # R2: gone, but no traffic to attribute it to
+            if period is None or applied_month == period:
+                pending_count += 1
             continue
-        if period is not None and (check.created_at.year, check.created_at.month) != period:
+        if (
+            period is not None
+            and (
+                _aware(check.created_at).year,
+                _aware(check.created_at).month,
+            )
+            != period
+        ):
             continue  # proved in a different month — not this statement's line
         baseline = float(finding.monthly_impact_usd)
         verified += min(max(0.0, baseline - recomputed), baseline)

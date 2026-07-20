@@ -38,19 +38,28 @@ def main() -> int:
         else LogMailAdapter()
     )
     year, month = previous_month(datetime.now(UTC))
-    issued = skipped = 0
+    issued = skipped = failed = 0
     engine = create_engine(settings.database_url)
     with Session(engine) as session:
         for user in session.execute(select(User)).scalars().all():
-            doc = statements.build(session, user, year, month)
-            row = statements.archive(session, user, doc)
-            session.flush()
-            if statements.send(session, mail, user, row):
-                issued += 1
-            else:
-                skipped += 1
-            session.commit()
-    print(f"statements {year:04d}-{month:02d}: issued={issued} already_sent={skipped}")
+            # Per-user isolation: one bad address or build must not cost every
+            # later user their statement (V-D6 cold-review f.4).
+            try:
+                doc = statements.build(session, user, year, month)
+                row = statements.archive(session, user, doc)
+                session.flush()
+                if statements.send(session, mail, user, row):
+                    issued += 1
+                else:
+                    skipped += 1
+                session.commit()
+            except Exception as exc:
+                session.rollback()
+                failed += 1
+                print(f"  statement failed for {user.id}: {str(exc)[:120]}", file=sys.stderr)
+    print(
+        f"statements {year:04d}-{month:02d}: issued={issued} already_sent={skipped} failed={failed}"
+    )
     return 0
 
 

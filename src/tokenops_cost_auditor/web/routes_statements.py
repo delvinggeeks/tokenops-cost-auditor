@@ -6,6 +6,7 @@ who never logs in here. This page just makes it reachable.
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -20,6 +21,16 @@ from tokenops_cost_auditor.services.statements import build as statements
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 
 router = APIRouter(prefix="/statements", tags=["statements"])
+
+PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
+def _parse_period(period: str) -> tuple[int, int]:
+    """YYYY-MM or 400 — never an uncaught 500 on user-controlled input
+    (V-D6 cold-review f.3)."""
+    if not PERIOD_RE.match(period):
+        raise HTTPException(status_code=400, detail="period must be YYYY-MM")
+    return int(period[:4]), int(period[5:7])
 
 
 @router.get("", response_class=HTMLResponse)
@@ -72,13 +83,14 @@ def send_statement(
     request: Request, period: str, user_email: str = Depends(current_user)
 ) -> RedirectResponse:
     """Issue it, or re-send an already-issued one to the same address."""
+    _parse_period(period)  # reject malformed input before touching the DB
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         row = session.execute(
             select(Statement).where(Statement.user_id == user.id, Statement.period == period)
         ).scalar_one_or_none()
         if row is None:
-            year, month = int(period[:4]), int(period[5:7])
+            year, month = _parse_period(period)
             doc = statements.build(session, user, year, month)
             row = statements.archive(session, user, doc)
             session.flush()

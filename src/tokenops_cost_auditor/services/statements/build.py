@@ -16,7 +16,6 @@ one implementation of the formula, never a second copy.
 
 from __future__ import annotations
 
-from calendar import monthrange
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -44,11 +43,17 @@ class StatementDoc:
 
 
 def _month_bounds(year: int, month: int) -> tuple[datetime, datetime]:
-    last = monthrange(year, month)[1]
-    return (
-        datetime(year, month, 1, tzinfo=UTC),
-        datetime(year, month, last, 23, 59, 59, tzinfo=UTC),
+    """[start, next_month_start) — EXCLUSIVE at the top. A 23:59:59 upper
+    bound silently dropped audits landing in the final second, so a statement
+    could say "no audit ran this month" while showing a verified figure that
+    came from exactly that audit (V-D6 cold-review f.2)."""
+    start = datetime(year, month, 1, tzinfo=UTC)
+    nxt = (
+        datetime(year + 1, 1, 1, tzinfo=UTC)
+        if month == 12
+        else datetime(year, month + 1, 1, tzinfo=UTC)
     )
+    return start, nxt
 
 
 def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
@@ -60,7 +65,7 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
                 Audit.user_id == user.id,
                 Audit.status == "done",
                 Audit.created_at >= start,
-                Audit.created_at <= end,
+                Audit.created_at < end,
             )
             .order_by(Audit.created_at)
         )

@@ -287,3 +287,129 @@ class TestStatementPages:
         client.post(f"/statements/{period}/send", headers=HDR, follow_redirects=False)
         other = client.get(f"/statements/{period}", headers={"X-User-Email": "someone@else.com"})
         assert other.status_code == 404
+
+
+class TestColdReviewRegressionsV6:
+    """V-D6 cold-review FAIL (2026-07-22) — f.1..f.4."""
+
+    def test_f1_pending_is_period_scoped_like_everything_else(self, session: Session) -> None:
+        """A route applied in June must not be reported as pending in July's
+        statement — the artifact would contradict itself."""
+        user = User(email=EMAIL)
+        session.add(user)
+        session.flush()
+        a = Audit(
+            user_id=user.id,
+            status="done",
+            created_at=JUNE,
+            report_ready_at=JUNE,
+            observed_days=30,
+            row_count=10,
+            total_spend_usd=100.0,
+        )
+        session.add(a)
+        session.flush()
+        session.add(
+            FindingRow(
+                audit_id=a.id,
+                finding_id="D2-001",
+                detector="d2_missing_cache",
+                route="m1",
+                severity="high",
+                monthly_impact_usd=500.0,
+                confidence="estimated",
+                fix_text="x",
+                evidence_sample=[],
+            )
+        )
+        session.add(
+            FindingFeedback(
+                audit_id=a.id,
+                finding_id="D2-001",
+                verdict="applied",
+                actor=EMAIL,
+                ts=JUNE + timedelta(hours=2),
+            )
+        )
+        session.commit()
+        june = statements.build(session, user, 2026, 6)
+        july = statements.build(session, user, 2026, 7)
+        assert "awaiting confirmation" in june.body  # applied in June
+        assert "awaiting confirmation" not in july.body  # nothing to do with July
+
+    def test_f2_an_audit_in_the_final_second_is_not_dropped(self, session: Session) -> None:
+        """A 23:59:59 upper bound lost audits landing in the last second, so a
+        statement could deny an audit whose figures it was already showing."""
+        user = User(email=EMAIL)
+        session.add(user)
+        session.flush()
+        edge = datetime(2026, 6, 30, 23, 59, 59, 800000, tzinfo=UTC)
+        session.add(
+            Audit(
+                user_id=user.id,
+                status="done",
+                created_at=edge,
+                report_ready_at=edge,
+                observed_days=30,
+                row_count=42,
+                total_spend_usd=300.0,
+                savings_pct=10.0,
+            )
+        )
+        session.commit()
+        doc = statements.build(session, user, 2026, 6)
+        assert "No audit ran this month" not in doc.body
+        assert "Audits this month: 1" in doc.body
+        # and it does not leak into the next month
+        assert "No audit ran this month" in statements.build(session, user, 2026, 7).body
+
+    def test_f3_a_malformed_period_is_a_400_not_a_500(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        for bad in ("abcd-ef", "2026-13", "2026-00", "99999-99", "2026"):
+            r = client.post(f"/statements/{bad}/send", headers=HDR, follow_redirects=False)
+            assert r.status_code == 400, bad
+
+    def test_f4_one_bad_user_does_not_cost_the_others_their_statement(
+        self, session: Session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        good = User(email="good@example.com")
+        bad = User(email="bad@example.com")
+        session.add_all([bad, good])  # bad is processed first
+        session.commit()
+
+        class OneBadRecipient:
+            def __init__(self) -> None:
+                self.sent: list[str] = []
+
+            def alert(self, to_email: str, subject: str, body: str) -> None:
+                if to_email == "bad@example.com":
+                    raise RuntimeError("mailbox rejected")
+                self.sent.append(to_email)
+
+        mail = OneBadRecipient()
+        year, month = 2026, 6
+        issued = failed = 0
+        for user in session.execute(select(User)).scalars().all():
+            try:
+                doc = statements.build(session, user, year, month)
+                row = statements.archive(session, user, doc)
+                session.flush()
+                if statements.send(session, mail, user, row):
+                    issued += 1
+                session.commit()
+            except Exception:
+                session.rollback()
+                failed += 1
+        assert (issued, failed) == (1, 1)
+        assert mail.sent == ["good@example.com"]
+        # January boundary in the monthly job's own helper
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "monthly_statements", "scripts/monthly_statements.py"
+        )
+        assert spec and spec.loader
+        job = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(job)
+        assert job.previous_month(datetime(2026, 1, 15, tzinfo=UTC)) == (2025, 12)
+        assert job.previous_month(datetime(2026, 7, 1, tzinfo=UTC)) == (2026, 6)

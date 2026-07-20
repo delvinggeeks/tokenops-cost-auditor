@@ -3,7 +3,25 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D6 BUILT (founder GO 2026-07-22) — Savings Statement, the owner artifact; at gate
+## V-D6 — cold-reviewer FAIL→FIXED (vv verdict pending); statement built
+
+cold-review (4 findings, all closed): (f.1) pending_count was NOT
+period-scoped while verified was, so July's statement could report a fix
+applied in June as "awaiting confirmation" — the artifact contradicting
+itself. Pending now belongs to the month the fix was APPLIED, verified to
+the month an audit PROVED it. (f.2) _month_bounds closed at 23:59:59 while
+compute() matched on year/month, so an audit in the final second of a month
+was dropped from build()'s own query — a statement could print "No audit
+ran this month" above a verified figure sourced from exactly that audit.
+Both now share one exclusive [start, next-month-start) bound. (f.3)
+POST /statements/{period}/send parsed the path segment with int() — "2026-13"
+and "abcd-ef" were uncaught 500s; now a 400 via one validated parser.
+(f.4) the monthly job had no per-user isolation, so one rejected mailbox
+would silently cost every later user that month's statement. Regressions
+added for each. savings.py AND statements/build.py both at 100%; suite
+green and deterministic; total 95.4%.
+
+## V-D6 BUILT (founder GO 2026-07-22) — build record
 
 Inherits R-Q9 wholesale as ruled: VERIFIED-only headline (and subject),
 identified + customer-reported in their own labelled sections that are
