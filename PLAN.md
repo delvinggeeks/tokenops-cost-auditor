@@ -558,6 +558,17 @@ we'll validate on the first pull" state plus a retry affordance. Hard-fail
 REJECTED — a customer's first minute must never hang on OpenAI's status
 page. T-WIZ-05 covers the degrade path.
 
+**R-NORMALIZE-AT-EVERY-DOOR (founder, 2026-07-23) — permanent law.**
+Identity fields (email, event ids, route keys) are normalized IDENTICALLY at
+every read and write path. A lookup that can miss its own insert is the bug
+class — it produced a paid upgrade stuck in an infinite provider-retry loop
+(V-D8 f.1). Pinned by the mixed-case email test.
+
+**R-BATCH-SEND-ISOLATION (founder, 2026-07-23) — cross-cutting law.** Any
+loop that sends to multiple customers commits and isolates per iteration.
+Named after the repeat offence: the same defect appeared in alerts (V-D5
+f.2) and again in dunning (V-D8 f.4). Applies everywhere, forever.
+
 **R-ZTA (founder, 2026-07-22) — positioning; zero v1.5 scope change.**
 (a) Zero-token vocabulary in launch/landing/docs engineering page:
 "deterministic engine, no inference — we never burn your tokens to count
