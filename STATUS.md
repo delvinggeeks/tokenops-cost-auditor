@@ -3,7 +3,31 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D9 BUILT (wizard + polish) — at gate
+## V-D9 GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES (all 8 notes closed)
+
+ux (3, closed): done-state cut to ONE line per R-MAGIC-CONNECT §1c (the
+rest belongs on the dashboard); an orphaned hidden form removed from the
+unreachable branch; the counts-only promise restated INLINE under the key
+input — a reassurance one visual hop from the hand is half-read.
+cold-review (5, closed): (f.1) validation ran BEFORE the plan check, so a
+customer at their limit spent provider quota and six seconds to earn a 403
+— now authorize-then-validate, with a test asserting the provider is never
+contacted for a refused request. (f.2) a new user's row was discarded when
+a bad key rolled the transaction back; user creation now commits
+independently of the verdict. (f.3) no idempotency: a double-click bought
+two connections and two first-pulls — now 409 with a re-check inside the
+lock for the race. (f.4) the sample fixtures lived in tests/, absent from a
+wheel, so /sample would have errored for real installs; they now ship
+INSIDE the package and I verified it by building a wheel and listing its
+contents rather than assuming. (f.5) sample_html claimed to render once and
+did not — a public unauthenticated page re-running the engine per hit;
+memoised, with a test that fails if the engine runs twice for three
+requests. Suite green across 3 consecutive runs; ruff/mypy clean.
+STILL DEFERRED (unchanged, founder's call): report web visual pass and
+pricing-page Savings-Statement framing — the report shares its template
+with the PDF and the golden-determinism tests.
+
+## V-D8 GATE CLOSED
 
 R-WIZ-ILLUSTRATION ratified and the ruling text amended in PLAN §0.1 +
 PLAN-V15 (drawn diffable SVG replaces "annotated screenshot").

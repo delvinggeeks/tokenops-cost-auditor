@@ -63,6 +63,11 @@
           <input name="api_key" type="password" autocomplete="off" required
                  style="width:100%; max-width:34em" aria-label="Your read-only usage key">
         </label>
+        {# The promise restated where the hand is (ux gate f.3): a reassurance
+           one visual hop away is a reassurance half-read. #}
+        <p class="muted" style="font-size:13px; margin:6px 0 0">
+          This key lets us read usage counts and nothing else. We can never see your
+          prompts, and we can't make calls on your account.</p>
         <p style="margin-top: var(--s2);">
           <button class="btn btn-primary" type="submit">Check and connect</button>
           <span id="checking" class="htmx-indicator muted">Checking with

@@ -8,6 +8,7 @@ and a provider outage that degrades instead of blocking.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
@@ -136,7 +137,7 @@ class TestInstantFirstPull:
         )
         assert resp.status_code == 200
         assert "Go to my dashboard" in resp.text
-        assert "in a minute or two, not tomorrow" in resp.text
+        assert "nothing else to do" in resp.text.lower()  # the ONE-line promise
         assert len(started) == 1, "the first pull must start immediately"
 
     def test_a_failing_first_pull_never_breaks_the_connect(
@@ -222,3 +223,118 @@ class TestWizardPlanGate:
         assert "already in use" in page
         assert "Compare plans" in page
         assert "Check and connect" not in page, "do not invite a paste that must fail"
+
+
+class TestColdReviewRegressionsV9:
+    """V-D9 cold-review (2026-07-23) — f.1..f.5."""
+
+    def test_f1_a_user_at_their_limit_is_refused_before_we_call_the_provider(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Never spend a customer's provider quota on a request we already
+        know we will refuse."""
+        user_id = give_plan(app, "pro")
+        with app.state.session_factory() as session:
+            session.add(
+                Source(
+                    user_id=user_id,
+                    provider="anthropic",
+                    label="existing",
+                    credentials_encrypted="x",
+                )
+            )
+            session.commit()
+        called: list[str] = []
+        monkeypatch.setattr(
+            validate,
+            "validate_key",
+            lambda *a, **k: called.append("called") or validate.VERDICTS[validate.OK],
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-x"}
+        )
+        assert resp.status_code == 403
+        assert called == [], "the provider must not be contacted for a refused request"
+
+    def test_f2_the_user_row_survives_a_rejected_key(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A brand-new user creating their account and pasting a bad key must
+        still exist afterwards."""
+        give_plan(app)
+        with app.state.session_factory() as session:
+            session.query(User).delete()
+            session.commit()
+        give_plan(app)  # re-create with a plan
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.NO_SCOPE]
+        )
+        TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-bad"}
+        )
+        with app.state.session_factory() as session:
+            assert session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+
+    def test_f3_a_double_submit_cannot_create_two_connections(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Double-click must not buy two connections and two first-pulls."""
+        give_plan(app, "team")  # room for several, so only idempotency can stop it
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        pulls: list[str] = []
+        monkeypatch.setattr(
+            routes_sources,
+            "_kickoff_first_pull",
+            lambda request, source_id: pulls.append(source_id),
+        )
+        client = TestClient(app)
+        first = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        second = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        assert first.status_code == 200 and second.status_code == 409
+        with app.state.session_factory() as session:
+            sources = session.execute(select(Source)).scalars().all()
+            assert len(sources) == 1
+        assert len(pulls) == 1, "one connection, one first pull"
+
+    def test_f4_the_sample_fixtures_ship_with_the_package(self) -> None:
+        """/sample is public: it must not depend on the test tree, which is
+        absent from an installed wheel."""
+        from tokenops_cost_auditor.services.report import sample
+
+        assert sample.FIXTURES.is_dir()
+        assert "site-packages" not in str(sample.FIXTURES) or sample.FIXTURES.exists()
+        for name in sample.SAMPLE_SOURCES:
+            assert (sample.FIXTURES / name).exists(), name
+        # and it lives inside the installed package, not beside it
+        import tokenops_cost_auditor
+
+        pkg_root = Path(tokenops_cost_auditor.__file__).parent
+        assert pkg_root in sample.FIXTURES.parents
+
+    def test_f5_the_sample_is_rendered_once_not_per_request(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A public unauthenticated page must not re-run the engine per hit."""
+        from tokenops_cost_auditor.services.report import sample
+
+        sample._RENDERED = None
+        builds: list[int] = []
+        real_build = sample.build_sample
+        monkeypatch.setattr(
+            sample,
+            "build_sample",
+            lambda s, t: (builds.append(1), real_build(s, t))[1],
+        )
+        client = TestClient(app)
+        for _ in range(3):
+            assert client.get("/sample").status_code == 200
+        assert len(builds) == 1, f"engine ran {len(builds)} times for 3 requests"
+        sample._RENDERED = None

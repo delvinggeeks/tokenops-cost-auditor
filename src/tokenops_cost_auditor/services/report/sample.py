@@ -24,7 +24,9 @@ from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import observed_days
 from tokenops_cost_auditor.services.rules.registry import run_all
 
-FIXTURES = Path(__file__).parents[3].parent / "tests" / "fixtures"
+# Shipped WITH the package: a public marketing page must not depend on the
+# test tree, which is absent from an installed wheel (V-D9 cold-review f.4).
+FIXTURES = Path(__file__).parent / "sample_data"
 SAMPLE_SOURCES = ("waste_pack_anthropic.jsonl", "waste_pack_openai.jsonl")
 SAMPLE_AUDIT_ID = "sample00000000000000000000000000"
 # Fixed so the page is byte-identical run to run (determinism is the product).
@@ -60,6 +62,15 @@ def build_sample(settings: Settings, table: PricingTable) -> ReportModel:
     )
 
 
+_RENDERED: str | None = None
+
+
 def sample_html(settings: Settings, table: PricingTable) -> str:
-    """Rendered once per process — the inputs never change."""
-    return render_report_html(build_sample(settings, table))
+    """Rendered ONCE per process and memoised — the inputs are committed
+    fixtures that never change, and /sample is public and unauthenticated, so
+    re-running ingest→price→detect per request would be free compute for
+    anyone who wants it (V-D9 cold-review f.5)."""
+    global _RENDERED
+    if _RENDERED is None:
+        _RENDERED = render_report_html(build_sample(settings, table))
+    return _RENDERED

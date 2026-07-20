@@ -126,47 +126,71 @@ def wizard_validate(
     if not key:
         raise HTTPException(status_code=400, detail="key required")
     settings = request.app.state.settings
-    verdict = validate.validate_key(provider, key)
 
-    saved = False
+    # AUTHORIZE, THEN VALIDATE (V-D9 cold-review f.1): never spend a customer's
+    # provider quota — or six seconds of their attention — on a request we
+    # already know we will refuse.
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
-        plan = user_plan(session, user.id)
+        session.commit()  # durable regardless of what the validation says (f.2)
+        user_id = user.id
+        plan = user_plan(session, user_id)
         limit = settings.plan_source_limits.get(plan, 0)
-        session.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
         active = (
             session.execute(
-                select(Source).where(Source.user_id == user.id, Source.status == "active")
+                select(Source).where(Source.user_id == user_id, Source.status == "active")
             )
             .scalars()
             .all()
         )
-        if verdict.can_save and len(active) >= limit:
+        if len(active) >= limit:
             raise HTTPException(
                 status_code=403,
                 detail=f"plan '{plan}' allows {limit} active connection(s) — revoke one first",
             )
-        if verdict.can_save:
+        # Idempotency (f.3): a double-submit must not create a second live
+        # connection to the same provider, nor a second first-pull.
+        if any(s.provider == provider for s in active):
+            raise HTTPException(
+                status_code=409,
+                detail=f"{provider} is already connected — revoke it first to replace it",
+            )
+
+    verdict = validate.validate_key(provider, key)
+
+    saved = False
+    source_id = ""
+    if verdict.can_save:
+        with _session(request) as session:
+            session.execute(select(User).where(User.id == user_id).with_for_update()).scalar_one()
+            still_active = (
+                session.execute(
+                    select(Source).where(Source.user_id == user_id, Source.status == "active")
+                )
+                .scalars()
+                .all()
+            )
+            if len(still_active) >= limit or any(s.provider == provider for s in still_active):
+                # Someone won the race between our check and this write.
+                raise HTTPException(
+                    status_code=409, detail=f"{provider} was connected a moment ago"
+                )
             source = Source(
-                user_id=user.id,
+                user_id=user_id,
                 provider=provider,
                 label=f"{provider} usage",
                 credentials_encrypted=encrypt_credential(settings.secret_key, key),
             )
             session.add(source)
-            auditlog.append(session, user.email, "source.connected", provider)
+            auditlog.append(session, user_email, "source.connected", provider)
             session.commit()
             saved = True
             source_id = source.id
-        else:
-            session.rollback()
-            source_id = ""
 
     if saved and verdict.status == validate.OK:
         # INSTANT GRATIFICATION (R-MAGIC-CONNECT §2): pull and audit NOW, in
         # the background, so the dashboard has real numbers in this session
         # rather than tomorrow.
-        request.state.background = None
         _kickoff_first_pull(request, source_id)
 
     tpl = request.app.state.jinja.get_template("app/_wizard_verdict.html")

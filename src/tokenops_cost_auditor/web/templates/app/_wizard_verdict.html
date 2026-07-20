@@ -1,25 +1,19 @@
 {# Step 3: the verdict, in plain words. Three outcomes, no jargon, and the
    unreachable case is a saved key with a retry — never a dead end
-   (R-WIZ-DEGRADE). #}
+   (R-WIZ-DEGRADE). The success state is ONE line (R-MAGIC-CONNECT §1c):
+   anything more belongs on the dashboard the customer is about to open. #}
 <div class="swap-in" style="margin-top: var(--s3);">
   {% if verdict.status == "ok" %}
     <div class="steps-bar" aria-label="Step 3 of 3">
       <span class="done"><span class="step-n">✓</span></span>
       <span class="cur lbl">{{ copy.step3_title }}</span>
     </div>
-    <p><span class="badge badge-verified">{{ verdict.headline }}</span></p>
-    <p>{{ verdict.detail }}</p>
-    <p>{{ copy.step3_body }}</p>
-    <p class="muted">We've already started your first pull — your dashboard should have
-      real numbers in a minute or two, not tomorrow.</p>
+    <p><span class="badge badge-verified">{{ verdict.headline }}</span>
+      {{ copy.step3_body }}</p>
     <a class="btn btn-primary" href="/dashboard">Go to my dashboard</a>
   {% elif verdict.status == "unreachable" %}
     <p><span class="badge badge-neutral">{{ verdict.headline }}</span></p>
     <p>{{ verdict.detail }}</p>
-    <form hx-post="/sources/connect/{{ provider }}/validate"
-          hx-target="#verdict" hx-swap="innerHTML" style="display:inline">
-      <input type="hidden" name="api_key" value="">
-    </form>
     <a class="btn" href="/sources/connect/{{ provider }}">Try again</a>
     <a class="btn btn-quiet" href="/dashboard">Carry on to my dashboard</a>
   {% else %}
