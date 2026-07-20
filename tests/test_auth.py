@@ -3,11 +3,10 @@ T-MAIL-01 (SMTP adapter) per docs/05 §3."""
 
 import re
 import time
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from pathlib import Path
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -260,7 +259,7 @@ class TestSessionCookieFlags:
     local http preview — found when the founder preview signed in and
     immediately appeared signed out (2026-07-22)."""
 
-    def _login(self, app: "FastAPI") -> object:
+    def _login(self, app: FastAPI) -> object:
         from fastapi.testclient import TestClient
 
         from tokenops_cost_auditor.web.auth import issue_magic_token
@@ -268,13 +267,13 @@ class TestSessionCookieFlags:
         token = issue_magic_token(app.state.settings.secret_key, "flags@example.com")
         return TestClient(app).get(f"/auth/verify?token={token}", follow_redirects=False)
 
-    def test_dev_cookie_is_sendable_over_http(self, app: "FastAPI") -> None:
+    def test_dev_cookie_is_sendable_over_http(self, app: FastAPI) -> None:
         resp = self._login(app)
         header = resp.headers["set-cookie"]
         assert "HttpOnly" in header and "SameSite=lax" in header
         assert "Secure" not in header, "a secure cookie is never sent over http"
 
-    def test_prod_cookie_is_https_only(self, tmp_path: "Path") -> None:
+    def test_prod_cookie_is_https_only(self, tmp_path: Path) -> None:
         from tokenops_cost_auditor.config import Settings
         from tokenops_cost_auditor.main import create_app
         from tokenops_cost_auditor.persistence.models import Base
