@@ -183,6 +183,7 @@ class AuditRunner:
             for row in aggregates:
                 session.add(CallAggregate(audit_id=audit_id, **row))
             audit.observed_days = report.observed_days
+            audit.equiv_spend = report.equiv_spend  # FR-30
             audit.total_spend_usd = report.total_spend_usd
             audit.projected_spend_usd = report.monthly_optimized_usd
             audit.savings_pct = report.savings_pct

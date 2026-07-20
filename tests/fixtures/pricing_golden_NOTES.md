@@ -184,6 +184,26 @@ baseline in force when the customer acted). Traffic evidence for R2 reads
 call_aggregates for the audit; a finding with no route recorded can never
 be credited on disappearance (conservative by construction).
 
+### Statement month-credit rule (V-D6, 2026-07-22) — money-math default
+
+R-Q9 says verified_savings(MONTH); it does not say which month a saving
+lands in when the fix ships in one month and the proving audit runs in the
+next. DEFAULT TAKEN: credit the month of the audit that PROVED it.
+
+Rationale: a statement is an archived artifact that is emailed and then
+forwarded. Crediting the application month would require restating an
+already-sent statement once proof arrives, which the archive rule forbids.
+Crediting the proving month means every statement is true when written and
+never changes afterwards. Implemented as a `period` filter inside the ONE
+compute() — a second copy of the formula for statements would be a
+money-math hazard.
+
+Statement golden (tests/test_statements.py, June 2026 fixture):
+baseline 1000.00 - recomputed 250.00 = **750.00 verified**; 300.00
+identified (dismissed, still open); 75.00 customer-reported; 600.00/mo
+spend. The three figures appear in three labelled sections and are never
+summed (a summed 1,125.00 is asserted absent).
+
 ## Founder verification log
 
 - 2026-07-17 | Founder verification: ledger row 1 (post-UAT-D5) —

@@ -79,6 +79,9 @@ class Audit(Base):
     total_spend_usd: Mapped[float | None] = mapped_column(Float)
     projected_spend_usd: Mapped[float | None] = mapped_column(Float)
     savings_pct: Mapped[float | None] = mapped_column(Float)
+    # FR-30: metered-API billing could not be assumed for this audit's
+    # traffic, so any figure derived from it carries the equiv-spend line.
+    equiv_spend: Mapped[bool | None] = mapped_column(Boolean)
     paid_via: Mapped[str | None] = mapped_column(String(32))
     error: Mapped[str | None] = mapped_column(Text)  # user-safe message only (LLD §8)
     upload_path: Mapped[str | None] = mapped_column(Text)
@@ -295,6 +298,9 @@ class Statement(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     period: Mapped[str] = mapped_column(String(7), nullable=False)  # YYYY-MM
+    # The number leads the subject (R-DESIGN §4e); stored so a resend
+    # delivers the same artifact rather than re-deriving it.
+    subject: Mapped[str | None] = mapped_column(String(300))
     body_text: Mapped[str] = mapped_column(Text, nullable=False)  # dollars/counts only
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

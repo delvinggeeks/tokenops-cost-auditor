@@ -73,7 +73,23 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
-def compute(session: Session, user_id: str, now: datetime | None = None) -> SavingsSummary:
+def compute(
+    session: Session,
+    user_id: str,
+    now: datetime | None = None,
+    period: tuple[int, int] | None = None,
+) -> SavingsSummary:
+    """`period` = (year, month) scopes the figures to one calendar month for
+    the Savings Statement. R-Q9 says verified_savings(MONTH); the statement
+    is an archived artifact that must never be restated, so a route is
+    credited to the month of the audit that PROVED it — not the month the
+    customer applied the fix, which would require rewriting an already-sent
+    statement when the proof arrives later. Rationale recorded in the golden
+    NOTES sheet (money-math default).
+
+    ONE implementation, deliberately: a second copy of this formula for
+    statements would be a money-math hazard.
+    """
     now = now or datetime.now(UTC)
     audits = (
         session.execute(
@@ -144,12 +160,27 @@ def compute(session: Session, user_id: str, now: datetime | None = None) -> Savi
         else:
             pending_count += 1  # R2: gone, but no traffic to attribute it to
             continue
+        if period is not None and (check.created_at.year, check.created_at.month) != period:
+            continue  # proved in a different month — not this statement's line
         baseline = float(finding.monthly_impact_usd)
         verified += min(max(0.0, baseline - recomputed), baseline)
         verified_count += 1
 
     # R3: identified excludes anything already settled as verified or pending.
-    latest = audits[-1]
+    in_period = (
+        [a for a in audits if (a.created_at.year, a.created_at.month) == period]
+        if period is not None
+        else audits
+    )
+    if not in_period:
+        return SavingsSummary(
+            verified_usd=round(verified, 2),
+            identified_usd=0.0,
+            customer_reported_usd=0.0,
+            verified_count=verified_count,
+            pending_count=pending_count,
+        )
+    latest = in_period[-1]
     identified = 0.0
     for f in findings_by_audit.get(latest.id, []):
         key = _route_key(f.detector, f.route, f.finding_id)
@@ -161,7 +192,11 @@ def compute(session: Session, user_id: str, now: datetime | None = None) -> Savi
 
     # Customer-reported: every entry the customer made, summed as entered.
     # Separate line by ruling — it never touches `verified`.
-    customer_reported = sum(float(fb.savings_realized_usd or 0.0) for fb in feedback)
+    customer_reported = sum(
+        float(fb.savings_realized_usd or 0.0)
+        for fb in feedback
+        if period is None or (_aware(fb.ts).year, _aware(fb.ts).month) == period
+    )
 
     return SavingsSummary(
         verified_usd=round(verified, 2),

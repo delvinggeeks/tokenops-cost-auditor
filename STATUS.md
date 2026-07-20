@@ -3,6 +3,28 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D6 BUILT (founder GO 2026-07-22) — Savings Statement, the owner artifact; at gate
+
+Inherits R-Q9 wholesale as ruled: VERIFIED-only headline (and subject),
+identified + customer-reported in their own labelled sections that are
+never summed with it, a provenance stamp per audit, and the FR-30
+equiv-spend line verbatim when any audit in the period could not assume
+metered billing — which required persisting audits.equiv_spend (migration
+006) from both producers, since the flag lived only in the report model.
+MONEY-MATH DEFAULT RECORDED (NOTES): R-Q9 does not say which month a saving
+lands in when the fix ships in one month and the proof arrives in the next
+— credited to the month of the audit that PROVED it, because a statement is
+archived and emailed, and crediting the application month would mean
+restating an artifact already in someone's inbox. Implemented as a `period`
+filter inside the ONE compute(); a second copy of the formula would be a
+money-math hazard. Archive law: one row per user per month, a re-run
+refreshes a DRAFT, a SENT statement is frozen (test asserts the body does
+not move even when the figures do); send is at-most-once like alerts, with
+resend delivering the archived artifact unchanged. Statements page + detail
++ resend; monthly ofelia job (1st, 06:00 UTC); Savings statements earns its
+nav entry (it ships). 9 tests incl. hand-derived arithmetic; suite green
+and deterministic, coverage 95.3%. NEXT: gate verdicts, then STOP.
+
 ## V-D5 GATE — cold-reviewer FAIL→FIXED, vv FAIL→FIXED; both re-verified, awaiting founder review
 
 cold-review (4 findings, all closed): (f.1, the serious one) the

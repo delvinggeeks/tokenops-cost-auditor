@@ -1,0 +1,44 @@
+{% extends "app/_shell.html" %}
+{% block title %}Savings statements — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+  <section class="widget w-8">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-statement"/></svg>
+      <h2>This month, so far</h2>
+    </div>
+    <p class="tells">What this tells you: exactly what your next statement will
+      say if the month ended today.</p>
+    <div class="money-hero total-rule">${{ "{:,.2f}".format(preview.verified_usd) }}</div>
+    <p class="muted" style="margin-top: var(--s2);">verified savings ·
+      {{ preview.fixes_applied }} fix(es) confirmed</p>
+    <pre class="snippet" style="white-space: pre-wrap">{{ preview.body }}</pre>
+    <form method="post" action="/statements/{{ preview.period }}/send">
+      <button class="btn btn-primary" type="submit">Email it to me now</button>
+    </form>
+    <div class="provenance">Preview — issued automatically at month end</div>
+  </section>
+
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-reports"/></svg>
+      <h2>Issued statements</h2>
+    </div>
+    <p class="tells">What this tells you: every statement we have sent you.</p>
+    {% if not rows %}
+      <div class="empty">
+        <p>None issued yet. Your first statement goes out at the end of your
+          first full month.</p>
+      </div>
+    {% else %}
+      {% for r in rows %}
+        <p><a href="/statements/{{ r.period }}">{{ r.period }}</a><br>
+          <small class="muted">
+            {% if r.sent_at %}Sent {{ r.sent_at.strftime("%Y-%m-%d") }}
+            {% else %}Not sent yet{% endif %}</small></p>
+      {% endfor %}
+    {% endif %}
+    <div class="provenance">{{ rows | length }} archived</div>
+  </section>
+</div>
+{% endblock %}

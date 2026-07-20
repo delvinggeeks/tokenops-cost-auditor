@@ -1,0 +1,21 @@
+{% extends "app/_shell.html" %}
+{% block title %}Statement {{ row.period }} — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+  <section class="widget w-12">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-statement"/></svg>
+      <h2>{{ row.subject or row.period }}</h2>
+    </div>
+    <p class="tells">What this tells you: the artifact exactly as it was sent —
+      archived statements are never rewritten.</p>
+    <pre class="snippet" style="white-space: pre-wrap">{{ row.body_text }}</pre>
+    <form method="post" action="/statements/{{ row.period }}/send">
+      <button class="btn" type="submit">Send it again</button>
+    </form>
+    <div class="provenance">
+      {% if row.sent_at %}Sent {{ row.sent_at.strftime("%Y-%m-%d %H:%M") }} UTC
+      {% else %}Not sent yet{% endif %} · period {{ row.period }}</div>
+  </section>
+</div>
+{% endblock %}
