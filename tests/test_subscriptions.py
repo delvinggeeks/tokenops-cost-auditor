@@ -425,6 +425,19 @@ class TestPlanHelpers:
         assert plans.get(settings, "enterprise-platinum").key == "free"
         assert plans.currency_for_country(None) == "USD"
         assert "$500" in plans.one_shot_display(settings)
+        # Both sides pinned: asserting only the USD half is how the INR half
+        # drifted into the Terms page unnoticed (V-D10).
+        assert f"₹{settings.inr_per_usd_display * 500:,.0f}" in plans.one_shot_display(settings)
+
+    def test_terms_page_quotes_the_price_we_actually_charge(self, client: TestClient) -> None:
+        """The Terms page hardcoded '$500 / ₹20,000' while billing rendered
+        ₹45,000 from config — a binding document quoting a price 44% under
+        what an Indian customer's card is charged. It now renders from the
+        one price config, so the contract cannot disagree with the checkout."""
+        html = client.get("/legal/terms").text
+        settings = Settings()
+        assert plans.one_shot_display(settings) in html
+        assert "₹20,000" not in html
 
 
 class TestColdReviewRegressionsV8:

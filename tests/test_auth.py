@@ -157,53 +157,104 @@ class TestTWEB01Landing:
         assert "15 minutes" in page.text  # magic-link copy states what happens next
 
 
+def install_fake_smtp(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, object]]:
+    """Capture every message an adapter sends. Returns the growing list, so a
+    test can assert on how many messages went out as well as what was in them."""
+    outbox: list[dict[str, object]] = []
+
+    class FakeSMTP:
+        def __init__(self, host: str, port: int, timeout: int = 0) -> None:
+            self.endpoint = (host, port)
+            self.tls = False
+            self.login_user: str | None = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def ehlo(self) -> None:
+            pass
+
+        def has_extn(self, name: str) -> bool:
+            return True
+
+        def starttls(self) -> None:
+            self.tls = True
+
+        def login(self, user: str, password: str) -> None:
+            self.login_user = user
+
+        def send_message(self, msg) -> None:
+            outbox.append(
+                {
+                    "endpoint": self.endpoint,
+                    "tls": self.tls,
+                    "login": self.login_user,
+                    "to": msg["To"],
+                    "from": msg["From"],
+                    "subject": msg["Subject"],
+                    "body": msg.get_content(),
+                }
+            )
+
+    import smtplib
+
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    return outbox
+
+
+def make_adapter() -> SmtpMailAdapter:
+    return SmtpMailAdapter(
+        "smtp.example.com",
+        587,
+        "u",
+        "p",
+        "audits@example.com",
+        base_url="https://audit.example.com",
+    )
+
+
 class TestTMAIL01Smtp:
     def test_smtp_adapter_sends_via_starttls(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        sent: dict[str, object] = {}
-
-        class FakeSMTP:
-            def __init__(self, host: str, port: int, timeout: int = 0) -> None:
-                sent["endpoint"] = (host, port)
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args: object) -> None:
-                return None
-
-            def ehlo(self) -> None:
-                pass
-
-            def has_extn(self, name: str) -> bool:
-                return True
-
-            def starttls(self) -> None:
-                sent["tls"] = True
-
-            def login(self, user: str, password: str) -> None:
-                sent["login"] = user
-
-            def send_message(self, msg) -> None:
-                sent["to"] = msg["To"]
-                sent["subject"] = msg["Subject"]
-                sent["body"] = msg.get_content()
-
-        import smtplib
-
-        monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
-        adapter = SmtpMailAdapter(
-            "smtp.example.com",
-            587,
-            "u",
-            "p",
-            "audits@example.com",
-            base_url="https://audit.example.com",
-        )
-        adapter.magic_link("cto@example.com", "/auth/verify?token=abc")
+        outbox = install_fake_smtp(monkeypatch)
+        make_adapter().magic_link("cto@example.com", "/auth/verify?token=abc")
+        sent = outbox[0]
         assert sent["endpoint"] == ("smtp.example.com", 587)
         assert sent["tls"] is True
         assert sent["to"] == "cto@example.com"
         assert re.search(r"https://audit\.example\.com/auth/verify\?token=abc", str(sent["body"]))
+
+    def test_report_ready_carries_an_absolute_link(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A relative URL in mail is a dead link in a mail client — the base_url
+        join is the whole job of this method, and it had no test."""
+        outbox = install_fake_smtp(monkeypatch)
+        make_adapter().report_ready("cfo@example.com", "/r/abc123")
+        assert outbox[0]["subject"] == "Your audit report is ready"
+        assert "https://audit.example.com/r/abc123" in str(outbox[0]["body"])
+
+    def test_alert_passes_subject_and_body_through_unchanged(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        outbox = install_fake_smtp(monkeypatch)
+        make_adapter().alert("cfo@example.com", "Spend up 40%", "Route /chat doubled.")
+        assert outbox[0]["subject"] == "Spend up 40%"
+        assert "Route /chat doubled." in str(outbox[0]["body"])
+        assert outbox[0]["from"] == "audits@example.com"
+
+    def test_digest_subject_flags_alerts_only_when_present(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The founder triages this digest by subject line alone. If the ALERTS
+        suffix were wrong in either direction the digest would be either noise
+        or falsely calm — both make it useless as an ops signal."""
+        outbox = install_fake_smtp(monkeypatch)
+        adapter = make_adapter()
+        adapter.send_digest("ops@example.com", "all quiet\n")
+        adapter.send_digest("ops@example.com", "ALERTS: disk 91%\n")
+        assert outbox[0]["subject"] == "TokenOps daily digest"
+        assert outbox[1]["subject"] == "TokenOps daily digest — ALERTS"
 
 
 class TestG5F2SameSecondReissue:

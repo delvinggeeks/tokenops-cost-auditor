@@ -84,8 +84,15 @@ def main() -> None:
 
     settings = Settings()
     engine = make_engine(settings.database_url)
-    with make_session_factory(engine)() as session:
-        purged = purge_due(session, settings.purge_after_days)
+    try:
+        with make_session_factory(engine)() as session:
+            purged = purge_due(session, settings.purge_after_days)
+    finally:
+        # Return the pooled connections rather than leaving them for GC. As a
+        # cron one-shot the process exit would clean up anyway, but main() is
+        # callable in-process (and now is, from the test), where an undisposed
+        # engine leaks a live connection per call (V-D10 vv gate f.1).
+        engine.dispose()
     print(f"purge: {len(purged)} audit(s) purged: {', '.join(purged) or '-'}")
 
 

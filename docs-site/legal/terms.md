@@ -21,7 +21,7 @@ computed from your logs and published provider rates. They are decision
 support, not a promise of realized savings; model suitability requires your
 own quality evaluation.
 
-**4. Payment.** Audits are prepaid ($500 / ₹20,000 per audit unless agreed
+**4. Payment.** One-off audits are prepaid ($500 · ₹45,000 per audit unless agreed
 otherwise). Payment links are provided by Razorpay (INR) or Stripe (USD).
 Refund: if we cannot produce a report from your upload, we refund in full.
 
