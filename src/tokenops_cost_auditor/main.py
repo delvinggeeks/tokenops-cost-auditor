@@ -33,6 +33,7 @@ from tokenops_cost_auditor.services.payments.stripe_link import StripeLinkAdapte
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.runner import AuditRunner
 from tokenops_cost_auditor.web.routes_admin import router as admin_router
+from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
 from tokenops_cost_auditor.web.routes_dashboard import router as dashboard_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
@@ -126,6 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin_router)  # admin panel (FR-19)
     app.include_router(sources_router)  # T2 connect/revoke (v1.5 WP-1)
     app.include_router(dashboard_router)  # owner dashboard + guide + tour (v1.5 WP-2)
+    app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:

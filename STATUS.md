@@ -3,6 +3,29 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D5 BUILT (founder GO 2026-07-22) — alerts live, Prevent stage real, L0 customer-reported path wired; at gate
+
+WP-3b: four rules per the ruling (spend spike DoD, waste above target, new
+HIGH finding, soft budget), each evaluated against audits the customer
+already has, each message leading with the NUMBER and naming its audit.
+OBSERVE-ONLY is enforced, not just asserted: T-ALR-05 parses the alerts
+package with ast (docstrings stripped, so prose naming the forbidden verbs
+does not self-trip) and fails on any enforcement-shaped code; a second test
+asserts no alert body claims we paused/blocked/capped anything. Dispatch
+records the AlertEvent BEFORE sending so a mail failure cannot re-fire the
+same alert (at-most-once beats at-least-once when the payload is customer
+email); one alert per rule per audit. Delivery rides the existing adapter
+(new `alert` method on the protocol + both adapters). Hourly connector tick
+now evaluates alerts right after audits land, so a new finding reaches the
+customer in the pass that found it. /alerts is a grouped settings form
+(familiar shape, unparseable input falls back rather than erroring) with a
+20-event history. PREVENT ribbon stage now reads real armed-rule state and
+Alerts earned its sidebar entry — it ships, so it appears (no-promises law).
+L0: the drawer gained the optional savings-realized input, labelled
+customer-reported and stated as never touching the verified headline
+(R-Q9). Suite green exit-code-checked; ruff/format/mypy clean.
+NEXT: gate verdicts, then STOP.
+
 ## V-D4 + V-D4g GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer FAIL→FIXED→re-verified · vv PASS-WITH-NOTES
 
 ux (3 notes, all closed): Prevent ribbon stage was static placeholder text —

@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Source
+from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.connectors.pull import run_pull
 from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
 from tokenops_cost_auditor.services.pricing.table import PricingTable
@@ -60,6 +61,7 @@ def tick(
     settings: Settings,
     table: PricingTable,
     now: datetime | None = None,
+    mail: object | None = None,
 ) -> dict[str, int]:
     """One scheduler pass. Failures on one source never block the others."""
     now = now or datetime.now(UTC)
@@ -82,5 +84,11 @@ def tick(
             session.rollback()
             stats["audit_errors"] += 1
             log.warning("connector.audit_failed", source_id=source.id, error=str(exc)[:200])
+    if mail is not None:
+        # WP-3b: alerts are evaluated after audits land, so a new finding or a
+        # spend jump reaches the customer in the same pass that discovered it.
+        alert_stats = alerts_dispatch.run_all(session, settings, mail, now=now)
+        stats["alerts_fired"] = alert_stats["fired"]
+        stats["alert_errors"] = alert_stats["errors"]
     log.info("connector.tick", **stats)
     return stats

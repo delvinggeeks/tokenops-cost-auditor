@@ -52,6 +52,10 @@ class SmtpMailAdapter:
             f"{self.base_url}{report_url}\n\nThe link expires in 30 days.",
         )
 
+    def alert(self, to_email: str, subject: str, body: str) -> None:
+        """Alert mail: one column, text-first, no images, one CTA (R-DESIGN §4e)."""
+        self._send(to_email, subject, body)
+
     def send_digest(self, to_email: str, body: str) -> None:
         """Founder ops digest (runbook §3; scripts/daily_digest.py)."""
         subject = "TokenOps daily digest"

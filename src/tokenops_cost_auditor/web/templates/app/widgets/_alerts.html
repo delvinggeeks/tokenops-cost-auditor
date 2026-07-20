@@ -1,0 +1,18 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-4" id="w-alerts">
+  {{ widget_head("i-alert", "alerts", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>No alerts armed yet. Pick what is worth an email between audits —
+        a spend jump, waste above your target, a new high-impact finding, or
+        your budget being passed.</p>
+      <a class="btn btn-primary" href="/alerts">Set up alerts</a>
+    </div>
+  {% else %}
+    <div class="stat-lg">{{ w.data.count }} armed</div>
+    <p class="muted" style="margin: 4px 0 0; font-size: 13px;">
+      {{ w.data['rules'] | join(", ") | replace("_", " ") }}</p>
+    <a class="btn btn-quiet" href="/alerts">Review thresholds</a>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

@@ -23,7 +23,7 @@ destinations:
   get_logs:
     purpose: "Export request logs from your provider or agent tooling and upload them here."
   alerts:
-    purpose: "Choose what should reach you between audits, and at what threshold."
+    purpose: "Choose what should reach you between audits, and at what threshold. Alerts notify you; they never change your traffic."
   statements:
     purpose: "Open the monthly one-page summary written for whoever signs off on the bill."
   guide:
