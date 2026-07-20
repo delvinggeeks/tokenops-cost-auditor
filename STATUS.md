@@ -3,7 +3,22 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D6 — cold-reviewer FAIL→FIXED (vv verdict pending); statement built
+## V-D6 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
+
+vv: coverage TOTAL 95.4%, statements/build.py AND dashboard/savings.py both
+100% (money-math floor met), T-STMT-01..03 verified non-trivial, the
+month-credit default confirmed recorded in the SAME commit, migration chain
+001→006 intact, equiv_spend confirmed written by both producers, and the
+hand derivation independently recomputed (750/300/75/600 — matches).
+Note CLOSED: my new regression loaded the monthly job through a
+CWD-relative path, so it could fail when pytest ran from elsewhere — now
+repo-relative via Path(__file__), proven by running the file from /tmp.
+STANDING DEBT REPORTED, NOT SILENTLY FIXED (pre-existing, untouched by this
+diff): services/mail/smtp.py 83.8% and services/lifecycle/purge.py 78.9%
+are below the 85% services floor — v1 code, outside V-D6 scope; founder's
+call whether to close them now or carry them.
+
+## V-D6 — cold-review record
 
 cold-review (4 findings, all closed): (f.1) pending_count was NOT
 period-scoped while verified was, so July's statement could report a fix

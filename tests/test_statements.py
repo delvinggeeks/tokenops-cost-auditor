@@ -405,9 +405,10 @@ class TestColdReviewRegressionsV6:
         # January boundary in the monthly job's own helper
         import importlib.util
 
-        spec = importlib.util.spec_from_file_location(
-            "monthly_statements", "scripts/monthly_statements.py"
-        )
+        # Repo-relative, not CWD-relative: the test must not depend on where
+        # pytest was invoked from (V-D6 vv gate note).
+        script = Path(__file__).resolve().parents[1] / "scripts" / "monthly_statements.py"
+        spec = importlib.util.spec_from_file_location("monthly_statements", script)
         assert spec and spec.loader
         job = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(job)
