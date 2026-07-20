@@ -3,6 +3,29 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D4 + V-D4g BUILT (founder GO on mockup v3, 2026-07-21) — dashboard + guidance wired; at gate
+
+Founder v3 verdict: all three surfaces PASS, GO to wire; digest arrival
+CONFIRMED. BUILT: R-Q9 verified-savings service (money math — 6 exact-value
+goldens + NOTES derivation; the >=7-day gate reads a NEW audits.
+observed_days column persisted by BOTH audit producers, since the rule was
+otherwise unenforceable); metrics module (one function per widget, each
+carrying its own provenance stamp); app shell (stage-grouped sidebar, only
+shipped modules, freshness topbar, section purpose lines from the
+registry); 6 widgets each independently htmx-refreshable at
+/dashboard/w/<key>; pipeline ribbon from real state; findings table with
+row->drawer expansion (punch-list item 2 DONE) where the drawer is depth
+(c) in the fixed why/evidence/fix/verify/methodology order and carries the
+detector id (punch-list item 1 DONE — headline depth is plain language,
+test-enforced); L0 feedback capture that swaps the savings headline back in
+(the applied-fix-flows-into-the-number moment); guided tour (vanilla JS,
+5 steps, server-persisted dismissal, replay from Help); YAML help registry
+as the single source for popovers + Guide + purpose lines with thresholds
+rendered from live Settings; vendored htmx 2.0.4 + static mount (no CDN,
+provenance in web/static/VENDORED.md); design-asset drift tests pinning the
+shipped CSS/sprite to design/. Migration 004 additive. Suite 122 green
+exit-code-checked, ruff+format+mypy clean. NEXT: gate verdicts, then STOP.
+
 ## R-CLARITY RECORDED (founder 2026-07-21) — designed developer depth + familiarity principle; still NO mockup round
 
 Addendum to R-PERSONA in PLAN §0.1 + PLAN-V15. (1) Depth (c) on every
