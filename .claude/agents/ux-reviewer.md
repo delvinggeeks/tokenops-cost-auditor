@@ -59,3 +59,20 @@ R-PERSONA AMENDMENT (founder 2026-07-21, checked at every wiring gate):
 7. Guide pages open with "who this is for" (Owner · Engineer · Both).
 8. NO persona-forked dashboards — one shell, three depths. A proposed
    parallel view for a different audience is a finding, not a feature.
+
+R-CLARITY AMENDMENT (founder 2026-07-21, checked at every wiring gate):
+9. FAMILIARITY — any interaction pattern a Datadog/Stripe/Grafana user
+   would NOT already know is a finding. Expected grammar: filters
+   top-left, time-range top-right, row→drawer expansion, sortable headers
+   with aria-sort, breadcrumbed multi-step flows, settings as grouped
+   forms. The novelty budget is spent ONLY on the pipeline ribbon and the
+   double rule; novelty anywhere else is a finding, not a flourish.
+10. DEVELOPER DEPTH ORDER — depth (c) on a finding must present, in this
+    order: WHY flagged (rule + threshold values) · EVIDENCE (counts
+    table) · THE FIX (copyable snippet / exact config change) · VERIFY
+    (what the next audit shows if applied) · methodology link. Missing or
+    out-of-order sections are a finding. Test: an engineer with zero
+    FinOps knowledge and an owner with zero engineering knowledge each
+    get a COMPLETE answer from the same screen at their own depth.
+11. SECTION PURPOSE LINES — every sidebar destination opens with one
+    plain sentence of "what you do here", sourced from the help registry.

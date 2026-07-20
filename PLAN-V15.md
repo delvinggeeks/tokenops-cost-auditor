@@ -134,6 +134,21 @@ the help registry stores BOTH phrasings per key; Guide pages open with
 plain + technical phrasing for every key; a headline-depth string
 containing a detector id fails the test).
 
+**R-CLARITY (2026-07-21) — same milestones, adds structure.** The help
+registry schema per detector becomes: `plain` / `technical` phrasing +
+a `why` (rule sentence + threshold values, rendered from the live
+Settings values so docs cannot drift from config) + `fix` (copyable
+snippet or exact config change) + `verify` (what the next audit shows if
+applied) + `methodology_url`. Depth (c) renders those five in that
+fixed order. Sidebar destinations render a `purpose` line from the same
+registry. Familiarity principle governs interaction choices — novelty
+budget spent only on the ribbon and the double rule.
+Tests added to V-D4g: T-HELP-05 (every detector key has the full
+why/fix/verify triple + methodology url; a missing field fails),
+T-HELP-06 (threshold values in `why` render from Settings, not
+hard-coded strings — changing a threshold changes the help text),
+T-HELP-07 (every sidebar destination has a purpose line).
+
 ### V-D4g (+1 day, R-DESIGN-V3 §2; founder-accepted scope addition) — In-product guidance
 Guided tour (5 spotlight steps, vanilla JS + CSS, server-persisted
 dismiss, replayable), per-widget "?" help popovers, HELP sidebar group

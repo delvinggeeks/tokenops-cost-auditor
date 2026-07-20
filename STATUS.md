@@ -3,6 +3,25 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## R-CLARITY RECORDED (founder 2026-07-21) — designed developer depth + familiarity principle; still NO mockup round
+
+Addendum to R-PERSONA in PLAN §0.1 + PLAN-V15. (1) Depth (c) on every
+finding renders a FIXED order: why flagged (rule + threshold values) →
+evidence table → the fix (copyable) → verify (what the next audit shows)
+→ methodology link. Help-registry schema per detector therefore becomes
+plain/technical phrasing + why/fix/verify + methodology_url; thresholds
+render FROM Settings so help text cannot drift from config. New tests:
+T-HELP-05 (full triple per detector), T-HELP-06 (thresholds live, not
+hard-coded — changing a threshold changes the help text), T-HELP-07
+(purpose line per sidebar destination). (2) FAMILIARITY: Stripe/Datadog/
+Grafana grammar — filters top-left, time-range top-right, row→drawer,
+aria-sort headers, breadcrumbed flows, grouped settings forms; novelty
+budget spent ONLY on the pipeline ribbon + double rule. ux-reviewer
+charter gained checks 9-11 (familiarity, developer-depth order,
+section purpose lines). (3) Every sidebar destination opens with one
+plain "what you do here" sentence from the registry. Mockup v3 unchanged
+— founder verdict remains the only gate on wiring.
+
 ## R-PERSONA RECORDED (founder 2026-07-21) — three-depth law; NO new mockup round, v3 verdict still the gate
 
 Design law recorded in PLAN §0.1 and PLAN-V15 (applies to V-D4/V-D4g/V-D9

@@ -492,6 +492,27 @@ before. (5) Savings Statement stays the owner artifact; report PDF stays
 the shared artifact; NO persona-forked dashboards — one shell, three
 depths, forever.
 
+**R-CLARITY (founder, 2026-07-21) — addendum to R-PERSONA; applied during
+V-D4 wiring, no mockup round.** (1) DEVELOPER DEPTH IS DESIGNED, NOT
+DUMPED: depth (c) on every finding answers, IN ORDER — WHY flagged (the
+rule in one sentence + its threshold values) · EVIDENCE (the counts
+table) · THE FIX (copyable snippet or exact config change, per finding
+type) · VERIFY (what the next audit will show if applied) · methodology
+link. A developer with zero FinOps knowledge and an owner with zero
+engineering knowledge must EACH find their complete answer on the same
+screen at their own depth. The help-registry YAML gains a why/fix/verify
+triple per detector. (2) FAMILIARITY PRINCIPLE: workflows adopt the
+conventions of the dashboards our users already live in (the
+Stripe/Datadog/Grafana grammar) — filters top-left, time-range top-right,
+row→drawer expansion, sortable headers with aria-sort, breadcrumbed
+multi-step flows, settings as grouped forms. The novelty budget stays
+spent on the pipeline ribbon + the double rule ONLY; every other
+interaction should feel pre-learned. ux-reviewer check 9: "any
+interaction pattern a Datadog/Stripe user wouldn't already know is a
+finding." (3) SECTION PURPOSE LINES: every sidebar destination opens with
+one plain sentence of "what you do here" (sourced from the help
+registry) — the ecosystem's workflow made legible page by page.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply
