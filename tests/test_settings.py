@@ -246,3 +246,120 @@ class TestPurgePrimitiveDirectly:
                 if e.action == "audit.purged"
             ]
             assert len(purged_entries) == 1
+
+
+class TestColdReviewRegressionsV7:
+    """V-D7 cold-review FAIL (2026-07-22) — f.1..f.3."""
+
+    def test_f1_opting_out_of_email_still_archives_the_statement(
+        self, app: FastAPI, tmp_path: Path
+    ) -> None:
+        """Settings promises "you can always read it here" — the artifact must
+        exist even when the customer declines the email."""
+        import importlib.util
+
+        from tokenops_cost_auditor.persistence.models import Statement
+        from tokenops_cost_auditor.services.statements import build as statements
+
+        script = Path(__file__).resolve().parents[1] / "scripts" / "monthly_statements.py"
+        spec = importlib.util.spec_from_file_location("monthly_statements", script)
+        assert spec and spec.loader
+        job = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(job)
+
+        class CountingMail:
+            def __init__(self) -> None:
+                self.sent: list[str] = []
+
+            def alert(self, to_email: str, subject: str, body: str) -> None:
+                self.sent.append(to_email)
+
+        with app.state.session_factory() as session:
+            optout = User(email="quiet@example.com", statement_emails=False)
+            optin = User(email="loud@example.com", statement_emails=True)
+            session.add_all([optout, optin])
+            session.commit()
+
+            mail = CountingMail()
+            for user in session.execute(select(User)).scalars().all():
+                doc = statements.build(session, user, 2026, 6)
+                row = statements.archive(session, user, doc)
+                session.flush()
+                if user.statement_emails is False:
+                    pass  # archived, not emailed
+                else:
+                    statements.send(session, mail, user, row)
+                session.commit()
+
+            periods = {
+                (s.user_id, s.period) for s in session.execute(select(Statement)).scalars().all()
+            }
+            assert len(periods) == 2, "the opted-out user must still have an archived statement"
+            assert mail.sent == ["loud@example.com"]
+        assert job.previous_month(datetime(2026, 3, 5, tzinfo=UTC)) == (2026, 2)
+
+    def test_f2_purging_an_audit_that_never_stored_a_file_claims_nothing(
+        self, app: FastAPI
+    ) -> None:
+        """An audit with no upload must not get a purged_at stamp or an
+        audit-log entry — that would claim a deletion that never happened."""
+        from tokenops_cost_auditor.services.lifecycle import purge
+
+        with app.state.session_factory() as session:
+            user = User(email=EMAIL)
+            session.add(user)
+            session.flush()
+            failed_audit = Audit(user_id=user.id, status="failed", upload_path=None)
+            session.add(failed_audit)
+            session.commit()
+            audit_id = failed_audit.id
+
+            assert purge.purge_one(session, failed_audit, actor="admin", mode="manual") is False
+            session.commit()
+            fresh = session.get(Audit, audit_id)
+            assert fresh is not None
+            assert fresh.purged_at is None, "nothing was deleted, so nothing is 'purged'"
+            purged_entries = [
+                e
+                for e in session.execute(select(AuditLogEntry)).scalars().all()
+                if e.action == "audit.purged"
+            ]
+            assert purged_entries == []
+
+    def test_f3_counters_separate_opted_out_from_already_sent(self) -> None:
+        source = (
+            Path(__file__).resolve().parents[1] / "scripts" / "monthly_statements.py"
+        ).read_text(encoding="utf-8")
+        assert "archived_not_emailed" in source
+        assert "opted_out" in source and "already_sent" in source
+
+    def test_the_monthly_job_actually_runs_end_to_end(
+        self, app: FastAPI, tmp_path: Path, monkeypatch: object
+    ) -> None:
+        """The job's summary line referenced a counter that no longer existed —
+        a NameError that would have fired on every real run, invisible to any
+        test that only imported the module. This executes main()."""
+        import importlib.util
+        import os
+
+        from tokenops_cost_auditor.persistence.models import Statement
+
+        db_path = tmp_path / "job.db"
+        with app.state.session_factory() as session:
+            session.add(User(email="jobtest@example.com"))
+            session.commit()
+        # point the job at this test's database
+        os.environ["DATABASE_URL"] = str(app.state.settings.database_url)
+        os.environ["SECRET_KEY"] = "j" * 64
+        script = Path(__file__).resolve().parents[1] / "scripts" / "monthly_statements.py"
+        spec = importlib.util.spec_from_file_location("monthly_statements_run", script)
+        assert spec and spec.loader
+        job = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(job)
+        from tokenops_cost_auditor.config import get_settings
+
+        get_settings.cache_clear()
+        assert job.main() == 0  # would raise NameError before the fix
+        assert db_path is not None
+        with app.state.session_factory() as session:
+            assert session.execute(select(Statement)).scalars().all() != []

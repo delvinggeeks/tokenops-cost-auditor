@@ -49,7 +49,11 @@ def purge_one(
     paths cannot drift — the manual path previously skipped the idempotency
     keys the scheduled path deletes. Does not commit; the caller does.
     Returns False if there was nothing left to purge."""
-    if audit.upload_path is None and audit.purged_at is not None:
+    if audit.upload_path is None:
+        # No stored file: nothing to delete. Stamping purged_at and writing an
+        # audit-log entry here would claim a deletion that never happened —
+        # reachable via the admin route, which does not pre-filter
+        # (V-D7 cold-review f.2).
         return False
     if audit.upload_path:
         shutil.rmtree(Path(audit.upload_path).parent, ignore_errors=True)

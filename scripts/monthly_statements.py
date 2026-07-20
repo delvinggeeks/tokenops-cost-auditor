@@ -38,30 +38,34 @@ def main() -> int:
         else LogMailAdapter()
     )
     year, month = previous_month(datetime.now(UTC))
-    issued = skipped = failed = 0
+    issued = already_sent = opted_out = failed = 0
     engine = create_engine(settings.database_url)
     with Session(engine) as session:
         for user in session.execute(select(User)).scalars().all():
             # Per-user isolation: one bad address or build must not cost every
             # later user their statement (V-D6 cold-review f.4).
             try:
-                if user.statement_emails is False:  # NULL = opted in
-                    skipped += 1
-                    continue
+                # ALWAYS build and archive: the statement is readable in-app
+                # regardless of email preference (V-D7 cold-review f.1 — the
+                # opt-out was silently destroying the artifact too).
                 doc = statements.build(session, user, year, month)
                 row = statements.archive(session, user, doc)
                 session.flush()
-                if statements.send(session, mail, user, row):
+                if user.statement_emails is False:  # NULL = opted in
+                    opted_out += 1
+                elif statements.send(session, mail, user, row):
                     issued += 1
                 else:
-                    skipped += 1
+                    already_sent += 1
                 session.commit()
             except Exception as exc:
                 session.rollback()
                 failed += 1
                 print(f"  statement failed for {user.id}: {str(exc)[:120]}", file=sys.stderr)
+    # Separate counters: "opted out" is not "already sent" (V-D7 cold-review f.3)
     print(
-        f"statements {year:04d}-{month:02d}: issued={issued} already_sent={skipped} failed={failed}"
+        f"statements {year:04d}-{month:02d}: issued={issued} "
+        f"already_sent={already_sent} archived_not_emailed={opted_out} failed={failed}"
     )
     return 0
 

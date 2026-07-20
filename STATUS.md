@@ -3,7 +3,30 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D7 BUILT (founder GO 2026-07-22) — Settings, boring on purpose; at gate
+## V-D7 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
+
+cold-review (3 findings, all closed): (f.1, promise-breaking) opting out of
+the statement EMAIL also skipped archiving it, so Settings' own words —
+"you can always read it here" — became false; the job now ALWAYS builds and
+archives, and only the send is optional. (f.2) purge_one's guard missed the
+upload_path=None + purged_at=None case, so an admin purge of a failed audit
+that never stored a file would stamp purged_at and write an audit-log entry
+claiming a deletion that never happened; the guard is now simply "no file,
+nothing to purge". (f.3) the job's summary conflated opted-out with
+already-sent — separate counters. WRITING THE f.3 FIX EXPOSED A LATENT
+CRASH: the summary line still referenced a counter I had renamed, a
+NameError that would have fired on every real run and that no
+import-only test could see — now covered by a test that actually executes
+main().
+vv PASS-WITH-NOTES; note CLOSED: PLAN-V15's V-D7 entry still claimed alert
+thresholds, which had shipped early in V-D5's /alerts page. Reconciled in
+the plan (one editor per setting; Settings links to it) with T-SET-01
+remapped to the tests that actually cover threshold persistence and
+validation. Traceability rows added for WP-3b/4/5. purge.py 80.0% with
+every remaining miss the pre-existing CLI main() — the carried debt,
+unchanged. Suite green and deterministic; total 95.4%.
+
+## V-D7 BUILT (founder GO 2026-07-22) — build record
 
 Rulings recorded first: R-STMT-MONTH (V-D6 default ratified as law — single
 compute(), a second copy forbidden forever), R-COVERAGE-DEBT (smtp/purge

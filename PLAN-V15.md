@@ -195,6 +195,16 @@ portal link.
 Tests: T-SET-01 (threshold persistence + validation), T-SET-02
 (purge-now = FR-21 semantics), T-SET-03 (revoke flow e2e).
 
+**SCOPE RECONCILIATION (V-D7 vv gate, 2026-07-22).** Alert thresholds
+shipped EARLY, in V-D5's /alerts page (the founder's WP-3b order included
+the settings form), so V-D7 links to them instead of building a second
+control for the same rows — one editor per setting. T-SET-01 therefore
+maps to: threshold persistence + validation at
+tests/test_alerts.py::TestAlertsPage::test_settings_round_trip and
+::test_unparseable_threshold_falls_back, plus the Settings page-facts test
+at tests/test_settings.py::TestSettingsPage::test_01_page_groups_render_
+with_live_facts. Nothing was dropped; the editor moved milestone.
+
 ### V-D8 (days 10-11) — WP-6 SUBSCRIPTIONS
 Razorpay + Stripe subscription mode on FR-27 dedup rails. Plans: Free =
 1 one-shot audit · Pro $99/mo = 1 source, weekly audits, dashboard,
