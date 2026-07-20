@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from sqlalchemy import select
 
@@ -102,6 +103,36 @@ class TestTLIF03AuditTrail:
         assert len(entries) == 1
         assert entries[0].actor == "system@purge"
         assert entries[0].detail == {"mode": "scheduled"}
+
+
+class TestPurgeCliEntrypoint:
+    def test_the_purge_job_actually_runs_end_to_end(
+        self, app: FastAPI, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """purge.main() is what cron actually calls, and nothing executed it —
+        exactly the hole that hid a NameError in the monthly-statements job.
+        Here the stakes are higher: this job IS the FR-21 deletion promise, and
+        a crash in it fails silently and open, retaining uploads we told
+        customers were gone within 7 days."""
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.services.lifecycle import purge
+
+        audit_id = seed_audit(app, "openai_small.jsonl", email="cron@example.com")
+        app.state.runner.run(audit_id)
+        age_audit(app, audit_id, days=8)
+
+        # Point the job's own Settings() at this test's database, then let it
+        # build its engine and session exactly as it does in production.
+        db_url = str(app.state.settings.database_url)
+        monkeypatch.setenv("DATABASE_URL", db_url)
+        monkeypatch.setenv("SECRET_KEY", "p" * 64)
+        assert Settings().database_url == db_url
+
+        purge.main()
+
+        assert audit_id in capsys.readouterr().out  # the summary line resolves
+        with app.state.session_factory() as session:
+            assert session.get(Audit, audit_id).upload_path is None  # type: ignore[union-attr]
 
 
 class TestFR26KeysPurgeWithUploads:
