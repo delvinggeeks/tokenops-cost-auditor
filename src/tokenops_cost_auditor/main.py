@@ -35,6 +35,7 @@ from tokenops_cost_auditor.services.runner import AuditRunner
 from tokenops_cost_auditor.web.routes_admin import router as admin_router
 from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
+from tokenops_cost_auditor.web.routes_billing import router as billing_router
 from tokenops_cost_auditor.web.routes_dashboard import router as dashboard_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
@@ -132,6 +133,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)
     app.include_router(statements_router)  # monthly owner artifact (v1.5 WP-4)
     app.include_router(settings_router)  # account/data controls (v1.5 WP-5)
+    app.include_router(billing_router)  # plans + dunning state (v1.5 WP-6)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:

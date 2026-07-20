@@ -14,6 +14,13 @@ import json
 
 from tokenops_cost_auditor.services.payments.razorpay_link import TOLERANCE_S, WebhookPayment
 
+STRIPE_SUB_EVENTS = {
+    "customer.subscription.created": "activated",
+    "invoice.payment_succeeded": "renewed",
+    "invoice.payment_failed": "failed",
+    "customer.subscription.deleted": "cancelled",
+}
+
 
 class StripeLinkAdapter:
     provider = "stripe"
@@ -61,3 +68,31 @@ class StripeLinkAdapter:
             currency=str(obj.get("currency", "usd")).upper(),
             ref=str(obj["id"]),
         )
+
+    def parse_subscription_event(self, body: bytes) -> object | None:
+        """Same rails as the one-shot path (signature verified by the caller,
+        which also applies the timestamp tolerance); dedup happens downstream."""
+        from tokenops_cost_auditor.services.payments.subscriptions import SubscriptionEvent
+
+        try:
+            data = json.loads(body)
+            kind = STRIPE_SUB_EVENTS.get(str(data.get("type")))
+            if kind is None:
+                return None
+            obj = data["data"]["object"]
+            email = str(
+                obj.get("customer_email") or (obj.get("metadata") or {}).get("email") or ""
+            ).lower()
+            if not email:
+                return None
+            plan = str((obj.get("metadata") or {}).get("plan") or "pro").lower()
+            return SubscriptionEvent(
+                event_id=str(data.get("id") or ""),
+                email=email,
+                kind=kind,
+                plan=plan,
+                currency=str(obj.get("currency") or "usd").upper(),
+                ref=str(obj.get("subscription") or obj.get("id") or ""),
+            )
+        except ValueError, KeyError, TypeError:
+            return None

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from test_connectors import OPENAI_PAGE
 from tokenops_cost_auditor.config import Settings
-from tokenops_cost_auditor.persistence.models import Base, Source, User
+from tokenops_cost_auditor.persistence.models import Base, Source, Subscription, User
 from tokenops_cost_auditor.services.connectors.crypto import encrypt_credential
 from tokenops_cost_auditor.services.connectors.schedule import due_audits, due_pulls, tick
 from tokenops_cost_auditor.services.pricing.table import PricingTable
@@ -42,6 +42,10 @@ def add_source(session: Session, settings: Settings, **kw: object) -> Source:
     if user is None:
         user = User(email="owner@example.com")
         session.add(user)
+        session.flush()
+        # A connected source implies a paid plan (Free has no connections,
+        # R-Q5/Q6) — and scheduled audits are a Pro entitlement.
+        session.add(Subscription(user_id=user.id, provider="stripe", plan="pro"))
         session.flush()
     src = Source(
         user_id=user.id,

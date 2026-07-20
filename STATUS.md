@@ -3,6 +3,33 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D8 BUILT (founder GO 2026-07-22) — Subscriptions + dunning; at gate
+
+ONE price config (services/payments/plans.py): every amount renders from
+Settings, both currencies shown for paid plans (R-Q11), and a test greps
+templates/routes for inline literals so a price change can never half-land.
+Free is genuinely free — no price, no card, no scheduler, and the billing
+page says "No card required" even on the row you are already on.
+WEBHOOKS ride the EXISTING FR-27 rails: signature → timestamp tolerance →
+event-id dedup, now shared by one-shot payments AND subscription events
+(the dedup helper gained a structural protocol instead of assuming a
+payment shape — it would have AttributeError'd on every subscription
+event otherwise). Replay of a subscription event is acknowledged, never
+reprocessed. DUNNING per R-Q11/12 exactly, as a PURE function of
+(failed_at, now) so the rungs are testable without clocks: day 0 past_due
++ email, day 7 read_only, day 21 cancelled → Free. Two edges pinned: a
+REPEATED failure must not restart the clock (or the ladder never reaches
+day 7 and a failing customer keeps a paid plan), and a successful charge
+clears it. Read-only touches exactly ONE capability — scheduled audits
+pause; dashboard, reports and connections all stay, asserted. Cancellation
+reverts to Free and deletes NOTHING (founder ruling verbatim; the email
+says so). Scheduler now gates due audits on entitlements, which surfaced
+that Free accounts must not get scheduled audits — the old scheduler
+fixtures implied a source without a plan, which cannot happen (R-Q5/Q6);
+fixtures corrected. 16 tests (T-SUB-01..05 + edges); plans.py and
+routes_billing.py both 100%; suite green and deterministic; total 95.0%.
+NEXT: gate verdicts, then STOP.
+
 ## V-D7 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
 
 cold-review (3 findings, all closed): (f.1, promise-breaking) opting out of

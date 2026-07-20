@@ -21,6 +21,7 @@ from tokenops_cost_auditor.persistence.models import Source
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.connectors.pull import run_pull
 from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
+from tokenops_cost_auditor.services.payments import subscriptions
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
@@ -45,14 +46,24 @@ def due_pulls(session: Session, now: datetime) -> list[Source]:
     ]
 
 
-def due_audits(session: Session, now: datetime) -> list[Source]:
+def due_audits(session: Session, now: datetime, settings: Settings | None = None) -> list[Source]:
     sources = session.execute(select(Source).where(Source.status == "active")).scalars().all()
-    return [
+    due = [
         s
         for s in sources
         # first audit only after the first pull has landed data
         if s.last_pull_at is not None
         and (s.last_audit_at is None or now - _aware(s.last_audit_at) >= AUDIT_EVERY)
+    ]
+    if settings is None:
+        return due
+    # R-Q12 day 7: a read-only account keeps its data, its dashboard and its
+    # connections — only SCHEDULED audits pause. Pulls continue, so nothing
+    # is lost while payment is sorted out.
+    return [
+        s
+        for s in due
+        if subscriptions.entitlements(session, settings, s.user_id)["scheduled_audits"]
     ]
 
 
@@ -75,7 +86,7 @@ def tick(
             session.rollback()
             stats["pull_errors"] += 1
             log.warning("connector.pull_failed", source_id=source.id, error=str(exc)[:200])
-    for source in due_audits(session, now):
+    for source in due_audits(session, now, settings):
         try:
             run_source_audit(session, settings, table, source)
             session.commit()
@@ -85,6 +96,14 @@ def tick(
             stats["audit_errors"] += 1
             log.warning("connector.audit_failed", source_id=source.id, error=str(exc)[:200])
     if mail is not None:
+        # Walk any failing subscription to the rung it has reached (R-Q12).
+        try:
+            dunning = subscriptions.advance_dunning(session, settings, mail, now=now)
+            stats["dunning_moved"] = sum(dunning.values())
+        except Exception as exc:
+            session.rollback()
+            stats["dunning_errors"] = 1
+            log.warning("dunning.stage_failed", error=str(exc)[:200])
         # WP-3b: alerts are evaluated after audits land, so a new finding or a
         # spend jump reaches the customer in the same pass that discovered it.
         # Isolated like every other stage: pulls and audits are already

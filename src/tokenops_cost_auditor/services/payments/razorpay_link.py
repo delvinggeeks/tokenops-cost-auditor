@@ -26,6 +26,17 @@ class WebhookPayment:
     ref: str
 
 
+# Subscription events, normalised to the kinds subscriptions.py acts on.
+RAZORPAY_SUB_EVENTS = {
+    "subscription.activated": "activated",
+    "subscription.charged": "renewed",
+    "subscription.pending": "failed",
+    "subscription.halted": "failed",
+    "subscription.cancelled": "cancelled",
+    "subscription.completed": "cancelled",
+}
+
+
 class RazorpayLinkAdapter:
     provider = "razorpay"
 
@@ -68,3 +79,33 @@ class RazorpayLinkAdapter:
             currency=str(entity.get("currency", "INR")),
             ref=str(entity["id"]),
         )
+
+    def parse_subscription_event(self, body: bytes, now_epoch: int) -> object | None:
+        """Subscription lifecycle on the SAME FR-27 rails as one-shot payments:
+        caller verifies the signature first, timestamp tolerance here, dedup by
+        event id downstream. Returns None for anything we do not act on."""
+        from tokenops_cost_auditor.services.payments.subscriptions import SubscriptionEvent
+
+        try:
+            data = json.loads(body)
+            kind = RAZORPAY_SUB_EVENTS.get(str(data.get("event")))
+            if kind is None:
+                return None
+            created_at = int(data.get("created_at") or 0)
+            if abs(now_epoch - created_at) > TOLERANCE_S:
+                return None  # FR-27: stale event
+            entity = data["payload"]["subscription"]["entity"]
+            notes = entity.get("notes") or {}
+            email = str(notes.get("email") or entity.get("customer_email") or "").lower()
+            if not email:
+                return None
+            return SubscriptionEvent(
+                event_id=str(data.get("id") or entity.get("id")),
+                email=email,
+                kind=kind,
+                plan=str(notes.get("plan") or "pro").lower(),
+                currency="INR",
+                ref=str(entity.get("id") or ""),
+            )
+        except ValueError, KeyError, TypeError:
+            return None
