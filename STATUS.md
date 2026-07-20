@@ -3,7 +3,35 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D4 + V-D4g BUILT (founder GO on mockup v3, 2026-07-21) — dashboard + guidance wired; at gate
+## V-D4 + V-D4g GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer FAIL→FIXED→re-verified · vv PASS-WITH-NOTES
+
+ux (3 notes, all closed): Prevent ribbon stage was static placeholder text —
+the "coming soon" the shell forbids — now renders REAL armed-rule state
+("Not set up" at zero); sortable headers were a false affordance, now do
+real server-side sorting via SSR links; severity/confidence render as words.
+cold-reviewer FAIL (6 findings, all closed, commit 362dee0) — THREE were
+money-math defects that would have inflated the customer-facing headline:
+(R1) weekly audits re-emit an unfixed finding with a fresh feedback row and
+the old code summed them, billing the same saved dollars every week — now
+ONE credit per route against the EARLIEST applied feedback; (R2) a route
+vanishing from a later audit was credited in full even if the feature was
+simply retired — now a disappearance counts only when call_aggregates prove
+the route still carried traffic, else pending; (R3) the same finding could
+book as both identified and verified. Enabling fix: findings.route persisted
+by BOTH producers (migration 005) — "same detector and route" was otherwise
+uncheckable. Also fixed: drawer showed a stale null verdict so an applied
+route invited re-applying (the R1 trigger), overdue audits collapsed to
+"today", malformed help placeholders could 500 a page.
+PROCESS NOTE (mine): the first vv gate FAILed on a "non-deterministic
+suite" — I had launched gates and then edited the same files, so it sampled
+half-applied states. Gates review a FIXED diff; re-run on the settled tree
+gave PASS-WITH-NOTES with determinism independently confirmed (2 runs, 280
+tests, identical, EXIT=0). vv's coverage note (anthropic_usage 53.2%,
+pre-existing from M1) closed too: fetch-path tests bring it to 95.7% and the
+suite total to 95.1%. Money math savings.py 100%. NEXT: STOP for founder
+review per order; V-D5 (alerts + L0 deltas) on go.
+
+## V-D4 + V-D4g BUILT (founder GO on mockup v3, 2026-07-21) — build record
 
 Founder v3 verdict: all three surfaces PASS, GO to wire; digest arrival
 CONFIRMED. BUILT: R-Q9 verified-savings service (money math — 6 exact-value

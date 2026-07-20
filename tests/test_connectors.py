@@ -202,3 +202,75 @@ class TestPull:
         # key travels in the header and is never persisted anywhere
         assert fake.calls[0]["headers"]["Authorization"] == "Bearer sk-admin-secret-1"
         assert json.dumps({"p": params}, default=str).count("sk-admin") == 0
+
+
+class TestFetchPaths:
+    """Coverage for the fetch loops themselves: pagination, auth failure and
+    the flat cache-creation variant (vv gate note, 2026-07-21)."""
+
+    def test_anthropic_flat_cache_creation_field(self) -> None:
+        """Some API versions report cache creation flat instead of nested."""
+        page = {
+            "data": [
+                {
+                    "starting_at": "2026-07-18T00:00:00Z",
+                    "results": [
+                        {
+                            "model": "claude-opus-4-8",
+                            "num_requests": 3,
+                            "uncached_input_tokens": 1000,
+                            "cache_read_input_tokens": 500,
+                            "cache_creation_input_tokens": 250,
+                            "output_tokens": 90,
+                        }
+                    ],
+                }
+            ],
+            "has_more": False,
+        }
+        rows = anthropic_usage.parse_page(page)
+        assert rows[0]["prompt_tokens"] == 1750  # 1000 + 500 + 250
+        assert rows[0]["cached_tokens"] == 500
+
+    def test_both_clients_paginate(self) -> None:
+        """A `next_page` + has_more pair must be followed exactly once here."""
+
+        class Paging:
+            def __init__(self, first: dict, second: dict) -> None:
+                self.pages = [first, second]
+                self.status_code = 200
+                self.seen: list[dict] = []
+
+            def get(self, url: str, params: dict, headers: dict) -> Paging:
+                self.seen.append(dict(params))
+                return self
+
+            def json(self) -> dict:
+                return self.pages.pop(0)
+
+            def raise_for_status(self) -> None:
+                return None
+
+        first = dict(ANTHROPIC_PAGE, has_more=True, next_page="cursor-2")
+        client = Paging(first, dict(ANTHROPIC_PAGE, has_more=False, next_page=None))
+        rows, pages = anthropic_usage.fetch_usage(
+            "sk-1", date(2026, 7, 1), date(2026, 7, 19), client
+        )
+        assert pages == 2 and len(rows) == 2
+        assert client.seen[1]["page"] == "cursor-2"  # cursor threaded into page 2
+
+        first_oa = dict(OPENAI_PAGE, has_more=True, next_page="oa-2")
+        oa = Paging(first_oa, dict(OPENAI_PAGE, has_more=False, next_page=None))
+        rows, pages = openai_usage.fetch_usage("sk-1", date(2026, 7, 1), date(2026, 7, 19), oa)
+        assert pages == 2 and len(rows) == 4
+
+    def test_revoked_key_raises_user_safe_error(self) -> None:
+        """401/403 must surface as ConnectorAuthError, never leak the key."""
+        for module in (anthropic_usage, openai_usage):
+            for code in (401, 403):
+                client = FakeHTTP({}, status_code=code)
+                with pytest.raises(openai_usage.ConnectorAuthError) as exc:
+                    module.fetch_usage(
+                        "sk-super-secret", date(2026, 7, 1), date(2026, 7, 2), client
+                    )
+                assert "sk-super-secret" not in str(exc.value)
