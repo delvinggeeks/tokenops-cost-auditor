@@ -90,6 +90,14 @@ promotion still requires a PRD amendment.
   export, poll audit status, fetch findings, so agents and frameworks can
   call TokenOps as a tool. TRIGGER: the existing API-key buying signal
   (same event, modern surface) — see the API-keys entry above.
+- **WP-REPORT-VISUAL — report web page visual pass** (V-D9 deferral,
+  founder-ratified 2026-07-23 §1) — the /report web surface still wears the
+  pre-design-constitution styling while every v1.5 app surface moved to
+  wa-design.css. DEFERRED TO ITS OWN POST-LAUNCH GATED MILESTONE, not a
+  polish-commit rider, because the template is SHARED with the PDF renderer
+  and pinned by golden-determinism tests: a change that looks like CSS can
+  silently move a byte in a deliverable customers pay $500 for. It gets a
+  full gate (ux + vv golden re-verification), or it does not get touched.
 - **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
   per-pipeline / per-knowledge-base attribution views, the T4-era
   architect dashboard. Registered, NOT built: arrives with T4 span data,
