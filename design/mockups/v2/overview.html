@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v2 — Overview in the app shell (R-DESIGN-SHELL) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../../wa-design.css">
+</head>
+<body>
+<!-- MOCKUP v2, sample data. Every widget below is a self-contained partial
+     (htmx-refreshable independently). Sidebar lists ONLY shipped modules —
+     it grows as rings ship; no "coming soon" anywhere. -->
+<div class="app">
+
+  <!-- ============ SIDEBAR: the ecosystem's stages ARE the navigation ============ -->
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">TokenOps Cost Auditor</div>
+
+    <nav class="nav-group">
+      <div class="label">Monitor</div>
+      <a href="#" aria-current="page">Overview</a>
+      <a href="#">Findings</a>
+      <a href="#">Reports &amp; audits</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Connect</div>
+      <a href="#">Sources</a>
+      <a href="#">Get your logs</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Act</div>
+      <a href="#">Alerts</a>
+      <a href="#">Savings statements</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Account</div>
+      <a href="#">Settings</a>
+      <a href="#">Billing</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Engineering</div>
+      <a href="#">Detector detail</a>
+      <a href="#">Methodology</a>
+    </nav>
+  </aside>
+
+  <div>
+    <!-- ============ TOPBAR ============ -->
+    <header class="topbar">
+      <button class="btn btn-quiet sidebar-toggle" aria-expanded="true">Menu</button>
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">Overview</span>
+      <span class="plan-badge">Pro</span>
+      <span class="spacer"></span>
+      <span class="freshness">Data as of <b>2026-07-21 06:30 UTC</b> · last audit
+        <code>a7f2…c91</code></span>
+      <button class="btn btn-quiet">lokesh@…</button>
+    </header>
+
+    <main class="main">
+      <div class="grid">
+
+        <!-- ============ W0 — PIPELINE RIBBON: the holistic spine ============ -->
+        <section class="w-12" aria-labelledby="w0">
+          <h2 id="w0" style="margin-bottom: 2px;">Your pipeline, right now</h2>
+          <p class="tells" style="margin-bottom: var(--s2);">What this tells you:
+            where your money is in the loop — from the logs coming in to the
+            alerts watching for the next surprise.</p>
+          <div class="ribbon">
+            <div class="seg active">
+              <div class="stage-name">Input</div>
+              <div class="stage-state">1 source</div>
+              <div class="stage-note">OpenAI org · pulled 06:15 UTC</div>
+            </div>
+            <div class="seg active">
+              <div class="stage-name">Analyze</div>
+              <div class="stage-state">1.24M calls</div>
+              <div class="stage-note">Audited 06:30 UTC · 31 days</div>
+            </div>
+            <div class="seg active">
+              <div class="stage-name">Report</div>
+              <div class="stage-state">11 findings</div>
+              <div class="stage-note">$2,931.20/mo identified</div>
+            </div>
+            <div class="seg active">
+              <div class="stage-name">Act</div>
+              <div class="stage-state">3 applied</div>
+              <div class="stage-note">$1,284.40/mo verified</div>
+            </div>
+            <div class="seg waiting">
+              <div class="stage-name">Prevent</div>
+              <div class="stage-state">2 alerts armed</div>
+              <div class="stage-note">Spend spike · waste above 25%</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ W1 — VERIFIED SAVINGS HERO ============ -->
+        <section class="widget w-12" aria-labelledby="w1">
+          <h2 id="w1">Verified savings — July 2026</h2>
+          <p class="tells">What this tells you: money you are no longer spending,
+            recomputed from your own logs after you applied fixes. Not a projection.</p>
+          <div class="money-hero total-rule">
+            $<span class="countup" style="--target: 1284;" aria-label="1,284 dollars"></span><span class="money-sm">.40</span>
+          </div>
+          <div style="margin-top: var(--s2);">
+            <span class="badge badge-verified">VERIFIED — 3 fixes, confirmed over 14 days of data</span>
+            <span class="badge badge-estimate" style="margin-left: 8px;">$2,931.20/mo more identified (estimate)</span>
+          </div>
+          <p class="muted" style="margin: var(--s2) 0 0; font-size: 13px;">
+            Customer-reported savings ($400.00) are tracked separately and never
+            enter this figure.</p>
+          <div style="margin-top: var(--s2);">
+            <a class="btn btn-primary" href="#">Apply the next fix ($1,120.10/mo)</a>
+            <a class="btn btn-quiet" href="#">How we verify savings</a>
+          </div>
+          <div class="provenance">Source: audit <code>a7f2…c91</code> vs baseline
+            <code>3b90…447</code> · rate card v2026-07-17</div>
+        </section>
+
+        <!-- ============ W2 / W3 — TREND PAIR ============ -->
+        <section class="widget w-6" aria-labelledby="w2">
+          <h2 id="w2">Spend trend</h2>
+          <p class="tells">What this tells you: what you are paying now versus the
+            last 30 days.</p>
+          <div class="money money-lg">$8,912.55<span class="muted" style="font-size: 14px; font-family: var(--sans);"> /mo run-rate</span></div>
+          <svg viewBox="0 0 300 72" width="100%" height="72" role="img"
+               aria-label="Spend trend over 30 days, gently rising">
+            <polyline fill="none" stroke="var(--accent)" stroke-width="2"
+              points="0,52 30,50 60,54 90,47 120,45 150,48 180,41 210,42 240,38 270,36 300,34"/>
+          </svg>
+          <div class="provenance">30-day window · audit <code>a7f2…c91</code></div>
+        </section>
+
+        <section class="widget w-6" aria-labelledby="w3">
+          <h2 id="w3">Waste share</h2>
+          <p class="tells">What this tells you: how much of that spend our detectors
+            can account for as avoidable.</p>
+          <div class="money money-lg" style="color: var(--waste);">24.1%</div>
+          <svg viewBox="0 0 300 72" width="100%" height="72" role="img"
+               aria-label="Waste share falling since fixes were applied">
+            <polyline fill="none" stroke="var(--waste)" stroke-width="2"
+              points="0,22 30,24 60,20 90,26 120,25 150,30 180,34 210,38 240,44 270,47 300,50"/>
+          </svg>
+          <div class="provenance">Falling since the caching fix, Jul 8 · audit
+            <code>a7f2…c91</code></div>
+        </section>
+
+        <!-- ============ W4 — TOP FINDINGS ============ -->
+        <section class="widget w-8" aria-labelledby="w4">
+          <h2 id="w4">Top findings by monthly impact</h2>
+          <p class="tells">What this tells you: the biggest single things worth
+            fixing, ranked by dollars, not severity labels.</p>
+          <table class="ledger">
+            <thead>
+              <tr><th>Finding</th><th>Confidence</th><th class="money">Monthly</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Prompt cache unused on <code>claude-sonnet-5</code> agent route</td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$1,120.10</td>
+                <td><button class="btn btn-primary">Applied</button>
+                    <button class="btn btn-quiet">Dismiss</button></td>
+              </tr>
+              <tr>
+                <td>Frontier model on short completions (avg 92 tokens)</td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$688.75</td>
+                <td><button class="btn btn-primary">Applied</button>
+                    <button class="btn btn-quiet">Dismiss</button></td>
+              </tr>
+              <tr>
+                <td>Retry storms — needs per-request logs</td>
+                <td><span class="badge badge-waste">requires logs</span></td>
+                <td class="money muted">—</td>
+                <td><a class="btn" href="#">Upload logs</a></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="provenance">11 findings in audit <code>a7f2…c91</code> ·
+            marking Applied re-verifies on the next audit covering ≥7 days</div>
+        </section>
+
+        <!-- ============ W6 — NEXT AUDIT COUNTDOWN ============ -->
+        <section class="widget w-4" aria-labelledby="w6">
+          <h2 id="w6">Next scheduled audit</h2>
+          <p class="tells">What this tells you: when these numbers refresh next.</p>
+          <div class="stat-lg">2 days</div>
+          <p class="muted" style="margin: 4px 0 0;">Monday 06:30 UTC, weekly</p>
+          <div class="provenance">Pro plan · weekly cadence · source pulls daily 06:15 UTC</div>
+        </section>
+
+        <!-- ============ W5 — SOURCES HEALTH ============ -->
+        <section class="widget w-4" aria-labelledby="w5">
+          <h2 id="w5">Sources</h2>
+          <p class="tells">What this tells you: whether we are still receiving your
+            usage data.</p>
+          <p><span class="badge badge-verified">healthy</span>
+            <strong>OpenAI — production org</strong><br>
+            <small class="muted">31 days of usage · pulled today 06:15 UTC</small></p>
+          <a class="btn" href="#">Connect another source</a>
+          <div class="provenance">1 of 1 connections used on Pro</div>
+        </section>
+
+        <!-- ============ W7 — RECENT ALERTS (designed empty state) ============ -->
+        <section class="widget w-4" aria-labelledby="w7">
+          <h2 id="w7">Recent alerts</h2>
+          <p class="tells">What this tells you: surprises we caught between audits.</p>
+          <div class="empty">
+            <p>No alerts in the last 30 days — your spend stayed inside the
+              thresholds you set.</p>
+            <a class="btn" href="#">Review alert thresholds</a>
+          </div>
+          <div class="provenance">2 rules armed · checked hourly</div>
+        </section>
+
+        <!-- ============ W8 — LATEST STATEMENT ============ -->
+        <section class="widget w-4" aria-labelledby="w8">
+          <h2 id="w8">Savings statement</h2>
+          <p class="tells">What this tells you: the one-page summary you can forward
+            to whoever signs off on the bill.</p>
+          <p class="money money-sm">June 2026 · $980.15 verified</p>
+          <a class="btn" href="#">Open statement</a>
+          <a class="btn btn-quiet" href="#">Email it again</a>
+          <div class="provenance">Next statement: 1 Aug 2026 · sent to lokesh@…</div>
+        </section>
+
+      </div>
+
+      <p class="muted" style="margin-top: var(--s4); font-size: 13px;">
+        MOCKUP v2 — sample data. Delight on this surface: the verified-savings
+        count-up, and applied fixes flowing into that headline. Deterministic by
+        construction: the same logs produce the same report, byte for byte.
+        Every figure above names the audit it came from.</p>
+    </main>
+  </div>
+</div>
+</body>
+</html>

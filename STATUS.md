@@ -3,7 +3,26 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## R-DESIGN MOCKUP SET GATED — ux-reviewer PASS-WITH-NOTES (all 3 notes closed); awaiting founder three-second review
+## MOCKUP v2 (R-DESIGN-SHELL) GATED — ux-reviewer PASS-WITH-NOTES, 4 notes closed; awaiting founder re-review, WIRING STILL BLOCKED
+
+R-DESIGN-SHELL recorded in PLAN §0.1 (app shell, widget grid, pipeline
+ribbon, determinism-as-design; zero scope/date change). Built
+design/mockups/v2/{overview,first-run,findings}.html on shell components
+added to wa-design.css. SHELL: sidebar grouped MONITOR/CONNECT/ACT/
+ACCOUNT/ENGINEERING — only shipped modules, zero "coming soon" (grep
+clean); topbar = product name · page · plan badge · freshness stamp ·
+account. OVERVIEW: W0 ribbon (INPUT→ANALYZE→REPORT→ACT→PREVENT from real
+state) + W1-W8 widgets, each with title, "What this tells you" line,
+provenance stamp, designed empty state. FIRST-RUN renders in the SAME
+shell with every widget in its guided empty state (no shimmer, no invented
+numbers — R-Q9 held). ux gate v2: PASS-WITH-NOTES, all 4 closed — f.1
+non-money stats got .stat-lg so nothing outranks a dollar figure; f.2 W1
+hero gained its own next action; f.3 topbar now carries the product name;
+f.4 overview names its delight. Contrast measured AA-clear on all new
+pairs (sidebar active 11.1:1, ribbon 9.9:1, provenance 6.4-7.4:1).
+NEXT: founder three-second re-review of v2 → GO → V-D4 wiring.
+
+## SUPERSEDED — R-DESIGN v1 mockup set (single-page dashboard) — ux PASS-WITH-NOTES, 3 notes closed
 
 Consolidated order 2026-07-20 applied: Part 1 verified verbatim-identical
 to the prior approval (already executed — skipped); R-DESIGN + ADDENDUM

@@ -409,6 +409,38 @@ delight and proves contrast + reduced-motion compliance; three-second
 rule overrides on conflict. Scope note: R-DESIGN + addendum are DIRECTION
 for surfaces inside frozen v1.5 scope — zero new features, zero dates.
 
+**R-DESIGN-SHELL (founder mockup review, 2026-07-21) — supersedes the
+single-page dashboard mockup; restructures V-D4 templates only (zero
+features, zero dates; SSR + htmx partials law stands).** (1) APP SHELL:
+left sidebar grouped by the ecosystem's own stages so navigation itself
+explains the platform — MONITOR (Overview · Findings · Reports & Audits) /
+CONNECT (Sources · Get your logs) / ACT (Alerts · Savings Statements) /
+ACCOUNT (Settings · Billing) / ENGINEERING (Detector detail · Methodology);
+obvious active state; collapsible on mobile; ONLY real shipped modules
+appear — no "coming soon" anywhere (the no-promises law applies in-app;
+the sidebar GROWS as rings ship, which is the platform story told
+honestly). Slim topbar: product name · plan badge · data-freshness stamp
+("data as of <last audit/pull, UTC>") · account menu. (2) OVERVIEW =
+MODULAR WIDGET GRID, each a self-contained server-rendered partial:
+W1 verified-savings hero (full width), W2 spend trend + W3 waste% trend
+(pair), W4 top findings by $ with inline Applied/Dismissed, W5 sources
+health, W6 next-audit countdown, W7 recent alerts, W8 latest Savings
+Statement. EVERY widget carries title + one-line "What this tells you"
+subtitle + provenance stamp (audit id / pull time) + designed empty state
+that teaches the next action; independently htmx-refreshable. (3) THE
+HOLISTIC SPINE — pipeline ribbon W0 at top of Overview: INPUT → ANALYZE →
+REPORT → ACT → PREVENT drawn live from real state (sources connected,
+last audit time, findings open, applied count, alerts armed); one glance =
+end-to-end comprehension. (4) DETERMINISM AS A DESIGN FEATURE: no
+skeleton-shimmer fakery; every number traceable to a stamped audit;
+identical inputs render identical screens; Engineering tab says it plainly
+("deterministic engine — same logs, same report, byte-identical");
+freshness stamps everywhere money shows. (5) PROCESS: mockup v2 =
+app-shell + Overview grid + ribbon; finding-card and first-run inherit the
+shell (first-run renders INSIDE it with widgets in guided empty states);
+ux-reviewer gates v2 per-widget against the three-second rule; then STOP
+for founder review — wiring only after founder GO.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

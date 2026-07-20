@@ -71,6 +71,11 @@ a { color: var(--accent); }
   color: var(--verified);
 }
 .money-lg { font-size: 28px; font-weight: 700; }
+/* Non-money stats (countdowns, counts): serif for family, but deliberately
+   lighter and smaller than money — nothing outranks a dollar figure
+   (R-DESIGN §2; mockup-v2 ux gate f.1). */
+.stat-lg { font-family: var(--serif); font-variant-numeric: tabular-nums;
+  font-size: 22px; font-weight: 400; color: var(--ink); }
 .money-sm { font-size: 17px; font-weight: 600; }
 
 /* Signature: the accountant's double rule = final, verified total. */
@@ -158,6 +163,92 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .countup { --n: var(--target); }
+}
+
+/* ---- APP SHELL (R-DESIGN-SHELL 2026-07-21) ---- */
+
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+
+.sidebar { background: var(--surface-tint); border-right: 1px solid var(--rule);
+  padding: var(--s3) 0; }
+.sidebar .brand { font-weight: 700; padding: 0 var(--s3) var(--s3); }
+.nav-group { margin-bottom: var(--s3); }
+.nav-group > .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-soft); padding: 0 var(--s3) 6px; }
+.nav-group a { display: block; padding: 7px var(--s3); color: var(--ink);
+  text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+.nav-group a:hover { background: rgba(28, 26, 23, 0.04); }
+.nav-group a[aria-current="page"] { font-weight: 600; color: var(--accent-ink);
+  background: var(--surface); border-left-color: var(--accent); }
+
+.topbar { display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s2) var(--s4); border-bottom: 1px solid var(--rule);
+  background: var(--surface); }
+.topbar .spacer { flex: 1; }
+.freshness { font-size: 13px; color: var(--ink-soft); }
+.freshness b { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.plan-badge { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--paper); }
+.main { padding: var(--s4); }
+
+.sidebar-toggle { display: none; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--rule); }
+  .sidebar.collapsed .nav-group { display: none; }
+  .sidebar-toggle { display: inline-block; }
+  .main { padding: var(--s3) var(--s2); }
+}
+
+/* ---- WIDGET GRID ---- */
+
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s3); }
+.w-12 { grid-column: span 12; } .w-6 { grid-column: span 6; }
+.w-4 { grid-column: span 4; } .w-8 { grid-column: span 8; }
+@media (max-width: 860px) { .w-6, .w-4, .w-8 { grid-column: span 12; } }
+
+.widget { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-1), var(--inner-edge);
+  padding: var(--s3); display: flex; flex-direction: column;
+  transition: box-shadow var(--t-fast) var(--ease); }
+.widget:hover { box-shadow: var(--lift-2), var(--inner-edge); }
+.widget > h2 { margin-bottom: 2px; }
+/* "What this tells you" — mandatory one-liner on every widget */
+.widget > .tells { font-size: 13px; color: var(--ink-soft); margin: 0 0 var(--s2); }
+/* Provenance: determinism made visible — every number names its source */
+.widget > .provenance { margin-top: auto; padding-top: var(--s2); font-size: 12px;
+  color: var(--ink-soft); border-top: 1px solid var(--rule); }
+.widget .provenance code { font-size: 11px; }
+/* Empty states teach the next action — never a shimmer, never a spinner */
+.empty { padding: var(--s3) 0; }
+.empty p { margin: 0 0 var(--s2); color: var(--ink-soft); }
+
+/* ---- PIPELINE RIBBON (W0, the holistic spine) ---- */
+
+.ribbon { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--surface); overflow: hidden; }
+.ribbon .seg { padding: var(--s2) var(--s3); border-right: 1px solid var(--rule);
+  position: relative; }
+.ribbon .seg:last-child { border-right: none; }
+.ribbon .seg .stage-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-soft); }
+.ribbon .seg .stage-state { font-family: var(--serif); font-size: 19px; font-weight: 700;
+  font-variant-numeric: tabular-nums; margin-top: 2px; }
+.ribbon .seg .stage-note { font-size: 12px; color: var(--ink-soft); }
+.ribbon .seg.active { background: var(--surface-tint); }
+.ribbon .seg.active .stage-name { color: var(--accent-ink); }
+.ribbon .seg.waiting .stage-state { color: var(--ink-soft); font-weight: 400; }
+/* chevron seam: the strip reads left-to-right as one flow */
+.ribbon .seg::after { content: ""; position: absolute; right: -7px; top: 50%;
+  width: 12px; height: 12px; transform: translateY(-50%) rotate(45deg);
+  border-top: 1px solid var(--rule); border-right: 1px solid var(--rule);
+  background: inherit; z-index: 1; }
+.ribbon .seg:last-child::after { display: none; }
+@media (max-width: 860px) {
+  .ribbon { grid-template-columns: 1fr; }
+  .ribbon .seg { border-right: none; border-bottom: 1px solid var(--rule); }
+  .ribbon .seg::after { display: none; }
 }
 
 /* Print = CFO-forwardable (report + statement inherit at WP-7) */
