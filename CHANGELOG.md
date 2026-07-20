@@ -5,6 +5,34 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v15-d10 (pre-tag rehearsal, NOT a deploy) · V-D10 DEPLOY
+  REHEARSAL on a production-shaped copy. Real topology, isolated: the live
+  local stack was already up with populated pgdata/uploads/reports volumes,
+  so the rehearsal ran as a separate compose project (tokenops-rehearsal)
+  with its own volumes, renamed containers and loopback-only ports — the
+  running stack was never recreated. postgres:17, same Dockerfile build,
+  APP_ENV=prod, dummy secrets only (the real .env with the Postmark token
+  was never read). MIGRATION CHAIN: full 001->007 applied from empty on real
+  Postgres, each revision reporting by name; head = d3f8a1c7e604 (007
+  statement email preference); 16 tables. NOTE: the standing order said
+  "001->006" — the chain runs to 007, and 007 creates the statement-email
+  preference the V-D7 settings path writes to. SMOKE: /healthz 200 db:true;
+  landing 200 with FR-23 verbatim; /legal/terms renders $500 · ₹45,000 from
+  the price config; /sample 200. SUITE: full suite green against Postgres
+  with ZERO skips — the postgres-gated integration test that skips in every
+  local run executed here and passed, exercising the with_for_update row
+  locks that are no-ops on SQLite. FR-22 verified against the deployed
+  schema: no prompt/completion text column exists (only token counts and our
+  own findings.fix_text / statements.body_text). THREE DEFECTS FOUND AND
+  FIXED: (1) Terms of Service quoted ₹20,000/audit while billing charges
+  ₹45,000, and its guard test pinned both mirrors to the stale literal;
+  (2) `alembic upgrade head` — runbook §2 step 5, the riskiest deploy step —
+  printed nothing at all, because env.py never applied alembic.ini's logging
+  config, leaving an operator unable to tell 7 applied revisions from a
+  no-op; (3) alembic path_separator deprecation pinned. Rehearsal stack and
+  volumes destroyed afterwards. NO PRODUCTION DEPLOY: that remains a
+  separate founder GO after the gates.
+
 - 2026-07-19 · d13-live → d13-live.1 (8bd96a6) · FIRST PRODUCTION DEPLOY —
   https://tokenops.cloud on founder VPS (Contabo Cloud VPS 4: x86, 4 vCPU,
   7.8 GiB, Ubuntu 24.04, 169.58.44.80) via `scripts/provision.sh` one-command

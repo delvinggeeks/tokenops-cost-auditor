@@ -1116,3 +1116,52 @@ stdlib parser) and `python-multipart` at D6 (FastAPI multipart upload); (2) conf
 doc-string updates made under R-NAMING; (3) R-Q1 nuance — UML emission lands at the
 D6-D7 group gate (end of D7). Market-research refresh running; report to
 docs/09b-MARKET-RESEARCH-REFRESH.md.
+
+
+## V-D10 (2026-07-23) — harden + ship prep
+
+Coverage debt CLOSED, not carried: smtp.py 83.8%->100%, purge.py 80.0%->97.5%
+(residual = the `__main__` guard). Both were untested production paths:
+purge.main() is the FR-21 deletion promise running under cron and nothing had
+ever executed it — the same hole that hid the monthly-statements NameError,
+but failing open here means retaining uploads we told customers were deleted.
+
+DEPLOY REHEARSAL on a production-shaped copy (details in CHANGELOG). Ran as an
+isolated compose project because the live local stack was already up with
+populated volumes; the real stack was never recreated. Full migration chain
+001->007 applied from empty on postgres:17, each revision reporting by name.
+Full suite green against Postgres with ZERO skips — the postgres-gated test
+that skips locally ran and passed, exercising with_for_update row locks that
+are no-ops on SQLite. FR-22 re-verified against the DEPLOYED schema.
+
+DISCREPANCY OF RECORD: the standing order said migration chain "001->006".
+The chain runs to 007 (statement email preference, V-D7). Rehearsed to 007.
+
+Three defects found and fixed:
+1. Terms of Service (web + docs-site mirror) quoted $500 / ₹20,000 per audit
+   while the price config charges ₹45,000 — a binding document 44% under
+   what an Indian customer's card is charged. Root cause was the guard: the
+   MP-9 test pinned the literal in BOTH mirrors, certifying they agreed with
+   each other while both disagreed with checkout. Terms now renders from the
+   one price config; the test derives its expectation from that config and is
+   mutation-verified to fail on drift.
+2. `alembic upgrade head` (runbook §2 step 5) printed NOTHING — env.py never
+   applied alembic.ini's logging config, so the riskiest step of a production
+   deploy gave an operator no way to distinguish 7 applied revisions from a
+   silent no-op.
+3. alembic path_separator deprecation pinned rather than left to a future
+   default.
+
+Deferrals per founder ruling: report web visual pass -> BACKLOG as its own
+post-launch gated milestone (shared PDF template + golden pins). Pricing-page
+Savings-Statement framing: NOT taken into V-D10 — the day was spent on the
+pricing-truth defect and the rehearsal, which is not "genuine slack"; it goes
+to BACKLOG beside item 1 unless the founder directs otherwise.
+
+Open for founder: launch asset post 8/ now leads with Free->Pro subscription
+and demotes the $500 one-off to an enterprise line. That is a positioning
+change, not a figure correction — flagged in the asset approval checklist.
+Terms §4/§6 still describe a per-audit business only; they do not mention
+subscriptions at all, and §6 caps liability at "the amount you paid for the
+audit in question", which is undefined for a subscriber. I did not author
+contract language for that — founder/legal call.
