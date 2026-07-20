@@ -31,16 +31,22 @@ def run_for_user(
     now: datetime | None = None,
 ) -> list[Firing]:
     firings = evaluate(session, settings, user, now=now)
+    sent: list[Firing] = []
     for f in firings:
         session.add(
             AlertEvent(user_id=user.id, rule=f.rule, detail=f.detail, ts=now or datetime.now(UTC))
         )
-        session.flush()
+        # Commit THIS event before sending, and before attempting any further
+        # firing: a later failure must not roll back an email already sent
+        # (V-D5 cold-review f.2 — the at-most-once claim was false when the
+        # commit lived at the end of the batch).
+        session.commit()
         send = getattr(mail, "alert", None)
         if callable(send):
             send(user.email, f.subject, f.body)
         log.info("alert.fired", rule=f.rule, user_id=user.id)
-    return firings
+        sent.append(f)
+    return sent
 
 
 def run_all(
@@ -52,7 +58,6 @@ def run_all(
     for user in users:
         try:
             fired = run_for_user(session, settings, mail, user, now=now)
-            session.commit()
             stats["users"] += 1
             stats["fired"] += len(fired)
         except Exception as exc:

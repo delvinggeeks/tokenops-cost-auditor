@@ -105,7 +105,10 @@ def evaluate(
         )
 
     if SPEND_SPIKE in enabled and previous is not None:
-        threshold = enabled[SPEND_SPIKE].threshold or settings.alert_spend_spike_dod_pct
+        configured = enabled[SPEND_SPIKE].threshold
+        # `is not None`, not truthiness: a customer's explicit 0 means 0
+        # (V-D5 cold-review f.3).
+        threshold = configured if configured is not None else settings.alert_spend_spike_dod_pct
         before, after = _monthly(previous), _monthly(latest)
         if before > 0:
             change = (after - before) / before * 100.0
@@ -123,7 +126,8 @@ def evaluate(
                 )
 
     if WASTE_ABOVE in enabled:
-        threshold = enabled[WASTE_ABOVE].threshold or settings.alert_waste_target_pct
+        configured = enabled[WASTE_ABOVE].threshold
+        threshold = configured if configured is not None else settings.alert_waste_target_pct
         waste = float(latest.savings_pct or 0.0)
         if waste > threshold:
             fire(
@@ -173,8 +177,9 @@ def evaluate(
                 {"count": len(fresh), "top_usd": round(float(top.monthly_impact_usd), 2)},
             )
 
-    if SOFT_BUDGET in enabled and enabled[SOFT_BUDGET].threshold:
-        budget = float(enabled[SOFT_BUDGET].threshold or 0.0)
+    budget_rule = enabled.get(SOFT_BUDGET)
+    if budget_rule is not None and budget_rule.threshold is not None:
+        budget = float(budget_rule.threshold)
         spend = _monthly(latest)
         if spend > budget:
             fire(

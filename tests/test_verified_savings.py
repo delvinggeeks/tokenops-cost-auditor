@@ -92,6 +92,8 @@ def add_traffic(session: Session, audit_id: str, model: str) -> None:
 
 class TestVerifiedSavings:
     def test_01_applied_then_reaudited_is_verified(self, session: Session) -> None:
+        """T-FB-02: the before/after delta golden — an applied finding
+        recomputed by a later audit yields exactly baseline - recomputed."""
         uid = seed(session)
         a1 = add_audit(session, uid, T0, 30)
         add_finding(session, a1.id, "D2-001", "d2_missing_cache", 1000.0)
@@ -154,6 +156,8 @@ class TestVerifiedSavings:
         assert compute(session, uid).verified_usd == 0.0
 
     def test_04_customer_reported_never_in_headline(self, session: Session) -> None:
+        """T-FB-03: a customer-reported figure reaches its own line and
+        never the verified headline."""
         uid = seed(session)
         a1 = add_audit(session, uid, T0, 30)
         add_finding(session, a1.id, "D1-001", "d1_oversized_model", 400.0)

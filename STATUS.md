@@ -3,7 +3,29 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D5 BUILT (founder GO 2026-07-22) — alerts live, Prevent stage real, L0 customer-reported path wired; at gate
+## V-D5 GATE — cold-reviewer FAIL→FIXED, vv FAIL→FIXED; both re-verified, awaiting founder review
+
+cold-review (4 findings, all closed): (f.1, the serious one) the
+savings-realized form posted verdict="{{ verdict or 'applied' }}", so a
+customer typing a figure they saw on their own bill would silently mark the
+finding APPLIED — feeding R-Q9's verified headline with a decision they
+never made. The figure now rides WHICHEVER verdict they explicitly click
+(three submit buttons, no defaulted hidden field). (f.2) the at-most-once
+claim was false: the commit sat at the end of the per-user batch, so a
+later send failure rolled back an event whose email had already gone —
+each event now commits before its own send; the trade-off is stated in the
+test (a failed send is a MISSED alert, never a duplicate). (f.3) threshold
+truthiness read a deliberate 0 as "unset" — now `is not None`, so "alert me
+on any spend" works. (f.4) the alert stage could kill a tick whose pulls
+and audits had already committed — now isolated like every other stage.
+vv FAIL (2 objective gates, both closed): dispatch.py was 64.7% (run_all's
+loop never exercised directly) → 100% via a real per-user test incl. error
+isolation; T-FB-01/02 existed as behaviour but carried no test IDs, so
+traceability was fiction — now labelled in place with an ID map in
+PLAN-V15. Also fixed a mypy narrowing error my own run caught. Suite green
+and deterministic across runs; total coverage 95.1%.
+
+## V-D5 BUILT (founder GO 2026-07-22) — build record
 
 WP-3b: four rules per the ruling (spend spike DoD, waste above target, new
 HIGH finding, soft budget), each evaluated against audits the customer

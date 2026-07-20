@@ -182,6 +182,8 @@ class TestFindingsAndFeedback:
         assert "25 times" in r.text or "25 " in r.text
 
     def test_03_feedback_captures_and_updates_headline(self, app: FastAPI) -> None:
+        """T-FB-01: L0 capture, and a re-vote updates in place rather than
+        stacking rows (one verdict per finding, per audit)."""
         audit_id = seed_audit(app, findings=[("D2-001", "d2_missing_cache", 1120.10)])
         client = TestClient(app)
         r = client.post(

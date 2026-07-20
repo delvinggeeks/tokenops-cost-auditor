@@ -170,6 +170,11 @@ formula gets a golden-style derivation row in pricing_golden_NOTES.md
 Tests: T-ALR-01..04 (one per rule, incl. threshold edge), T-ALR-05
 (observe-only guard), T-FB-01 (capture + idempotent re-vote), T-FB-02
 (delta computation golden), T-FB-03 (savings-realized flows to headline).
+ID map (V-D5 gate): T-ALR-01..05 tests/test_alerts.py::TestRules /
+TestObserveOnly; T-FB-01 tests/test_dashboard.py::TestFindingsAndFeedback::
+test_03; T-FB-02 tests/test_verified_savings.py::TestVerifiedSavings::
+test_01; T-FB-03 same file test_04 + tests/test_alerts.py::
+TestColdReviewRegressionsV5::test_f1.
 
 ### V-D6 (day 8) — WP-4 SAVINGS STATEMENT
 Monthly one-page CFO-forwardable email: spend, waste found, fixes

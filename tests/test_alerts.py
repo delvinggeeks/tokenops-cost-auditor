@@ -307,3 +307,152 @@ class TestAlertsPage:
                 select(AlertRule).where(AlertRule.rule == "waste_above_target")
             ).scalar_one()
             assert row.threshold is None and row.enabled is True
+
+
+class TestColdReviewRegressionsV5:
+    """V-D5 cold-review FAIL (2026-07-22) — f.1..f.4."""
+
+    def test_f1_recording_a_figure_never_implies_applied(self, app: FastAPI) -> None:
+        """A customer-reported number must not silently mark a finding Applied
+        — that would feed R-Q9's verified headline with an unmade decision."""
+        from tokenops_cost_auditor.persistence.models import FindingFeedback
+
+        with app.state.session_factory() as session:
+            user = User(email=EMAIL)
+            session.add(user)
+            session.flush()
+            audit = Audit(user_id=user.id, status="done", observed_days=30, row_count=10)
+            session.add(audit)
+            session.flush()
+            session.add(
+                FindingRow(
+                    audit_id=audit.id,
+                    finding_id="D2-001",
+                    detector="d2_missing_cache",
+                    route="m1",
+                    severity="high",
+                    monthly_impact_usd=500.0,
+                    confidence="estimated",
+                    fix_text="x",
+                    evidence_sample=[],
+                )
+            )
+            session.commit()
+            audit_id = audit.id
+
+        drawer = TestClient(app).get(f"/findings/{audit_id}/D2-001", headers=HDR).text
+        # the form carries NO pre-set verdict — the customer must choose one
+        assert 'name="verdict" value="applied"' in drawer  # as an explicit button
+        assert 'type="hidden" name="verdict"' not in drawer
+        # and a dismissal carrying a figure stays a dismissal
+        TestClient(app).post(
+            f"/findings/{audit_id}/D2-001/feedback",
+            headers=HDR,
+            data={"verdict": "dismissed", "savings_realized_usd": "125.50"},
+        )
+        with app.state.session_factory() as session:
+            fb = session.execute(select(FindingFeedback)).scalars().one()
+            assert fb.verdict == "dismissed" and fb.savings_realized_usd == 125.50
+
+    def test_f2_a_send_failure_cannot_unsend_an_earlier_alert(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """Firing 1's email went out; firing 2 explodes. Firing 1 must stay
+        recorded, or the next tick re-sends it."""
+
+        class ExplodingMail:
+            def __init__(self) -> None:
+                self.sent: list[str] = []
+
+            def alert(self, to_email: str, subject: str, body: str) -> None:
+                self.sent.append(subject)
+                if len(self.sent) == 2:
+                    raise RuntimeError("smtp down")
+
+        user = make_user(session)
+        arm(session, user.id, WASTE_ABOVE, 25.0)
+        arm(session, user.id, SOFT_BUDGET, 100.0)
+        add_audit(session, user.id, T0, spend=900.0, waste=40.0)
+        session.commit()
+        mail = ExplodingMail()
+        with pytest.raises(RuntimeError):
+            dispatch.run_for_user(session, settings, mail, user)
+        session.rollback()
+        # Both events are committed — each before its own send. The deliberate
+        # trade-off is AT-MOST-ONCE: a failed send is a missed email (still
+        # visible in the in-app history), never a duplicate one. What must
+        # NEVER happen is the first alert's event rolling back and re-sending.
+        events = session.execute(select(AlertEvent)).scalars().all()
+        assert len(events) == 2
+        assert dispatch.run_for_user(session, settings, CapturingMail(), user) == []
+
+    def test_f3_an_explicit_zero_threshold_is_honoured(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """0 is a value the customer chose, not 'unset'."""
+        user = make_user(session)
+        arm(session, user.id, SOFT_BUDGET, 0.0)  # alert me on ANY spend
+        arm(session, user.id, SPEND_SPIKE, 0.0)  # alert me on ANY increase
+        add_audit(session, user.id, T0, spend=100.0)
+        add_audit(session, user.id, T0 + timedelta(days=7), spend=101.0)  # +1%
+        session.commit()
+        rules_fired = {f.rule for f in evaluate(session, settings, user)}
+        assert SOFT_BUDGET in rules_fired, "a 0 budget must not be read as unset"
+        assert SPEND_SPIKE in rules_fired, "a 0% spike threshold must not fall back to 30%"
+
+    def test_f4_alert_failure_does_not_lose_the_tick(
+        self, session: Session, settings: Settings, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pulls and audits are already committed; alerting must not kill them."""
+        from tokenops_cost_auditor.services.connectors import schedule
+        from tokenops_cost_auditor.services.pricing.table import PricingTable
+
+        def boom(*args: object, **kwargs: object) -> dict[str, int]:
+            raise RuntimeError("alert stage exploded")
+
+        monkeypatch.setattr(schedule.alerts_dispatch, "run_all", boom)
+        stats = schedule.tick(session, settings, PricingTable.load(), mail=CapturingMail())
+        assert stats["alert_errors"] == 1  # recorded, not raised
+        assert stats["pulled"] == 0 and stats["audited"] == 0
+
+
+class TestRunAll:
+    """run_all: the per-user loop the scheduler actually calls."""
+
+    def test_fires_for_each_user_and_isolates_failures(
+        self, session: Session, settings: Settings
+    ) -> None:
+        good = make_user(session)
+        arm(session, good.id, WASTE_ABOVE, 25.0)
+        add_audit(session, good.id, T0, spend=900.0, waste=40.0)
+        bad = User(email="breaks@example.com")
+        session.add(bad)
+        session.flush()
+        arm(session, bad.id, WASTE_ABOVE, 25.0)
+        add_audit(session, bad.id, T0, spend=900.0, waste=40.0)
+        session.commit()
+
+        class OneBadRecipient:
+            def __init__(self) -> None:
+                self.sent: list[str] = []
+
+            def alert(self, to_email: str, subject: str, body: str) -> None:
+                if to_email == "breaks@example.com":
+                    raise RuntimeError("mailbox full")
+                self.sent.append(to_email)
+
+        mail = OneBadRecipient()
+        stats = dispatch.run_all(session, settings, mail)
+        # one user served, one isolated failure, the good email still went out
+        assert stats["fired"] == 1 and stats["errors"] == 1
+        assert stats["users"] == 1
+        assert mail.sent == [EMAIL]
+
+    def test_users_without_rules_cost_nothing_and_fire_nothing(
+        self, session: Session, settings: Settings
+    ) -> None:
+        user = make_user(session)
+        add_audit(session, user.id, T0, spend=900.0, waste=99.0)
+        session.commit()
+        stats = dispatch.run_all(session, settings, CapturingMail())
+        assert stats == {"users": 1, "fired": 0, "errors": 0}

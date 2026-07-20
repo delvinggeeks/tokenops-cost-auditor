@@ -46,39 +46,30 @@
   <h3>How you'll know it worked</h3>
   <p>{{ h.verify }}</p>
 
-  <div style="margin-top:var(--s2); display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
-    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
-          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
-      <input type="hidden" name="verdict" value="applied">
-      <button class="btn btn-primary" type="submit"
-        {% if verdict == "applied" %}disabled{% endif %}>Applied</button>
-    </form>
-    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
-          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
-      <input type="hidden" name="verdict" value="dismissed">
-      <button class="btn" type="submit">Dismissed</button>
-    </form>
-    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
-          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
-      <input type="hidden" name="verdict" value="not_relevant">
-      <button class="btn btn-quiet" type="submit">Not relevant</button>
-    </form>
-    <a class="btn btn-quiet" href="{{ h.methodology_url }}">Methodology →</a>
-  </div>
-
+  {# L0 capture. The optional figure rides WHICHEVER verdict the customer
+     chooses — recording a number can never imply "applied" (V-D5
+     cold-review f.1), because that would feed the verified headline. #}
   <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
-        hx-target="#w-savings" hx-swap="outerHTML"
-        style="margin-top: var(--s2); display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
-    <input type="hidden" name="verdict" value="{{ verdict or 'applied' }}">
-    <label class="muted" style="font-size:13px">
-      Saw a different number on your bill?
+        hx-target="#w-savings" hx-swap="outerHTML" style="margin-top: var(--s2);">
+    <label class="muted" style="font-size:13px; display:block; margin-bottom:var(--s1);">
+      Saw a figure on your own bill? (optional)
       <input name="savings_realized_usd" type="number" step="0.01" min="0"
              style="width: 8em" placeholder="0.00" aria-label="Savings you measured">
+      <span>— shown separately as customer-reported; it never changes the
+        verified headline.</span>
     </label>
-    <button class="btn" type="submit">Record my figure</button>
-    <small class="muted">Shown separately as customer-reported — it never changes
-      the verified headline.</small>
+    <div style="display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" type="submit" name="verdict" value="applied"
+        {% if verdict == "applied" %}disabled{% endif %}>Applied</button>
+      <button class="btn" type="submit" name="verdict" value="dismissed">Dismissed</button>
+      <button class="btn btn-quiet" type="submit" name="verdict" value="not_relevant">
+        Not relevant</button>
+      <a class="btn btn-quiet" href="{{ h.methodology_url }}">Methodology →</a>
+      <small class="muted">Applied findings are recomputed on the next audit;
+        the verified delta joins your headline.</small>
+    </div>
   </form>
+
   <div class="provenance">Finding <code>{{ row.finding_id }}</code> in audit
     <code>{{ audit.id[:4] }}…{{ audit.id[-3:] }}</code> · verified amount will be capped
     at this estimate</div>

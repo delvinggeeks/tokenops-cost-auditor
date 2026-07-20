@@ -87,8 +87,16 @@ def tick(
     if mail is not None:
         # WP-3b: alerts are evaluated after audits land, so a new finding or a
         # spend jump reaches the customer in the same pass that discovered it.
-        alert_stats = alerts_dispatch.run_all(session, settings, mail, now=now)
-        stats["alerts_fired"] = alert_stats["fired"]
-        stats["alert_errors"] = alert_stats["errors"]
+        # Isolated like every other stage: pulls and audits are already
+        # committed and must not be lost to an alerting failure (V-D5
+        # cold-review f.4).
+        try:
+            alert_stats = alerts_dispatch.run_all(session, settings, mail, now=now)
+            stats["alerts_fired"] = alert_stats["fired"]
+            stats["alert_errors"] = alert_stats["errors"]
+        except Exception as exc:
+            session.rollback()
+            stats["alert_errors"] = stats.get("alert_errors", 0) + 1
+            log.warning("alert.stage_failed", error=str(exc)[:200])
     log.info("connector.tick", **stats)
     return stats
