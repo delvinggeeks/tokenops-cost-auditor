@@ -1200,3 +1200,35 @@ PASS-WITH-NOTES on the settled diff. Notes actioned:
 - spec-guard f.6 / vv f.7 confirm no traceability row is owed: nothing here
   implements a new FR, and the Terms price change is a copy correction, not
   an estimator change, so CLAUDE.md rule 4 does not apply.
+
+
+## R-LANDING-2 received 2026-07-24 — BLOCKED, not started (R-PREMISE-CHECK)
+
+The ruling's stated prerequisite does not exist in the record: there is no
+incident/funnel order, and therefore no Part B skeleton for this to dress.
+Paused per the law recorded the same day. Four further items need a founder
+answer before this can start cleanly:
+
+1. MISSING ORDER. Send the incident/funnel order, or confirm R-LANDING-2 is
+   self-contained and should build its own skeleton.
+2. FIGURE INVENTORY GAP. Section 2 calls for three attributed stat cards
+   including a "#1 unmet ask" figure. The approved inventory carries 79%
+   (DoiT/Sapio 2026), 31% mature-teams (same survey) and 98% (State of FinOps
+   2026). There is no attributed "#1 unmet ask" stat on file. Under the
+   no-invented-numbers law extended by this very ruling, it cannot be written
+   until a source exists.
+3. REGISTERED LINE NOT RELEASED. Section 5's header "We run the architecture
+   we audit you toward" sits in launch-assets-DRAFT under "Registered lines
+   (not yet approved for use)" per R-ARCH-PATTERNS. Using it on the landing
+   needs an explicit release.
+4. SUPERSESSION. The v4 landing mockup (branch v15-ui-unify, ux-gated
+   PASS-WITH-NOTES, awaiting founder review) is a 1-section-hero + 6-section
+   page. R-LANDING-2 specifies a 9-section page that absorbs and replaces it.
+   Confirm v4 landing is superseded so the founder review of v4 covers only
+   sources/upload/legal, or that v4 landing ships first as an interim.
+
+TOOLING NOTE: Lighthouse >= 90 mobile is specified as a GATE criterion. No
+Lighthouse is installed in this environment; a headless Chromium exists in the
+playwright cache but the CLI does not. Gating on evidence that cannot currently
+be produced would make the gate unfalsifiable, so this needs either an install
+or a substitute measurable criterion.

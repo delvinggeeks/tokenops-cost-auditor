@@ -581,6 +581,37 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-LANDING-2 (founder, 2026-07-24) — RECEIVED AND RECORDED; NOT STARTED,
+BLOCKED ON A MISSING PREREQUISITE.** Marketing landing rebuild, est. 2 days,
+ux-gated, founder review at the end. SSR + CSS-first, vanilla JS for scroll
+choreography, no framework, no WebGL library. Nine sections in narrative order:
+(1) hero — bill-shock headline (R-PAINMOMENT A/B) + platform subhead "the
+governance layer for your AI spend" + Start free + THE 3D MOMENT (real
+dashboard screenshot in CSS 3D, tilting on pointer/scroll); (2) problem strip —
+three attributed stat cards + "waste hides in shapes invoices can't show";
+(3) how it works — INPUT->ANALYZE->REPORT->ACT->PREVENT ribbon as a
+scroll-driven sequence, one sentence + micro-visual per stage; (4) live-feel
+product tour — three real screenshots in a tabbed frame, count-ups on reveal,
+labeled sample data; (5) preventive measures / governance — zero-token,
+zero-trust, counts-only (FR-23 verbatim), layered validation, honest-zeros,
+each linking its proof, header "We run the architecture we audit you toward";
+(6) comparison strip — category-level only, no named-vendor FUD; (7) self-audit
+proof — the ledger story, 32.5% with equiv-spend rail; (8) plans from the price
+config + enterprise line; (9) closing CTA + trust footer. MOTION:
+IntersectionObserver reveals (fade+rise 200ms), scroll-driven pipeline,
+count-ups, hero tilt — all respecting prefers-reduced-motion; JS < 15KB;
+Lighthouse >= 90 mobile as a GATE criterion. Gates: ux-reviewer (three-second
+rule per section, claim-to-source spot check on 10 claims, banned-list scan,
+Lighthouse evidence), then founder review as a stranger, on phone, before the
+thread. NO-INVENTED-NUMBERS LAW extended to marketing permanently.
+
+BLOCKED: the ruling states it "runs AFTER the incident/funnel order completes
+(that order's Part B is the skeleton this dresses)". No incident/funnel order
+exists in PLAN, PLAN-V15, STATUS, BACKLOG or docs; the only recorded Part B is
+docs/12-FLYWHEEL.md from the 2026-07-22 vision order, which is complete and is
+not a landing skeleton. Paused and reported per R-PREMISE-CHECK rather than
+executed literally. See STATUS for the open questions blocking a start.
+
 **R-PREMISE-CHECK (founder, 2026-07-24) — PERMANENT LAW.** An order whose
 stated premise is false is PAUSED and reported, never executed literally.
 Established when the v1.5 deploy order specified an incremental migration
