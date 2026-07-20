@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 mockup — get your logs / upload (app shell)</title>
+<link rel="stylesheet" href="../../../src/tokenops_cost_auditor/web/static/wa-design.css">
+<style>
+.purpose { font-size:14px; color:var(--ink-soft); max-width:68ch; margin:0 0 var(--s3); line-height:1.6; }
+.drop {
+  border: 1.5px dashed var(--rule); border-radius: var(--radius); background: var(--surface);
+  padding: var(--s6) var(--s3); text-align: center; transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.drop:hover, .drop:focus-within { border-color: var(--accent); background: var(--surface-tint); }
+.drop h3 { font: 600 17px var(--sans); margin: 0 0 var(--s1); }
+.drop p { color: var(--ink-soft); font-size: 14px; margin: 0 auto var(--s3); max-width: 44ch; line-height: 1.6; }
+.limits { display:flex; gap:var(--s3); justify-content:center; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:var(--s3); }
+.limits span { padding-left: var(--s2); border-left: 1px solid var(--rule); }
+.limits span:first-child { border-left: 0; padding-left: 0; }
+.counts-note { font-size:13px; color:var(--ink-soft); border-left:2px solid var(--accent); padding-left:var(--s2); margin:var(--s3) 0 0; max-width:68ch; line-height:1.6; }
+.tabs { display:flex; gap:var(--s1); border-bottom:1px solid var(--rule); margin-bottom:var(--s3); }
+.tabs button { font:600 13px var(--sans); background:none; border:0; padding:var(--s2) var(--s2); color:var(--ink-soft); cursor:pointer; border-bottom:2px solid transparent; }
+.tabs button[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent); }
+.tabs button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.snippet { font-family:var(--mono); font-size:12px; background:var(--surface-tint); border:1px solid var(--rule); border-radius:var(--radius); padding:var(--s2); overflow-x:auto; }
+.signedout { max-width: 44ch; margin: var(--s6) auto; text-align: center; }
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+</defs></svg>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">TokenOps Cost Auditor</div>
+    <nav class="nav-group"><div class="label">Monitor</div><a href="#">Overview</a><a href="#">Findings</a><a href="#">Reports &amp; audits</a></nav>
+    <nav class="nav-group"><div class="label">Connect</div><a href="#">Sources</a><a href="#" aria-current="page"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Get your logs</a></nav>
+    <nav class="nav-group"><div class="label">Act</div><a href="#">Alerts</a><a href="#">Savings statements</a></nav>
+    <nav class="nav-group"><div class="label">Account</div><a href="#">Settings</a><a href="#">Billing</a></nav>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <button class="btn btn-quiet sidebar-toggle" aria-label="Menu"><svg class="i" aria-hidden="true"><use href="#i-menu"/></svg></button>
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">Get your logs</span>
+      <span class="plan-badge">Free</span>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet">lokesh@…</button>
+    </header>
+
+    <main class="main">
+      <h1 style="font:600 22px var(--sans); margin:0 0 var(--s1);">Audit a log file</h1>
+      <p class="purpose">
+        Drop in a log export and we&rsquo;ll price every call against a versioned rate
+        card, then rank what was wasted by the dollars attached. Most audits finish
+        well inside 48 hours.
+      </p>
+
+      <section class="widget">
+        <div class="widget-head"><h2>Upload</h2></div>
+        <div class="drop">
+          <h3>Drop your log export here</h3>
+          <p>or <a href="#" style="color:var(--accent)">choose a file</a> &mdash; JSONL or CSV from OpenAI, Anthropic, or your own gateway.</p>
+          <a class="btn btn-primary" href="#">Start the audit</a>
+          <div class="limits">
+            <span>Up to 200 MB</span>
+            <span>.jsonl · .csv</span>
+            <span>Deleted within 7 days</span>
+          </div>
+        </div>
+        <p class="counts-note">
+          We read <b>counts and metadata only</b> &mdash; model, timestamps, token
+          totals. Prompt and completion text is never stored, and never leaves your
+          file. <a href="/legal/privacy" style="color:var(--accent)">How we handle your data &rarr;</a>
+        </p>
+      </section>
+
+      <!-- DEPTH (c): how to produce the file. Familiar tabbed docs pattern. -->
+      <section class="widget" style="margin-top:var(--s4);">
+        <div class="widget-head"><h2>Don&rsquo;t have an export yet?</h2></div>
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true">OpenAI</button>
+          <button role="tab" aria-selected="false">Anthropic</button>
+          <button role="tab" aria-selected="false">Claude Code</button>
+          <button role="tab" aria-selected="false">Other / CSV</button>
+        </div>
+        <p style="font-size:14px;color:var(--ink-soft);margin:0 0 var(--s2);line-height:1.6;">
+          Export your usage from the OpenAI dashboard, or pull it with the API:
+        </p>
+        <pre class="snippet">curl https://api.openai.com/v1/organization/costs \
+  -H "Authorization: Bearer $OPENAI_ADMIN_KEY" \
+  -G -d start_time=$(date -d '30 days ago' +%s) &gt; usage.jsonl</pre>
+        <p style="font-size:13px;color:var(--ink-soft);margin:var(--s2) 0 0;">
+          Rather not do this every month? <a href="#" style="color:var(--accent)">Connect the provider once</a> and it audits on a schedule.
+        </p>
+      </section>
+
+      <!-- SIGNED-OUT STATE: same page, public shell, no sidebar. -->
+      <section class="widget" style="margin-top:var(--s4);">
+        <div class="widget-head"><h2>Signed-out state (renders in the public shell, no sidebar)</h2></div>
+        <div class="signedout">
+          <h3 style="font:600 17px var(--sans);margin:0 0 var(--s1);">Sign in to start your audit</h3>
+          <p style="color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 var(--s3);">
+            We&rsquo;ll email you a sign-in link. No password to remember; the link
+            works once and expires in 15 minutes.
+          </p>
+          <form style="display:flex;gap:var(--s1);justify-content:center;flex-wrap:wrap;">
+            <input type="email" placeholder="you@company.com" style="padding:9px 12px;border:1px solid var(--rule);border-radius:var(--radius);font:14px var(--sans);min-width:220px;">
+            <button class="btn btn-primary" type="submit">Email me a link</button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

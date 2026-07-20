@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 mockup — landing</title>
+<link rel="stylesheet" href="../../../src/tokenops_cost_auditor/web/static/wa-design.css">
+<link rel="stylesheet" href="_public-shell.css">
+<style>
+/* ---- Landing-only layout. No new tokens; composition only. ---- */
+.hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: var(--s6); align-items: center; }
+.hero h1 {
+  font: 600 40px/1.12 var(--sans);
+  letter-spacing: -0.022em;
+  margin: 0 0 var(--s2);
+  max-width: 15ch;
+}
+.hero .lede { font-size: 17px; color: var(--ink-soft); line-height: 1.6; max-width: 46ch; margin: 0 0 var(--s3); }
+.hero-actions { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.hero-actions .quiet { font: 500 14px var(--sans); color: var(--accent); text-decoration: none; }
+.hero-actions .quiet:hover { text-decoration: underline; }
+.hero-note { font-size: 13px; color: var(--ink-soft); margin: var(--s2) 0 0; }
+
+/* THE ONE 3D ELEMENT (R-DESIGN-ADDENDUM: entire 3D budget, landing only,
+   never in-app). A single perspective tilt on the real product screenshot. */
+.hero-shot { perspective: 1400px; }
+.hero-shot figure { margin: 0; transform: rotateY(-13deg) rotateX(4deg) translateZ(0); transform-origin: left center; }
+.hero-shot img, .hero-shot .slot {
+  display: block; width: 100%; border-radius: var(--radius);
+  border: 1px solid var(--rule); box-shadow: var(--lift-3), var(--inner-edge);
+}
+.hero-shot figcaption { font-size: 12px; color: var(--ink-soft); margin-top: var(--s2); }
+/* Placeholder ONLY: deliberately ugly so it cannot be mistaken for finished.
+   R-DESIGN §4 requires a REAL capture of /dashboard — see the wiring note. */
+.hero-shot .slot {
+  aspect-ratio: 16/10; background: repeating-linear-gradient(45deg, #efece5 0 12px, #e6e2d9 12px 24px);
+  display: grid; place-items: center; text-align: center; padding: var(--s3);
+  font: 600 13px var(--sans); color: #8a2f2a;
+}
+
+/* Proof strip — R-DESIGN §4: trust strip linking proofs, not logos. */
+.proofs { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); }
+.proof { padding: var(--s3); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); box-shadow: var(--lift-1); }
+.proof h3 { font: 600 14px var(--sans); margin: 0 0 4px; }
+.proof p { font-size: 13px; color: var(--ink-soft); margin: 0 0 var(--s1); line-height: 1.55; }
+.proof a { font: 600 13px var(--sans); color: var(--accent); text-decoration: none; }
+.proof a:hover { text-decoration: underline; }
+
+/* The one number. Money is the heaviest object on the screen (R-DESIGN §2). */
+.headline-number { display: grid; grid-template-columns: auto 1fr; gap: var(--s5); align-items: start; }
+.rails { font-size: 12px; color: var(--ink-soft); line-height: 1.6; max-width: 54ch; margin: var(--s2) 0 0; }
+
+/* How it works — a real sequence, so numbering is earned. */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s4); counter-reset: step; }
+.step { position: relative; padding-top: var(--s3); border-top: 2px solid var(--rule-strong); }
+.step::before {
+  counter-increment: step; content: counter(step);
+  font: 600 12px var(--mono); color: var(--ink-soft);
+  position: absolute; top: calc(-1 * var(--s3)); left: 0;
+}
+.step h3 { font: 600 15px var(--sans); margin: 0 0 4px; }
+.step p { font-size: 14px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+
+.classes { columns: 2; column-gap: var(--s5); font-size: 14px; color: var(--ink-soft); }
+.classes li { margin: 0 0 6px; break-inside: avoid; }
+
+/* Pricing ladder (R-LAUNCH-POSITIONING). Every figure renders from the one
+   price config at wiring — these literals exist only in the mockup. */
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); align-items: stretch; }
+.plan { display: flex; flex-direction: column; padding: var(--s3); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); box-shadow: var(--lift-1); }
+.plan.featured { border-color: var(--accent); box-shadow: var(--lift-2); }
+.plan h3 { font: 600 14px var(--sans); margin: 0 0 var(--s1); }
+.plan .price { margin: 0 0 2px; }
+.plan .alt { font-size: 12px; color: var(--ink-soft); margin: 0 0 var(--s2); }
+.plan ul { list-style: none; padding: 0; margin: 0 0 var(--s3); font-size: 13px; color: var(--ink-soft); }
+.plan li { padding: 3px 0 3px 16px; position: relative; line-height: 1.5; }
+.plan li::before { content: "·"; position: absolute; left: 4px; color: var(--accent); font-weight: 700; }
+.plan .foot { margin-top: auto; }
+.enterprise { margin-top: var(--s3); padding-top: var(--s2); border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-soft); }
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 30px; }
+  .hero-shot figure { transform: none; } /* tilt is a wide-screen affordance */
+  .proofs, .steps, .plans { grid-template-columns: 1fr; }
+  .classes { columns: 1; }
+  .headline-number { grid-template-columns: 1fr; gap: var(--s2); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body class="paper">
+
+<header class="pub-top">
+  <div class="wrap">
+    <a class="pub-brand" href="/"><span class="mark" aria-hidden="true"></span> TokenOps Cost Auditor</a>
+    <nav class="pub-nav" aria-label="Primary">
+      <a href="/sample">Sample report</a>
+      <a href="/docs-site/methodology/">Methodology</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/upload">Sign in</a>
+    </nav>
+  </div>
+</header>
+
+<main class="pub-main">
+  <div class="wrap">
+
+    <!-- HERO. Variant shown: "billshock" (R-PAINMOMENT). The "control"
+         variant swaps only the h1 + lede; layout is identical. -->
+    <section class="pub-section hero">
+      <div>
+        <p class="eyebrow">LLM cost audit · no integration</p>
+        <h1>Just got an AI bill you can&rsquo;t explain?</h1>
+        <p class="lede">
+          Upload your LLM API logs and get back a dollar-ranked list of exactly
+          what was wasted &mdash; and what to change. No SDK, no proxy, nothing
+          in your request path.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary cta" href="/upload">Audit your logs &mdash; free</a>
+          <a class="quiet" href="/sample">See a real sample report &rarr;</a>
+        </div>
+        <p class="hero-note">One full audit free, no card. Results in 48 hours.</p>
+      </div>
+
+      <div class="hero-shot">
+        <figure>
+          <!-- WIRING NOTE (R-DESIGN §4 "screenshot truth, never mock"):
+               replace .slot with a REAL capture of /dashboard. Capture step is
+               listed in the gate submission; this placeholder must never ship. -->
+          <div class="slot" role="img" aria-label="Placeholder for a real product screenshot">
+            PLACEHOLDER &mdash; NOT FOR SHIP<br>
+            real capture of /dashboard goes here
+          </div>
+          <figcaption>The dashboard you get after your first audit. Real screen, real numbers.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- THE ONE NUMBER. Our own audited traffic, with the mandatory rails
+         attached verbatim (figure inventory + R-SELF-AUDIT d). -->
+    <section class="pub-section">
+      <p class="eyebrow">We ran it on ourselves first</p>
+      <div class="headline-number">
+        <div>
+          <div class="money money-hero countup">32.5%</div>
+          <div class="badge badge-waste">of our own AI spend was waste</div>
+        </div>
+        <div>
+          <p style="margin:0 0 var(--s1); font-size:15px; line-height:1.6;">
+            We pointed the auditor at the AI agents that built it: 67,095 API
+            calls, <span class="money money-sm">$8,757.75</span>/mo
+            API-equivalent spend, <span class="money money-sm">$2,846.62</span>/mo
+            estimated waste.
+          </p>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:var(--ink-soft);">
+            Then our own verification gate rejected the first two reports. We
+            publish both defects next to the methodology, because for an audit
+            product the arithmetic you can check <em>is</em> the product.
+          </p>
+          <p class="rails">
+            Figures are API-equivalent token value; actual billing depends on
+            your plan. &middot; n=1, uncontrolled &mdash; your logs are the real test.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROOF STRIP: links to things a sceptic can open, not logos. -->
+    <section class="pub-section">
+      <p class="eyebrow">Check us before you trust us</p>
+      <div class="proofs">
+        <div class="proof">
+          <h3>Every formula, in public</h3>
+          <p>Each detector&rsquo;s estimator, thresholds and haircuts are written down and versioned.</p>
+          <a href="/docs-site/methodology/">Read the methodology &rarr;</a>
+        </div>
+        <div class="proof">
+          <h3>Our defects, in public</h3>
+          <p>The two wrong numbers our own gates caught before launch, with root causes.</p>
+          <a href="/docs-site/defects/">Read the defect log &rarr;</a>
+        </div>
+        <div class="proof">
+          <h3>The engine calls no model</h3>
+          <p>Detection is deterministic arithmetic &mdash; enforced by a test that fails if a network import appears.</p>
+          <a href="/docs-site/standards/">How that&rsquo;s enforced &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <p class="eyebrow">How it works</p>
+      <div class="steps">
+        <div class="step">
+          <h3>Export your logs</h3>
+          <p>OpenAI, Anthropic, or a CSV. One file. Nothing installed, nothing in your request path.</p>
+        </div>
+        <div class="step">
+          <h3>We price every call</h3>
+          <p>Against a versioned, human-verified rate card &mdash; the same arithmetic every time you run it.</p>
+        </div>
+        <div class="step">
+          <h3>You get a ranked list</h3>
+          <p>Six kinds of waste, each with the dollars attached, the evidence, and the exact fix.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <p class="eyebrow">What we look for</p>
+      <ul class="classes">
+        <li>Prompts you resend at full price instead of cached</li>
+        <li>Retry storms billing you two and three times for one answer</li>
+        <li>Big models doing small-model work</li>
+        <li>Context you pay to send but never use</li>
+        <li>Output limits left unbounded</li>
+        <li>Agent loops re-reading what they already read</li>
+      </ul>
+    </section>
+
+    <!-- MARKET CONTEXT: attributed stats only (docs/09 §6). -->
+    <section class="pub-section">
+      <p class="eyebrow">You are not the only one</p>
+      <p style="font-size:16px; line-height:1.65; max-width:62ch; color:var(--ink-soft); margin:0;">
+        <strong style="color:var(--ink)">79%</strong> of enterprises overran their AI budgets last year
+        (DoiT/Sapio, 2026), and <strong style="color:var(--ink)">98%</strong> of FinOps teams now manage AI
+        spend (State of FinOps, 2026) &mdash; mostly with tools that need integrating before they show
+        you anything. Ours needs a log file.
+      </p>
+    </section>
+
+    <!-- PRICING LADDER (R-LAUNCH-POSITIONING: subscription-first). -->
+    <section class="pub-section" id="pricing">
+      <p class="eyebrow">Pricing</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>Free</h3>
+          <div class="money money-lg price">$0</div>
+          <p class="alt">No card, ever</p>
+          <ul>
+            <li>One full audit of a log file you upload</li>
+            <li>All six waste detectors</li>
+            <li>Client-ready PDF report</li>
+          </ul>
+          <div class="foot"><a class="btn" href="/upload">Start free</a></div>
+        </div>
+        <div class="plan featured">
+          <h3>Pro <span class="badge badge-neutral">Most teams</span></h3>
+          <div class="money money-lg price">$99<span style="font-size:14px;font-weight:500;">/mo</span></div>
+          <p class="alt">&#8377;8,999/mo</p>
+          <ul>
+            <li>Connect one provider, read-only</li>
+            <li>Scheduled re-audits &mdash; it keeps watching</li>
+            <li>Alerts when spend moves</li>
+            <li>Monthly savings statement</li>
+          </ul>
+          <div class="foot"><a class="btn btn-primary" href="/billing">Choose Pro</a></div>
+        </div>
+        <div class="plan">
+          <h3>Team</h3>
+          <div class="money money-lg price">$299<span style="font-size:14px;font-weight:500;">/mo</span></div>
+          <p class="alt">&#8377;26,999/mo</p>
+          <ul>
+            <li>Up to five connected providers</li>
+            <li>Everything in Pro</li>
+            <li>Fleet install across machines</li>
+          </ul>
+          <div class="foot"><a class="btn" href="/billing">Choose Team</a></div>
+        </div>
+      </div>
+      <p class="enterprise">
+        <strong>One-time deep audit</strong> &mdash; <span class="money money-sm">$500 &middot; &#8377;45,000</span>
+        for a single audit with no subscription. For procurement-led teams and
+        one-off engagements. <a href="/upload" style="color:var(--accent)">Talk to us &rarr;</a>
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<footer class="pub-foot">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a href="/sample">Sample report</a>
+        <a href="/docs-site/methodology/">Methodology</a>
+        <a href="/docs-site/defects/">Defect log</a>
+      </div>
+      <div>
+        <a href="/legal/terms">Terms</a>
+        <a href="/legal/privacy">Privacy</a>
+        <a href="/legal/dpa">DPA</a>
+      </div>
+      <div>
+        <a href="/upload">Sign in</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+    </div>
+    <!-- FR-23 verbatim. Must survive wiring byte-for-byte. -->
+    <p class="foot-policy">
+      Your data: logs are analyzed then deleted; nothing retained beyond 7 days;
+      never used for training.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

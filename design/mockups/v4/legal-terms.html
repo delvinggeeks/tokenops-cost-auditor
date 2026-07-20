@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 mockup — legal (public shell, prose measure)</title>
+<link rel="stylesheet" href="../../../src/tokenops_cost_auditor/web/static/wa-design.css">
+<link rel="stylesheet" href="_public-shell.css">
+<style>
+/* Legal pages are READ, not scanned. The only design decisions that matter
+   here are measure, rhythm and a clause index — everything else stays out of
+   the way. No cards, no accents on body text. */
+.legal-layout { display: grid; grid-template-columns: 200px 1fr; gap: var(--s6); align-items: start; }
+.toc { position: sticky; top: 80px; font-size: 13px; }
+.toc .label { font:600 11px var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 var(--s2); }
+.toc a { display:block; padding:4px 0 4px var(--s2); color:var(--ink-soft); text-decoration:none; border-left:2px solid var(--rule); line-height:1.4; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc a[aria-current="true"] { color: var(--ink); border-left-color: var(--accent); font-weight:600; }
+.legal-head { border-bottom: 3px double var(--rule-strong); padding-bottom: var(--s2); margin-bottom: var(--s4); }
+.legal-head h1 { font:600 26px var(--sans); margin:0 0 4px; letter-spacing:-0.015em; }
+.legal-head .meta { font-size:13px; color:var(--ink-soft); }
+.clause { scroll-margin-top: 80px; margin: 0 0 var(--s4); }
+.clause h2 { font:600 16px var(--sans); margin:0 0 var(--s1); }
+.clause h2 .num { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); margin-right: 8px; }
+.clause p { color: var(--ink-soft); line-height:1.7; margin:0 0 var(--s2); max-width:68ch; }
+.clause strong { color: var(--ink); font-weight:600; }
+.plain { background: var(--surface-tint); border-left:2px solid var(--accent); padding: var(--s2) var(--s3); margin: var(--s2) 0; font-size:13px; color:var(--ink-soft); max-width:68ch; }
+.plain b { color: var(--ink); }
+@media (max-width: 860px) { .legal-layout { grid-template-columns:1fr; } .toc { position:static; display:none; } }
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="pub-top">
+  <div class="wrap">
+    <a class="pub-brand" href="/"><span class="mark" aria-hidden="true"></span> TokenOps Cost Auditor</a>
+    <nav class="pub-nav" aria-label="Primary">
+      <a href="/sample">Sample report</a>
+      <a href="/docs-site/methodology/">Methodology</a>
+      <a href="/upload">Sign in</a>
+    </nav>
+  </div>
+</header>
+
+<main class="pub-main">
+  <div class="wrap legal-layout">
+
+    <nav class="toc" aria-label="Clauses">
+      <p class="label">Terms</p>
+      <a href="#c1">1 · Service</a>
+      <a href="#c2">2 · Your data</a>
+      <a href="#c3">3 · Estimates</a>
+      <a href="#c4" aria-current="true">4 · Payment</a>
+      <a href="#c5">5 · Acceptable use</a>
+      <a href="#c6">6 · Liability</a>
+      <a href="#c7">7 · Changes</a>
+      <p class="label" style="margin-top:var(--s4)">Also</p>
+      <a href="/legal/privacy">Privacy policy</a>
+      <a href="/legal/dpa">DPA-lite</a>
+    </nav>
+
+    <article>
+      <div class="legal-head">
+        <h1>Terms of Service</h1>
+        <p class="meta">Effective 2026-07-17 &middot; TokenOps Cost Auditor (Delving Geeks / WitAura)</p>
+      </div>
+
+      <section class="clause" id="c2">
+        <h2><span class="num">2</span>Your data</h2>
+        <p>
+          You must have the right to upload the logs you submit. We process them
+          solely to produce your report: logs are analyzed then deleted; nothing
+          is retained beyond 7 days; your data is never used for training.
+        </p>
+        <div class="plain">
+          <b>In plain words:</b> we read counts, not conversations. Your prompts
+          and completions are never stored, and the file itself is gone within a week.
+        </div>
+      </section>
+
+      <section class="clause" id="c4">
+        <h2><span class="num">4</span>Payment</h2>
+        <!-- WIRING: every figure renders from the one price config
+             (plans.one_shot_display / catalogue). No literals in the template. -->
+        <p>
+          Subscriptions renew automatically each month until cancelled. Cancelling
+          takes effect at the end of the current period &mdash; you keep the plan you
+          paid for until then. The Free plan never requires a card.
+        </p>
+        <p>
+          If a payment fails, the subscription is marked past due; access becomes
+          read-only after 7 days and reverts to Free after 21. One-time deep audits
+          are prepaid at <span class="money money-sm">$500 &middot; &#8377;45,000</span> per
+          audit unless agreed otherwise. Payment links are provided by Razorpay (INR)
+          or Stripe (USD). If we cannot produce a report from your upload, we refund in full.
+        </p>
+        <div class="plain">
+          <b>In plain words:</b> nothing is charged without a card you entered, a
+          failed payment never deletes your data, and you can leave at the end of
+          any month.
+        </div>
+      </section>
+
+      <section class="clause" id="c6">
+        <h2><span class="num">6</span>Liability</h2>
+        <p>
+          Service is provided &ldquo;as is&rdquo;. Our aggregate liability is capped at the
+          greater of the amounts you paid to WitAura in the twelve months preceding
+          the claim.
+        </p>
+      </section>
+
+      <p style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:var(--s2);max-width:68ch;">
+        Mockup shows clauses 2, 4 and 6 only &mdash; the ones R-TERMS-SUBS changes.
+        Clauses 1, 3, 5 and 7 keep their current wording and this layout.
+      </p>
+    </article>
+
+  </div>
+</main>
+
+<footer class="pub-foot">
+  <div class="wrap">
+    <p class="foot-policy">
+      Your data: logs are analyzed then deleted; nothing retained beyond 7 days;
+      never used for training.
+    </p>
+  </div>
+</footer>
+</body>
+</html>

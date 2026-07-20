@@ -1,0 +1,99 @@
+/* v4 PUBLIC SHELL — the logged-out surfaces (landing, upload-signed-out, legal).
+ *
+ * Extends wa-design.css. Adds NO new colour, type family, radius or shadow: a
+ * visitor and a signed-in user must be looking at one product, and the surest
+ * way to fail that is a second palette invented for "marketing". Everything
+ * here is layout only.
+ *
+ * Why a separate shell at all: the app shell is sidebar + topbar, which needs
+ * an authenticated nav. A logged-out visitor has nowhere to navigate to, so
+ * they get a hairline topbar and a single reading column instead — same
+ * tokens, same double rule, same serif money.
+ */
+
+.pub-top {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  box-shadow: var(--lift-1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.pub-top .wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 56px;
+}
+.pub-brand {
+  font: 700 15px var(--sans);
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+.pub-brand .mark {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--accent);
+  border-bottom-width: 4px; /* the double rule, shrunk to a mark */
+  border-radius: 2px;
+}
+.pub-nav {
+  margin-left: auto;
+  display: flex;
+  gap: var(--s3);
+  align-items: center;
+}
+.pub-nav a {
+  font: 500 14px var(--sans);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.pub-nav a:hover { color: var(--ink); }
+.pub-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.pub-main { padding: var(--s6) 0 var(--s6); }
+.pub-section { padding: var(--s6) 0; border-top: 1px solid var(--rule); }
+.pub-section:first-child { border-top: 0; }
+
+.eyebrow {
+  font: 600 12px var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 var(--s2);
+}
+
+/* The reading measure for prose surfaces (legal). Content max stays 1100px
+   for app-like pages; prose caps at 68ch because legal text is READ, and a
+   1100px line length is where readers give up. */
+.prose { max-width: 68ch; }
+.prose h2 { font: 600 18px var(--sans); margin: var(--s5) 0 var(--s1); }
+.prose p { color: var(--ink-soft); line-height: 1.65; margin: 0 0 var(--s2); }
+.prose strong { color: var(--ink); font-weight: 600; }
+
+.pub-foot {
+  border-top: 1px solid var(--rule);
+  background: var(--surface-tint);
+  padding: var(--s5) 0;
+  margin-top: var(--s6);
+}
+.pub-foot .cols { display: flex; gap: var(--s6); flex-wrap: wrap; }
+.pub-foot a { color: var(--ink-soft); text-decoration: none; font-size: 14px; display: block; padding: 3px 0; }
+.pub-foot a:hover { color: var(--accent); }
+.foot-policy {
+  margin-top: var(--s4);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 68ch;
+}
+
+@media (max-width: 720px) {
+  .pub-nav { display: none; } /* brand + CTA only; nav duplicates the footer */
+  .pub-section { padding: var(--s5) 0; }
+}
