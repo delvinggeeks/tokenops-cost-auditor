@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" data-mood="awaaz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v6 — Awaaz (setup)</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Awaaz drops the rail entirely. Setup is one task; a nav bar during
+     onboarding is an invitation to leave before finishing. */
+  .top { justify-content:space-between; }
+  .quit { font:600 13px var(--sans); color:var(--ink-3); text-decoration:none; }
+  .quit:hover { color:var(--ink); }
+  .lede { font-size:16px; color:var(--ink-2); line-height:1.65; margin:0 0 var(--s4); }
+  h1 { font-size:29px; margin-bottom:10px; }
+  .shot { border-radius:var(--radius); box-shadow:var(--hairline), var(--elev-2);
+    background:var(--surface-2); padding:var(--s3); margin:var(--s3) 0; }
+  .shot .frame { border-radius:var(--radius-sm); background:var(--surface);
+    box-shadow:var(--hairline); padding:var(--s2) var(--s3); font:13px var(--mono); color:var(--ink-2); }
+  .shot .frame .tick { color:var(--pos); font-weight:700; }
+  .shot .frame .box { display:inline-block; width:13px; height:13px; border:1.5px solid var(--accent);
+    border-radius:3px; vertical-align:-2px; margin-right:8px; background:var(--accent-soft); }
+  .cta-row { display:flex; align-items:center; gap:var(--s2); margin-top:var(--s4); }
+  .verdict { margin-top:var(--s4); }
+  .verdict .card { padding:var(--s3); }
+  .vh { display:flex; align-items:center; gap:10px; font:650 16px var(--sans); margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand" style="padding:0"><span class="g">T</span> TokenOps</div>
+  <a class="quit" href="dashboard.html">Save &amp; exit</a>
+</header>
+
+<main class="setup">
+
+  <div class="steps" aria-label="Progress">
+    <span class="step done"><span class="n">✓</span> Choose provider</span><span class="bar"></span>
+    <span class="step on"><span class="n">2</span> Add a read-only key</span><span class="bar"></span>
+    <span class="step"><span class="n">3</span> First pull</span>
+  </div>
+
+  <h1>Give us a key that can only read usage.</h1>
+  <p class="lede">
+    This is the one step that needs you. It takes about a minute, and the key you
+    make can do exactly one thing: read how many tokens you used. It cannot read
+    your prompts and it cannot spend anything.
+  </p>
+
+  <section class="shot" aria-label="Which permission to tick">
+    <p class="cap" style="margin-bottom:var(--s2)">On the OpenAI keys page, tick this one box</p>
+    <div class="frame">
+      <div style="margin-bottom:10px"><span class="box"></span> <b style="color:var(--ink)">Usage — read</b> &nbsp;<span class="tick">← this one</span></div>
+      <div style="opacity:.45;margin-bottom:6px">☐ Models — write</div>
+      <div style="opacity:.45;margin-bottom:6px">☐ Completions — write</div>
+      <div style="opacity:.45">☐ Fine-tuning — write</div>
+    </div>
+    <p class="note" style="margin-top:var(--s2)">Leave every other box unticked. If you tick more, we still only ever call the usage endpoint.</p>
+  </section>
+
+  <div class="field">
+    <label for="k">Paste the key here</label>
+    <input id="k" type="password" value="sk-admin-••••••••••••••••••••••••7Fq2" autocomplete="off">
+    <span class="hint">We encrypt it the moment it arrives and never show it again. Revoking deletes it immediately.</span>
+  </div>
+
+  <p class="promise">
+    <b>What we will read:</b> token totals per day and per model. Nothing else.
+    There is no prompt or completion text in the usage API, so there is none in
+    our database either — that is a property of the endpoint, not a promise about
+    our restraint.
+  </p>
+
+  <div class="cta-row">
+    <button class="btn pri">Check this key</button>
+    <span class="note" style="margin:0">Takes about six seconds.</span>
+  </div>
+
+  <section class="verdict">
+    <div class="card">
+      <div class="vh"><span class="dot ok"></span> Connected — we can see your usage.</div>
+      <p class="note" style="margin-top:0">
+        Read-only, confirmed. We're pulling your last 30 days now and your first
+        audit will be waiting on the dashboard in a few minutes.
+      </p>
+      <p style="margin-top:var(--s3)"><a class="btn pri" href="dashboard.html">Take me to the dashboard</a></p>
+    </div>
+  </section>
+
+  <p class="note" style="text-align:center;margin-top:var(--s6)">
+    Rather not use a key? <a href="#" style="color:var(--accent)">Upload a log file instead</a> — same audit, nothing connected.
+  </p>
+</main>
+
+<nav class="moodbar" aria-label="Mood" style="position:fixed;right:16px;bottom:16px;display:flex;gap:6px;
+  background:var(--surface);padding:6px;border-radius:999px;box-shadow:var(--hairline),var(--elev-3)">
+  <a href="dashboard.html?mood=sanchaya" style="font:600 12px var(--sans);text-decoration:none;color:var(--ink-2);padding:6px 12px;border-radius:999px">Sanchaya</a>
+  <a href="dashboard.html?mood=aura" style="font:600 12px var(--sans);text-decoration:none;color:var(--ink-2);padding:6px 12px;border-radius:999px">Aura</a>
+  <a href="setup.html" style="font:600 12px var(--sans);text-decoration:none;color:var(--accent-on);background:var(--accent);padding:6px 12px;border-radius:999px">Awaaz</a>
+</nav>
+</body>
+</html>

@@ -1,0 +1,232 @@
+/* ============================================================
+   ONE TOKEN MAP · THREE MOODS
+   (founder, 2026-07-24 — supersedes the v5 three-direction split)
+
+   Sanchaya  संचय   day, default   — accumulation. The savings view.
+   Aura            night, power   — the operator working the numbers.
+   Awaaz     आवाज़  setup          — the guided voice; onboarding + connect.
+
+   THE RULE THAT MAKES THIS ONE SYSTEM: every token below is SEMANTIC.
+   Nothing is named for its colour. A component asks for --surface or
+   --accent and never learns which mood answered, so a screen written
+   once renders correctly in all three and a fourth mood costs a block
+   of values, not a rewrite.
+
+   Moods may change hue, elevation style, radius and density. They may
+   NOT add a token that the others lack — that would fork the system.
+   ============================================================ */
+
+:root {
+  /* ---- type: constant across moods. Voice is a mood, not a typeface ---- */
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", monospace;
+
+  /* ---- space: 4px base, constant. Moods change density via --density ---- */
+  --s1: 8px; --s2: 14px; --s3: 20px; --s4: 28px; --s5: 40px; --s6: 56px;
+
+  /* ---- motion: constant. Reduced-motion handled once, at the bottom ---- */
+  --t-fast: 150ms; --t-med: 250ms;
+  --ease: cubic-bezier(.2,.7,.3,1);
+}
+
+/* ============================================================
+   SANCHAYA — day, default. Accumulation.
+   Warm-neutral paper, ink that reads for hours, green carried as
+   the verified-savings colour because that is what the product is
+   FOR. Depth is soft and low; the page should feel like a well-set
+   document, not a control panel.
+   ============================================================ */
+[data-mood="sanchaya"] {
+  --bg:#FAFAF8; --surface:#FFFFFF; --surface-2:#F4F4F0; --surface-3:#EDEDE7;
+  --line:#E4E4DD; --line-strong:#15171A;
+  --ink:#15171A; --ink-2:#565B62; --ink-3:#8B9098;
+  --accent:#0E6E5E; --accent-ink:#0A564A; --accent-soft:#E4F1EE; --accent-on:#FFFFFF;
+  --pos:#0E6E5E; --pos-soft:#E4F1EE;
+  --warn:#8A5A0B; --warn-soft:#FAF0DE;
+  --neg:#B02F22;  --neg-soft:#FBEAE8;
+  --radius:10px; --radius-sm:7px; --radius-lg:14px;
+  --elev-1:0 1px 2px rgba(21,23,26,.05);
+  --elev-2:0 1px 2px rgba(21,23,26,.05), 0 6px 18px -8px rgba(21,23,26,.12);
+  --elev-3:0 2px 4px rgba(21,23,26,.06), 0 18px 44px -14px rgba(21,23,26,.18);
+  --hairline:0 0 0 1px var(--line);
+  --density:1;         /* line-height + padding multiplier */
+  --num-font:var(--sans);
+  --num-weight:640;
+  --num-tracking:-.03em;
+}
+
+/* ============================================================
+   AURA — night, power. The operator at work.
+   Near-black with a cool cast, indigo-violet as the ONE accent.
+   Violet not green: green already means "saved" here, and an accent
+   that collides with a semantic colour makes every screen ambiguous.
+   Numerals go monospace so a column of money lines up and a changed
+   figure is visible by shape before you read it.
+   ============================================================ */
+[data-mood="aura"] {
+  --bg:#0A0C10; --surface:#111419; --surface-2:#161A21; --surface-3:#1C222A;
+  --line:#222833; --line-strong:#E9EDF3;
+  --ink:#E9EDF3; --ink-2:#98A2B0; --ink-3:#626C7A;
+  --accent:#7B5CFF; --accent-ink:#6544EE; --accent-soft:rgba(123,92,255,.15); --accent-on:#FFFFFF;
+  --pos:#2FCB80; --pos-soft:rgba(47,203,128,.13);
+  --warn:#EDB13C; --warn-soft:rgba(237,177,60,.13);
+  --neg:#FF6A5C;  --neg-soft:rgba(255,106,92,.13);
+  --radius:10px; --radius-sm:7px; --radius-lg:14px;
+  /* depth in the dark is a light edge, not a drop shadow — a shadow on
+     near-black is invisible and just muddies the surface */
+  --elev-1:inset 0 1px 0 rgba(255,255,255,.04);
+  --elev-2:inset 0 1px 0 rgba(255,255,255,.05), 0 14px 34px -20px #000;
+  --elev-3:inset 0 1px 0 rgba(255,255,255,.06), 0 26px 60px -24px #000;
+  --hairline:0 0 0 1px var(--line);
+  --density:.94;       /* slightly tighter: dark surfaces read denser */
+  --num-font:var(--mono);
+  --num-weight:600;
+  --num-tracking:-.02em;
+}
+
+/* ============================================================
+   AWAAZ — setup. The guided voice.
+   Not a third palette so much as a third POSTURE: one task, one
+   column, larger type, more air, chrome stripped back. The accent
+   warms to amber because setup is the one place we are asking the
+   customer to do something rather than reporting what we found —
+   and an ask should not wear the same colour as a result.
+   ============================================================ */
+[data-mood="awaaz"] {
+  --bg:#FBF9F5; --surface:#FFFFFF; --surface-2:#F6F2EA; --surface-3:#EFE9DD;
+  --line:#E7E0D3; --line-strong:#1A1815;
+  --ink:#1A1815; --ink-2:#5A544A; --ink-3:#8C857A;
+  --accent:#A8630E; --accent-ink:#864D08; --accent-soft:#F8EEDE; --accent-on:#FFFFFF;
+  --pos:#0E6E5E; --pos-soft:#E4F1EE;
+  --warn:#8A5A0B; --warn-soft:#FAF0DE;
+  --neg:#B02F22;  --neg-soft:#FBEAE8;
+  --radius:14px; --radius-sm:10px; --radius-lg:20px;   /* softer: setup is not a control panel */
+  --elev-1:0 1px 2px rgba(26,24,21,.05);
+  --elev-2:0 2px 6px rgba(26,24,21,.06), 0 10px 28px -12px rgba(26,24,21,.16);
+  --elev-3:0 4px 10px rgba(26,24,21,.07), 0 24px 56px -18px rgba(26,24,21,.22);
+  --hairline:0 0 0 1px var(--line);
+  --density:1.12;      /* roomier: one task, no rush */
+  --num-font:var(--sans);
+  --num-weight:640;
+  --num-tracking:-.03em;
+}
+
+/* ============================================================
+   COMPONENTS — written ONCE, against tokens only.
+   Nothing below names a colour. This is the proof that the moods
+   are values and not three stylesheets wearing a trench coat.
+   ============================================================ */
+* { box-sizing: border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--ink);
+  font:15px/calc(1.45 * var(--density)) var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+.app { display:grid; grid-template-columns:224px 1fr; min-height:100vh; }
+.rail {
+  background:var(--surface); border-right:1px solid var(--line);
+  padding:var(--s3) var(--s1); position:sticky; top:0; height:100vh;
+}
+.brand { display:flex; align-items:center; gap:10px; font-weight:640; letter-spacing:-.01em;
+  padding:0 12px var(--s4); font-size:15px; }
+.brand .g { width:24px; height:24px; border-radius:var(--radius-sm); background:var(--accent);
+  color:var(--accent-on); display:grid; place-items:center; font:700 12px var(--sans); }
+.grp { margin-bottom:var(--s3); }
+.grp .lbl { font:600 10px var(--mono); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-3); padding:0 12px 6px; }
+.rail a { display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:calc(7px * var(--density)) 12px; border-radius:var(--radius-sm);
+  color:var(--ink-2); text-decoration:none; font-size:14px; }
+.rail a:hover { background:var(--surface-2); color:var(--ink); }
+.rail a[aria-current] { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+[data-mood="aura"] .rail a[aria-current] { color:var(--ink); box-shadow:inset 0 0 0 1px var(--accent-soft); }
+.rail a kbd { font:500 10px var(--mono); color:var(--ink-3); border:1px solid var(--line);
+  border-radius:4px; padding:0 4px; }
+
+.top { display:flex; align-items:center; gap:var(--s2); padding:0 var(--s4);
+  height:calc(58px * var(--density)); border-bottom:1px solid var(--line); background:var(--surface); }
+.chip { font:600 11.5px var(--sans); color:var(--ink-2); background:var(--surface-2);
+  padding:4px 10px; border-radius:999px; }
+.chip.sample { color:var(--warn); background:var(--warn-soft); }
+.sp { margin-left:auto; }
+
+.wrap { padding:var(--s5) var(--s4); max-width:1240px; }
+h1 { font-size:26px; font-weight:650; letter-spacing:-.028em; margin:0 0 6px; }
+.sub { color:var(--ink-2); font-size:15px; margin:0 0 var(--s5); max-width:64ch; }
+
+.card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--hairline), var(--elev-1); }
+.card.raise { box-shadow:var(--hairline), var(--elev-2); }
+.pad { padding:var(--s3); }
+.cap { font:600 12px var(--sans); color:var(--ink-2); margin:0 0 var(--s2); }
+[data-mood="aura"] .cap { font-family:var(--mono); font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-3); }
+
+/* money — the heaviest object on any screen, in every mood */
+.num { font-family:var(--num-font); font-variant-numeric:tabular-nums;
+  font-weight:var(--num-weight); letter-spacing:var(--num-tracking); }
+.num-hero { font-size:56px; line-height:1.02; }
+.num-hero .c { color:var(--ink-3); font-size:28px; }
+.num-lg { font-size:26px; }
+.num-md { font-size:17px; }
+
+.badge { display:inline-flex; align-items:center; gap:6px; font:600 12.5px var(--sans);
+  padding:5px 11px; border-radius:999px; }
+.badge.pos { color:var(--pos); background:var(--pos-soft); }
+.badge.warn { color:var(--warn); background:var(--warn-soft); }
+.badge.neg { color:var(--neg); background:var(--neg-soft); }
+.note { color:var(--ink-3); font-size:13px; margin:var(--s3) 0 0; line-height:1.55; }
+
+.btn { font:600 14px var(--sans); border-radius:var(--radius-sm);
+  padding:calc(9px * var(--density)) 16px; cursor:pointer;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink); }
+.btn:hover { background:var(--surface-2); }
+.btn.pri { background:var(--accent); border-color:var(--accent-ink); color:var(--accent-on); }
+.btn.pri:hover { background:var(--accent-ink); }
+.btn:active { transform:scale(.985); }
+.btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+table { width:100%; border-collapse:collapse; }
+th { font:600 10px var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3);
+  text-align:left; padding:0 0 9px; border-bottom:1px solid var(--line); }
+th.r, td.r { text-align:right; }
+td { padding:calc(11px * var(--density)) 0; border-bottom:1px solid var(--line); font-size:14px; }
+tr:last-child td { border-bottom:0; }
+tr:hover td { background:var(--surface-2); }
+td.r { font-family:var(--num-font); font-variant-numeric:tabular-nums; font-weight:var(--num-weight); }
+.rt { font-family:var(--mono); font-size:11.5px; color:var(--ink-3); }
+.sev { display:inline-block; font:700 9.5px var(--mono); letter-spacing:.06em;
+  padding:2px 6px; border-radius:4px; margin-right:10px; }
+.sev.hi { color:var(--neg); background:var(--neg-soft); }
+.sev.md { color:var(--warn); background:var(--warn-soft); }
+.sev.lo { color:var(--ink-2); background:var(--surface-2); }
+
+.dot { width:8px; height:8px; border-radius:50%; flex:0 0 8px; }
+.dot.ok { background:var(--pos); } .dot.warn { background:var(--warn); }
+.row { display:flex; align-items:center; gap:12px; padding:calc(12px * var(--density)) 0;
+  border-bottom:1px solid var(--line); }
+.row:last-of-type { border-bottom:0; }
+
+/* ---- AWAAZ posture: one column, no rail, generous ---- */
+.setup { max-width:660px; margin:0 auto; padding:var(--s6) var(--s3); }
+.steps { display:flex; align-items:center; gap:10px; margin-bottom:var(--s5); }
+.step { display:flex; align-items:center; gap:8px; font:600 12.5px var(--sans); color:var(--ink-3); }
+.step .n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+  font:700 11px var(--mono); background:var(--surface-2); color:var(--ink-3); }
+.step.on { color:var(--ink); } .step.on .n { background:var(--accent); color:var(--accent-on); }
+.step.done .n { background:var(--pos-soft); color:var(--pos); }
+.step .bar { width:34px; height:1px; background:var(--line); }
+.field { display:flex; flex-direction:column; gap:7px; margin:var(--s3) 0; }
+.field label { font:600 13.5px var(--sans); }
+.field input { padding:13px 14px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  font:15px var(--mono); background:var(--surface); color:var(--ink); }
+.field input:focus-visible { outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+.field .hint { font-size:13px; color:var(--ink-3); line-height:1.5; }
+.promise { border-left:2px solid var(--accent); background:var(--surface-2);
+  padding:var(--s2) var(--s3); border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-size:13.5px; color:var(--ink-2); line-height:1.6; }
+.promise b { color:var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation:none !important; transition:none !important; }
+}
