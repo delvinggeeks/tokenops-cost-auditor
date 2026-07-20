@@ -605,7 +605,23 @@ rule per section, claim-to-source spot check on 10 claims, banned-list scan,
 Lighthouse evidence), then founder review as a stranger, on phone, before the
 thread. NO-INVENTED-NUMBERS LAW extended to marketing permanently.
 
-BLOCKED: the ruling states it "runs AFTER the incident/funnel order completes
+RECONCILED 2026-07-24 night (founder): the incident/funnel order was never
+pasted; R-PREMISE-CHECK applied correctly. Its surviving requirements are
+folded into the v15-ui-unify WIRING order. SEQUENCING: v4 ships as the INTERIM
+(it is the seam fix and it is gated); R-LANDING-2 then DRESSES it, and the v4
+landing is formally the "Part B" skeleton the ruling meant. Defect repair and
+enhancement stay SEPARATE DEPLOYS. v4 sections that R-LANDING-2 replicates are
+upgraded in place; the three genuinely new sections (animated pipeline, product
+tour tabs, comparison strip) arrive with R-LANDING-2.
+AMENDMENTS accepted from the pre-flight: (a) problem-strip third card = the 98%
+FinOps figure already on file; the unsourced "#1 unmet ask" card is DROPPED
+unless a citable source is added to the inventory first; (b) "We run the
+architecture we audit you toward" RELEASED for landing §5; (c) Lighthouse gate
+substituted until tooling exists — measured budgets as evidence (transfer
+<300KB, JS <15KB, CSS <25KB, hero <120KB), verified by curl/du in the gate
+report; real Lighthouse >=90 mobile preferred if installable.
+
+ORIGINAL BLOCK (resolved, kept for the record): the ruling states it "runs AFTER the incident/funnel order completes
 (that order's Part B is the skeleton this dresses)". No incident/funnel order
 exists in PLAN, PLAN-V15, STATUS, BACKLOG or docs; the only recorded Part B is
 docs/12-FLYWHEEL.md from the 2026-07-22 vision order, which is complete and is

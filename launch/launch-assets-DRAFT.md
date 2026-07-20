@@ -126,9 +126,13 @@ b. **Model-release weeks**: cost profiles shift when providers ship new
 c. **Hook discipline**: the thread hook leads with the bill-shock scenario,
    not the category (applied to Asset 1 post 1/).
 
+## Approved lines (released for use)
+
+- "We run the architecture we audit you toward." (R-ARCH-PATTERNS b; RELEASED
+  2026-07-24 for landing §5 under R-LANDING-2 amendment b)
+
 ## Registered lines (not yet approved for use)
 
-- "We run the architecture we audit you toward." (R-ARCH-PATTERNS b)
 - "One command installs the auditor inside the agent that's burning the
   tokens — and it asks your permission first." (R-CC-LINK 4, supersedes the
   R-SKILL 3 wording. Usable once WP-CC-LINK actually ships, never before —
