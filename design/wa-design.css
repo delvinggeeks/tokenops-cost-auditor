@@ -56,6 +56,9 @@
   --lift-2: 0 1px 2px rgba(21,23,26,.05), 0 6px 18px -8px rgba(21,23,26,.12);
   --lift-3: 0 2px 4px rgba(21,23,26,.06), 0 18px 44px -14px rgba(21,23,26,.18);
   --inner-edge: inset 0 1px 0 rgba(255,255,255,.85);
+  --accent-ring: rgba(14,110,94,.25);
+  --accent-glow: rgba(14,110,94,.55);
+  --veil: rgba(21,23,26,.45);
 }
 
 /* AURA — dark, ships at launch. Values only; no component knows. */
@@ -89,6 +92,9 @@
   --lift-2: inset 0 1px 0 rgba(255,255,255,.05), 0 14px 34px -20px #000;
   --lift-3: inset 0 1px 0 rgba(255,255,255,.06), 0 26px 60px -24px #000;
   --inner-edge: inset 0 1px 0 rgba(255,255,255,.05);
+  --accent-ring: rgba(111,79,245,.32);
+  --accent-glow: rgba(111,79,245,.6);
+  --veil: rgba(0,0,0,.62);
 }
 
 /* mood-invariant: type, space, motion */
@@ -126,25 +132,10 @@ small, .muted { color: var(--ink-soft); }
 a { color: var(--accent); }
 
 /* Money is the most visually weighted object on every screen. */
-.money { font-family: var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.money-hero {
-  font-family: var(--serif);
-  font-variant-numeric: tabular-nums;
-  font-size: 72px; line-height: 1.05; font-weight: 700;
-  color: var(--verified);
-}
-.money-lg { font-size: 28px; font-weight: 700; }
-/* Non-money stats (countdowns, counts): serif for family, but deliberately
-   lighter and smaller than money — nothing outranks a dollar figure
-   (R-DESIGN §2; mockup-v2 ux gate f.1). */
-.stat-lg { font-family: var(--serif); font-variant-numeric: tabular-nums;
-  font-size: 22px; font-weight: 400; color: var(--ink); }
-.money-sm { font-size: 17px; font-weight: 600; }
-
-/* Signature: the accountant's double rule = final, verified total. */
-.total-rule { display: inline-block; padding-bottom: 6px;
-  border-bottom: 1px solid var(--rule-strong); position: relative; }
-.total-rule::after { content: ""; position: absolute; left: 0; right: 0;
+/* .money / .money-hero / .money-lg / .money-sm / .total-rule are defined ONCE,
+   in the COMPONENT KIT section below. They used to be declared here too, and
+   the stale copy kept cascading its serif font-family onto every figure after
+   R-LOOK-FINAL — money was still rendering in the superseded face. */
   bottom: -4px; border-bottom: 1px solid var(--rule-strong); }
 
 /* Cards: 1px border + layered lift; hover tiers up (ADDENDUM 2b) */
@@ -216,8 +207,8 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .stage.done { color: var(--verified); border-color: var(--verified-line); background: var(--verified-bg); }
 .stage.live { color: var(--accent); border-color: var(--accent);
   animation: stage-pulse 1.6s var(--ease) infinite; }
-@keyframes stage-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(15, 92, 90, 0.25); }
-  50% { box-shadow: 0 0 0 6px rgba(15, 92, 90, 0); } }
+@keyframes stage-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--accent-ring); }
+  50% { box-shadow: 0 0 0 6px transparent; } }
 
 /* htmx swap default (wired at V-D4): 150ms fade + 4px rise */
 .swap-in { animation: swap-in var(--t-fast) var(--ease); }
@@ -394,10 +385,10 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
 
 /* ---- GUIDED TOUR (§2a): spotlight + popover ---- */
-.tour-veil { position: fixed; inset: 0; background: rgba(28, 26, 23, 0.45);
+.tour-veil { position: fixed; inset: 0; background: var(--veil);
   z-index: 40; }
 .tour-spot { position: absolute; z-index: 41; border-radius: var(--radius);
-  box-shadow: 0 0 0 4px rgba(15, 92, 90, 0.55), 0 0 0 9999px rgba(28, 26, 23, 0.45);
+  box-shadow: 0 0 0 4px var(--accent-glow), 0 0 0 9999px var(--veil);
   pointer-events: none; }
 .tour-pop { position: absolute; z-index: 42; width: 340px; background: var(--surface);
   border: 1px solid var(--rule); border-radius: var(--radius);
@@ -504,3 +495,130 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
   .sources-table tr { display: block; border-bottom: 1px solid var(--rule); padding: var(--s2) 0; }
   .row-actions { text-align: left; }
 }
+
+/* ============================================================
+   COMPONENT KIT (R-DESIGN-TOKENS-2 §3 · values per R-LOOK-FINAL)
+   Every rule below references ROLE TOKENS only. Controls and widget
+   chrome take --control-depth; data surfaces stay flat-crisp.
+   ============================================================ */
+
+/* ---- Surface ---- */
+.widget { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-1); padding: var(--s3); }
+.widget-raised { box-shadow: var(--lift-2); }
+.widget-head { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--s2); }
+.widget-head h2 { font: 600 15px var(--sans); margin: 0; letter-spacing: -.01em; }
+.widget-meta { margin-left: auto; font: 500 12px var(--mono); color: var(--ink-soft); }
+
+/* ---- Stat chip: widget chrome, so it carries control depth ---- */
+.stat-card { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: var(--s3); box-shadow: var(--control-depth); }
+.stat-k { font: 600 12px var(--sans); color: var(--ink-soft); margin-bottom: 6px; }
+.stat-v { font-size: 26px; font-weight: 640; letter-spacing: -.025em; }
+.stat-m { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+.tone-waste { color: var(--waste); }
+.tone-verified { color: var(--verified); }
+
+/* ---- Money: flat, crisp, tabular. Never inside a bevel. ---- */
+.money { font-variant-numeric: tabular-nums; color: var(--money);
+  letter-spacing: -.02em; box-shadow: none; }
+.money-hero { font-size: 54px; font-weight: 660; line-height: 1.02; letter-spacing: -.035em; }
+.money-lg { font-size: 26px; font-weight: 640; }
+.money-sm { font-size: 17px; font-weight: 620; }
+
+/* ---- SIGNATURE: the accountant's double rule ---- */
+.total-rule { border-top: 1px solid var(--rule-strong);
+  border-bottom: 3px double var(--rule-strong); height: 3px; margin: 10px 0 0; max-width: 320px; }
+.savings-hero .cap { font: 600 12px var(--sans); color: var(--ink-soft); margin: 0 0 var(--s1); }
+.hero-since { margin: var(--s2) 0 0; }
+.hero-note { color: var(--ink-soft); font-size: 13px; margin: var(--s3) 0 0; line-height: 1.55; }
+
+/* ---- SIGNATURE: the pipeline ribbon ---- */
+.ribbon { display: flex; align-items: center; gap: var(--s1); flex-wrap: wrap;
+  background: var(--surface-raised); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: 10px var(--s2); box-shadow: var(--control-depth); }
+.stage { display: inline-flex; align-items: center; gap: 8px; font: 600 12.5px var(--sans);
+  color: var(--ink-soft); padding: 4px 10px; border-radius: 999px; }
+.stage-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .5; }
+.stage-done { color: var(--verified); }
+.stage-done .stage-dot { opacity: 1; }
+.stage-now { color: var(--accent); background: var(--surface); box-shadow: var(--control-depth); }
+.stage-now .stage-dot { opacity: 1; }
+
+/* ---- DataTable: flat-crisp, no depth ---- */
+.ledger { width: 100%; border-collapse: collapse; box-shadow: none; }
+.ledger th { font: 600 10px var(--mono); letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-soft); text-align: left; padding: 0 var(--s1) 9px; border-bottom: 1px solid var(--rule); }
+.ledger th.r, .ledger td.r { text-align: right; }
+.ledger td { padding: 11px var(--s1); border-bottom: 1px solid var(--rule); font-size: 14px; }
+.ledger tbody tr:hover td { background: var(--surface-raised); }
+.ledger td.r.money { font-weight: 640; }
+.rt { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); }
+
+/* ---- FindingCard, three renderers ---- */
+.sev { display: inline-block; font: 700 9.5px var(--mono); letter-spacing: .06em;
+  padding: 2px 6px; border-radius: 4px; margin-right: 10px; }
+.sev-hi, .sev-high { color: var(--waste); background: var(--waste-bg); }
+.sev-md, .sev-med { color: var(--estimate); background: var(--estimate-bg); }
+.sev-lo, .sev-low { color: var(--ink-soft); background: var(--surface-raised); }
+.finding-detail h4 { font: 600 13px var(--sans); margin: var(--s2) 0 4px; }
+.finding-detail p { color: var(--ink-soft); font-size: 13.5px; margin: 0; line-height: 1.6; }
+.finding-summary { display: flex; align-items: center; gap: 12px; padding: 11px 0;
+  border-bottom: 1px solid var(--rule); }
+.fs-head { font-weight: 550; font-size: 14.5px; }
+.finding-summary .money { margin-left: auto; }
+
+/* ---- rows, source cards, alerts ---- */
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.row:last-of-type { border-bottom: 0; }
+.row .grow { flex: 1; }
+.row-t { font-weight: 550; font-size: 14.5px; }
+.source-card { display: flex; align-items: center; gap: 12px; padding: var(--s2);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--control-depth); margin-bottom: var(--s1); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+.dot-ok { background: var(--verified); }
+.dot-warn { background: var(--estimate); }
+.dot-neutral { background: var(--ink-soft); }
+
+/* ---- WizardSteps: control chrome ---- */
+.steps-bar { display: flex; align-items: center; gap: var(--s2); list-style: none;
+  padding: 0; margin: 0 0 var(--s4); flex-wrap: wrap; }
+.steps-bar li { display: flex; align-items: center; gap: 8px; font: 600 12.5px var(--sans);
+  color: var(--ink-soft); }
+.step-n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 11px var(--mono); background: var(--surface-raised); color: var(--ink-soft);
+  box-shadow: var(--control-depth); }
+.steps-bar .cur { color: var(--ink); }
+.steps-bar .cur .step-n { background: var(--accent); color: var(--on-accent); }
+.steps-bar .done .step-n { background: var(--verified-bg); color: var(--verified); }
+
+/* ---- form primitives: controls, so they carry depth ---- */
+.field { display: flex; flex-direction: column; gap: 6px; margin: 0 0 var(--s3); }
+.field label { font: 600 13.5px var(--sans); }
+.field input, .field select { padding: 11px 13px; border: 1px solid var(--rule);
+  border-radius: var(--radius); font: 15px var(--sans); background: var(--surface);
+  color: var(--ink); box-shadow: var(--control-depth); }
+.field input.money { text-align: right; font-variant-numeric: tabular-nums; }
+.field input:focus-visible, .field select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.field .hint { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+.field-bool label { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+
+/* ---- honest states ---- */
+.empty { text-align: center; padding: var(--s6) var(--s3); }
+.empty h3 { font: 600 17px var(--sans); margin: 0 0 var(--s1); }
+.empty p { color: var(--ink-soft); font-size: 14px; max-width: 46ch; margin: 0 auto var(--s3); line-height: 1.6; }
+.errorstate { border: 1px solid var(--waste-line); background: var(--waste-bg);
+  border-radius: var(--radius); padding: var(--s3); }
+.errorstate h3 { font: 600 15px var(--sans); margin: 0 0 6px; color: var(--waste); }
+.errorstate p { color: var(--ink-soft); font-size: 14px; margin: 0 0 var(--s2); line-height: 1.6; }
+/* money never shimmers — explicit words instead of a pulsing placeholder */
+.computing { font: 500 14px var(--sans); color: var(--ink-soft); margin: var(--s2) 0; }
+.skeleton { display: grid; gap: 8px; }
+.skel-line { height: 11px; border-radius: 4px; background: var(--surface-raised); display: block; }
+.skel-line:nth-child(2) { width: 82%; }
+.skel-line:nth-child(3) { width: 64%; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

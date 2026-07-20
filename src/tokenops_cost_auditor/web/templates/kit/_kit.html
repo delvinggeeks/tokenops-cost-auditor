@@ -1,0 +1,276 @@
+{#
+  THE COMPONENT KIT (R-DESIGN-TOKENS-2 §3, values per R-LOOK-FINAL)
+
+  Screens COMPOSE these. A bespoke element on a screen is a ux-reviewer
+  finding, because the moment one screen hand-rolls a table the mood swap
+  stops being free and the next redesign is a rewrite again.
+
+  Every macro references ROLE TOKENS only — no colour literals live here.
+
+  HONEST STATES ARE PART OF THE KIT, not an afterthought:
+    empty_state()  teaches the next action
+    error_state()  says what happened AND what to do
+    computing()    the ONLY loading treatment allowed near money
+
+  MONEY NEVER SHIMMERS. There is deliberately no skeleton macro for figures:
+  a shimmering placeholder where a dollar amount belongs reads as a number
+  that is still settling, and an audit product cannot afford a customer
+  believing a figure moved when it was merely still loading.
+#}
+
+{# ---------------------------------------------------------------- Button #}
+{% macro button(label, href=None, variant="quiet", type="submit", icon=None,
+                confirm=None, name=None, value=None, disabled=False) %}
+  {%- set cls = "btn" + (" btn-primary" if variant == "primary" else "") %}
+  {%- if href %}
+    <a class="{{ cls }}" href="{{ href }}"{% if disabled %} aria-disabled="true"{% endif %}>
+      {%- if icon %}<svg class="i" aria-hidden="true"><use href="#i-{{ icon }}"/></svg>{% endif %}
+      {{ label }}</a>
+  {%- else %}
+    {# R-DESIGN-TOKENS-2 §5c: a money-affecting action states its consequence
+       in words before it happens. The confirm text IS the consequence. #}
+    <button class="{{ cls }}" type="{{ type }}"
+            {% if name %}name="{{ name }}" value="{{ value }}"{% endif %}
+            {% if disabled %}disabled{% endif %}
+            {% if confirm %}data-confirm="{{ confirm }}"{% endif %}>
+      {%- if icon %}<svg class="i" aria-hidden="true"><use href="#i-{{ icon }}"/></svg>{% endif %}
+      {{ label }}</button>
+  {%- endif %}
+{% endmacro %}
+
+{# --------------------------------------------------------------- Surface #}
+{% macro surface_open(title=None, icon=None, meta=None, raised=False) %}
+  <section class="widget{{ ' widget-raised' if raised else '' }}">
+    {%- if title %}
+    <div class="widget-head">
+      {%- if icon %}<svg class="i i-lg" aria-hidden="true"><use href="#i-{{ icon }}"/></svg>{% endif %}
+      <h2>{{ title }}</h2>
+      {%- if meta %}<span class="widget-meta">{{ meta }}</span>{% endif %}
+    </div>
+    {%- endif %}
+{% endmacro %}
+{% macro surface_close() %}</section>{% endmacro %}
+
+{# ------------------------------------------------------------- Stat chip #}
+{% macro stat(label, value, meta=None, tone=None) %}
+  <div class="stat-card">
+    <div class="stat-k">{{ label }}</div>
+    <div class="stat-v money{{ ' tone-' ~ tone if tone else '' }}">{{ value }}</div>
+    {%- if meta %}<div class="stat-m">{{ meta }}</div>{% endif %}
+  </div>
+{% endmacro %}
+
+{# ----------------------------------------------------- SavingsHero (§4) #}
+{% macro savings_hero(amount, since=None, note=None, computing=False) %}
+  {# SIGNATURE 2 of 3: the accountant's double rule under a verified total.
+     It is brand, not theme — it survives every re-skin. #}
+  <div class="savings-hero">
+    <p class="cap">Verified savings</p>
+    {%- if computing %}
+      {{ computing_label("Recomputing your verified total") }}
+    {%- else %}
+      <div class="money money-hero">{{ amount }}</div>
+      <div class="total-rule" aria-hidden="true"></div>
+      {%- if since %}<p class="hero-since"><span class="badge badge-verified">{{ since }}</span></p>{% endif %}
+    {%- endif %}
+    {%- if note %}<p class="hero-note">{{ note }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{# --------------------------------------------------- PipelineRibbon (§4) #}
+{% macro pipeline_ribbon(stages, current=None) %}
+  {# SIGNATURE 1 of 3: where the platform's end-to-end state lives. One
+     glance away on every app screen. #}
+  <nav class="ribbon" aria-label="Audit pipeline">
+    {%- for s in stages %}
+      {%- set state = "done" if loop.index0 < (current or 0) else ("now" if loop.index0 == current else "next") %}
+      <span class="stage stage-{{ state }}"{% if state == 'now' %} aria-current="step"{% endif %}>
+        <span class="stage-dot" aria-hidden="true"></span>{{ s }}
+      </span>
+    {%- endfor %}
+  </nav>
+{% endmacro %}
+
+{# ------------------------------------------------------------- DataTable #}
+{% macro table_open(columns, caption=None) %}
+  <table class="ledger">
+    {%- if caption %}<caption class="sr-only">{{ caption }}</caption>{% endif %}
+    <thead><tr>
+      {%- for c in columns %}
+        <th{% if c.numeric %} class="r"{% endif %}
+            {% if c.sortable %} aria-sort="{{ c.sort or 'none' }}"{% endif %}>{{ c.label }}</th>
+      {%- endfor %}
+    </tr></thead>
+    <tbody>
+{% endmacro %}
+{% macro table_close() %}</tbody></table>{% endmacro %}
+
+{# ---------------------------------------------------------------- Drawer #}
+{% macro drawer(id, colspan, open=False) %}
+  <tr class="drawer" id="{{ id }}"{% if not open %} hidden{% endif %}>
+    <td colspan="{{ colspan }}">{{ caller() }}</td>
+  </tr>
+{% endmacro %}
+{% macro drawer_toggle(id, label="Details") %}
+  <button class="btn btn-quiet" type="button" aria-expanded="false"
+          aria-controls="{{ id }}" data-drawer="{{ id }}">{{ label }}</button>
+{% endmacro %}
+
+{# ----------------------------------------------------------- FindingCard #}
+{#  The atom, three renderers. ONE component so a finding cannot say
+    different things in a row, a drawer and a report. #}
+{% macro finding_row(f) %}
+  <tr>
+    <td><span class="sev sev-{{ f.severity }}">{{ f.severity|upper }}</span>{{ f.headline }}</td>
+    <td><span class="rt">{{ f.route or "—" }}</span></td>
+    <td class="r money">{{ f.impact }}</td>
+    <td class="r">{{ drawer_toggle("f-" ~ f.id) }}</td>
+  </tr>
+{% endmacro %}
+
+{% macro finding_detail(f) %}
+  {# R-CLARITY §1: WHY · EVIDENCE · THE FIX · VERIFY, in that order. #}
+  <div class="finding-detail">
+    <h4>Why we flagged this</h4>
+    <p>{{ f.why }}</p>
+    <h4>Evidence</h4>
+    {{ caller() if caller else "" }}
+    <h4>The fix</h4>
+    {%- if f.fix_snippet %}<pre class="snippet">{{ f.fix_snippet }}</pre>{% endif %}
+    <p>{{ f.fix }}</p>
+    <h4>How you'll know it worked</h4>
+    <p>{{ f.verify }}</p>
+  </div>
+{% endmacro %}
+
+{% macro finding_summary(f) %}
+  <div class="finding-summary">
+    <span class="sev sev-{{ f.severity }}">{{ f.severity|upper }}</span>
+    <div><div class="fs-head">{{ f.headline }}</div><div class="rt">{{ f.route or "—" }}</div></div>
+    <div class="money money-sm">{{ f.impact }}</div>
+  </div>
+{% endmacro %}
+
+{# --------------------------------------------------------------- AlertRow #}
+{% macro alert_row(title, meta, tone="neutral") %}
+  <div class="row alert-row">
+    <span class="dot dot-{{ tone }}" aria-hidden="true"></span>
+    <div class="grow"><div class="row-t">{{ title }}</div><div class="rt">{{ meta }}</div></div>
+  </div>
+{% endmacro %}
+
+{# ------------------------------------------------------------- SourceCard #}
+{% macro source_card(name, sub, status, tone, last, actions=None) %}
+  <div class="source-card">
+    <span class="dot dot-{{ tone }}" aria-hidden="true"></span>
+    <div class="grow">
+      <div class="row-t">{{ name }}</div>
+      <div class="rt">{{ sub }}</div>
+    </div>
+    <span class="badge badge-{{ 'verified' if tone == 'ok' else 'estimate' }}">{{ status }}</span>
+    <span class="rt">{{ last }}</span>
+    {%- if actions %}<span class="row-actions">{{ actions }}</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{# ------------------------------------------------------------ WizardSteps #}
+{% macro wizard_steps(steps, current) %}
+  <ol class="steps-bar" aria-label="Progress">
+    {%- for s in steps %}
+      {%- set state = "done" if loop.index0 < current else ("cur" if loop.index0 == current else "") %}
+      <li class="{{ state }}">
+        <span class="step-n" aria-hidden="true">{{ "✓" if state == "done" else loop.index }}</span>
+        <span class="step-l">{{ s }}</span>
+      </li>
+    {%- endfor %}
+  </ol>
+{% endmacro %}
+
+{# ------------------------------------------------------------ HelpPopover #}
+{% macro help_popover(id, title, body, learn_more=None) %}
+  <details class="help" id="{{ id }}">
+    <summary aria-label="What is {{ title }}?">?</summary>
+    <div class="help-body">
+      <strong>{{ title }}</strong>
+      <p>{{ body }}</p>
+      {%- if learn_more %}<a href="{{ learn_more }}">Learn more →</a>{% endif %}
+    </div>
+  </details>
+{% endmacro %}
+
+{# --------------------------------------------------------------- TourSpot #}
+{% macro tour_spot(step, title, body, total) %}
+  <div class="tour-pop" data-tour-step="{{ step }}" hidden>
+    <p class="tour-count">Step {{ step }} of {{ total }}</p>
+    <strong>{{ title }}</strong>
+    <p>{{ body }}</p>
+    <div class="tour-actions">
+      <button class="btn btn-quiet" data-tour="skip">Skip</button>
+      <button class="btn btn-primary" data-tour="next">Next</button>
+    </div>
+  </div>
+{% endmacro %}
+
+{# --------------------------------------------------- Field primitives #}
+{% macro field(name, label, kind="text", value="", hint=None, required=False,
+               placeholder="", options=None, checked=False, accept=None) %}
+  <div class="field field-{{ kind }}">
+    {%- if kind == "bool" %}
+      <label class="field-bool">
+        <input type="checkbox" name="{{ name }}" id="{{ name }}" {% if checked %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+    {%- else %}
+      <label for="{{ name }}">{{ label }}</label>
+      {%- if kind == "enum" %}
+        <select name="{{ name }}" id="{{ name }}">
+          {%- for o in options %}<option value="{{ o.value }}"{% if o.value == value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+        </select>
+      {%- elif kind == "file" %}
+        <input type="file" name="{{ name }}" id="{{ name }}" {% if accept %}accept="{{ accept }}"{% endif %} {% if required %}required{% endif %}>
+      {%- else %}
+        {# money and int render right-aligned tabular so a column of them scans #}
+        <input type="{{ 'number' if kind in ('int','money') else ('email' if kind=='email' else 'text') }}"
+               class="{{ 'money' if kind == 'money' else '' }}"
+               {% if kind == 'money' %}step="0.01" inputmode="decimal"{% elif kind == 'int' %}step="1" inputmode="numeric"{% endif %}
+               name="{{ name }}" id="{{ name }}" value="{{ value }}"
+               placeholder="{{ placeholder }}" {% if required %}required{% endif %}>
+      {%- endif %}
+    {%- endif %}
+    {%- if hint %}<span class="hint">{{ hint }}</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{# ------------------------------------------------------- HONEST STATES #}
+{% macro empty_state(headline, body, action_label=None, action_href=None) %}
+  {# Teaches the next action. An empty screen that only says "no data" has
+     wasted the one moment the user was willing to be told what to do. #}
+  <div class="empty">
+    <h3>{{ headline }}</h3>
+    <p>{{ body }}</p>
+    {%- if action_label %}{{ button(action_label, href=action_href, variant="primary") }}{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro error_state(what_happened, what_to_do, retry_href=None) %}
+  {# What happened AND what to do. Never an apology, never vague. #}
+  <div class="errorstate" role="alert">
+    <h3>{{ what_happened }}</h3>
+    <p>{{ what_to_do }}</p>
+    {%- if retry_href %}{{ button("Try again", href=retry_href) }}{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro computing_label(what="Computing") %}
+  {# The ONLY loading treatment permitted where a figure will appear.
+     Explicit words, not a shimmer: a placeholder that pulses where money
+     goes reads as a number still settling. #}
+  <p class="computing" role="status" aria-live="polite">{{ what }}…</p>
+{% endmacro %}
+
+{% macro skeleton(lines=3) %}
+  {# TEXT ONLY. Never wrap a figure in this — see computing_label(). #}
+  <div class="skeleton" aria-hidden="true">
+    {%- for _ in range(lines) %}<span class="skel-line"></span>{% endfor %}
+  </div>
+{% endmacro %}
