@@ -8,11 +8,16 @@ publishes until the founder approves this file AND the D14 spec-guard sweep
 passes.
 
 Figure inventory (the ONLY numbers permitted in any asset):
-- Ledger row 1 (founder-verified): 1,340 calls · $432.27 observed ·
+- Ledger row 1 (founder-verified 2026-07-17): 1,340 calls · $432.27 observed ·
   est. $1,966.27/mo waste · 30.3%
+- Ledger row 2 (founder-verified 2026-07-19): 1,478 calls · $512.92 observed ·
+  est. $1,525.61/mo waste · 29.7%
 - Corrected UAT-1 set (founder-approved, machine-checked): 67,095 unique
   calls from 159,571 events (58% duplicates) · $8,757.75/mo API-equivalent ·
   $2,846.62/mo est. waste · 32.5%
+- Price list, as shipped (renders from the one price config, never inline):
+  Free $0 no card · Pro $99/mo · ₹8,999/mo · Team $299/mo · ₹26,999/mo ·
+  one-off audit $500 · ₹45,000
 - Defect narrative: the 228% claim our golden discipline caught; the ledger
   row our own verification gate refused (UAT-D5)
 - Market stats (attributed only): 79% overran AI budgets (DoiT/Sapio, 2026);
@@ -38,6 +43,12 @@ worth telling.
 waste audit in 48h. No SDK, no proxy, nothing in your request path. Six
 waste classes: missing prompt caching, retry storms, oversized models,
 prompt bloat, unbounded output caps, chatty agent loops.
+
+**2b/** New in this build: connect your provider read-only and it keeps
+auditing — scheduled re-audits, alerts when spend moves, a monthly savings
+statement showing what you actually banked. Read-only means read-only: we
+pull usage counts from the official admin API. There is no prompt text in
+that API, so there is none in our database either.
 
 **3/** First rejection: the audit of our own build sessions claimed 228% of
 spend as "savings." Impossible number. Root cause: we priced prompt-token
@@ -66,7 +77,10 @@ AI budgets last year (DoiT/Sapio, 2026); even mature FinOps teams overspent
 tools that need integration before they show you anything. Ours needs a log
 file.
 
-**8/** $500 flat (₹20,000), one audit, 48h, client-ready PDF. Your data:
+**8/** Start free — one full audit of a log file you upload, no card. Keep it
+watching for $99/mo (₹8,999) — connect your provider read-only and it audits
+on a schedule, alerts on spend moves, and posts you a monthly savings
+statement. One-off audit for enterprises: $500 (₹45,000). Your data:
 "analyzed then deleted; nothing retained beyond 7 days; never used for training." Docs — including our full methodology, our defect log, and the
 audit of ourselves — at <docs URL>. DM or <site URL> to start.
 
@@ -101,7 +115,11 @@ Outreach targets TRIGGER MOMENTS, not cold personas:
 a. **Search-and-reply, not broadcast**: find X/Reddit/HN posts complaining
    about OpenAI/Anthropic/Claude Code bills; reply with the free audit
    offer. Replies follow the same rules as the assets: figure inventory
-   only, rails attached, no hype, no Connect claims.
+   only, rails attached, no hype. CONNECT IS NOW CLAIMABLE (V-D10,
+   2026-07-23) — it ships in this build, so replies may describe the
+   read-only provider connection and scheduled re-audits as things that
+   exist today. The old "no Connect claims" rule is retired, not relaxed:
+   it existed because Connect was unbuilt, and that is no longer true.
 b. **Model-release weeks**: cost profiles shift when providers ship new
    models/prices — audit demand spikes; time outreach pushes to those
    windows (pricing-watch WP-P1.5 will surface them once live).
@@ -119,6 +137,12 @@ c. **Hook discipline**: the thread hook leads with the bill-shock scenario,
 ## Approval checklist (founder)
 
 - [ ] Figures match the inventory above, nothing else numeric
+- [ ] Prices match the shipped price config ($500 · ₹45,000 one-off; the
+      assets previously published ₹20,000, a rate we do not charge — the
+      same stale figure was live in the Terms of Service until V-D10)
+- [ ] FOUNDER CALL OUTSTANDING: post 8/ now leads with Free→Pro subscription
+      and demotes the $500 one-off to an enterprise line. That is a
+      positioning change, not a figure correction — confirm or reorder.
 - [ ] Rails present wherever our numbers appear
 - [ ] FR-23 string verbatim in asset 1/8
 - [ ] URLs filled (site, docs) post-deploy

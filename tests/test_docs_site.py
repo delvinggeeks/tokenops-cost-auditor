@@ -45,9 +45,28 @@ class TestMP9LegalSingleSourcing:
                 )
 
     def test_price_matches_terms(self) -> None:
+        """Both legal copies must quote the price the CONFIG charges.
+
+        This test used to pin the literal '$500 / ₹20,000' in both files. That
+        passed happily while the shipped config rendered ₹45,000 at checkout —
+        the test was pinning the two mirrors to each other and to a rate we do
+        not charge, so it certified agreement on a wrong number. It now derives
+        the expected string from the one price config, which is the only
+        version of this check that can catch drift (V-D10).
+        """
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.services.payments import plans
+
+        expected = plans.one_shot_display(Settings())  # e.g. "$500 · ₹45,000"
         web = (TEMPLATES / "terms.html").read_text(encoding="utf-8")
         docs = (DOCS / "legal/terms.md").read_text(encoding="utf-8")
-        assert "$500 / ₹20,000" in web and "$500 / ₹20,000" in docs
+        # The web page renders the price from config; the static docs mirror
+        # cannot, so it carries the literal and must be updated when it moves.
+        assert "{{ one_shot }}" in web, "terms.html must render the price from the price config"
+        assert expected in docs, (
+            f"docs-site/legal/terms.md quotes a price the config does not charge; expected "
+            f"{expected!r}. Update the mirror in the same commit as any price change (MP-9)."
+        )
 
 
 class TestDocsSiteStatsPolicy:

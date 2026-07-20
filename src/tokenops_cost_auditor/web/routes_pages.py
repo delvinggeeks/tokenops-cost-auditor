@@ -118,7 +118,14 @@ def upload_page(request: Request) -> HTMLResponse:
 
 @router.get("/legal/terms", response_class=HTMLResponse)
 def terms(request: Request) -> HTMLResponse:
-    return _render(request, "legal/terms.html")
+    # The price in the binding document comes from the SAME config that charges
+    # the card (R-ONE-PRICE-CONFIG). It was hardcoded here and had already
+    # drifted to a rate we do not charge.
+    from tokenops_cost_auditor.services.payments import plans
+
+    return _render(
+        request, "legal/terms.html", one_shot=plans.one_shot_display(request.app.state.settings)
+    )
 
 
 @router.get("/legal/privacy", response_class=HTMLResponse)
