@@ -5,6 +5,37 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-24 · v1.5.0 (35ad41d) · v1.5 MONITOR LIVE on https://tokenops.cloud.
+  PRE-FLIGHT CAUGHT A FALSE PREMISE: the deploy order specified an incremental
+  migration "001->007 (rehearsed)", but production stood at 002 (9 tables) with
+  live data (3 users, 4 audits, 452 aggregates, 15,022 findings) — so the real
+  path was FIVE unrehearsed migrations over customer data, not the one
+  rehearsed. Paused and reported instead of executing literally (now permanent
+  law R-PREMISE-CHECK). Also declined the one-command provision.sh path, whose
+  steps 4-5 migrate production automatically with no rehearsal gate, and
+  declined to copy the production dump off-box to rehearse locally (it holds
+  real user emails). REHEARSAL ON-BOX: backup taken first
+  (tokenops_2026-07-20.dump, 4.0M), restored into a throwaway `prodcopy` in
+  the same postgres, 002->007 run against a byte-faithful copy of live data —
+  all 15,022 findings / 452 aggregates / 4 audits / 3 users unchanged, tables
+  9->16; prodcopy dropped immediately rather than left lying around. NULL
+  semantics verified conservative and ratified as final: findings.route NULL
+  on legacy rows falls back to finding_id so legacy findings can never be
+  wrongly credited, and audits.observed_days NULL fails the MIN_VERIFY_DAYS
+  gate — honest zeros, no backfill. DEPLOY: migrate 002->007 (additive, so the
+  running old image tolerated the new schema), then `up -d` onto the new image;
+  head d3f8a1c7e604. SMOKE ALL PASS: healthz 200 db:true (internal AND external
+  over real DNS/TLS, cert valid to 2026-10-17); landing 200 with FR-23
+  verbatim; /sample 200; /legal/terms renders $500 · ₹45,000 from the price
+  config; auth-gated /dashboard,/sources,/billing correctly 401; REAL Postmark
+  magic link accepted for delivery to lokesh@tokenops.cloud (mail.sent logged,
+  request_id d5c7f270efec432d); engine end-to-end through the real detectors
+  (17 calls, 2 findings, deterministic spend). HARDWARE RE-CHECKS: 4 vCPU,
+  load 0.23, 933Mi/7.8Gi memory used, 9.2G/96G disk (10%), app 210MB RSS at
+  0.29% CPU — ample headroom. NOT YET CONFIRMED: that the magic link ARRIVED
+  in the inbox; SMTP acceptance is not delivery, and the founder's production
+  walkthrough is what closes that.
+
 - 2026-07-23 · v15-d10 @ ec50ca0 (pre-tag rehearsal, NOT a deploy) · V-D10 DEPLOY
   REHEARSAL on a production-shaped copy. Real topology, isolated: the live
   local stack was already up with populated pgdata/uploads/reports volumes,

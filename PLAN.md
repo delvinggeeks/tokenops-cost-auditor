@@ -581,6 +581,21 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-PREMISE-CHECK (founder, 2026-07-24) — PERMANENT LAW.** An order whose
+stated premise is false is PAUSED and reported, never executed literally.
+Established when the v1.5 deploy order specified an incremental migration
+"001->007 (rehearsed)" while production actually stood at 002, making the real
+path five unrehearsed migrations over live customer data. Ratified with it:
+premise-check before execution; refusing a one-command path that would have
+migrated production ahead of any rehearsal gate; refusing to move customer
+data off-box in order to test; rehearsing on an on-box copy of real data; and
+dropping that copy the moment it had served its purpose.
+
+**R-NULL-HONEST-ZEROS (founder, 2026-07-24) — FINAL.** Columns added to
+existing rows stay NULL and read conservatively: legacy findings earn no
+verified-savings credit until re-audited, legacy audits do not qualify for
+verification. Honest zeros over invented savings. NO BACKFILL, EVER.
+
 **R-CC-LINK (founder, 2026-07-23) — BACKLOG consolidation, zero v1.5/V-D10
 change.** WP-SKILL and WP-COLLECTOR merge into ONE subscriber deliverable,
 WP-CC-LINK: `pipx install tokenops && tokenops link <code>`, a device-link
