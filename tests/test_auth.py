@@ -221,6 +221,10 @@ class TestRGTMControlLanding:
     """R-GTM-CONTROL (founder 2026-07-18): control narrative + early-access CTA."""
 
     def test_control_narrative_leads_and_audit_is_step_one(self, client: TestClient) -> None:
+        # R-PAINMOMENT added a hero A/B, so this test must say which variant it
+        # is asserting. R-GTM-CONTROL governs the control arm; the bill-shock
+        # arm is covered in tests/test_polish.py::TestHeroExperiment.
+        client.cookies.set("hero_v", "control")
         html = client.get("/").text
         assert "Take control of your AI spend." in html
         assert "step one" in html  # audit framed as step one of a prevention path

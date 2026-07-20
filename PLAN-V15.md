@@ -236,7 +236,9 @@ carries counts-only line), figure-inventory grep (launch rails).
 
 **R-MAGIC-CONNECT (2026-07-22) adds to V-D9 (+0.5 day, absorbed):** the
 Connect flow becomes a 3-step guided wizard per provider (deep-link to the
-exact console screen + annotated screenshot; live server-side key
+exact console screen + annotated DRAWN SVG illustration (R-WIZ-ILLUSTRATION,
+founder 2026-07-23: diffable and version-controlled; a provider-UI PNG rots
+silently on their next restyle); live server-side key
 validation with a plain-words verdict; a done-state stating "first audit
 tonight, nothing else to do"); on successful connect an IMMEDIATE pull +
 mini-audit runs in the background so the dashboard shows real numbers in

@@ -3,7 +3,34 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D9 IN PROGRESS — Connect wizard built (T-WIZ-01..05 green); polish pass next
+## V-D9 BUILT (wizard + polish) — at gate
+
+R-WIZ-ILLUSTRATION ratified and the ruling text amended in PLAN §0.1 +
+PLAN-V15 (drawn diffable SVG replaces "annotated screenshot").
+POLISH HALF: /sample (FR-16) runs the committed synthetic fixtures through
+the REAL engine — ingest → price → detect → assemble — so every figure on
+the shareable page is arithmetic the shipped detectors produced, not a
+mock-up; it is deterministic run-to-run, needs no login, and carries a
+banner saying plainly that the arithmetic is real even though the company
+is not. /upload became the guided "Get your logs" flow: five routes in
+(Connect wizard · Claude Code exporter · OpenAI · Anthropic · CSV), each
+carrying its OWN counts-only promise beside the instruction rather than a
+footer nobody reads (test asserts exactly five). Landing hero A/B per
+R-PAINMOMENT: cookie-bucketed so a visitor sees one hero and never watches
+it change mid-read.
+FLAKE CAUGHT AND FIXED BEFORE THE GATE: the A/B made an EXISTING
+R-GTM-CONTROL test intermittent (it asserts the control headline, now
+shown ~half the time). Both that test and my own new one now pin their
+variant explicitly — a coin-flip assertion has no place in a suite I call
+deterministic. 3 consecutive clean full runs after the fix.
+10 polish tests (T-POL-01..03 + sample determinism + hero arms);
+sample.py 96.9%, routes_pages.py 100%; total 95.5%.
+DEFERRED, stated honestly: the report web page's visual pass and the
+pricing-page Savings-Statement framing are NOT done — the report shares
+its template with the PDF and the golden-determinism tests, so restyling
+it is a change I want gated on its own, not smuggled into a polish commit.
+
+## V-D8 GATE CLOSED
 
 R-NORMALIZE-AT-EVERY-DOOR + R-BATCH-SEND-ISOLATION recorded as permanent
 laws, each naming the defect that produced it. WIZARD (R-MAGIC-CONNECT):

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Run an audit · TokenOps Cost Auditor{% endblock %}
 {% block content %}
+{% include "_get_logs_tabs.html" %}
+
 {% if not user_email %}
 <h1>Sign in to run your audit</h1>
 <div class="panel">

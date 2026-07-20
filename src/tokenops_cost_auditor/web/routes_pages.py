@@ -6,6 +6,7 @@ display-only; the API enforces auth separately.
 
 from __future__ import annotations
 
+import structlog
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -13,6 +14,8 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE, verify_session
+
+log = structlog.get_logger("tokenops_cost_auditor.web")
 
 router = APIRouter(tags=["pages"])
 
@@ -30,9 +33,33 @@ def session_email(request: Request) -> str | None:
     return verify_session(settings.secret_key, cookie, settings.session_ttl_days)
 
 
+HERO_COOKIE = "hero_v"
+HERO_VARIANTS = ("control", "billshock")
+
+
+def _hero_variant(request: Request) -> str:
+    """Cookie-bucketed so a visitor sees ONE hero, not a new one per reload.
+    R-PAINMOMENT asked for the bill-shock line to be tested against the
+    control narrative; the split is deterministic per visitor, never per
+    request."""
+    existing = request.cookies.get(HERO_COOKIE)
+    if existing in HERO_VARIANTS:
+        return existing
+    import secrets
+
+    return HERO_VARIANTS[secrets.randbelow(len(HERO_VARIANTS))]
+
+
 @router.get("/", response_class=HTMLResponse)
 def landing(request: Request) -> HTMLResponse:
-    return _render(request, "landing.html")
+    variant = _hero_variant(request)
+    response = _render(request, "landing.html", hero_variant=variant)
+    if request.cookies.get(HERO_COOKIE) != variant:
+        response.set_cookie(
+            HERO_COOKIE, variant, max_age=30 * 86400, httponly=False, samesite="lax"
+        )
+    log.info("landing.hero", variant=variant)
+    return response
 
 
 @router.post("/early-access", response_class=HTMLResponse)
@@ -58,6 +85,25 @@ def early_access_signup(request: Request, email: str = Form(...)) -> HTMLRespons
         "early access opens. Until then, the audit is the fastest way to take "
         'control — <a href="/upload">start with your logs</a>.</p>'
     )
+
+
+@router.get("/sample", response_class=HTMLResponse)
+def sample_report(request: Request) -> HTMLResponse:
+    """FR-16: a shareable sample built by running synthetic fixture traffic
+    through the REAL engine — every figure is arithmetic our detectors
+    produced, not a mock-up."""
+    from tokenops_cost_auditor.services.report import sample
+
+    html = sample.sample_html(request.app.state.settings, request.app.state.pricing_table)
+    banner = (
+        '<div style="background:#f5f2ec;border-bottom:1px solid #e3ded4;'
+        'padding:12px 24px;font:14px system-ui">'
+        "<strong>Sample report.</strong> Invented traffic with planted waste, "
+        "run through the same engine your logs would use — so the arithmetic is "
+        "real even though the company is not. "
+        '<a href="/upload">Audit your own logs →</a></div>'
+    )
+    return HTMLResponse(html.replace("<body>", f"<body>{banner}", 1))
 
 
 @router.get("/upload", response_class=HTMLResponse)

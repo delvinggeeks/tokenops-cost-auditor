@@ -517,8 +517,12 @@ registry) — the ecosystem's workflow made legible page by page.
 absorbed in the polish milestone already in plan.** (1) GUIDED KEY WIZARD:
 Connect becomes a hand-held 3-step wizard per provider — (a) "Open your
 provider's key page" as a deep-link button to the exact console screen,
-with an annotated screenshot beside it showing precisely what to click and
-which permission to pick (read-only/usage scope); (b) paste field with LIVE
+with an annotated ILLUSTRATION beside it showing precisely what to click
+and which permission to pick (read-only/usage scope). [AMENDED by
+R-WIZ-ILLUSTRATION, founder 2026-07-23: a DRAWN, diffable SVG replaces the
+original "annotated screenshot" — a PNG of a provider's UI rots silently on
+their next restyle; a drawn illustration is version-controlled and
+reviewable.] (b) paste field with LIVE
 validation — on paste we test the key server-side immediately and show
 "✓ Connected — we can see your usage (read-only). We can never see prompts
 or make calls." or a plain-words error ("this key can't read usage — here's
