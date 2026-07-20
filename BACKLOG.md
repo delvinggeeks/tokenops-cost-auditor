@@ -34,6 +34,9 @@ promotion still requires a PRD amendment.
   metering seed for future usage-based pricing), revocation instant,
   every key event audit-logged. Until then: sessions + CLI cover all
   real users.]
+  [R-SKILL 2 (2026-07-23): WP-MCP fires on this SAME event — a request for
+  programmatic access is a request for the MCP surface. One trigger, two
+  deliverables; do not treat them as separate signals.]
 - **Queue/workers (replacing BackgroundTasks + NFR-13 cap)** — trigger: the
   MAX_CONCURRENT_AUDITS cap regularly saturated (queue depth alerts in digest).
 - **Orgs/SSO** (X-03 stands) — trigger: first team customer.
@@ -75,6 +78,18 @@ promotion still requires a PRD amendment.
   them to sharpen findings (task-tier mismatch, declared-repetitive → D7
   priority, budget-per-purpose). Declarations are counts-safe metadata —
   FR-22 untouched.
+- **WP-SKILL — "tokenops-audit" Claude Code skill** (R-SKILL 2026-07-23 §1)
+  — SKILL.md plus scripts wrapping the T1 exporter and the CLI: runs
+  entirely on the user's own machine over their own transcripts (UAT-D5
+  dedup law, counts-only by construction, nothing transmitted), opens the
+  report, and closes with ONE pointer to the monitored product. Distribution:
+  skill lists + a docs page. TRIGGER: immediately post-v1.5 launch, est. 1
+  day. Its README states the ZTA credential plainly — the skill performs
+  zero inference beyond its own invocation.
+- **WP-MCP — MCP server over /api/v1** (R-SKILL 2026-07-23 §2) — submit an
+  export, poll audit status, fetch findings, so agents and frameworks can
+  call TokenOps as a tool. TRIGGER: the existing API-key buying signal
+  (same event, modern surface) — see the API-keys entry above.
 - **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
   per-pipeline / per-knowledge-base attribution views, the T4-era
   architect dashboard. Registered, NOT built: arrives with T4 span data,

@@ -573,6 +573,14 @@ loop that sends to multiple customers commits and isolates per iteration.
 Named after the repeat offence: the same defect appeared in alerts (V-D5
 f.2) and again in dunning (V-D8 f.4). Applies everywhere, forever.
 
+**R-SKILL (founder, 2026-07-23) — BACKLOG only, zero v1.5 change.**
+(1) WP-SKILL: a "tokenops-audit" Claude Code skill wrapping the T1 exporter
+and CLI, running locally on the user's own transcripts and transmitting
+nothing; trigger = immediately post-v1.5 launch (est. 1 day). (2) WP-MCP:
+an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
+— same event, modern surface. (3) Marketing line registered: "Install the
+auditor inside the agent that's burning the tokens."
+
 **R-ZTA (founder, 2026-07-22) — positioning; zero v1.5 scope change.**
 (a) Zero-token vocabulary in launch/landing/docs engineering page:
 "deterministic engine, no inference — we never burn your tokens to count

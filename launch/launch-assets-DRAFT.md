@@ -108,6 +108,14 @@ b. **Model-release weeks**: cost profiles shift when providers ship new
 c. **Hook discipline**: the thread hook leads with the bill-shock scenario,
    not the category (applied to Asset 1 post 1/).
 
+## Registered lines (not yet approved for use)
+
+- "We run the architecture we audit you toward." (R-ARCH-PATTERNS b)
+- "Install the auditor inside the agent that's burning the tokens."
+  (R-SKILL 3 — usable once WP-SKILL actually ships, never before)
+- "Your traffic's shape tells us what it's doing — you tell us why — we
+  never read what it says." (R-INTENT-LADDER b)
+
 ## Approval checklist (founder)
 
 - [ ] Figures match the inventory above, nothing else numeric
