@@ -581,6 +581,21 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-MOTION-SPEC (founder, 2026-07-24) — addendum to R-LANDING-2's motion
+system; applies at wiring.** (1) Every animated effect on the landing and any
+future surface is SPECIFIED BEFORE IMPLEMENTATION as trigger · behavior ·
+duration+easing · reduced-motion fallback · tokens used (wa-design vars only —
+motion introduces no new colours or shadows). design/MOTION-SPECS.md is a GATE
+ARTIFACT; ux-reviewer checks implementation against it. (2) Prototyping tools
+may be used to explore an effect, but production code is written in-repo
+against our tokens and gated normally — we adopt patterns, not artifacts.
+(3) Simplicity law restated: one designed delight per section; motion that does
+not serve comprehension or the money-moment is cut at the gate.
+APPLIED: design/MOTION-SPECS.md written covering shipped in-app effects (A1-A7),
+the v4 unified surfaces (B1-B2) and the not-yet-built landing effects (C1-C5),
+plus a cut list of rejected effects. tests/test_motion_specs.py binds the sheet
+to the code so it cannot drift into fiction.
+
 **R-LANDING-2 (founder, 2026-07-24) — RECEIVED AND RECORDED; NOT STARTED,
 BLOCKED ON A MISSING PREREQUISITE.** Marketing landing rebuild, est. 2 days,
 ux-gated, founder review at the end. SSR + CSS-first, vanilla JS for scroll
