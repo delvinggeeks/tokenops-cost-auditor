@@ -10,13 +10,13 @@
   {% else %}
     <table class="ledger">
       <thead><tr>
-        <th>Finding</th><th>Severity</th><th class="money" aria-sort="descending">Monthly</th><th></th>
+        <th>Finding</th><th>Severity</th><th class="money">Monthly</th><th></th>
       </tr></thead>
       <tbody>
       {% for it in w.data['items'] %}
         <tr>
           <td>{{ help.detector_plain(it.detector) }}</td>
-          <td><span class="sev sev-{{ it.severity }}">{{ it.severity }}</span></td>
+          <td><span class="sev sev-{{ it.severity }}">{{ {"high": "High", "med": "Medium", "low": "Low"}.get(it.severity, it.severity) }}</span></td>
           <td class="money">${{ "{:,.2f}".format(it.monthly_usd) }}</td>
           <td>
             {% if it.verdict == "applied" %}

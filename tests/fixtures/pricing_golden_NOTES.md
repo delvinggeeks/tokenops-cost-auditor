@@ -162,10 +162,27 @@ finding capped at its original estimate.
 | Customer-reported | savings_realized 333.00 on a dismissed finding → separate line only | verified **0.00**, reported **333.00** |
 | Unapplied | two findings 400.00 + 600.00, no feedback | identified **1000.00**, verified **0.00** |
 
-Route identity = (detector, detail["model"] if present else finding_id) —
+Route identity = (detector, findings.route or finding_id), where `route`
+is the model id persisted by BOTH audit producers —
 the stable key a re-audit reproduces for the same traffic. The >=7-day gate
 reads audits.observed_days, persisted by BOTH audit producers (runner.py and
 source_audit.py) in the same commit as this formula.
+
+### R-Q9 correctness rules added after the V-D4 cold-review FAIL (2026-07-21)
+
+The formula alone under-specified three cases that would each have inflated
+the headline. Rules and their goldens:
+
+| Rule | Why it matters | Golden |
+|---|---|---|
+| R1 one credit per route | weekly audits re-emit an unfixed finding, each with its own feedback row; naive summing bills the same dollars weekly | applied in 2 successive audits at baseline 1000, later route at 200 → **800.00 once** (not 1600) |
+| R2 vanished ≠ fixed | a route absent from the later audit may be retired, not fixed; crediting it would invent savings | gone + no traffic on the model → **0.00, pending**; gone + traffic present → **1000.00 verified** |
+| R3 no double booking | a settled route must not also inflate `identified` | route applied then re-found at 400 → verified **600.00**, identified **0.00** |
+
+Route identity is credited against the EARLIEST applied feedback (the
+baseline in force when the customer acted). Traffic evidence for R2 reads
+call_aggregates for the audit; a finding with no route recorded can never
+be credited on disappearance (conservative by construction).
 
 ## Founder verification log
 

@@ -54,10 +54,12 @@
           {{ "${:,.2f}/mo verified".format(widgets.savings.data.verified)
              if not widgets.savings.empty else "Apply a fix, we verify the saving" }}</div>
       </div>
-      <div class="seg waiting">
+      <div class="seg {{ 'active' if not widgets.alerts.empty else 'waiting' }}">
         <div class="stage-name">Prevent</div>
-        <div class="stage-state">Waiting</div>
-        <div class="stage-note">Alerts watch between audits</div>
+        <div class="stage-state">
+          {{ widgets.alerts.data.count if not widgets.alerts.empty else "Not set up" }}
+          {{ "armed" if not widgets.alerts.empty else "" }}</div>
+        <div class="stage-note">{{ widgets.alerts.provenance }}</div>
       </div>
     </div>
   </section>

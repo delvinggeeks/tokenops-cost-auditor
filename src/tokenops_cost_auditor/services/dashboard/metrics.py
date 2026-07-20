@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import (
+    AlertRule,
     Audit,
     CallAggregate,
     FindingFeedback,
@@ -215,10 +216,35 @@ def next_audit(session: Session, user_id: str, now: datetime | None = None) -> W
         return Widget(empty=True, provenance="No scheduled audits")
     soonest = min(due)
     delta = soonest - now
-    days = max(delta.days, 0)
+    if delta.total_seconds() < 0:
+        # Overdue is exactly what this widget exists to surface — never hide it
+        # behind "today" (V-D4 cold-review f.5).
+        late = abs(delta.days) or 1
+        return Widget(
+            empty=False,
+            provenance=f"Was due {soonest:%a %d %b %H:%M} UTC · check the scheduler",
+            data={"countdown": f"{late} day(s) overdue", "overdue": True},
+        )
+    days = delta.days
     label = "today" if days == 0 else ("1 day" if days == 1 else f"{days} days")
     return Widget(
         empty=False,
         provenance=f"Weekly cadence · next {soonest:%a %d %b %H:%M} UTC",
-        data={"countdown": label},
+        data={"countdown": label, "overdue": False},
+    )
+
+
+def alerts_armed(session: Session, user_id: str) -> Widget:
+    """Prevent stage + alerts widget. Rendered from real rules only: with none
+    configured this says so plainly — it never promises a future feature
+    (no-promises law, R-DESIGN-SHELL §1)."""
+    rows = (
+        session.execute(select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.enabled))
+        .scalars()
+        .all()
+    )
+    return Widget(
+        empty=not rows,
+        provenance=(f"{len(rows)} rule(s) armed · checked hourly" if rows else "No rules set up"),
+        data={"count": len(rows), "rules": [r.rule for r in rows]},
     )

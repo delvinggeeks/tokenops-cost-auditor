@@ -34,7 +34,23 @@ from tokenops_cost_auditor.web.routes_sources import user_plan
 router = APIRouter(tags=["dashboard"])
 
 VERDICTS = ("applied", "dismissed", "not_relevant")
-WIDGETS = ("savings", "spend_trend", "waste_trend", "top_findings", "sources", "next_audit")
+# Server-side sort keys for the findings table. SSR links, not JS —
+# a header that looks sortable IS sortable (familiarity principle).
+SORTS = {
+    "impact": lambda i: -i["monthly_usd"],
+    "title": lambda i: i["plain"].lower(),
+    "severity": lambda i: {"high": 0, "med": 1, "low": 2}.get(i["severity"], 3),
+    "confidence": lambda i: i["confidence"],
+}
+WIDGETS = (
+    "savings",
+    "spend_trend",
+    "waste_trend",
+    "top_findings",
+    "sources",
+    "next_audit",
+    "alerts",
+)
 
 
 def _session(request: Request) -> Session:
@@ -80,6 +96,7 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 "top_findings": metrics.top_findings(session, user.id),
                 "sources": metrics.sources_health(session, user.id),
                 "next_audit": metrics.next_audit(session, user.id),
+                "alerts": metrics.alerts_armed(session, user.id),
             },
             show_tour=user.tour_dismissed_at is None,
             **ctx,
@@ -99,12 +116,15 @@ def widget_partial(
         if key == "savings":
             widget, _ = metrics.savings(session, user.id)
         else:
-            widget = getattr(metrics, {"sources": "sources_health"}.get(key, key))(session, user.id)
+            fn = {"sources": "sources_health", "alerts": "alerts_armed"}.get(key, key)
+            widget = getattr(metrics, fn)(session, user.id)
         return _render(request, f"app/widgets/_{key}.html", w=widget, standalone=True)
 
 
 @router.get("/findings", response_class=HTMLResponse)
-def findings_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+def findings_page(
+    request: Request, sort: str = "impact", user_email: str = Depends(current_user)
+) -> HTMLResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
@@ -138,17 +158,28 @@ def findings_page(request: Request, user_email: str = Depends(current_user)) -> 
                 # headline depth: plain phrasing only (R-PERSONA jargon law)
                 "plain": help_registry.detector(r.detector, settings).plain,
                 "severity": r.severity,
+                # plain words at headline depth; the raw codes stay internal
+                "severity_label": {"high": "High", "med": "Medium", "low": "Low"}.get(
+                    r.severity, r.severity
+                ),
                 "confidence": r.confidence,
+                "confidence_label": {
+                    "estimated": "Estimate",
+                    "conservative": "Conservative floor",
+                }.get(r.confidence, r.confidence),
                 "monthly_usd": round(float(r.monthly_impact_usd), 2),
                 "verdict": verdicts.get(r.finding_id),
             }
             for r in rows
         ]
+        sort_key = sort if sort in SORTS else "impact"
+        items.sort(key=SORTS[sort_key])
         ctx = _shell_ctx(session, request, user, "findings")
         return _render(
             request,
             "app/findings.html",
             items=items,
+            sort=sort_key,
             audit=audit,
             show_tour=False,
             **ctx,
@@ -180,6 +211,11 @@ def finding_drawer(
                 FindingFeedback.finding_id == finding_id,
             )
         ).scalar_one_or_none()
+        if fb is None:
+            # The same route re-appears in later audits until it is fixed. Show
+            # the verdict already recorded for that route so the customer is not
+            # invited to "apply" the same fix again (V-D4 cold-review f.3).
+            fb = _verdict_for_route(session, user.id, row)
         detector_help = help_registry.detector(row.detector, request.app.state.settings)
         return _render(
             request,
@@ -189,6 +225,33 @@ def finding_drawer(
             h=detector_help,
             verdict=fb.verdict if fb else None,
         )
+
+
+def _verdict_for_route(session: Session, user_id: str, row: FindingRow) -> FindingFeedback | None:
+    """Latest verdict recorded for this (detector, route) across the user's
+    audits — route identity, the same key R-Q9 credits on."""
+    key = (row.detector, row.route or row.finding_id)
+    audit_ids = [
+        a.id for a in session.execute(select(Audit).where(Audit.user_id == user_id)).scalars().all()
+    ]
+    rows = (
+        session.execute(select(FindingRow).where(FindingRow.audit_id.in_(audit_ids)))
+        .scalars()
+        .all()
+    )
+    same_route = {
+        (f.audit_id, f.finding_id) for f in rows if (f.detector, f.route or f.finding_id) == key
+    }
+    candidates = [
+        fb
+        for fb in session.execute(
+            select(FindingFeedback).where(FindingFeedback.audit_id.in_(audit_ids))
+        )
+        .scalars()
+        .all()
+        if (fb.audit_id, fb.finding_id) in same_route
+    ]
+    return max(candidates, key=lambda fb: fb.ts) if candidates else None
 
 
 @router.post("/findings/{audit_id}/{finding_id}/feedback", response_model=None)

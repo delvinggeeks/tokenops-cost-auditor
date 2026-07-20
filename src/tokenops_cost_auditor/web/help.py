@@ -70,7 +70,7 @@ def detector(key: str, settings: Settings) -> DetectorHelp:
         key=key,
         plain=entry["plain"],
         technical=entry["technical"],
-        why=str(entry["why"]).format(**_threshold_values(settings)),
+        why=_render_thresholds(str(entry["why"]), settings),
         fix=entry["fix"],
         verify=entry["verify"],
         methodology_url=entry["methodology_url"],
@@ -82,6 +82,16 @@ def detector_plain(key: str) -> str:
     Templates use this wherever a finding is named above depth (c)."""
     entry = _raw()["detectors"].get(key)
     return str(entry["plain"]) if entry else key
+
+
+def _render_thresholds(text: str, settings: Settings) -> str:
+    """Fill {placeholders} from live Settings. A malformed or unknown
+    placeholder must never take a page down (V-D4 cold-review f.6): the raw
+    text is returned instead, and T-HELP-05/06 catch it in CI."""
+    try:
+        return text.format(**_threshold_values(settings))
+    except KeyError, IndexError, ValueError:
+        return text
 
 
 def guide_page(slug: str) -> dict[str, str]:

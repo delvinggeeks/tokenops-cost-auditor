@@ -7,7 +7,7 @@ order, live thresholds, purpose lines) as executable rules, not review notes.
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -20,6 +20,7 @@ from tokenops_cost_auditor.persistence.models import (
     Audit,
     FindingFeedback,
     FindingRow,
+    Source,
     User,
 )
 from tokenops_cost_auditor.web import help as help_registry
@@ -297,3 +298,106 @@ class TestDesignAssets:
         for path in Path("src/tokenops_cost_auditor/web/templates").rglob("*.html"):
             text = path.read_text()
             assert "https://cdn" not in text and "unpkg.com" not in text, path
+
+
+class TestUxGateFixes:
+    """Regressions for the V-D4 ux-gate findings (2026-07-21)."""
+
+    def test_f1_prevent_stage_reflects_real_state_never_a_promise(self, app: FastAPI) -> None:
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "Not set up" in page and "No rules set up" in page
+        # the forbidden shapes: no future-tense promise anywhere in the shell
+        for banned in ("coming soon", "Coming soon", "will watch", "soon)"):
+            assert banned not in page
+
+    def test_f2_sort_headers_are_real_links_that_reorder(self, app: FastAPI) -> None:
+        seed_audit(
+            app,
+            findings=[
+                ("D1-001", "d1_oversized_model", 100.0),
+                ("D2-001", "d2_missing_cache", 900.0),
+            ],
+        )
+        client = TestClient(app)
+        by_impact = client.get("/findings?sort=impact", headers=HDR).text
+        assert by_impact.index("900.00") < by_impact.index("100.00")
+        by_title = client.get("/findings?sort=title", headers=HDR).text
+        assert "aria-sort" in by_title
+        # every header offering a sort actually performs one: alphabetical by
+        # the plain title puts "...paying full price" ($900) before
+        # "...using a top-tier model" ($100), i.e. NOT the impact order.
+        assert by_title.index("900.00") < by_title.index("100.00")
+        assert by_title.index("paying full price") < by_title.index("using a top-tier")
+        # an unknown sort key falls back, never 500s
+        assert client.get("/findings?sort=nonsense", headers=HDR).status_code == 200
+
+    def test_f3_severity_and_confidence_read_as_words(self, app: FastAPI) -> None:
+        seed_audit(app, findings=[("D2-001", "d2_missing_cache", 500.0)])
+        page = TestClient(app).get("/findings", headers=HDR).text
+        table = visible_text(page.split('id="drawer"')[0])
+        assert "High" in table and "Estimate" in table
+        assert ">med<" not in page and ">estimated<" not in page
+
+
+class TestMetricsCoverage:
+    """Widget-metric branches the page tests don't reach (services/* gate)."""
+
+    def test_spend_series_from_aggregates(self, app: FastAPI) -> None:
+        from datetime import date
+
+        from tokenops_cost_auditor.persistence.models import CallAggregate
+        from tokenops_cost_auditor.services.dashboard import metrics
+
+        audit_id = seed_audit(app, findings=[])
+        with app.state.session_factory() as session:
+            for d, cost in ((date(2026, 7, 1), 10.0), (date(2026, 7, 2), 12.5)):
+                session.add(
+                    CallAggregate(
+                        audit_id=audit_id,
+                        day=d,
+                        model="m1",
+                        calls=10,
+                        prompt_tokens=1000,
+                        completion_tokens=100,
+                        cached_tokens=0,
+                        cost_usd=cost,
+                    )
+                )
+            session.commit()
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            w = metrics.spend_trend(session, user.id)
+            assert not w.empty and [p.value for p in w.series] == [10.0, 12.5]
+
+    def test_sources_health_marks_stale_and_next_audit_overdue(self, app: FastAPI) -> None:
+        from tokenops_cost_auditor.services.dashboard import metrics
+
+        now = datetime.now(UTC)
+        with app.state.session_factory() as session:
+            user = User(email=EMAIL)
+            session.add(user)
+            session.flush()
+            session.add(
+                Source(
+                    user_id=user.id,
+                    provider="openai",
+                    label="stale org",
+                    credentials_encrypted="x",
+                    last_pull_at=now - timedelta(days=5),
+                    last_audit_at=now - timedelta(days=30),  # weekly cadence => overdue
+                )
+            )
+            session.commit()
+            health = metrics.sources_health(session, user.id, now=now)
+            assert health.data["items"][0]["healthy"] is False  # 5 days without a pull
+            nxt = metrics.next_audit(session, user.id, now=now)
+            assert nxt.data["overdue"] is True
+            assert "overdue" in str(nxt.data["countdown"])
+
+    def test_malformed_help_placeholder_never_500s(self) -> None:
+        """A bad registry string degrades to raw text (cold-review f.6)."""
+        from tokenops_cost_auditor.web.help import _render_thresholds
+
+        s = Settings(secret_key="k" * 64, database_url="sqlite://", _env_file=None)
+        assert _render_thresholds("literal {oops} placeholder", s) == "literal {oops} placeholder"
+        assert _render_thresholds("stray { brace", s) == "stray { brace"
+        assert "25" in _render_thresholds("repeats {d2_cache_min_repeats}", s)

@@ -96,6 +96,10 @@ class FindingRow(Base):
     )
     finding_id: Mapped[str] = mapped_column(String(16), nullable=False)
     detector: Mapped[str] = mapped_column(String(32), nullable=False)
+    # v1.5 R-Q9: the route this finding is about (model id when the detector
+    # names one). Route identity is what a re-audit must reproduce before
+    # any saving is called verified.
+    route: Mapped[str | None] = mapped_column(String(120))
     severity: Mapped[str] = mapped_column(String(8), nullable=False)
     monthly_impact_usd: Mapped[float] = mapped_column(Float, nullable=False)
     confidence: Mapped[str] = mapped_column(String(16), nullable=False)

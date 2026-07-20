@@ -180,6 +180,7 @@ def run_source_audit(
                 audit_id=audit.id,
                 finding_id=f.id,
                 detector=f.detector,
+                route=str(f.detail.get("model")) if f.detail else None,
                 severity=str(f.severity),
                 monthly_impact_usd=f.monthly_cost_impact_usd,
                 confidence=str(f.confidence),
