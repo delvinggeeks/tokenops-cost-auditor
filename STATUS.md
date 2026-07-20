@@ -3,6 +3,29 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## R-DESIGN MOCKUP SET GATED — ux-reviewer PASS-WITH-NOTES (all 3 notes closed); awaiting founder three-second review
+
+Consolidated order 2026-07-20 applied: Part 1 verified verbatim-identical
+to the prior approval (already executed — skipped); R-DESIGN + ADDENDUM
+recorded in PLAN §0.1, ux-reviewer charter amended (three-second rule +
+delight/contrast/reduced-motion checklist + banned list); R-AGENTIC-
+DIMENSIONS + R-RAG into docs/12 (T4 mapping preserves agent + vector-DB
+span dimensions; policy grammar = the platform's "autonomous mode"
+definition; L3 fires mid-cycle); R-APIKEYS build detail on the BACKLOG
+trigger; R-AGNOSTIC expansion law in docs/12 + BACKLOG queue (Gemini,
+Bedrock, Azure-OpenAI T2; Copilot AGG); dark-mode + RAG-pack BACKLOG
+lines. MOCKUPS (frontend-design skill read first): design/wa-design.css
+(tokens: paper neutrals, deep-teal accent chosen once, serif tabular
+money, 2-4 tier crisp shadows, count-up/pipeline/spring motion with
+reduced-motion neutralization, print styles) + design/mockups/
+{dashboard,finding-card,first-run}.html. Signature: the accountant's
+DOUBLE RULE under verified totals. ux-reviewer mockup gate:
+PASS-WITH-NOTES — f.1 estimate-amber contrast 4.10:1 → darkened to
+#7a5500 (AA); f.2 first-run's deliberate no-number state annotated as the
+R-Q9 exception; f.3 delight de-scoped to exactly one per surface. All
+closed same day. WIRING BLOCKED until founder three-second review of the
+mockup set (R-DESIGN §5).
+
 ## G-V1 GATE COMPLETE — vv PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES · spec-guard PASS-WITH-NOTES (all notes closed same day)
 
 vv: suite green EXIT=0 pinned toolchain; 93.9% total; money-math same-

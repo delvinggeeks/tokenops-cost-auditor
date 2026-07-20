@@ -1,0 +1,168 @@
+/* wa-design.css — WitAura / TokenOps design tokens (R-DESIGN + ADDENDUM).
+   One sheet for landing, app, docs, PDF (print styles at end).
+   Direction: the auditor's aesthetic — premium audit report. Calm, dense,
+   numbers-first. Signature: the accountant's double rule under verified
+   totals. Accent chosen once: deep teal. Dark mode deferred (BACKLOG). */
+
+:root {
+  /* Paper neutrals (warm, calm) */
+  --paper: #faf8f4;        /* page */
+  --surface: #ffffff;      /* cards */
+  --surface-tint: #f5f2ec; /* subtle section tinting */
+  --ink: #1c1a17;          /* primary text */
+  --ink-soft: #5c574f;     /* secondary text */
+  --rule: #e3ded4;         /* 1px borders */
+  --rule-strong: #1c1a17;  /* the double rule */
+
+  /* Accent — chosen once (R-DESIGN §2) */
+  --accent: #0f5c5a;       /* deep teal */
+  --accent-ink: #0a4341;
+
+  /* Semantic — only these three beyond the accent */
+  --verified: #1e6f3e;     /* green: verified savings */
+  --estimate: #7a5500;      /* darkened from #9a6b00: 12px badge on --estimate-bg was 4.10:1, AA needs 4.5 (mockup ux gate f.1) */     /* amber: estimates */
+  --waste: #9e2b25;        /* red: waste / alert */
+  --verified-bg: #eaf3ec;
+  --estimate-bg: #f7efdc;
+  --waste-bg: #f9e9e7;
+
+  /* Type. Serif carries the numbers; sans carries the UI. */
+  --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+  --sans: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* 8px grid */
+  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
+  --content-max: 1100px;
+  --radius: 6px;
+
+  /* Precision-luxury elevation: crisp layered shadows, never emboss */
+  --lift-1: 0 1px 2px rgba(28, 26, 23, 0.06);
+  --lift-2: 0 1px 2px rgba(28, 26, 23, 0.06), 0 4px 12px rgba(28, 26, 23, 0.07);
+  --lift-3: 0 2px 4px rgba(28, 26, 23, 0.07), 0 10px 28px rgba(28, 26, 23, 0.10);
+  --inner-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85); /* 1px highlight */
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --t-fast: 150ms; --t-med: 250ms;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--s3); }
+
+h1, h2, h3 { font-family: var(--sans); font-weight: 600; margin: 0 0 var(--s2); }
+h1 { font-size: 20px; }
+h2 { font-size: 16px; }
+small, .muted { color: var(--ink-soft); }
+a { color: var(--accent); }
+
+/* Money is the most visually weighted object on every screen. */
+.money { font-family: var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.money-hero {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 72px; line-height: 1.05; font-weight: 700;
+  color: var(--verified);
+}
+.money-lg { font-size: 28px; font-weight: 700; }
+.money-sm { font-size: 17px; font-weight: 600; }
+
+/* Signature: the accountant's double rule = final, verified total. */
+.total-rule { display: inline-block; padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-strong); position: relative; }
+.total-rule::after { content: ""; position: absolute; left: 0; right: 0;
+  bottom: -4px; border-bottom: 1px solid var(--rule-strong); }
+
+/* Cards: 1px border + layered lift; hover tiers up (ADDENDUM 2b) */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1), var(--inner-edge);
+  padding: var(--s3);
+  transition: box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.card:hover { box-shadow: var(--lift-2), var(--inner-edge); transform: translateY(-1px); }
+.tinted { background: var(--surface-tint); }
+
+/* Badges — semantic only */
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+.badge-verified { color: var(--verified); background: var(--verified-bg); border-color: #cfe3d4; }
+.badge-estimate { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
+.badge-waste { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+
+/* Buttons */
+.btn { font: 600 14px var(--sans); border-radius: var(--radius); cursor: pointer;
+  padding: 8px 14px; border: 1px solid var(--rule);
+  background: var(--surface); color: var(--ink);
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.btn:active { transform: scale(0.98); }             /* micro-confirmation */
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: #fff; }
+.btn-primary:hover { background: var(--accent-ink); }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--ink-soft); }
+
+/* Tables: dense but ordered; money right-aligned tabular */
+table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ledger th { text-align: left; font-weight: 600; color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule-strong); padding: 6px 8px; }
+.ledger td { border-bottom: 1px solid var(--rule); padding: 8px; }
+.ledger td.money, .ledger th.money { text-align: right; }
+
+/* Evidence expander: native details, springs open (ADDENDUM 2b) */
+details.evidence > summary { cursor: pointer; color: var(--accent); font-weight: 600;
+  list-style: none; }
+details.evidence > summary::before { content: "▸ "; transition: transform var(--t-fast) var(--ease); }
+details.evidence[open] > summary::before { content: "▾ "; }
+details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); transform-origin: top; }
+@keyframes spring-open { from { opacity: 0; transform: translateY(-4px) scaleY(0.98); }
+  to { opacity: 1; transform: none; } }
+
+/* Fix snippet: copyable */
+.snippet { font-family: var(--mono); font-size: 13px; background: var(--surface-tint);
+  border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--s2);
+  overflow-x: auto; }
+
+/* Count-up hero (ADDENDUM 2a): CSS-only, runs once, 600ms */
+@property --n { syntax: "<integer>"; inherits: false; initial-value: 0; }
+.countup { --target: 0; counter-reset: n var(--n); animation: countup 600ms var(--ease) forwards; }
+.countup::after { content: counter(n); }
+@keyframes countup { from { --n: 0; } to { --n: var(--target); } }
+
+/* Pipeline theater (first-run + audit progress) */
+.pipeline { display: flex; gap: var(--s2); align-items: center; }
+.stage { flex: 1; text-align: center; padding: var(--s2); border: 1px solid var(--rule);
+  border-radius: var(--radius); background: var(--surface); color: var(--ink-soft);
+  font-size: 13px; font-weight: 600; }
+.stage.done { color: var(--verified); border-color: #cfe3d4; background: var(--verified-bg); }
+.stage.live { color: var(--accent); border-color: var(--accent);
+  animation: stage-pulse 1.6s var(--ease) infinite; }
+@keyframes stage-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(15, 92, 90, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(15, 92, 90, 0); } }
+
+/* htmx swap default (wired at V-D4): 150ms fade + 4px rise */
+.swap-in { animation: swap-in var(--t-fast) var(--ease); }
+@keyframes swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Focus + accessibility floor */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Reduced motion: everything designed degrades to instant (ADDENDUM 2) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .countup { --n: var(--target); }
+}
+
+/* Print = CFO-forwardable (report + statement inherit at WP-7) */
+@media print {
+  body { background: #fff; font-size: 12px; }
+  .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
+  .no-print { display: none !important; }
+}

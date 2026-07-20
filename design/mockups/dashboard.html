@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Owner dashboard (R-DESIGN §4b) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<style>
+  /* mockup-local layout only; all tokens from wa-design.css */
+  .topbar { display: flex; justify-content: space-between; align-items: center;
+    padding: var(--s2) 0; border-bottom: 1px solid var(--rule); margin-bottom: var(--s4); }
+  .tabs a { margin-left: var(--s3); text-decoration: none; font-weight: 600; }
+  .tabs a.quiet { color: var(--ink-soft); }
+  .hero { text-align: left; margin-bottom: var(--s5); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); margin-bottom: var(--s4); }
+  .grid-side { display: grid; grid-template-columns: 2fr 1fr; gap: var(--s3); }
+  .spark { width: 100%; height: 72px; }
+  .find-row { display: flex; align-items: baseline; gap: var(--s2); padding: var(--s2) 0;
+    border-bottom: 1px solid var(--rule); }
+  .find-row:last-child { border-bottom: none; }
+  .find-title { flex: 1; }
+  .l0 { white-space: nowrap; }
+  @media (max-width: 720px) { .grid-2, .grid-side { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <strong>TokenOps Cost Auditor</strong>
+    <nav class="tabs" aria-label="Views">
+      <a href="#" aria-current="page">Overview</a>
+      <a class="quiet" href="#">Engineering</a>
+      <a class="quiet" href="#">My audits</a>
+      <a class="quiet" href="#">Settings</a>
+    </nav>
+  </div>
+
+  <!-- [1] The one number that matters. Serif, tabular, double-ruled = a
+       verified total in an audit ledger. Counts up once on load (600ms). -->
+  <section class="hero" aria-labelledby="hero-label">
+    <div id="hero-label" class="muted">Verified savings — July 2026</div>
+    <div class="money-hero total-rule">
+      $<span class="countup" style="--target: 1284;" aria-label="1,284 dollars"></span><span class="money-sm">.40</span>
+    </div>
+    <div style="margin-top: var(--s2);">
+      <span class="badge badge-verified">VERIFIED — recomputed after you applied 3 fixes</span>
+      <span class="badge badge-estimate" style="margin-left: 8px;">$2,931.20/mo further identified (estimate)</span>
+      <span class="muted" style="margin-left: 8px;">Customer-reported: $400 (shown separately, never in the headline)</span>
+    </div>
+  </section>
+
+  <!-- [2] Spend + waste trends side by side -->
+  <div class="grid-2">
+    <div class="card">
+      <h2>Spend, last 30 days</h2>
+      <div class="money money-lg">$8,912.55</div>
+      <svg class="spark" viewBox="0 0 300 72" role="img" aria-label="Spend trend, gently rising">
+        <polyline fill="none" stroke="var(--accent)" stroke-width="2"
+          points="0,52 30,50 60,54 90,47 120,45 150,48 180,41 210,42 240,38 270,36 300,34"/>
+      </svg>
+      <small class="muted">30d · 90d</small>
+    </div>
+    <div class="card">
+      <h2>Waste share</h2>
+      <div class="money money-lg" style="color: var(--waste);">24.1%</div>
+      <svg class="spark" viewBox="0 0 300 72" role="img" aria-label="Waste share trend, falling since fixes applied">
+        <polyline fill="none" stroke="var(--waste)" stroke-width="2"
+          points="0,22 30,24 60,20 90,26 120,25 150,30 180,34 210,38 240,44 270,47 300,50"/>
+      </svg>
+      <small class="muted">Falling since the caching fix on Jul 8</small>
+    </div>
+  </div>
+
+  <div class="grid-side">
+    <!-- [3] Top findings by $, inline L0 capture -->
+    <div class="card">
+      <h2>Top findings by monthly impact</h2>
+      <div class="find-row">
+        <span class="find-title">Prompt cache unused on <code>claude-sonnet-5</code> agent route</span>
+        <span class="badge badge-estimate">estimate</span>
+        <span class="money money-sm">$1,120.10/mo</span>
+        <span class="l0">
+          <button class="btn btn-primary">Applied</button>
+          <button class="btn btn-quiet">Dismiss</button>
+        </span>
+      </div>
+      <div class="find-row">
+        <span class="find-title">Frontier model on short completions (avg 92 tokens)</span>
+        <span class="badge badge-estimate">estimate</span>
+        <span class="money money-sm">$688.75/mo</span>
+        <span class="l0">
+          <button class="btn btn-primary">Applied</button>
+          <button class="btn btn-quiet">Dismiss</button>
+        </span>
+      </div>
+      <div class="find-row">
+        <span class="find-title">Retry storm, checkout service (needs request logs — upload to confirm)</span>
+        <span class="badge badge-waste">requires logs</span>
+        <span class="money money-sm muted">—</span>
+        <span class="l0"><a class="btn" href="#">Upload logs</a></span>
+      </div>
+      <small class="muted">Marking a finding Applied moves its verified delta into the
+      headline after the next audit covering ≥7 days.</small>
+    </div>
+
+    <!-- [4] Sources health + countdown -->
+    <div class="card tinted">
+      <h2>Sources</h2>
+      <p><span class="badge badge-verified">healthy</span> <strong>OpenAI — production org</strong><br>
+        <small class="muted">Pulled today 06:15 UTC · 31 days of usage</small></p>
+      <p><strong>Next audit</strong><br>
+        <span class="money money-lg">2 days</span><br>
+        <small class="muted">Weekly, Mondays 06:30 UTC</small></p>
+      <a class="btn" href="#">Connect another source</a>
+    </div>
+  </div>
+
+  <p class="muted" style="margin: var(--s4) 0;">MOCKUP — sample data only.
+  Delight (one per flow): hero count-up + the Applied→headline flow.</p>
+</div>
+</body>
+</html>
