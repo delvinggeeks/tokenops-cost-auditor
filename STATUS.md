@@ -3,7 +3,35 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## V-D8 BUILT (founder GO 2026-07-22) — Subscriptions + dunning; at gate
+## V-D8 GATE CLOSED — cold-reviewer FAIL→FIXED · vv FAIL→FIXED (both re-verified)
+
+The founder's instruction to attack money paths paid for itself twice over.
+cold-review (6 findings, all closed): (f.1) email was normalised on CREATE
+but not on LOOKUP, so a mixed-case address from checkout missed the lookup,
+hit users.email UNIQUE on insert, and the provider retried forever — a paid
+upgrade stuck in a permanent failure loop, invisible to the customer.
+(f.2) the day-0 dunning EMAIL was unreachable: apply_event set status
+past_due synchronously, so the sweep's idempotency guard always saw
+stage == status and skipped — the R-Q11/12 "day 0 email" promise could
+never fire in production, and my own test masked it by jumping to day 8.
+Day 0 now emails at the transition. (f.3) the plan came from
+provider-echoed metadata with no validation — "team" in a Pro checkout's
+metadata escalated the tier; unknown values now keep the existing plan and
+log. (f.4) I repeated the alerts mistake: emails sent inside a loop with
+one commit at the end, so a later failure rolled back a rung whose email
+had already gone — now committed per rung. (f.5) N+1 entitlement queries
+per source → batched. (f.6) dead code in the billing route.
+vv FAIL (4 findings, closed): (f.2, serious) every webhook-route test was
+SKIPPING because the shared fixture has no webhook secret — the FR-27
+dedup rail for subscriptions was never actually exercised. A dedicated
+test-mode webhook app now runs all four; repo-wide skips are down to the
+single environment-gated postgres test. stripe_link.py 77.8%→94.4% (its
+whole subscription branch was untested while razorpay's was covered);
+T-SUB-03 now exists by name for source counts AND scheduler cadence;
+determinism double-run completed here (2 runs, identical, EXIT=0).
+Total 95.6%. NEXT: STOP for founder review; V-D9 (polish + wizard) on go.
+
+## V-D8 BUILT (founder GO 2026-07-22) — build record
 
 ONE price config (services/payments/plans.py): every amount renders from
 Settings, both currencies shown for paid plans (R-Q11), and a test greps

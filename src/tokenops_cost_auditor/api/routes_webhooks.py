@@ -94,7 +94,13 @@ def _handle_subscription(
         if not _record_once(session, provider, event):
             session.commit()
             return {"status": "duplicate"}
-        subscriptions.apply_event(session, request.app.state.settings, provider, event)
+        subscriptions.apply_event(
+            session,
+            request.app.state.settings,
+            provider,
+            event,
+            mail=request.app.state.mail,
+        )
         session.commit()
     return {"status": "processed"}
 

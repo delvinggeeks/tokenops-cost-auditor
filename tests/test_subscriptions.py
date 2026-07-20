@@ -240,6 +240,30 @@ class TestDunningLadder:
         assert ent["read_only"] is True
 
 
+@pytest.fixture()
+def webhook_app(tmp_path: Path) -> FastAPI:
+    """An app with TEST-MODE webhook secrets configured. The suite previously
+    SKIPPED every webhook test because the shared fixture has no secret, so
+    the FR-27 dedup rail was never actually exercised (V-D8 vv gate f.2)."""
+    from tokenops_cost_auditor.main import create_app
+    from tokenops_cost_auditor.persistence.models import Base as ModelBase
+
+    settings = Settings(
+        app_env="test",
+        secret_key="w" * 64,
+        database_url=f"sqlite:///{tmp_path / 'wh.db'}",
+        upload_dir=tmp_path / "uploads",
+        report_dir=tmp_path / "reports",
+        backup_dir=tmp_path / "backups",
+        stripe_webhook_secret=SECRET,
+        razorpay_webhook_secret=SECRET,
+        _env_file=None,
+    )
+    app = create_app(settings)
+    ModelBase.metadata.create_all(app.state.engine)
+    return app
+
+
 class TestWebhookRails:
     def _post_stripe(self, app: FastAPI, payload: dict) -> object:
         body = json.dumps(payload).encode()
@@ -253,11 +277,12 @@ class TestWebhookRails:
             headers={"Stripe-Signature": f"t={ts},v1={sig}", "content-type": "application/json"},
         )
 
-    def test_01_subscription_events_are_deduplicated_like_payments(self, app: FastAPI) -> None:
+    def test_01_subscription_events_are_deduplicated_like_payments(
+        self, webhook_app: FastAPI
+    ) -> None:
         """T-SUB-01: FR-27 rails apply to subscription events too — replay of
         the same event id must not move the subscription twice."""
-        if not app.state.settings.stripe_webhook_secret:
-            pytest.skip("stripe webhook secret not configured in this fixture")
+        app = webhook_app
         payload = {
             "id": "evt_sub_1",
             "type": "customer.subscription.created",
@@ -280,9 +305,8 @@ class TestWebhookRails:
             subs = session.execute(select(Subscription)).scalars().all()
             assert len(subs) == 1 and subs[0].plan == "pro"
 
-    def test_bad_signature_is_rejected(self, app: FastAPI) -> None:
-        if not app.state.settings.stripe_webhook_secret:
-            pytest.skip("stripe webhook secret not configured in this fixture")
+    def test_bad_signature_is_rejected(self, webhook_app: FastAPI) -> None:
+        app = webhook_app
         body = json.dumps(
             {
                 "id": "evt_x",
@@ -297,11 +321,9 @@ class TestWebhookRails:
         )
         assert resp.status_code == 400
 
-    def test_unknown_event_types_are_ignored_not_errors(self, app: FastAPI) -> None:
-        if not app.state.settings.stripe_webhook_secret:
-            pytest.skip("stripe webhook secret not configured in this fixture")
+    def test_unknown_event_types_are_ignored_not_errors(self, webhook_app: FastAPI) -> None:
         resp = self._post_stripe(
-            app, {"id": "evt_z", "type": "customer.updated", "data": {"object": {}}}
+            webhook_app, {"id": "evt_z", "type": "customer.updated", "data": {"object": {}}}
         )
         assert resp.status_code == 200 and resp.json()["status"] == "ignored"
 
@@ -403,3 +425,242 @@ class TestPlanHelpers:
         assert plans.get(settings, "enterprise-platinum").key == "free"
         assert plans.currency_for_country(None) == "USD"
         assert "$500" in plans.one_shot_display(settings)
+
+
+class TestColdReviewRegressionsV8:
+    """V-D8 cold-review FAIL (2026-07-22) — f.1..f.6, money paths."""
+
+    def test_f1_mixed_case_email_does_not_lose_a_paid_upgrade(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """A case-mismatched lookup missed, the insert hit users.email UNIQUE,
+        and the provider retried forever — the upgrade never landed."""
+        subscriptions.apply_event(
+            session,
+            settings,
+            "stripe",
+            SubscriptionEvent("e1", "Owner@Example.COM", "activated", "pro", "USD", "s1"),
+        )
+        session.commit()
+        # second event, different casing again — must find the SAME user
+        subscriptions.apply_event(
+            session,
+            settings,
+            "stripe",
+            SubscriptionEvent("e2", "OWNER@example.com", "renewed", "team", "USD", "s1"),
+        )
+        session.commit()
+        users = session.execute(select(User)).scalars().all()
+        assert len(users) == 1 and users[0].email == "owner@example.com"
+        assert sub_of(session).plan == "team", "the upgrade must land, not deadlock"
+
+    def test_f2_day_zero_actually_emails_the_customer(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """R-Q11/12 day 0 is 'email + provider retries'. The sweep can never
+        send it — by then status already equals the stage it would move to."""
+        mail = CapturingMail()
+        subscriptions.apply_event(session, settings, "stripe", event("activated"))
+        session.commit()
+        subscriptions.apply_event(session, settings, "stripe", event("failed", eid="f1"), mail=mail)
+        session.commit()
+        assert len(mail.sent) == 1
+        assert "couldn't take this month's payment" in mail.sent[0][1]
+        # and a repeat failure does not email again (the clock did not restart)
+        subscriptions.apply_event(session, settings, "stripe", event("failed", eid="f2"), mail=mail)
+        session.commit()
+        assert len(mail.sent) == 1
+
+    def test_f3_provider_metadata_cannot_escalate_the_plan(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """Plan names arrive as provider-echoed metadata — customer-influenced
+        text. An unknown value must keep the tier we already had."""
+        subscriptions.apply_event(session, settings, "stripe", event("activated", "pro"))
+        session.commit()
+        for bogus in ("enterprise", "admin", "", "TEAM-unlimited"):
+            subscriptions.apply_event(
+                session,
+                settings,
+                "stripe",
+                SubscriptionEvent(f"x-{bogus}", EMAIL, "renewed", bogus, "USD", "s1"),
+            )
+            session.commit()
+            assert sub_of(session).plan == "pro", f"escalated via {bogus!r}"
+        # a genuine known plan still works
+        subscriptions.apply_event(session, settings, "stripe", event("renewed", "team", "ok"))
+        session.commit()
+        assert sub_of(session).plan == "team"
+
+    def test_f4_a_later_failure_cannot_roll_back_a_sent_dunning_email(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """Same rule already applied to alerts: commit the rung before sending."""
+
+        class ExplodingMail:
+            def __init__(self) -> None:
+                self.sent: list[str] = []
+
+            def alert(self, to_email: str, subject: str, body: str) -> None:
+                self.sent.append(to_email)
+                if len(self.sent) == 2:
+                    raise RuntimeError("smtp down")
+
+        for email in ("a@example.com", "b@example.com"):
+            user = User(email=email)
+            session.add(user)
+            session.flush()
+            session.add(
+                Subscription(
+                    user_id=user.id, provider="stripe", plan="pro", status=PAST_DUE, failed_at=T0
+                )
+            )
+        session.commit()
+        mail = ExplodingMail()
+        with pytest.raises(RuntimeError):
+            subscriptions.advance_dunning(session, settings, mail, now=T0 + timedelta(days=8))
+        session.rollback()
+        moved = [
+            s
+            for s in session.execute(select(Subscription)).scalars().all()
+            if s.status == READ_ONLY
+        ]
+        assert len(moved) >= 1, "the first rung's state must survive its own send"
+
+    def test_f5_entitlements_are_batched_not_per_source(
+        self, session: Session, settings: Settings
+    ) -> None:
+        subscriptions.apply_event(session, settings, "stripe", event("activated", "pro"))
+        session.commit()
+        user = session.execute(select(User)).scalars().one()
+        batched = subscriptions.entitlements_for(session, settings, [user.id, "ghost-id"])
+        assert batched[user.id]["scheduled_audits"] is True
+        # a user with no subscription row reads as Free, explicitly
+        assert batched["ghost-id"]["plan_key"] == "free"
+        assert batched["ghost-id"]["scheduled_audits"] is False
+        assert subscriptions.entitlements_for(session, settings, []) == {}
+
+    def test_f6_no_dead_code_in_the_billing_route(self) -> None:
+        source = Path("src/tokenops_cost_auditor/web/routes_billing.py").read_text(encoding="utf-8")
+        assert "get_bind() and None" not in source
+
+
+class TestStripeAdapterPaths:
+    """stripe_link.py sat at 77.8% — its whole subscription-parsing branch was
+    untested while razorpay's had direct tests (V-D8 vv gate f.1)."""
+
+    def _adapter(self) -> object:
+        from tokenops_cost_auditor.services.payments.stripe_link import StripeLinkAdapter
+
+        return StripeLinkAdapter("https://pay.example/link", SECRET)
+
+    def test_subscription_event_kinds_map_correctly(self) -> None:
+        adapter = self._adapter()
+        cases = {
+            "customer.subscription.created": "activated",
+            "invoice.payment_succeeded": "renewed",
+            "invoice.payment_failed": "failed",
+            "customer.subscription.deleted": "cancelled",
+        }
+        for stripe_type, kind in cases.items():
+            body = json.dumps(
+                {
+                    "id": f"evt_{kind}",
+                    "type": stripe_type,
+                    "data": {
+                        "object": {
+                            "customer_email": EMAIL,
+                            "currency": "usd",
+                            "metadata": {"plan": "pro"},
+                            "subscription": "sub_x",
+                        }
+                    },
+                }
+            ).encode()
+            parsed = adapter.parse_subscription_event(body)
+            assert parsed is not None and parsed.kind == kind
+            assert parsed.currency == "USD" and parsed.email == EMAIL
+
+    def test_email_from_metadata_when_customer_email_absent(self) -> None:
+        body = json.dumps(
+            {
+                "id": "evt_m",
+                "type": "customer.subscription.created",
+                "data": {"object": {"metadata": {"email": "Meta@Example.com", "plan": "team"}}},
+            }
+        ).encode()
+        parsed = self._adapter().parse_subscription_event(body)
+        assert parsed is not None and parsed.email == "meta@example.com"
+        assert parsed.plan == "team"
+
+    def test_unparseable_or_emailless_events_are_ignored_never_raised(self) -> None:
+        adapter = self._adapter()
+        assert adapter.parse_subscription_event(b"{not json") is None
+        no_email = json.dumps(
+            {"id": "e", "type": "customer.subscription.created", "data": {"object": {}}}
+        ).encode()
+        assert adapter.parse_subscription_event(no_email) is None
+        assert adapter.parse_subscription_event(json.dumps({"type": "x"}).encode()) is None
+
+    def test_payment_link_and_signature_helpers(self) -> None:
+        adapter = self._adapter()
+        assert adapter.payment_link() == "https://pay.example/link"
+        body = b'{"hello": 1}'
+        ts = int(time.time())
+        sig = hmac.new(SECRET.encode(), f"{ts}.".encode() + body, hashlib.sha256).hexdigest()
+        assert adapter.verify_signature(body, f"t={ts},v1={sig}", now_epoch=ts) is True
+        assert adapter.verify_signature(body, f"t={ts},v1=bad", now_epoch=ts) is False
+        # stale timestamp fails the FR-27 tolerance
+        assert adapter.verify_signature(body, f"t={ts},v1={sig}", now_epoch=ts + 10_000) is False
+
+
+class TestPlanGating:
+    """T-SUB-03: source counts and audit cadence per plan (named explicitly —
+    the vv gate could not find this ID)."""
+
+    def test_03_source_counts_and_cadence_follow_the_plan(
+        self, session: Session, settings: Settings
+    ) -> None:
+        subscriptions.apply_event(session, settings, "stripe", event("activated", "pro"))
+        session.commit()
+        user = session.execute(select(User)).scalars().one()
+
+        pro = subscriptions.entitlements(session, settings, user.id)
+        assert pro["sources_allowed"] == settings.plan_source_limits["pro"] == 1
+        assert pro["scheduled_audits"] is True
+
+        subscriptions.apply_event(session, settings, "stripe", event("activated", "team", "t1"))
+        session.commit()
+        team = subscriptions.entitlements(session, settings, user.id)
+        assert team["sources_allowed"] == settings.plan_source_limits["team"] == 5
+
+        # Free: no connections, no scheduler (R-Q5/Q6)
+        subscriptions.apply_event(session, settings, "stripe", event("cancelled", "team", "c1"))
+        session.commit()
+        free = subscriptions.entitlements(session, settings, user.id)
+        assert free["sources_allowed"] == 0 and free["scheduled_audits"] is False
+
+    def test_03b_scheduler_honours_the_gate(self, session: Session, settings: Settings) -> None:
+        """The cadence gate is only real if the scheduler applies it."""
+        from tokenops_cost_auditor.services.connectors import schedule
+
+        subscriptions.apply_event(session, settings, "stripe", event("activated", "pro"))
+        session.commit()
+        user = session.execute(select(User)).scalars().one()
+        session.add(
+            Source(
+                user_id=user.id,
+                provider="openai",
+                label="s",
+                credentials_encrypted="x",
+                last_pull_at=T0,
+                last_audit_at=None,
+            )
+        )
+        session.commit()
+        now = T0 + timedelta(days=1)
+        assert len(schedule.due_audits(session, now, settings)) == 1
+        sub_of(session).status = READ_ONLY  # day-7 rung
+        session.commit()
+        assert schedule.due_audits(session, now, settings) == []
+        assert len(schedule.due_audits(session, now)) == 1, "ungated call still sees it"

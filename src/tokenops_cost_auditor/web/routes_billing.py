@@ -46,7 +46,6 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
         catalogue = plans.catalogue(settings)
         current = ent["plan"]
         status = str(ent["status"])
-        sub = session.get_bind() and None  # no extra query; entitlements has what we need
         ctx = _shell_ctx(session, request, user, "billing")
         return _render(
             request,
@@ -60,7 +59,6 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             razorpay_link=request.app.state.razorpay.payment_link(),
             stripe_link=request.app.state.stripe.payment_link(),
             now=datetime.now(UTC),
-            sub=sub,
             show_tour=False,
             **{k: v for k, v in ctx.items() if k != "plan"},
         )

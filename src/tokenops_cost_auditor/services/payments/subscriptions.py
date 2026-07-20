@@ -70,12 +70,23 @@ def dunning_stage(failed_at: datetime | None, now: datetime, settings: Settings)
     return PAST_DUE
 
 
-def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str, object]:
-    """What this account may do right now. Read-only pauses SCHEDULED work
-    and nothing else — the dashboard stays visible and connections are kept."""
-    sub = session.execute(
-        select(Subscription).where(Subscription.user_id == user_id)
-    ).scalar_one_or_none()
+def entitlements_for(
+    session: Session, settings: Settings, user_ids: list[str]
+) -> dict[str, dict[str, object]]:
+    """Batched entitlements — one query for many users (V-D8 cold-review f.5:
+    the scheduler was issuing one per source)."""
+    if not user_ids:
+        return {}
+    subs = {
+        s.user_id: s
+        for s in session.execute(select(Subscription).where(Subscription.user_id.in_(user_ids)))
+        .scalars()
+        .all()
+    }
+    return {uid: _entitlements_from(settings, subs.get(uid)) for uid in user_ids}
+
+
+def _entitlements_from(settings: Settings, sub: Subscription | None) -> dict[str, object]:
     status = sub.status if sub else ACTIVE
     plan_key = sub.plan if sub and status != CANCELLED else plans.FREE
     plan = plans.get(settings, plan_key)
@@ -93,13 +104,41 @@ def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str
     }
 
 
+def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str, object]:
+    """What this account may do right now. Read-only pauses SCHEDULED work
+    and nothing else — the dashboard stays visible and connections are kept."""
+    sub = session.execute(
+        select(Subscription).where(Subscription.user_id == user_id)
+    ).scalar_one_or_none()
+    return _entitlements_from(settings, sub)
+
+
+def _safe_plan(candidate: str, current: str) -> str:
+    """Provider metadata is customer-influenced text. An unknown value must
+    never silently escalate a tier — keep what we already had and log it
+    (V-D8 cold-review f.3)."""
+    key = (candidate or "").strip().lower()
+    if key in plans.ALL_PLANS:
+        return key
+    log.warning("subscription.unknown_plan", candidate=candidate, kept=current)
+    return current
+
+
 def apply_event(
-    session: Session, settings: Settings, provider: str, event: SubscriptionEvent
+    session: Session,
+    settings: Settings,
+    provider: str,
+    event: SubscriptionEvent,
+    mail: object | None = None,
 ) -> Subscription:
     """Move the subscription per a verified, deduplicated webhook event."""
-    user = session.execute(select(User).where(User.email == event.email)).scalar_one_or_none()
+    # Normalised on BOTH sides: a case-mismatched lookup missed, then the
+    # insert hit users.email UNIQUE and the provider retried forever —
+    # a paid upgrade silently dropped (V-D8 cold-review f.1).
+    email = event.email.strip().lower()
+    user = session.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if user is None:
-        user = User(email=event.email.lower())
+        user = User(email=email)
         session.add(user)
         session.flush()
     sub = session.execute(
@@ -116,15 +155,21 @@ def apply_event(
     sub.updated_at = utcnow()
 
     if event.kind in (ACTIVATED, RENEWED):
-        sub.plan = event.plan
+        sub.plan = _safe_plan(event.plan, sub.plan)
         sub.status = ACTIVE
         sub.failed_at = None  # a successful charge clears the dunning clock
     elif event.kind == FAILED:
         # Only START the clock; a second failure must not restart it, or the
         # ladder would never reach day 7.
-        if sub.failed_at is None:
+        first_failure = sub.failed_at is None
+        if first_failure:
             sub.failed_at = utcnow()
         sub.status = PAST_DUE
+        if first_failure and mail is not None:
+            # Day 0 of the ladder is an EMAIL, and it happens here — the sweep
+            # can never send it, because by then status already equals the
+            # stage it would be moving to (V-D8 cold-review f.2).
+            _notify(mail, user.email, PAST_DUE, settings)
     elif event.kind == CANCELLED_EVENT:
         sub.status = CANCELLED
         sub.plan = plans.FREE
@@ -169,7 +214,6 @@ def advance_dunning(
             sub.plan = plans.FREE
             sub.failed_at = None  # the ladder is finished
         stats[stage] = stats.get(stage, 0) + 1
-        _notify(mail, user.email, stage, settings)
         auditlog.append(
             session,
             "system@dunning",
@@ -177,8 +221,13 @@ def advance_dunning(
             user.email,
             {"from": previous},
         )
+        # Commit THIS rung before sending, and before touching the next
+        # subscription: a later failure must not roll back a state change
+        # whose email already went out (V-D8 cold-review f.4 — the same rule
+        # already applied to alerts).
+        session.commit()
+        _notify(mail, user.email, stage, settings)
         log.info("subscription.dunning", stage=stage, user_id=user.id)
-    session.commit()
     return stats
 
 

@@ -60,11 +60,8 @@ def due_audits(session: Session, now: datetime, settings: Settings | None = None
     # R-Q12 day 7: a read-only account keeps its data, its dashboard and its
     # connections — only SCHEDULED audits pause. Pulls continue, so nothing
     # is lost while payment is sorted out.
-    return [
-        s
-        for s in due
-        if subscriptions.entitlements(session, settings, s.user_id)["scheduled_audits"]
-    ]
+    allowed = subscriptions.entitlements_for(session, settings, [s.user_id for s in due])
+    return [s for s in due if allowed[s.user_id]["scheduled_audits"]]
 
 
 def tick(
