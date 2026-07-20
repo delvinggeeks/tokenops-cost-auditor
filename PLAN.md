@@ -558,6 +558,50 @@ we'll validate on the first pull" state plus a retry affordance. Hard-fail
 REJECTED — a customer's first minute must never hang on OpenAI's status
 page. T-WIZ-05 covers the degrade path.
 
+**R-ZTA (founder, 2026-07-22) — positioning; zero v1.5 scope change.**
+(a) Zero-token vocabulary in launch/landing/docs engineering page:
+"deterministic engine, no inference — we never burn your tokens to count
+your tokens." Hightower PlatformCon 2026 attribution where referenced (one
+short quote max, linked). D6 depth-(a) alias: "loop burn". (b) BACKLOG: D7
+EXPORT-CANDIDATE detector (recorded, not built). (c) Build Health metrics
+adopt "loop engineering" vocabulary when they ship.
+
+**R-ARCH-PATTERNS (founder, 2026-07-22) — name what is enforced; zero scope
+change.** (a) docs-site Engineering gains an "Architecture principles"
+section where EVERY claim cites its test/spec id — the no-uncited-prose law
+applied to our own page: ZERO-TOKEN (NFR-01 + import guard); ZERO-TRUST
+across five axes (input never trusted · network never trusted · least
+privilege · explicit verification · assume breach), each item linking its
+FR/NFR/test; LAYERED DATA VALIDATION drawn as the five-gate ladder (ingest
+validation → normalization contract → founder-verified golden pricing →
+detector conservative rails → R-Q9 proving audit → statement
+archive-freeze). (b) Sales line registered: "We run the architecture we
+audit you toward." (c) BACKLOG: Act-stage "export this loop" playbooks per
+D7 finding. (d) LAW: architecture labels are adopted only where practice
+already exists or a ruling builds it — we name what we enforce; we never
+enforce by naming.
+
+**R-INTENT-DECLARED + R-INTENT-LADDER (founder, 2026-07-22) — docs/12 +
+BACKLOG; zero v1.5 change.** (a) LAW: the platform NEVER infers developer
+intent from CONTENT and NEVER takes optimization decisions autonomously.
+Intent enters by declaration; decisions ship as recommendations only, until
+a human-approved policy exists (control-plane era, X-02 path). FR-22 and
+NFR-01 are the structural reasons. (b) THE LADDER — intent is read at three
+levels: BEHAVIORAL (deterministic shape algorithms over counts/timing/
+models/cache fields — the detector suite incl. D7: recurring shapes =
+loops, monotonic prompt growth = context bloat, burst patterns = retries/
+flail, repeat-prefix-no-cache-reads = unclaimed caching); DECLARED (task
+tags: class, quality sensitivity, expected recurrence); LEARNED (L0
+Applied/Dismissed labels → L2 threshold training). Only CONTENT-inferred
+intent is forbidden. Sales language: "your traffic's shape tells us what
+it's doing — you tell us why — we never read what it says." (c) BACKLOG:
+TASK DECLARATION layer (optional route/tag purpose declarations, consumed
+by detectors; counts-safe metadata, FR-22 untouched). (d) COPY LAW for
+depth (c): findings address the developer as the operator being handed
+efficiency wins, never the party at fault — "your pipeline, same output,
+lower bill." Owner depth stays money-verified. ux-reviewer checks tone at
+both depths.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

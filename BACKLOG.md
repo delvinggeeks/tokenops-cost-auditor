@@ -60,6 +60,21 @@ promotion still requires a PRD amendment.
   reporting, it promotes immediately as the connect path and the paste
   wizard becomes the fallback. Until then the wizard is the state of the
   art. Notify the founder when either provider announces it.
+- **D7 EXPORT-CANDIDATE detector** (R-ZTA 2026-07-22 b) — near-identical
+  inference calls recurring on a schedule or loop: work that could be
+  inferred once and exported to code. Output: the recurring shape, its full
+  monthly cost, and the zero-token recommendation; recurrence + similarity
+  thresholds; confidence=estimated; the quality caveat verbatim. Promotion:
+  day-45 gate, or the first customer exhibiting the pattern — whichever
+  comes first.
+- **Act-stage "export this loop" playbooks** (R-ARCH-PATTERNS 2026-07-22 c)
+  — per D7 finding, a guide from recurring inference to a script or tool,
+  quality caveat attached. The services bridge.
+- **TASK DECLARATION layer** (R-INTENT-LADDER 2026-07-22 c) — optional
+  route/tag purpose declarations via config or dashboard; detectors consume
+  them to sharpen findings (task-tier mismatch, declared-repetitive → D7
+  priority, budget-per-purpose). Declarations are counts-safe metadata —
+  FR-22 untouched.
 - **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
   per-pipeline / per-knowledge-base attribution views, the T4-era
   architect dashboard. Registered, NOT built: arrives with T4 span data,

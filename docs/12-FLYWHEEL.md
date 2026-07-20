@@ -38,6 +38,32 @@ tier (reports state which detectors a tier can and cannot feed).
 - **T5 GATEWAY** — in-VPC control plane (Phase 2; X-01/X-02 intact for
   the audit product; deployment contract applies).
 
+## INTENT LAW (R-INTENT-DECLARED + R-INTENT-LADDER, founder 2026-07-22)
+
+The platform NEVER infers developer intent from CONTENT, and NEVER takes an
+optimization decision autonomously. Intent enters by DECLARATION; decisions
+ship as recommendations until a human-approved policy exists (control-plane
+era, X-02 path). The structural reasons are FR-22 (we never hold the text)
+and NFR-01 (the engine performs no inference).
+
+Intent is read at three levels — only the content-inferred one is banned:
+
+- **BEHAVIORAL** — deterministic shape algorithms over counts, timing,
+  models and cache fields: the detector suite, including D7. Recurring
+  shapes = loops; monotonic prompt growth = context bloat; burst patterns =
+  retries or flail; repeat-prefix-with-no-cache-reads = unclaimed caching.
+- **DECLARED** — task tags the customer supplies: class, quality
+  sensitivity, expected recurrence.
+- **LEARNED** — L0 Applied/Dismissed labels feeding L2 threshold training.
+
+Sales language: "your traffic's shape tells us what it's doing — you tell
+us why — we never read what it says."
+
+COPY LAW at depth (c): findings address the developer as the operator being
+handed efficiency wins, never the party at fault — "your pipeline, same
+output, lower bill." Owner depth stays money-verified. ux-reviewer checks
+tone at both depths.
+
 ## STAGE 2 — DETERMINISTIC JUDGMENT
 
 The shipped engine; LLM-free forever — it manufactures the clean
@@ -77,6 +103,15 @@ Gemini, Bedrock, Azure-OpenAI (T2 class); Copilot admin exports (AGG
 class); per-tool T1 parsers on first customer request each. Detectors,
 reports, and the flywheel are provider-neutral by the frame contract —
 no per-tool forks, ever.
+
+## ZERO-TOKEN ARCHITECTURE (R-ZTA, founder 2026-07-22)
+
+Positioning vocabulary for the engine we already ship: "deterministic
+engine, no inference — we never burn your tokens to count your tokens."
+Enforced by NFR-01 and the T-NFR-01 import guard, not by assertion. D6's
+depth-(a) alias is "loop burn"; Build Health metrics adopt the "loop
+engineering" vocabulary when they ship. Attribution: Hightower,
+PlatformCon 2026 — one short quote maximum, linked, where referenced.
 
 ## FOUR MOATS (verbatim)
 
