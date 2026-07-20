@@ -4,47 +4,73 @@
    numbers-first. Signature: the accountant's double rule under verified
    totals. Accent chosen once: deep teal. Dark mode deferred (BACKLOG). */
 
-:root {
-  /* Paper neutrals (warm, calm) */
-  --paper: #faf8f4;        /* page */
-  --surface: #ffffff;      /* cards */
-  --surface-tint: #f5f2ec; /* subtle section tinting */
-  --ink: #1c1a17;          /* primary text */
-  --ink-soft: #5c574f;     /* secondary text */
-  --rule: #e3ded4;         /* 1px borders */
-  --rule-strong: #1c1a17;  /* the double rule */
+/* ============================================================
+   ROLE TOKENS (R-DESIGN-TOKENS-2 §1)
+   The ONLY place in this file where a colour literal may appear.
+   Components reference ROLES, never hues, so a mood is a value swap
+   and never a component change (§2). Enforced by
+   tests/test_design_tokens.py — a hex outside this block FAILS.
 
-  /* Accent — chosen once (R-DESIGN §2) */
-  --accent: #0f5c5a;       /* deep teal */
+   MOOD: "Ledger" — the approved warm-paper auditor's light, shipped
+   as the only mood. "Night Audit" is designed-not-built: promoting it
+   means adding a sibling value block below and re-verifying AA. By
+   construction it costs zero component changes.
+   ============================================================ */
+:root,
+[data-mood="ledger"] {
+  /* ground / surfaces */
+  --ground: #faf8f4;          /* the page */
+  --surface: #ffffff;         /* cards, panels */
+  --surface-raised: #f5f2ec;  /* tinted surface: sidebars, drawers, callouts */
+
+  /* ink */
+  --ink: #1c1a17;
+  --ink-soft: #5c574f;
+
+  /* structure */
+  --rule: #e3ded4;            /* 1px borders */
+  --rule-strong: #1c1a17;     /* the accountant's double rule (§4 signature) */
+
+  /* accent — chosen once, used sparingly */
+  --accent: #0f5c5a;
   --accent-ink: #0a4341;
+  --on-accent: #ffffff;       /* text/icons ON accent; never a raw #fff */
 
-  /* Semantic — only these three beyond the accent */
-  --verified: #1e6f3e;     /* green: verified savings */
-  --estimate: #7a5500;      /* darkened from #9a6b00: 12px badge on --estimate-bg was 4.10:1, AA needs 4.5 (mockup ux gate f.1) */     /* amber: estimates */
-  --waste: #9e2b25;        /* red: waste / alert */
-  --verified-bg: #eaf3ec;
-  --estimate-bg: #f7efdc;
-  --waste-bg: #f9e9e7;
+  /* money is its own role: it must be able to diverge from --ink when a
+     future mood needs the figure to carry more weight than body copy */
+  --money: #1c1a17;
 
-  /* Type. Serif carries the numbers; sans carries the UI. */
-  --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
-  --sans: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  /* signal roles — meaning, never decoration */
+  --verified: #1e6f3e;   --verified-bg: #eaf3ec;   --verified-line: #cfe3d4;
+  --estimate: #7a5500;   --estimate-bg: #f7efdc;   --estimate-line: #e8d9b0;
+  --waste:    #9e2b25;   --waste-bg:    #f9e9e7;   --waste-line:    #ecc9c5;
 
-  /* 8px grid */
-  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
-  --content-max: 1100px;
-  --radius: 6px;
-
-  /* Precision-luxury elevation: crisp layered shadows, never emboss */
+  /* depth: crisp layered tiers + a 1px inner highlight (R-DESIGN-ADDENDUM).
+     Neumorphic/emboss shadow roles are DELIBERATELY NOT ADOPTED from the
+     family language — low-contrast emboss softens numeral edges, and money
+     legibility outranks family consistency here. Recorded divergence. */
   --lift-1: 0 1px 2px rgba(28, 26, 23, 0.06);
   --lift-2: 0 1px 2px rgba(28, 26, 23, 0.06), 0 4px 12px rgba(28, 26, 23, 0.07);
   --lift-3: 0 2px 4px rgba(28, 26, 23, 0.07), 0 10px 28px rgba(28, 26, 23, 0.10);
-  --inner-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85); /* 1px highlight */
+  --inner-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 
+  /* type / space / motion — mood-invariant */
+  --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+  --sans: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
+  --content-max: 1100px;
+  --radius: 6px;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --t-fast: 150ms; --t-med: 250ms;
+
+  /* ---- legacy aliases. The role names above are canonical; these keep the
+     already-shipped components working while they migrate screen by screen.
+     Adding a NEW rule that uses one of these is a ux-reviewer finding. ---- */
+  --paper: var(--ground);
+  --surface-tint: var(--surface-raised);
 }
+
 
 * { box-sizing: border-box; }
 body {
@@ -99,9 +125,9 @@ a { color: var(--accent); }
 /* Badges — semantic only */
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px;
   font-size: 12px; font-weight: 600; border: 1px solid transparent; }
-.badge-verified { color: var(--verified); background: var(--verified-bg); border-color: #cfe3d4; }
-.badge-estimate { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
-.badge-waste { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+.badge-verified { color: var(--verified); background: var(--verified-bg); border-color: var(--verified-line); }
+.badge-estimate { color: var(--estimate); background: var(--estimate-bg); border-color: var(--estimate-line); }
+.badge-waste { color: var(--waste); background: var(--waste-bg); border-color: var(--waste-line); }
 /* "needs more data" is not waste — keep red for real waste signals only
    (mockup-v3 ux gate f.3). */
 .badge-neutral { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
@@ -113,7 +139,7 @@ a { color: var(--accent); }
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
 .btn:active { transform: scale(0.98); }             /* micro-confirmation */
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: #fff; }
+.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-ink); }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--ink-soft); }
 
@@ -149,7 +175,7 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .stage { flex: 1; text-align: center; padding: var(--s2); border: 1px solid var(--rule);
   border-radius: var(--radius); background: var(--surface); color: var(--ink-soft);
   font-size: 13px; font-weight: 600; }
-.stage.done { color: var(--verified); border-color: #cfe3d4; background: var(--verified-bg); }
+.stage.done { color: var(--verified); border-color: var(--verified-line); background: var(--verified-bg); }
 .stage.live { color: var(--accent); border-color: var(--accent);
   animation: stage-pulse 1.6s var(--ease) infinite; }
 @keyframes stage-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(15, 92, 90, 0.25); }
@@ -297,8 +323,8 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .sev { font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
   text-transform: uppercase; padding: 1px 7px; border-radius: 3px;
   border: 1px solid transparent; }
-.sev-high { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
-.sev-med { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
+.sev-high { color: var(--waste); background: var(--waste-bg); border-color: var(--waste-line); }
+.sev-med { color: var(--estimate); background: var(--estimate-bg); border-color: var(--estimate-line); }
 .sev-low { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
 
 /* Charts: real axes, gridlines, target bands (§1b) */
@@ -320,7 +346,7 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
   border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-soft);
   display: grid; place-items: center; font-size: 12px; font-weight: 700; }
 .help > summary:hover { color: var(--accent); border-color: var(--accent); }
-.help[open] > summary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.help[open] > summary { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
 .help-body { position: absolute; right: 0; top: 26px; z-index: 30; width: 300px;
   background: var(--surface); border: 1px solid var(--rule);
   border-radius: var(--radius); box-shadow: var(--lift-3); padding: var(--s2);
@@ -353,16 +379,16 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .steps-bar .step-n { display: grid; place-items: center; width: 22px; height: 22px;
   border-radius: 999px; font-size: 12px; font-weight: 700;
   border: 1px solid var(--rule); color: var(--ink-soft); }
-.steps-bar .cur .step-n { background: var(--accent); border-color: var(--accent); color: #fff; }
-.steps-bar .done .step-n { background: var(--verified-bg); border-color: #cfe3d4;
+.steps-bar .cur .step-n { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.steps-bar .done .step-n { background: var(--verified-bg); border-color: var(--verified-line);
   color: var(--verified); }
 .steps-bar .lbl { font-size: 13px; color: var(--ink-soft); }
 .steps-bar .cur .lbl { color: var(--ink); font-weight: 600; }
 
 /* Print = CFO-forwardable (report + statement inherit at WP-7) */
 @media print {
-  body { background: #fff; font-size: 12px; }
-  .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
+  body { background: var(--surface); font-size: 12px; }
+  .card { box-shadow: none; border-color: var(--rule-strong); break-inside: avoid; }
   .no-print { display: none !important; }
 }
 

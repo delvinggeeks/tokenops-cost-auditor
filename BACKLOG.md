@@ -101,6 +101,16 @@ promotion still requires a PRD amendment.
   never before (R-AGENTIC-DIMENSIONS + R-RAG already reserve the
   dimensions in the T4 mapping spec). No persona-forked dashboard — it
   is a lens inside the one shell (R-PERSONA §5).
+- **"Night Audit" mood — BACKLOG-DESIGNED, not someday** (R-DESIGN-TOKENS-2 §2,
+  2026-07-25) — dark mood for on-call operators watching alerts. Promoted from
+  someday to designed: because moods are value swaps over the role map, shipping
+  it is a sibling `[data-mood="night-audit"]` value block plus an AA
+  re-verification pass, with ZERO component changes by construction. The
+  architecture landed 2026-07-25; only the values and the contrast audit remain.
+- **Indic locales** (R-DESIGN-TOKENS-2 §6, 2026-07-25) — the translation-key
+  layer ships with the wiring (en only). Adding a locale is then a catalogue,
+  not a refactor, which is the entire reason the key layer goes in early.
+  Bhasha-era synergy.
 - **Dark mode** (R-DESIGN 2026-07-20 §2) — deferred by the design
   constitution; wa-design.css tokens are structured to admit it later.
 - **RAG waste pattern pack** (R-RAG 2026-07-20) — D2/D3 sub-findings

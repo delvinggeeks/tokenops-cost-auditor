@@ -581,6 +581,40 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-DESIGN-TOKENS-2 (founder, 2026-07-25) — design-system constitution
+upgrade, adapted from the WitAura family design language. Applies at
+v15-ui-unify wiring + R-LANDING-2. No new mockup round; NO visual re-theme —
+this formalizes the architecture UNDER the approved look.** (1) ONE TOKEN MAP,
+SEMANTIC ROLES: ~12 role tokens (ground, surface, surface-raised, ink,
+ink-soft, rule, accent, money, verified, estimate, waste, lift tiers);
+components reference roles only; a hex outside the token block FAILS a test.
+Neumorphic depth roles explicitly NOT adopted — recorded divergence, money
+legibility outranks family consistency. (2) MOODS AS VALUE SWAPS: theming is a
+data-mood attribute swapping VALUES, never a re-theme. ONE mood ships now,
+"Ledger" (warm-paper auditor's light); "Night Audit" moves from
+BACKLOG-someday to BACKLOG-DESIGNED — a token-value sheet plus AA
+re-verification, zero component changes by construction. (3) ONE COMPONENT KIT
+— screens compose, never invent; Skeleton BANNED for numbers (money never
+shimmers; use explicit "computing…" language). A bespoke element is a
+ux-reviewer finding. (4) THE SIGNATURE, one glance away on every app screen:
+pipeline ribbon + accountant's double rule under any verified total +
+Applied→headline money-flow. Nothing else competes for signature status.
+(5) AUTHORITY LIVES ON THE SERVER: UI paints decisions, never makes them —
+(a) absent capabilities are OMITTED from the payload, (b) plan-locked features
+are honest upsells never fake-enabled, (c) every money-affecting mutation is
+explicit-confirm with the consequence in words (R-VERDICT-EXPLICIT
+generalized), (d) htmx endpoints re-check authority server-side always.
+(6) A11Y + I18N FLOOR: AA in every mood; depth never carries meaning alone;
+motion always has a reduced-motion equivalent carrying the SAME information;
+all UI strings become translation keys at wiring (en only shipped). Indic
+locales → BACKLOG. ux-reviewer charter gains role-token compliance,
+kit-composition, signature-presence and authority-omission checks.
+APPLIED (§1 + §2 architecture): wa-design.css refactored to the role map under
+[data-mood="ledger"] with legacy names aliased; all 12 raw hex outside the
+token block removed; tests/test_design_tokens.py enforces the rule, pins the
+roles, pins mood-selectability, and pins the neumorphic divergence by CSS
+signature. Values unchanged — the suite is green and nothing moved visually.
+
 **R-MOTION-SPEC (founder, 2026-07-24) — addendum to R-LANDING-2's motion
 system; applies at wiring.** (1) Every animated effect on the landing and any
 future surface is SPECIFIED BEFORE IMPLEMENTATION as trigger · behavior ·
