@@ -6,6 +6,8 @@ import time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -85,8 +87,12 @@ class TestTAUTH02Consume:
         set_cookie = resp.headers["set-cookie"]
         assert "top_session=" in set_cookie
         assert "HttpOnly" in set_cookie  # T-AUTH-04 cookie flags
-        assert "Secure" in set_cookie
         assert "SameSite=lax" in set_cookie or "SameSite=Lax" in set_cookie
+        # Secure is environment-scoped, not dropped: this fixture is app_env=test,
+        # where a Secure cookie would never be sent back over http and the user
+        # would sign in only to appear signed out. The production assertion
+        # lives in TestSessionCookieFlags::test_prod_cookie_is_https_only.
+        assert "Secure" not in set_cookie
 
     def test_session_authenticates_api_without_header(
         self, sclient: TestClient, mail: MailRecorder, app: FastAPI
@@ -247,3 +253,42 @@ class TestRGTMControlLanding:
 
     def test_invalid_email_rejected(self, client: TestClient) -> None:
         assert client.post("/early-access", data={"email": "nope"}).status_code == 400
+
+
+class TestSessionCookieFlags:
+    """The session cookie must be HTTPS-only in production and usable on a
+    local http preview — found when the founder preview signed in and
+    immediately appeared signed out (2026-07-22)."""
+
+    def _login(self, app: "FastAPI") -> object:
+        from fastapi.testclient import TestClient
+
+        from tokenops_cost_auditor.web.auth import issue_magic_token
+
+        token = issue_magic_token(app.state.settings.secret_key, "flags@example.com")
+        return TestClient(app).get(f"/auth/verify?token={token}", follow_redirects=False)
+
+    def test_dev_cookie_is_sendable_over_http(self, app: "FastAPI") -> None:
+        resp = self._login(app)
+        header = resp.headers["set-cookie"]
+        assert "HttpOnly" in header and "SameSite=lax" in header
+        assert "Secure" not in header, "a secure cookie is never sent over http"
+
+    def test_prod_cookie_is_https_only(self, tmp_path: "Path") -> None:
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.main import create_app
+        from tokenops_cost_auditor.persistence.models import Base
+
+        settings = Settings(
+            app_env="prod",
+            secret_key="p" * 64,
+            database_url=f"sqlite:///{tmp_path / 'prod.db'}",
+            upload_dir=tmp_path / "u",
+            report_dir=tmp_path / "r",
+            backup_dir=tmp_path / "b",
+            _env_file=None,
+        )
+        prod_app = create_app(settings)
+        Base.metadata.create_all(prod_app.state.engine)
+        resp = self._login(prod_app)
+        assert "Secure" in resp.headers["set-cookie"]
