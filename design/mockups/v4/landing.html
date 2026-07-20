@@ -58,11 +58,12 @@
 
 /* How it works — a real sequence, so numbering is earned. */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s4); counter-reset: step; }
-.step { position: relative; padding-top: var(--s3); border-top: 2px solid var(--rule-strong); }
+.step { position: relative; padding-top: var(--s4); border-top: 2px solid var(--rule-strong); }
 .step::before {
   counter-increment: step; content: counter(step);
   font: 600 12px var(--mono); color: var(--ink-soft);
-  position: absolute; top: calc(-1 * var(--s3)); left: 0;
+  position: absolute; top: var(--s1); left: 0;   /* BELOW its own rule, not in
+     the previous section's line box — the marker was colliding with the eyebrow */
 }
 .step h3 { font: 600 15px var(--sans); margin: 0 0 4px; }
 .step p { font-size: 14px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
@@ -150,7 +151,7 @@
       <p class="eyebrow">We ran it on ourselves first</p>
       <div class="headline-number">
         <div>
-          <div class="money money-hero countup">32.5%</div>
+          <div class="money money-hero">32.5%</div>
           <div class="badge badge-waste">of our own AI spend was waste</div>
         </div>
         <div>
