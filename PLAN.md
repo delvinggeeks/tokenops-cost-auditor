@@ -471,6 +471,27 @@ WITH help affordances present, WCAG AA on all new chrome. (4) GATE:
 ux-reviewer on v3, then founder three-second review; deliverables =
 overview, findings-table, first-run-with-tour-step-1.
 
+**R-PERSONA (founder, 2026-07-21) — design law; applied during V-D4 wiring
+as copy/structure discipline. NO new mockup round (the v3 verdict remains
+the gate).** (1) THREE-DEPTH RULE on every surface: each widget/page must
+read correctly at three depths — (a) HEADLINE, the layman/owner sentence:
+plain words, a money number, zero jargon; (b) CONTEXT, the manager line:
+what changed, since when, provenance in words; (c) DEPTH, the engineer
+expander/tab: evidence tables, detector params, methodology links.
+ux-reviewer checks ALL THREE depths per surface at wiring gates.
+(2) JARGON LAW: detector names never appear at depth (a) — "You're paying
+full price for prompts you resend", never "D2 missing-cache". Technical
+identifiers live at depth (c) only; the help-registry YAML carries BOTH
+phrasings so popovers translate between personas. (3) AUDIENCE TAGS: each
+Guide page opens with "who this is for" (Owner · Engineer · Both), same
+discipline as the docs site. (4) ARCHITECT LENS registered, NOT built:
+per-agent / per-pipeline / per-knowledge-base attribution views are the
+T4-era architect dashboard (R-AGENTIC-DIMENSIONS + R-RAG already reserve
+the span dimensions); BACKLOG line added; arrives with T4 data, not
+before. (5) Savings Statement stays the owner artifact; report PDF stays
+the shared artifact; NO persona-forked dashboards — one shell, three
+depths, forever.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

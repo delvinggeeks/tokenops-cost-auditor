@@ -126,6 +126,14 @@ T-DASH-02 (trends from fixtures), T-DASH-03 (auth scoping — no
 cross-user leakage), T-DASH-04 (FR-31 purged-row metadata-only),
 T-DASH-05 (zero-state honesty).
 
+**R-PERSONA (2026-07-21) applies to V-D4/V-D4g/V-D9 as copy discipline:**
+every widget reads at three depths (owner headline · manager context ·
+engineer expander); detector identifiers never surface at headline depth;
+the help registry stores BOTH phrasings per key; Guide pages open with
+"who this is for". Adds test coverage to V-D4g: T-HELP-04 (registry has
+plain + technical phrasing for every key; a headline-depth string
+containing a detector id fails the test).
+
 ### V-D4g (+1 day, R-DESIGN-V3 §2; founder-accepted scope addition) — In-product guidance
 Guided tour (5 spotlight steps, vanilla JS + CSS, server-persisted
 dismiss, replayable), per-widget "?" help popovers, HELP sidebar group

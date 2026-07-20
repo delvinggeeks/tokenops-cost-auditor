@@ -3,6 +3,24 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## R-PERSONA RECORDED (founder 2026-07-21) — three-depth law; NO new mockup round, v3 verdict still the gate
+
+Design law recorded in PLAN §0.1 and PLAN-V15 (applies to V-D4/V-D4g/V-D9
+as copy/structure discipline, not a new milestone): every surface reads at
+three depths (owner headline in plain words with a money number · manager
+context with provenance in words · engineer expander with evidence,
+detector params, methodology); JARGON LAW — detector identifiers never at
+headline depth, help-registry YAML carries both phrasings per key
+(T-HELP-04 added: a headline-depth string containing a detector id fails
+the test); Guide pages open with "who this is for" (Owner · Engineer ·
+Both); architect lens (per-agent/pipeline/knowledge-base attribution)
+REGISTERED NOT BUILT on BACKLOG — arrives with T4 span data; no
+persona-forked dashboards, one shell three depths, Savings Statement stays
+the owner artifact and the report PDF the shared one. ux-reviewer charter
+amended with checks 5-8 (three depths per surface, jargon auto-finding,
+audience tags, no forked views). Mockup v3 is UNCHANGED and remains the
+open gate.
+
 ## MOCKUP v3 (R-DESIGN-V3) GATED — ux PASS-WITH-NOTES, all 4 notes closed; FINAL round, awaiting founder verdict → wiring
 
 R-DESIGN-V3 recorded (PLAN §0.1); V-D4g added to PLAN-V15 as the

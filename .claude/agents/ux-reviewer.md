@@ -45,3 +45,17 @@ R-DESIGN AMENDMENT (founder 2026-07-20, binding on every gated surface):
    3D anywhere inside the app (landing hero gets exactly one).
 4. Money figures must be the most visually weighted objects on screen;
    tabular-nums wherever money appears; serif display numerals.
+
+R-PERSONA AMENDMENT (founder 2026-07-21, checked at every wiring gate):
+5. THREE-DEPTH RULE — test each surface at all three depths, not just the
+   page: (a) HEADLINE reads as a plain-words owner sentence with a money
+   number and ZERO jargon; (b) CONTEXT states what changed, since when,
+   and provenance in words; (c) DEPTH (expander/tab) carries evidence
+   tables, detector params, methodology links. A surface that only works
+   at one depth FAILs.
+6. JARGON LAW — a detector identifier (D1..D6, d2_missing_cache, etc.)
+   appearing at depth (a) is an automatic finding. Technical identifiers
+   belong at depth (c) only; help popovers must carry both phrasings.
+7. Guide pages open with "who this is for" (Owner · Engineer · Both).
+8. NO persona-forked dashboards — one shell, three depths. A proposed
+   parallel view for a different audience is a finding, not a feature.

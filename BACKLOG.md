@@ -51,6 +51,12 @@ promotion still requires a PRD amendment.
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
   (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
+- **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
+  per-pipeline / per-knowledge-base attribution views, the T4-era
+  architect dashboard. Registered, NOT built: arrives with T4 span data,
+  never before (R-AGENTIC-DIMENSIONS + R-RAG already reserve the
+  dimensions in the T4 mapping spec). No persona-forked dashboard — it
+  is a lens inside the one shell (R-PERSONA §5).
 - **Dark mode** (R-DESIGN 2026-07-20 §2) — deferred by the design
   constitution; wa-design.css tokens are structured to admit it later.
 - **RAG waste pattern pack** (R-RAG 2026-07-20) — D2/D3 sub-findings
