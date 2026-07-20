@@ -16,7 +16,8 @@ tier (reports state which detectors a tier can and cannot feed).
 - **T2 ACCOUNT** — "Connect OpenAI/Anthropic" via official Usage/Admin
   APIs (v1.5 WP-1; promoted by R-CONNECT 2026-07-19).
 - **T3 COLLECTOR** — pipx transcript watcher — UAT-D5 dedup law,
-  counts-only by construction (WP-COLLECTOR, post-launch).
+  counts-only by construction (WP-CC-LINK, post-launch — absorbed
+  WP-COLLECTOR and WP-SKILL per R-CC-LINK 2026-07-23).
 - **T4 STREAM** — OTLP ingest endpoint speaking OpenTelemetry GenAI
   semantic conventions (gen_ai.* token-usage attributes ->
   CallRecordFrame mapping documented; dual-version attribute handling

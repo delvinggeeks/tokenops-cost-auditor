@@ -111,8 +111,11 @@ c. **Hook discipline**: the thread hook leads with the bill-shock scenario,
 ## Registered lines (not yet approved for use)
 
 - "We run the architecture we audit you toward." (R-ARCH-PATTERNS b)
-- "Install the auditor inside the agent that's burning the tokens."
-  (R-SKILL 3 — usable once WP-SKILL actually ships, never before)
+- "One command installs the auditor inside the agent that's burning the
+  tokens — and it asks your permission first." (R-CC-LINK 4, supersedes the
+  R-SKILL 3 wording. Usable once WP-CC-LINK actually ships, never before —
+  and the second clause is not decoration: it is only sayable because
+  consent is enforced in code, so it must not ship ahead of that.)
 - "Your traffic's shape tells us what it's doing — you tell us why — we
   never read what it says." (R-INTENT-LADDER b)
 

@@ -581,6 +581,17 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-CC-LINK (founder, 2026-07-23) — BACKLOG consolidation, zero v1.5/V-D10
+change.** WP-SKILL and WP-COLLECTOR merge into ONE subscriber deliverable,
+WP-CC-LINK: `pipx install tokenops && tokenops link <code>`, a device-link
+exchange (short-lived dashboard code -> scoped revocable device token, no keys
+typed). One command performs consent, skill install, collector arming and the
+self-update path. LAW: one human action is the FLOOR, never zero — remote or
+silent install is forbidden as a trust posture, and the consent screen is
+marketed as a feature. Sources gains a "Claude Code" type at build time
+(linked machines, last ship, revoke). Trigger: immediately post-v1.5 launch,
+est. 2-3 days. Registered line updated per §4.
+
 **R-ZTA (founder, 2026-07-22) — positioning; zero v1.5 scope change.**
 (a) Zero-token vocabulary in launch/landing/docs engineering page:
 "deterministic engine, no inference — we never burn your tokens to count

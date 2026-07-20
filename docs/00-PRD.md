@@ -143,7 +143,7 @@ under "Amendments" with date + reason.
   "Connect OpenAI" / "Connect Anthropic" flows — customer pastes an org/admin
   API key; usage pulled server-side via the official Usage/Admin APIs; reduced
   detector set as documented since D1; key handling encrypted at rest,
-  revocable, never logged; UI parity with the upload flow. (2) WP-COLLECTOR
+  revocable, never logged; UI parity with the upload flow. (2) WP-CC-LINK (was WP-COLLECTOR; consolidated R-CC-LINK 2026-07-23)
   registered (next after AGG): pipx-installable watcher for Claude Code
   transcript dirs — dedup per UAT-D5 law, counts-only by construction,
   scheduled ship to the API (FR-26 idempotency); one command, zero code

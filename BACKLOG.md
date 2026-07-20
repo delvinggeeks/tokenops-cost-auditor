@@ -78,14 +78,11 @@ promotion still requires a PRD amendment.
   them to sharpen findings (task-tier mismatch, declared-repetitive → D7
   priority, budget-per-purpose). Declarations are counts-safe metadata —
   FR-22 untouched.
-- **WP-SKILL — "tokenops-audit" Claude Code skill** (R-SKILL 2026-07-23 §1)
-  — SKILL.md plus scripts wrapping the T1 exporter and the CLI: runs
-  entirely on the user's own machine over their own transcripts (UAT-D5
-  dedup law, counts-only by construction, nothing transmitted), opens the
-  report, and closes with ONE pointer to the monitored product. Distribution:
-  skill lists + a docs page. TRIGGER: immediately post-v1.5 launch, est. 1
-  day. Its README states the ZTA credential plainly — the skill performs
-  zero inference beyond its own invocation.
+- **WP-SKILL** — SUPERSEDED 2026-07-23 by R-CC-LINK. Folded into WP-CC-LINK
+  below as step 2 of the one-command install; the skill is no longer a
+  separate deliverable, because shipping it alone would have asked a customer
+  to run one command for the skill and another for the collector. Its ZTA
+  credential (zero inference beyond invocation) carries over intact.
 - **WP-MCP — MCP server over /api/v1** (R-SKILL 2026-07-23 §2) — submit an
   export, poll audit status, fetch findings, so agents and frameworks can
   call TokenOps as a tool. TRIGGER: the existing API-key buying signal
@@ -186,13 +183,49 @@ Layers b (policy-threshold recommendations mapped to the provider's NATIVE
 enforcement levers — X-02 stands, we never enforce) and c (governance
 retainer) remain Phase-2, unpromoted.
 
-## WP-COLLECTOR — registered next after WP-P2-AGG (R-CONNECT 2026-07-19)
+## WP-CC-LINK — one command, one consent (R-CC-LINK 2026-07-23)
 
-pipx-installable watcher for Claude Code transcript dirs: dedup per UAT-D5
-law (by request_id, max-complete usage wins, summary printed), counts-only
-by construction (FR-22 — no text ever read into the payload), scheduled
-ship to the API using FR-26 idempotent uploads. One command, zero code
-changes on the customer side. This is the enterprise fleet onboarding.
+CONSOLIDATES WP-SKILL and WP-COLLECTOR into a single subscriber deliverable.
+They were two entries describing two halves of one install; a customer was
+never going to run two commands. TRIGGER: immediately post-v1.5 launch,
+est. 2-3 days.
+
+    pipx install tokenops && tokenops link <code>
+
+Device-link pattern: the dashboard issues a short-lived code, the CLI
+exchanges it for a scoped, revocable device token. NO KEYS ARE EVER TYPED —
+the customer never handles a long-lived credential, and revocation is a
+dashboard click rather than a key rotation.
+
+That one command performs, in order:
+1. CONSENT, in plain words, before anything else — what is collected (counts
+   only), on what schedule, and how to revoke. Recorded in the audit log.
+   Linking REFUSES to proceed without it.
+2. Skill install into the customer's Claude Code. The skill invokes the LOCAL
+   collector/CLI and performs zero inference beyond its own invocation — the
+   ZTA credential, stated plainly in its README.
+3. Collector arming: user-level scheduler, UAT-D5 dedup law (by request_id,
+   max-complete usage wins, summary printed), counts-only by construction
+   (FR-22 — no text ever read into the payload), shipped with FR-26 idempotent
+   uploads.
+4. A pipx self-update path, so the fleet does not rot.
+
+LAW — ONE HUMAN ACTION IS THE FLOOR, NEVER ZERO (R-CC-LINK 2. Permanent.)
+Remote or silent install is FORBIDDEN, as a matter of trust posture rather
+than of technical difficulty. We are asking people to install an auditor
+inside the agent holding their credentials; the moment that can happen
+without them watching, the product is the thing it was built to protect
+against. The consent screen is a FEATURE and is marketed as one: "you'll see
+exactly what we collect before anything runs."
+
+DASHBOARD (built at WP-CC-LINK build time, not before): Sources gains a
+"Claude Code" source type — linked machines, last ship, revoke button.
+Multi-machine is the same command per machine; fleet install uses the same
+code, documented for team plans.
+
+SDK/proxy note (R-CONNECT 3): remains Phase-2 control plane — X-01/X-02
+intact for the audit product; recorded rationale: in-path components live
+in the customer's VPC per the deployment contract, post-trust.
 
 SDK/proxy note (R-CONNECT 3): remains Phase-2 control plane — X-01/X-02
 intact for the audit product; recorded rationale: in-path components live
