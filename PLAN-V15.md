@@ -126,6 +126,16 @@ T-DASH-02 (trends from fixtures), T-DASH-03 (auth scoping — no
 cross-user leakage), T-DASH-04 (FR-31 purged-row metadata-only),
 T-DASH-05 (zero-state honesty).
 
+### V-D4g (+1 day, R-DESIGN-V3 §2; founder-accepted scope addition) — In-product guidance
+Guided tour (5 spotlight steps, vanilla JS + CSS, server-persisted
+dismiss, replayable), per-widget "?" help popovers, HELP sidebar group
+with 4 one-screen Guide pages, workflow breadcrumbs. Help content lives
+ONCE in a YAML registry rendered SSR — docs-site and popovers read the
+same source and cannot drift.
+Tests: T-HELP-01 (registry renders every widget's help; missing key =
+test failure), T-HELP-02 (tour dismiss persists per user + replay
+resets), T-HELP-03 (docs/popover parity — same registry keys).
+
 ### V-D5 (day 7) — WP-3b Alerts + L0 feedback capture (mandatory)
 Alert rules: spend spike DoD, waste % above target, new HIGH finding,
 soft budget crossed (observe-and-alert ONLY — X-02 test asserts no

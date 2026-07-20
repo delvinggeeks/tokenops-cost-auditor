@@ -3,7 +3,31 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
-## MOCKUP v2 (R-DESIGN-SHELL) GATED — ux-reviewer PASS-WITH-NOTES, 4 notes closed; awaiting founder re-review, WIRING STILL BLOCKED
+## MOCKUP v3 (R-DESIGN-V3) GATED — ux PASS-WITH-NOTES, all 4 notes closed; FINAL round, awaiting founder verdict → wiring
+
+R-DESIGN-V3 recorded (PLAN §0.1); V-D4g added to PLAN-V15 as the
+founder-accepted +1-day guidance package with T-HELP-01..03. DELIVERED
+design/mockups/v3/{overview,findings-table,first-run-tour}.html +
+design/icons.svg (22-symbol self-hosted stroke sprite, no emoji/icon
+font) + v3 CSS layer (icons, stat chips, sortable table, help popovers,
+tour spotlight, breadcrumbs, density pass: h1 22px, 15px/600 widget
+titles with icons, 84px hero, tightened chrome). REAL charts: spend =
+area with gridlines + $ axis + date axis; waste% = line with 25% target
+band; sparklines inside chips — zero placeholder boxes. GUIDANCE: 5-step
+tour (step 1 spotlighting the ribbon, Next/Skip, progress dots),
+per-widget "?" popovers (what it shows · where the number comes from in
+words · what to do · Learn more) from a single YAML registry at build,
+HELP sidebar group, breadcrumbs stating each step's purpose in a
+sentence. ux gate v3: PASS-WITH-NOTES, ALL CLOSED — f.1 one canonical
+finding title across table row + expanded card + overview; f.2 trend
+widgets gained their own next actions; f.3 "requires logs" moved to a
+neutral badge (red reserved for real waste); f.4 un-carded ribbon
+confirmed deliberate in-file. Contrast AA-clear on all new chrome
+(sev chips 5.9-6.4:1, axis labels 7.2:1, target label 5.4:1).
+NEXT: founder verdict on v3 → wiring begins (V-D4), remaining polish as
+inline notes, no further mockup cycles.
+
+## SUPERSEDED — mockup v2 (R-DESIGN-SHELL) — ux PASS-WITH-NOTES, 4 notes closed
 
 R-DESIGN-SHELL recorded in PLAN §0.1 (app shell, widget grid, pipeline
 ribbon, determinism-as-design; zero scope/date change). Built

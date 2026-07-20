@@ -441,6 +441,36 @@ shell (first-run renders INSIDE it with widgets in guided empty states);
 ux-reviewer gates v2 per-widget against the three-second rule; then STOP
 for founder review — wiring only after founder GO.
 
+**R-DESIGN-V3 (founder mockup review #2, 2026-07-21) — enterprise polish +
+in-product guidance. FINAL mockup round: v3 → founder verdict → wiring;
+remaining polish handled as inline notes during V-D4, not further mockup
+cycles.** (1) DENSITY & RICHNESS: (a) single inline-SVG stroke icon set
+(lucide-style, self-hosted sprite, ~20 icons) on sidebar/widget
+headers/stat chips/alert types — no emoji, no icon fonts; (b) REAL charts
+in mockups (spend = area with gridlines + axis labels, waste% = line with
+target band, sparklines in stat chips) — placeholder boxes BANNED;
+(c) density pass: tightened topbar/sidebar, findings as a sortable data
+TABLE with the card as expanded state, number-first stat-chip row under
+the hero, type scale up (h1 22px, widget titles 15px/600 with icons,
+hero larger); (d) chrome: sidebar surface tint vs paper page, active-item
+accent bar, topbar hairline + lift-1, consistent 12px provenance meta.
+(2) IN-PRODUCT GUIDANCE — real feature, ADDED TO WP-2 SCOPE as V-D4g
+(+1 day, founder-accepted): (a) guided tour, 5 sequential spotlight steps
+(ribbon → hero → findings/Apply → sources → alerts), positioned popovers
+with Next/Skip, progressive vanilla JS + CSS (no library, no SPA),
+dismiss state persisted server-side, replayable from Help; (b) per-widget
+"?" help popovers (what it shows · where the number comes from in words ·
+what to do with it · Learn more → docs-site), content authored ONCE in a
+YAML help registry rendered SSR so docs and popovers cannot drift;
+(c) HELP sidebar group — Guide pages (How TokenOps works · Your first
+audit · Applying findings · Reading your Savings Statement, one screen
+each) + Replay tour + docs link; (d) workflow breadcrumbs (step 1 of 3)
+with the current step's purpose in a sentence. (3) Guardrails unchanged:
+banned list stands, determinism stamps stay, three-second rule judged
+WITH help affordances present, WCAG AA on all new chrome. (4) GATE:
+ux-reviewer on v3, then founder three-second review; deliverables =
+overview, findings-table, first-run-with-tour-step-1.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

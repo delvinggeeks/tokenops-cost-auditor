@@ -102,6 +102,9 @@ a { color: var(--accent); }
 .badge-verified { color: var(--verified); background: var(--verified-bg); border-color: #cfe3d4; }
 .badge-estimate { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
 .badge-waste { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+/* "needs more data" is not waste — keep red for real waste signals only
+   (mockup-v3 ux gate f.3). */
+.badge-neutral { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
 
 /* Buttons */
 .btn { font: 600 14px var(--sans); border-radius: var(--radius); cursor: pointer;
@@ -250,6 +253,111 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
   .ribbon .seg { border-right: none; border-bottom: 1px solid var(--rule); }
   .ribbon .seg::after { display: none; }
 }
+
+/* ---- ICON SYSTEM (R-DESIGN-V3 §1a): one self-hosted stroke sprite ---- */
+.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none;
+  stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -3px; }
+.i-lg { width: 20px; height: 20px; vertical-align: -4px; }
+.nav-group a .i { margin-right: 10px; color: var(--ink-soft); }
+.nav-group a[aria-current="page"] .i { color: var(--accent); }
+
+/* ---- DENSITY PASS (§1c/§1d) ---- */
+h1 { font-size: 22px; letter-spacing: -0.01em; }
+.widget > h2, .widget-head h2 { font-size: 15px; font-weight: 600; }
+.widget-head { display: flex; align-items: center; gap: var(--s1); margin-bottom: 2px; }
+.widget-head h2 { margin: 0; flex: 1; }
+.money-hero { font-size: 84px; }
+.sidebar { padding: var(--s2) 0; }
+.sidebar .brand { padding: 0 var(--s3) var(--s2); font-size: 15px; }
+.nav-group { margin-bottom: var(--s2); }
+.nav-group a { padding: 6px var(--s3); display: flex; align-items: center; }
+.topbar { padding: 10px var(--s4); box-shadow: var(--lift-1); }
+.provenance, .freshness, .meta { font-size: 12px; }
+
+/* Stat chips: number-first row under the hero */
+.chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s2); }
+@media (max-width: 860px) { .chips { grid-template-columns: repeat(2, 1fr); } }
+.chip { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: 10px var(--s2);
+  box-shadow: var(--lift-1), var(--inner-edge); }
+.chip .k { display: flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--ink-soft); font-weight: 600; }
+.chip .v { font-family: var(--serif); font-variant-numeric: tabular-nums;
+  font-size: 21px; font-weight: 700; margin-top: 2px; }
+.chip .spark { display: block; margin-top: 4px; }
+
+/* Sortable data table (findings list view) */
+.ledger th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.ledger th.sortable .i { opacity: 0.55; }
+.ledger th[aria-sort] .i { opacity: 1; color: var(--accent); }
+.ledger tbody tr { transition: background var(--t-fast) var(--ease); }
+.ledger tbody tr:hover { background: var(--surface-tint); }
+.ledger tbody tr.expanded { background: var(--surface-tint); }
+.sev { font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 1px 7px; border-radius: 3px;
+  border: 1px solid transparent; }
+.sev-high { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+.sev-med { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
+.sev-low { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
+
+/* Charts: real axes, gridlines, target bands (§1b) */
+.chart { width: 100%; height: auto; display: block; }
+.chart .grid-line { stroke: var(--rule); stroke-width: 1; }
+.chart .axis-label { font: 10px var(--sans); fill: var(--ink-soft); }
+.chart .area { opacity: 0.12; }
+.chart .target-band { fill: var(--verified); opacity: 0.10; }
+.chart .target-line { stroke: var(--verified); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .plot { fill: none; stroke-width: 2; stroke-linejoin: round; }
+/* draw-in on first paint (ADDENDUM 2d) */
+.chart .plot.draw { stroke-dasharray: 1000; stroke-dashoffset: 1000;
+  animation: draw 900ms var(--ease) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* ---- HELP AFFORDANCES (§2b): "?" per widget ---- */
+.help { position: relative; display: inline-flex; }
+.help > summary { list-style: none; cursor: pointer; width: 20px; height: 20px;
+  border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-soft);
+  display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.help > summary:hover { color: var(--accent); border-color: var(--accent); }
+.help[open] > summary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.help-body { position: absolute; right: 0; top: 26px; z-index: 30; width: 300px;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-3); padding: var(--s2);
+  font-size: 13px; text-align: left; animation: swap-in var(--t-fast) var(--ease); }
+.help-body dt { font-weight: 600; margin-top: var(--s1); }
+.help-body dt:first-child { margin-top: 0; }
+.help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
+
+/* ---- GUIDED TOUR (§2a): spotlight + popover ---- */
+.tour-veil { position: fixed; inset: 0; background: rgba(28, 26, 23, 0.45);
+  z-index: 40; }
+.tour-spot { position: absolute; z-index: 41; border-radius: var(--radius);
+  box-shadow: 0 0 0 4px rgba(15, 92, 90, 0.55), 0 0 0 9999px rgba(28, 26, 23, 0.45);
+  pointer-events: none; }
+.tour-pop { position: absolute; z-index: 42; width: 340px; background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--lift-3); padding: var(--s3); }
+.tour-pop .step { font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--accent); }
+.tour-pop h3 { margin: 4px 0 var(--s1); font-size: 16px; }
+.tour-pop p { margin: 0 0 var(--s2); font-size: 14px; color: var(--ink-soft); }
+.tour-pop .row { display: flex; align-items: center; gap: var(--s1); }
+.tour-pop .row .spacer { flex: 1; }
+.tour-dots { display: flex; gap: 5px; }
+.tour-dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--rule); }
+.tour-dots i.on { background: var(--accent); }
+
+/* ---- WORKFLOW BREADCRUMBS (§2d) ---- */
+.steps-bar { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s2); }
+.steps-bar .step-n { display: grid; place-items: center; width: 22px; height: 22px;
+  border-radius: 999px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--rule); color: var(--ink-soft); }
+.steps-bar .cur .step-n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.steps-bar .done .step-n { background: var(--verified-bg); border-color: #cfe3d4;
+  color: var(--verified); }
+.steps-bar .lbl { font-size: 13px; color: var(--ink-soft); }
+.steps-bar .cur .lbl { color: var(--ink); font-weight: 600; }
 
 /* Print = CFO-forwardable (report + statement inherit at WP-7) */
 @media print {

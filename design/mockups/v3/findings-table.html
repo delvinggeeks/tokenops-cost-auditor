@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v3 — Findings table + expanded card (R-DESIGN-V3 §1c) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../../wa-design.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol>
+  <symbol id="i-findings" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-reports" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-source" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 9l5-5 5 5M12 4v12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="i-statement" viewBox="0 0 24 24"><path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h8M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-billing" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-detector" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></symbol>
+  <symbol id="i-method" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-guide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.5h.01"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-savings" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 6.5C17 4.6 14.8 3.5 12 3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.1 5 3-2.2 3.5-5 3.5-5-1.1-5-3"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8"/><path d="M21 17v-6h-6"/></symbol>
+  <symbol id="i-calls" viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 5v14M8 19l-3-3M8 5l3 3"/><path d="M16 19V5M16 5l3 3M16 19l-3-3"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+</svg>
+
+<!-- MOCKUP v3. Findings as a real data table (sortable headers, right-aligned
+     tabular money, severity chips, row hover); the card is the EXPANDED state
+     of a row, not a separate page. -->
+<div class="app">
+  <aside class="sidebar" aria-label="Sections">
+      <div class="brand">TokenOps Cost Auditor</div>
+      <nav class="nav-group">
+        <div class="label">Monitor</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-overview"/></svg>Overview</a>
+        <a href="#" aria-current="page"><svg class="i" aria-hidden="true"><use href="#i-findings"/></svg>Findings</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-reports"/></svg>Reports &amp; audits</a>
+      </nav>
+      <nav class="nav-group">
+        <div class="label">Connect</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-source"/></svg>Sources</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Get your logs</a>
+      </nav>
+      <nav class="nav-group">
+        <div class="label">Act</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>Alerts</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-statement"/></svg>Savings statements</a>
+      </nav>
+      <nav class="nav-group">
+        <div class="label">Help</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-guide"/></svg>Guide</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-replay"/></svg>Replay tour</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-method"/></svg>Documentation</a>
+      </nav>
+      <nav class="nav-group">
+        <div class="label">Account</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-settings"/></svg>Settings</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-billing"/></svg>Billing</a>
+      </nav>
+      <nav class="nav-group">
+        <div class="label">Engineering</div>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-detector"/></svg>Detector detail</a>
+        <a href="#"><svg class="i" aria-hidden="true"><use href="#i-method"/></svg>Methodology</a>
+      </nav>
+    </aside>
+  <div>
+    <header class="topbar">
+      <button class="btn btn-quiet sidebar-toggle" aria-expanded="true" aria-label="Menu"><svg class="i" aria-hidden="true"><use href="#i-menu"/></svg></button>
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">Findings</span>
+      <span class="plan-badge">Pro</span>
+      <span class="spacer"></span>
+      <span class="freshness">Data as of <b>2026-07-21 06:30 UTC</b> · audit <code>a7f2…c91</code></span>
+      <button class="btn btn-quiet">lokesh@…</button>
+    </header>
+    <main class="main">
+      <div class="grid">
+
+        <section class="widget w-12">
+          <div class="widget-head">
+            <svg class="i i-lg" aria-hidden="true"><use href="#i-findings"/></svg><h2>11 findings · $2,931.20/mo identified ·
+              $1,284.40/mo verified</h2>
+            <details class="help">
+          <summary aria-label="What is this?">?</summary>
+          <div class="help-body">
+            <dl>
+              <dt>What this shows</dt><dd>Every finding in your latest audit, sortable by dollars, severity or detector.</dd>
+              <dt>Where the number comes from</dt><dd>One row per detector per route, priced at the verified rate card and scaled to 30 days.</dd>
+              <dt>What to do with it</dt><dd>Work top-down. Click a row to see its evidence and the exact fix.</dd>
+            </dl>
+            <a href="#">Applying findings →</a>
+          </div>
+        </details>
+          </div>
+          <p class="tells">What this tells you: everything the detectors found, ranked
+            by monthly dollars. Applied fixes move into the verified figure after the
+            next audit covering ≥7 days.</p>
+          <table class="ledger">
+            <thead><tr>
+              <th class="sortable">Finding <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+              <th class="sortable">Detector <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+              <th class="sortable">Severity <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+              <th class="sortable">Confidence <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+              <th class="sortable money" aria-sort="descending">Monthly impact <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+              <th></th>
+            </tr></thead>
+            <tbody>
+              <tr class="expanded">
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> Your agent re-sends a 28,000-token prefix uncached, 1,900 times a day</td>
+                <td><code class="meta">d2_missing_cache</code></td>
+                <td><span class="sev sev-high">high</span></td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$1,120.10</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+              <tr>
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> Frontier model on short completions (avg 92 tokens)</td>
+                <td><code class="meta">d1_oversized_model</code></td>
+                <td><span class="sev sev-med">med</span></td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$688.75</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+              <tr>
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> System prompt grew 3.1× on the support route</td>
+                <td><code class="meta">d3_prompt_bloat</code></td>
+                <td><span class="sev sev-med">med</span></td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$512.40</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+              <tr>
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> Cache misses after the Jul 14 deploy</td>
+                <td><code class="meta">d2_missing_cache</code></td>
+                <td><span class="sev sev-med">med</span></td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$318.90</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+              <tr>
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> Oversized model on classification calls</td>
+                <td><code class="meta">d1_oversized_model</code></td>
+                <td><span class="sev sev-low">low</span></td>
+                <td><span class="badge badge-estimate">estimate</span></td>
+                <td class="money">$164.05</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+              <tr>
+                <td><svg class="i" aria-hidden="true"><use href="#i-chevron-down"/></svg> Retry storms — needs per-request logs</td>
+                <td><code class="meta">d4_retry_storm</code></td>
+                <td><span class="sev sev-low">low</span></td>
+                <td><span class="badge badge-neutral">requires logs</span></td>
+                <td class="money muted">—</td>
+                <td><button class="btn btn-quiet">Apply</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="provenance">Audit <code>a7f2…c91</code> · 1.24M calls · 31 days ·
+            rate card v2026-07-17 · 3 of 6 detectors active on connected sources</div>
+        </section>
+
+        <article class="widget w-12" aria-labelledby="f1-title">
+          <p class="meta muted">Expanded row 1 of 11</p>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);">
+            <div>
+              <h2 id="f1-title" style="margin-bottom: 4px;">Your agent re-sends a 28,000-token prefix uncached, 1,900 times a day</h2>
+              <span class="sev sev-high">high</span>
+              <span class="badge badge-estimate">estimate</span>
+              <small class="muted">D2 · missing prompt cache · claude-sonnet-5</small>
+            </div>
+            <div style="text-align:right;">
+              <div class="money money-lg" style="color: var(--waste);">$1,120.10</div>
+              <small class="muted">per month</small>
+            </div>
+          </div>
+
+          <details class="evidence" open>
+            <summary>Evidence — 20 sampled calls (counts only)</summary>
+            <div>
+              <table class="ledger">
+                <thead><tr><th>UTC time</th><th>Model</th><th class="money">Prompt tokens</th>
+                  <th class="money">Cached</th><th class="money">Billed → as-if-cached</th></tr></thead>
+                <tbody>
+                  <tr><td>Jul 18 09:14:02</td><td>claude-sonnet-5</td><td class="money">28,412</td>
+                    <td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+                  <tr><td>Jul 18 09:14:31</td><td>claude-sonnet-5</td><td class="money">28,412</td>
+                    <td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+                  <tr><td>Jul 18 09:15:07</td><td>claude-sonnet-5</td><td class="money">28,395</td>
+                    <td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+                </tbody>
+              </table>
+              <small class="muted">No prompt text is ever stored — token counts,
+                timestamps and hashes only.</small>
+            </div>
+          </details>
+
+          <div style="position:relative; margin-top:var(--s2);">
+            <pre class="snippet">"system": [{"type": "text", "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"}}]</pre>
+            <button class="btn" style="position:absolute; top:8px; right:8px; padding:4px 10px; font-size:12px;">Copy</button>
+          </div>
+
+          <div style="margin-top:var(--s2); display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-primary"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg> Applied</button>
+            <button class="btn">Dismissed</button>
+            <button class="btn btn-quiet">Not relevant</button>
+            <small class="muted">Applied findings are recomputed on the next audit; the
+              verified delta joins your headline.</small>
+          </div>
+          <div class="provenance">Finding <code>D2-003</code> in audit <code>a7f2…c91</code> ·
+            verified amount will be capped at this estimate</div>
+        </article>
+      </div>
+      <p class="muted" style="margin-top: var(--s4); font-size: 13px;">MOCKUP v3 — sample data. Delight on this surface: the evidence expander spring. The card is the expanded state of a table row — one component, three renderers (table row, expanded card, PDF-static).</p>
+    </main>
+  </div>
+</div>
+</body>
+</html>
