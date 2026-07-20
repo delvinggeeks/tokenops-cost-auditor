@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A — Signal</title>
+<style>
+/* ============================================================
+   DIRECTION A — "SIGNAL"
+   Dark operations console. The bet: cost control is an ops
+   discipline, so it should look like the tools engineers already
+   keep open — Linear/Vercel register, not a finance product.
+   Numerics are monospace so digits line up down a column and a
+   changed figure is visible by shape alone.
+   Accent is violet rather than the usual terminal-green: green is
+   already spoken for by "saved", and an accent that collides with
+   a semantic colour makes every screen ambiguous.
+   ============================================================ */
+:root{
+  --bg:#0B0D10; --surface:#12161B; --surface-2:#171C23; --line:#212832;
+  --ink:#E8ECF2; --ink-2:#95A0AE; --ink-3:#5D6875;
+  --accent:#7C5CFF; --accent-soft:rgba(124,92,255,.14);
+  --pos:#35D07F; --warn:#F0B33E; --neg:#FF6B5E;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",monospace;
+  --r:10px; --s1:8px; --s2:14px; --s3:20px; --s4:28px; --s5:40px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans);
+  -webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+
+/* rail */
+.rail{background:#0E1116;border-right:1px solid var(--line);padding:var(--s3) 0;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 var(--s3) var(--s4);font-weight:600;letter-spacing:-.01em}
+.brand .glyph{width:22px;height:22px;border-radius:6px;background:linear-gradient(180deg,#8E70FF,#5B3CE0);
+  display:grid;place-items:center;font:700 11px var(--mono);color:#fff}
+.rail .grp{padding:0 var(--s2);margin-bottom:var(--s3)}
+.rail .lbl{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);padding:0 10px 8px}
+.rail a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;color:var(--ink-2);
+  text-decoration:none;font-size:13.5px}
+.rail a:hover{background:var(--surface);color:var(--ink)}
+.rail a.on{background:var(--accent-soft);color:#fff;box-shadow:inset 0 0 0 1px rgba(124,92,255,.28)}
+.rail a .d{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55}
+
+/* top */
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s4);height:56px;
+  border-bottom:1px solid var(--line);background:rgba(11,13,16,.8);backdrop-filter:blur(8px);
+  position:sticky;top:0;z-index:5}
+.crumb{font-size:13px;color:var(--ink-2)}
+.crumb b{color:var(--ink);font-weight:600}
+.pill{font:500 11px var(--mono);padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2)}
+.sp{margin-left:auto}
+.sample{font:500 11px var(--mono);color:var(--warn);border:1px solid rgba(240,179,62,.3);
+  background:rgba(240,179,62,.08);padding:3px 8px;border-radius:6px}
+
+.wrap{padding:var(--s4);max-width:1280px}
+h1{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 4px}
+.sub{color:var(--ink-2);font-size:13.5px;margin:0 0 var(--s4);max-width:70ch}
+
+/* hero money */
+.hero{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--s3);margin-bottom:var(--s3)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 30px -18px #000}
+.pad{padding:var(--s3)}
+.cap{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+.money{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.big{font-size:46px;font-weight:600;line-height:1;color:#fff}
+.big .cur{color:var(--ink-3);font-size:26px;margin-right:2px}
+.delta{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--mono);
+  color:var(--pos);background:rgba(53,208,127,.1);border:1px solid rgba(53,208,127,.22);
+  padding:3px 8px;border-radius:6px;margin-top:12px}
+.foot{border-top:1px solid var(--line);margin-top:var(--s3);padding-top:12px;font-size:12px;color:var(--ink-3)}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);margin-bottom:var(--s3)}
+.stat .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:600;letter-spacing:-.02em}
+.stat .k{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.spark{margin-top:10px;display:block}
+
+/* table */
+.grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s3)}
+table{width:100%;border-collapse:collapse}
+th{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-align:left;padding:0 0 10px;border-bottom:1px solid var(--line)}
+td{padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.sev{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:9px;vertical-align:middle}
+.sev.hi{background:var(--neg);box-shadow:0 0 0 3px rgba(255,107,94,.14)}
+.sev.md{background:var(--warn);box-shadow:0 0 0 3px rgba(240,179,62,.14)}
+.sev.lo{background:var(--ink-3)}
+td .rt{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.act{font:500 12px var(--sans);color:var(--accent);text-decoration:none}
+.act:hover{text-decoration:underline}
+
+/* source rows */
+.src{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.src:last-child{border-bottom:0}
+.src .nm{font-size:13.5px}
+.src .mt{font:500 11px var(--mono);color:var(--ink-3)}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot.ok{background:var(--pos)} .dot.warn{background:var(--warn)}
+.btn{font:500 12.5px var(--sans);color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:#6B4CE8;color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <div class="brand"><span class="glyph">T</span> TokenOps</div>
+    <div class="grp">
+      <div class="lbl">Monitor</div>
+      <a class="on" href="#"><span class="d"></span>Overview</a>
+      <a href="#"><span class="d"></span>Findings</a>
+      <a href="#"><span class="d"></span>Audits</a>
+    </div>
+    <div class="grp">
+      <div class="lbl">Connect</div>
+      <a href="#"><span class="d"></span>Sources</a>
+      <a href="#"><span class="d"></span>Upload logs</a>
+    </div>
+    <div class="grp">
+      <div class="lbl">Act</div>
+      <a href="#"><span class="d"></span>Alerts</a>
+      <a href="#"><span class="d"></span>Statements</a>
+    </div>
+    <div class="grp">
+      <div class="lbl">Account</div>
+      <a href="#"><span class="d"></span>Settings</a>
+      <a href="#"><span class="d"></span>Billing</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <span class="crumb">Monitor / <b>Overview</b></span>
+      <span class="pill">Pro</span>
+      <span class="sp"></span>
+      <span class="sample">SAMPLE DATA</span>
+      <span class="pill">synced 06:30 UTC</span>
+    </header>
+
+    <div class="wrap">
+      <h1>Overview</h1>
+      <p class="sub">Everything we've priced from your connected accounts, ranked by the dollars attached.</p>
+
+      <section class="hero">
+        <div class="card pad">
+          <p class="cap">Verified savings · last 90 days</p>
+          <div class="money big"><span class="cur">$</span>1,910.40</div>
+          <span class="delta">▲ $412.18 since last audit</span>
+          <div class="foot">Counted only where a later audit saw the route still running and the waste gone.</div>
+        </div>
+        <div class="card pad">
+          <p class="cap">Spend trend · 30 days</p>
+          <svg width="100%" height="112" viewBox="0 0 420 112" preserveAspectRatio="none" aria-label="Spend trend">
+            <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7C5CFF" stop-opacity=".30"/>
+              <stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/></linearGradient></defs>
+            <line x1="0" y1="28" x2="420" y2="28" stroke="#212832"/>
+            <line x1="0" y1="62" x2="420" y2="62" stroke="#212832"/>
+            <line x1="0" y1="96" x2="420" y2="96" stroke="#212832"/>
+            <path d="M0,88 L38,80 L76,84 L114,66 L152,72 L190,54 L228,58 L266,40 L304,46 L342,30 L380,36 L420,24 L420,112 L0,112 Z" fill="url(#ga)"/>
+            <path d="M0,88 L38,80 L76,84 L114,66 L152,72 L190,54 L228,58 L266,40 L304,46 L342,30 L380,36 L420,24"
+                  fill="none" stroke="#7C5CFF" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="420" cy="24" r="3.5" fill="#7C5CFF" stroke="#12161B" stroke-width="2"/>
+          </svg>
+          <div class="foot">$8,757.75/mo API-equivalent · figures are token value, actual billing depends on your plan.</div>
+        </div>
+      </section>
+
+      <section class="stats">
+        <div class="card pad stat">
+          <div class="k">Monthly spend</div>
+          <div class="v">$8,757.75</div>
+          <svg class="spark" width="100%" height="22" viewBox="0 0 120 22" preserveAspectRatio="none">
+            <path d="M0,16 L20,14 L40,15 L60,10 L80,11 L100,6 L120,7" fill="none" stroke="#95A0AE" stroke-width="1.5"/></svg>
+        </div>
+        <div class="card pad stat">
+          <div class="k">Waste found</div>
+          <div class="v" style="color:var(--neg)">$2,846.62</div>
+          <svg class="spark" width="100%" height="22" viewBox="0 0 120 22" preserveAspectRatio="none">
+            <path d="M0,8 L20,10 L40,7 L60,12 L80,10 L100,14 L120,13" fill="none" stroke="#FF6B5E" stroke-width="1.5"/></svg>
+        </div>
+        <div class="card pad stat">
+          <div class="k">Waste rate</div>
+          <div class="v">32.5%</div>
+          <svg class="spark" width="100%" height="22" viewBox="0 0 120 22" preserveAspectRatio="none">
+            <path d="M0,6 L20,7 L40,9 L60,8 L80,12 L100,11 L120,15" fill="none" stroke="#35D07F" stroke-width="1.5"/></svg>
+        </div>
+        <div class="card pad stat">
+          <div class="k">Next audit</div>
+          <div class="v">06:30 UTC</div>
+          <div class="foot" style="margin-top:10px;padding-top:0;border:0">in 9h 12m · daily</div>
+        </div>
+      </section>
+
+      <section class="grid2">
+        <div class="card pad">
+          <p class="cap">Top findings by monthly impact</p>
+          <table>
+            <thead><tr><th>Finding</th><th>Route</th><th style="text-align:right">$ / mo</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="sev hi"></span>Paying full price for prompts you resend</td>
+                <td><span class="rt">/v1/chat · agent-loop</span></td>
+                <td class="num">1,204.90</td>
+                <td style="text-align:right"><a class="act" href="#">Open</a></td>
+              </tr>
+              <tr>
+                <td><span class="sev hi"></span>Retry storms billing the same answer twice</td>
+                <td><span class="rt">/v1/chat · ingest</span></td>
+                <td class="num">642.18</td>
+                <td style="text-align:right"><a class="act" href="#">Open</a></td>
+              </tr>
+              <tr>
+                <td><span class="sev md"></span>Frontier model doing small-model work</td>
+                <td><span class="rt">/v1/classify</span></td>
+                <td class="num">488.04</td>
+                <td style="text-align:right"><a class="act" href="#">Open</a></td>
+              </tr>
+              <tr>
+                <td><span class="sev md"></span>Context sent but never used</td>
+                <td><span class="rt">/v1/chat · rag</span></td>
+                <td class="num">331.60</td>
+                <td style="text-align:right"><a class="act" href="#">Open</a></td>
+              </tr>
+              <tr>
+                <td><span class="sev lo"></span>Output limits left unbounded</td>
+                <td><span class="rt">/v1/complete</span></td>
+                <td class="num">179.90</td>
+                <td style="text-align:right"><a class="act" href="#">Open</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card pad">
+          <p class="cap">Sources</p>
+          <div class="src"><span class="dot ok"></span><div style="flex:1"><div class="nm">OpenAI</div><div class="mt">production org</div></div><div class="mt">06:30</div></div>
+          <div class="src"><span class="dot warn"></span><div style="flex:1"><div class="nm">Anthropic</div><div class="mt">couldn't reach provider</div></div><div class="mt">yest.</div></div>
+          <div style="margin-top:var(--s3);display:flex;gap:10px">
+            <button class="btn pri">Connect a provider</button>
+            <button class="btn">Upload logs</button>
+          </div>
+          <div class="foot">Read-only. Usage counts only — never prompt text.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</body>
+</html>

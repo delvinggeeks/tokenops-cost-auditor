@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B — Atrium</title>
+<style>
+/* ============================================================
+   DIRECTION B — "ATRIUM"
+   Light, spacious, confident. The bet: the person who cares most
+   about this number is not an engineer, and a dark ops console
+   makes them feel like they wandered into someone else's tool.
+   Air, large type and one very large number.
+   Modern-fintech register (Mercury / Stripe's newer surfaces):
+   soft depth, generous radius, colour used only semantically.
+   Deliberately fewer objects per screen than A or C — the
+   restraint IS the direction.
+   ============================================================ */
+:root{
+  --bg:#FAFAFC; --surface:#FFFFFF; --line:#ECEDF2; --line-2:#F5F6F9;
+  --ink:#14161C; --ink-2:#5A6172; --ink-3:#8B93A5;
+  --brand:#2B4BF2; --brand-soft:#EEF1FE;
+  --pos:#0E9F6E; --pos-soft:#E7F7F0;
+  --warn:#B7791F; --warn-soft:#FDF6E7;
+  --neg:#D8402F; --neg-soft:#FDEEEC;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:16px; --r-sm:10px;
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px;
+  --sh:0 1px 2px rgba(20,22,28,.04), 0 4px 16px -6px rgba(20,22,28,.08);
+  --sh-2:0 2px 4px rgba(20,22,28,.05), 0 16px 40px -12px rgba(20,22,28,.14);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+
+.rail{padding:var(--s3) var(--s2);border-right:1px solid var(--line);background:var(--surface);position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15.5px;letter-spacing:-.01em;padding:0 10px var(--s4)}
+.brand .glyph{width:26px;height:26px;border-radius:8px;background:var(--brand);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.grp{margin-bottom:var(--s3)}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);padding:0 10px 8px}
+.rail a{display:block;padding:9px 10px;border-radius:var(--r-sm);color:var(--ink-2);text-decoration:none;font-size:14.5px;font-weight:500}
+.rail a:hover{background:var(--line-2);color:var(--ink)}
+.rail a.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:var(--s2);padding:0 var(--s5);height:68px;border-bottom:1px solid var(--line);background:var(--surface)}
+.chip{font-size:12px;font-weight:600;color:var(--ink-2);background:var(--line-2);padding:5px 10px;border-radius:999px}
+.chip.sample{color:var(--warn);background:var(--warn-soft)}
+.sp{margin-left:auto}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand);
+  display:grid;place-items:center;font-weight:600;font-size:13px}
+
+.wrap{padding:var(--s5);max-width:1180px}
+h1{font-size:30px;font-weight:650;letter-spacing:-.028em;margin:0 0 6px}
+.sub{color:var(--ink-2);font-size:16px;margin:0 0 var(--s5);max-width:62ch}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.pad{padding:var(--s3)}
+.cap{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 var(--s2)}
+
+/* the one number, given real room */
+.headline{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);margin-bottom:var(--s3)}
+.headline .hero{padding:var(--s4);box-shadow:var(--sh-2)}
+.num{font-size:66px;font-weight:660;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.num .c{color:var(--ink-3);font-size:34px;font-weight:500;vertical-align:super;margin-right:2px}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;margin-top:var(--s2)}
+.badge.up{color:var(--pos);background:var(--pos-soft)}
+.note{color:var(--ink-3);font-size:13.5px;margin:var(--s3) 0 0;line-height:1.55}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);margin-bottom:var(--s3)}
+.stat .v{font-size:28px;font-weight:640;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.stat .k{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.stat .m{font-size:13px;color:var(--ink-3);margin-top:4px}
+
+.list-item{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.list-item:last-child{border-bottom:0}
+.tag{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap}
+.tag.hi{color:var(--neg);background:var(--neg-soft)}
+.tag.md{color:var(--warn);background:var(--warn-soft)}
+.tag.lo{color:var(--ink-2);background:var(--line-2)}
+.li-t{font-weight:550;font-size:15px;letter-spacing:-.005em}
+.li-s{font-size:13px;color:var(--ink-3)}
+.li-n{margin-left:auto;font-size:17px;font-weight:640;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.btn{font:600 14.5px var(--sans);border-radius:var(--r-sm);padding:11px 18px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 1px 2px rgba(43,75,242,.3)}
+.srcrow{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.srcrow:last-of-type{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%}
+.dot.ok{background:var(--pos)} .dot.warn{background:var(--warn)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <div class="brand"><span class="glyph">T</span> TokenOps</div>
+    <div class="grp"><div class="lbl">Monitor</div>
+      <a class="on" href="#">Overview</a><a href="#">Findings</a><a href="#">Audits</a></div>
+    <div class="grp"><div class="lbl">Connect</div>
+      <a href="#">Sources</a><a href="#">Upload logs</a></div>
+    <div class="grp"><div class="lbl">Act</div>
+      <a href="#">Alerts</a><a href="#">Statements</a></div>
+    <div class="grp"><div class="lbl">Account</div>
+      <a href="#">Settings</a><a href="#">Billing</a></div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <strong style="font-size:15px">Overview</strong>
+      <span class="chip">Pro</span>
+      <span class="sp"></span>
+      <span class="chip sample">Sample data</span>
+      <span class="chip">Synced 06:30 UTC</span>
+      <span class="avatar">L</span>
+    </header>
+
+    <div class="wrap">
+      <h1>You've saved $1,910.40 so far.</h1>
+      <p class="sub">That's what we can prove — waste we flagged, that you fixed, and a later audit confirmed was actually gone.</p>
+
+      <section class="headline">
+        <div class="card hero">
+          <p class="cap">Verified savings · last 90 days</p>
+          <div class="num"><span class="c">$</span>1,910.40</div>
+          <span class="badge up">↑ $412.18 since your last audit</span>
+          <p class="note">We only count a saving when a later audit saw that route still running with the waste gone. Nothing here is an estimate.</p>
+        </div>
+
+        <div class="card pad">
+          <p class="cap">Where your spend is going</p>
+          <svg width="100%" height="184" viewBox="0 0 460 184" aria-label="Spend trend, 30 days">
+            <defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2B4BF2" stop-opacity=".16"/>
+              <stop offset="1" stop-color="#2B4BF2" stop-opacity="0"/></linearGradient></defs>
+            <line x1="0" y1="40" x2="460" y2="40" stroke="#ECEDF2"/>
+            <line x1="0" y1="86" x2="460" y2="86" stroke="#ECEDF2"/>
+            <line x1="0" y1="132" x2="460" y2="132" stroke="#ECEDF2"/>
+            <text x="0" y="34" fill="#8B93A5" font-size="11" font-family="Inter,sans-serif">$12k</text>
+            <text x="0" y="80" fill="#8B93A5" font-size="11" font-family="Inter,sans-serif">$8k</text>
+            <text x="0" y="126" fill="#8B93A5" font-size="11" font-family="Inter,sans-serif">$4k</text>
+            <path d="M44,120 L80,112 L116,116 L152,96 L188,102 L224,80 L260,86 L296,64 L332,70 L368,52 L404,58 L440,44 L440,150 L44,150 Z" fill="url(#gb)"/>
+            <path d="M44,120 L80,112 L116,116 L152,96 L188,102 L224,80 L260,86 L296,64 L332,70 L368,52 L404,58 L440,44"
+                  fill="none" stroke="#2B4BF2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="440" cy="44" r="4.5" fill="#2B4BF2" stroke="#fff" stroke-width="2.5"/>
+            <text x="44" y="168" fill="#8B93A5" font-size="11" font-family="Inter,sans-serif">30 days ago</text>
+            <text x="392" y="168" fill="#8B93A5" font-size="11" font-family="Inter,sans-serif">today</text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="stats">
+        <div class="card pad stat"><div class="k">Monthly spend</div><div class="v">$8,757.75</div>
+          <div class="m">API-equivalent token value</div></div>
+        <div class="card pad stat"><div class="k">Waste we found</div><div class="v" style="color:var(--neg)">$2,846.62</div>
+          <div class="m">32.5% of what you spend</div></div>
+        <div class="card pad stat"><div class="k">Next audit</div><div class="v">In 9 hours</div>
+          <div class="m">Daily, 06:30 UTC</div></div>
+      </section>
+
+      <section class="card pad" style="margin-bottom:var(--s3)">
+        <p class="cap">What's costing you the most</p>
+        <div class="list-item">
+          <span class="tag hi">Highest</span>
+          <div><div class="li-t">You're paying full price for prompts you resend</div><div class="li-s">/v1/chat · agent-loop</div></div>
+          <div class="li-n">$1,204.90<span style="font-size:13px;font-weight:500;color:var(--ink-3)">/mo</span></div>
+        </div>
+        <div class="list-item">
+          <span class="tag hi">Highest</span>
+          <div><div class="li-t">Retries are billing you twice for one answer</div><div class="li-s">/v1/chat · ingest</div></div>
+          <div class="li-n">$642.18<span style="font-size:13px;font-weight:500;color:var(--ink-3)">/mo</span></div>
+        </div>
+        <div class="list-item">
+          <span class="tag md">Medium</span>
+          <div><div class="li-t">A frontier model is doing small-model work</div><div class="li-s">/v1/classify</div></div>
+          <div class="li-n">$488.04<span style="font-size:13px;font-weight:500;color:var(--ink-3)">/mo</span></div>
+        </div>
+        <div class="list-item">
+          <span class="tag md">Medium</span>
+          <div><div class="li-t">You're sending context the model never uses</div><div class="li-s">/v1/chat · rag</div></div>
+          <div class="li-n">$331.60<span style="font-size:13px;font-weight:500;color:var(--ink-3)">/mo</span></div>
+        </div>
+        <div style="margin-top:var(--s3)"><button class="btn">See all 14 findings</button></div>
+      </section>
+
+      <section class="card pad">
+        <p class="cap">Connected accounts</p>
+        <div class="srcrow"><span class="dot ok"></span>
+          <div style="flex:1"><div class="li-t" style="font-size:14.5px">OpenAI</div><div class="li-s">production org · read-only</div></div>
+          <div class="li-s">Last pull 06:30 UTC</div></div>
+        <div class="srcrow"><span class="dot warn"></span>
+          <div style="flex:1"><div class="li-t" style="font-size:14.5px">Anthropic</div><div class="li-s">we couldn't reach them — we'll retry</div></div>
+          <div class="li-s">Yesterday</div></div>
+        <div style="margin-top:var(--s3);display:flex;gap:12px">
+          <button class="btn pri">Connect a provider</button><button class="btn">Upload a log file</button>
+        </div>
+        <p class="note">We read usage counts only — token totals per day and model. Your prompts never leave your account.</p>
+      </section>
+    </div>
+  </div>
+</div>
+</body>
+</html>

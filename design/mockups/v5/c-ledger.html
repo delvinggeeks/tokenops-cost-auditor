@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction C — Ledger</title>
+<style>
+/* ============================================================
+   DIRECTION C — "LEDGER"
+   Dense, keyboard-first, information-maximal. The bet: someone
+   auditing spend wants to SEE the whole picture at once and work
+   it like a spreadsheet, not scroll through cards.
+   Modern in the Linear/Bloomberg-terminal sense rather than the
+   marketing-site sense: tight grid, small type, hairlines instead
+   of shadows, near-zero radius, one signal colour.
+   Depth comes from structure, not elevation — nothing floats.
+   ============================================================ */
+:root{
+  --bg:#F6F6F4; --surface:#FFFFFF; --line:#E2E2DD; --line-hard:#12130F;
+  --ink:#12130F; --ink-2:#5B5F57; --ink-3:#8E938A;
+  --sig:#1F5CD8; --sig-soft:#EAF0FD;
+  --pos:#12734A; --warn:#8A5A00; --neg:#B3271C;
+  --pos-bg:#E6F2EB; --warn-bg:#FBF1DE; --neg-bg:#FBEBE9;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  --r:4px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:180px 1fr;min-height:100vh}
+
+.rail{background:var(--surface);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;padding:10px 0}
+.brand{font:700 13px var(--sans);letter-spacing:-.01em;padding:6px 12px 14px;display:flex;align-items:center;gap:8px}
+.brand .g{width:16px;height:16px;background:var(--line-hard);border-radius:2px}
+.lbl{font:600 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);padding:12px 12px 5px}
+.rail a{display:flex;align-items:center;justify-content:space-between;padding:5px 12px;color:var(--ink-2);text-decoration:none;font-size:12.5px;border-left:2px solid transparent}
+.rail a:hover{background:#FAFAF8;color:var(--ink)}
+.rail a.on{border-left-color:var(--sig);background:var(--sig-soft);color:var(--ink);font-weight:600}
+.rail a kbd{font:500 10px var(--mono);color:var(--ink-3);border:1px solid var(--line);border-radius:3px;padding:0 4px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;height:40px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.top .path{font:500 12px var(--mono);color:var(--ink-2)}
+.top .path b{color:var(--ink)}
+.tag{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink-2)}
+.tag.s{color:var(--warn);background:var(--warn-bg);border-color:#EBD9B4}
+.sp{margin-left:auto}
+.search{font:500 12px var(--mono);color:var(--ink-3);border:1px solid var(--line);border-radius:var(--r);padding:3px 10px;background:#FAFAF8}
+
+/* the summary bar: everything that matters, one row, always visible */
+.bar{display:grid;grid-template-columns:1.4fr repeat(4,1fr);border-bottom:1px solid var(--line);background:var(--surface)}
+.cell{padding:12px 16px;border-left:1px solid var(--line)}
+.cell:first-child{border-left:0;background:linear-gradient(90deg,#FFFFFF, #FBFBF9)}
+.k{font:600 9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:19px;font-weight:600;letter-spacing:-.02em}
+.cell:first-child .v{font-size:34px;line-height:1.05;letter-spacing:-.03em}
+.cell:first-child .v .c{color:var(--ink-3);font-size:19px}
+.d{font:500 11px var(--mono);margin-top:5px}
+.d.up{color:var(--pos)} .d.dn{color:var(--neg)} .d.mut{color:var(--ink-3)}
+.rule{height:0;border-top:2px solid var(--line-hard);width:34px;margin:8px 0 0}
+
+/* content grid */
+.body{display:grid;grid-template-columns:1fr 300px;flex:1;min-height:0}
+.panel{border-right:1px solid var(--line);background:var(--surface);min-width:0}
+.ph{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:#FBFBF9}
+.ph h2{font:600 11.5px var(--sans);margin:0;letter-spacing:.01em}
+.ph .cnt{font:500 10px var(--mono);color:var(--ink-3)}
+.filters{margin-left:auto;display:flex;gap:6px}
+.f{font:500 11px var(--sans);border:1px solid var(--line);border-radius:3px;padding:2px 8px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.f.on{background:var(--line-hard);color:#fff;border-color:var(--line-hard)}
+
+table{width:100%;border-collapse:collapse}
+thead th{font:600 9.5px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  text-align:left;padding:7px 16px;border-bottom:1px solid var(--line);background:#FBFBF9;position:sticky;top:0}
+thead th.r{text-align:right}
+tbody td{padding:8px 16px;border-bottom:1px solid var(--line);font-size:12.5px}
+tbody tr:hover td{background:var(--sig-soft)}
+tbody tr.sel td{background:var(--sig-soft);box-shadow:inset 2px 0 0 var(--sig)}
+td.r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+td .rt{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.sv{display:inline-block;font:600 9.5px var(--mono);padding:1px 5px;border-radius:2px;letter-spacing:.05em}
+.sv.hi{color:var(--neg);background:var(--neg-bg)}
+.sv.md{color:var(--warn);background:var(--warn-bg)}
+.sv.lo{color:var(--ink-2);background:#F1F1EE}
+.pct{display:inline-block;height:3px;background:var(--line-hard);vertical-align:middle;margin-left:8px}
+
+/* right column */
+.side{background:var(--surface);min-width:0}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.srow{display:flex;align-items:center;gap:9px;padding:7px 0}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.ok{background:var(--pos)} .dot.warn{background:var(--warn)}
+.sname{font-size:12.5px;font-weight:500}
+.smeta{font:500 10.5px var(--mono);color:var(--ink-3)}
+.btn{font:600 12px var(--sans);border:1px solid var(--line-hard);background:var(--line-hard);color:#fff;
+  border-radius:var(--r);padding:7px 12px;cursor:pointer;width:100%}
+.btn.q{background:var(--surface);color:var(--ink);}
+.foot{font-size:11px;color:var(--ink-3);line-height:1.5;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <div class="brand"><span class="g"></span>TokenOps</div>
+    <div class="lbl">Monitor</div>
+    <a class="on" href="#">Overview <kbd>1</kbd></a>
+    <a href="#">Findings <kbd>2</kbd></a>
+    <a href="#">Audits <kbd>3</kbd></a>
+    <div class="lbl">Connect</div>
+    <a href="#">Sources <kbd>4</kbd></a>
+    <a href="#">Upload <kbd>5</kbd></a>
+    <div class="lbl">Act</div>
+    <a href="#">Alerts</a>
+    <a href="#">Statements</a>
+    <div class="lbl">Account</div>
+    <a href="#">Settings</a>
+    <a href="#">Billing</a>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <span class="path">monitor / <b>overview</b></span>
+      <span class="tag">Pro</span>
+      <span class="tag s">Sample data</span>
+      <span class="sp"></span>
+      <span class="search">Search or jump to…  ⌘K</span>
+    </header>
+
+    <section class="bar">
+      <div class="cell">
+        <div class="k">Verified savings · 90d</div>
+        <div class="v"><span class="c">$</span>1,910.40</div>
+        <div class="d up">+$412.18 since last audit</div>
+        <div class="rule"></div>
+      </div>
+      <div class="cell"><div class="k">Monthly spend</div><div class="v">$8,757.75</div><div class="d mut">API-equiv token value</div></div>
+      <div class="cell"><div class="k">Waste found</div><div class="v" style="color:var(--neg)">$2,846.62</div><div class="d dn">32.5% of spend</div></div>
+      <div class="cell"><div class="k">Open findings</div><div class="v">14</div><div class="d mut">4 high · 6 med · 4 low</div></div>
+      <div class="cell"><div class="k">Next audit</div><div class="v">06:30</div><div class="d mut">daily · in 9h 12m</div></div>
+    </section>
+
+    <div class="body">
+      <div class="panel">
+        <div class="ph">
+          <h2>Findings</h2><span class="cnt">14 open · ranked by monthly impact</span>
+          <div class="filters">
+            <button class="f on">All</button><button class="f">High</button>
+            <button class="f">Applied</button><button class="f">Dismissed</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:34px"></th><th>Finding</th><th>Route</th>
+            <th>Calls</th><th class="r">$ / mo</th><th class="r">Share</th>
+          </tr></thead>
+          <tbody>
+            <tr class="sel">
+              <td><span class="sv hi">HI</span></td>
+              <td>Paying full price for prompts you resend</td>
+              <td><span class="rt">/v1/chat · agent-loop</span></td>
+              <td><span class="rt">18,402</span></td>
+              <td class="r">1,204.90</td>
+              <td class="r">42.3%<span class="pct" style="width:42px"></span></td>
+            </tr>
+            <tr>
+              <td><span class="sv hi">HI</span></td>
+              <td>Retry storms billing the same answer twice</td>
+              <td><span class="rt">/v1/chat · ingest</span></td>
+              <td><span class="rt">9,118</span></td>
+              <td class="r">642.18</td>
+              <td class="r">22.6%<span class="pct" style="width:23px"></span></td>
+            </tr>
+            <tr>
+              <td><span class="sv md">MD</span></td>
+              <td>Frontier model doing small-model work</td>
+              <td><span class="rt">/v1/classify</span></td>
+              <td><span class="rt">12,740</span></td>
+              <td class="r">488.04</td>
+              <td class="r">17.1%<span class="pct" style="width:17px"></span></td>
+            </tr>
+            <tr>
+              <td><span class="sv md">MD</span></td>
+              <td>Context sent but never used</td>
+              <td><span class="rt">/v1/chat · rag</span></td>
+              <td><span class="rt">6,955</span></td>
+              <td class="r">331.60</td>
+              <td class="r">11.7%<span class="pct" style="width:12px"></span></td>
+            </tr>
+            <tr>
+              <td><span class="sv lo">LO</span></td>
+              <td>Output limits left unbounded</td>
+              <td><span class="rt">/v1/complete</span></td>
+              <td><span class="rt">3,201</span></td>
+              <td class="r">179.90</td>
+              <td class="r">6.3%<span class="pct" style="width:6px"></span></td>
+            </tr>
+            <tr>
+              <td><span class="sv lo">LO</span></td>
+              <td>Agent loops re-reading the same context</td>
+              <td><span class="rt">/v1/chat · planner</span></td>
+              <td><span class="rt">2,088</span></td>
+              <td class="r">96.40</td>
+              <td class="r">3.4%<span class="pct" style="width:3px"></span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ph" style="border-top:1px solid var(--line)">
+          <h2>Spend</h2><span class="cnt">30 days · daily</span>
+        </div>
+        <div style="padding:14px 16px">
+          <svg width="100%" height="120" viewBox="0 0 640 120" preserveAspectRatio="none" aria-label="Daily spend">
+            <line x1="0" y1="30" x2="640" y2="30" stroke="#E2E2DD"/>
+            <line x1="0" y1="60" x2="640" y2="60" stroke="#E2E2DD"/>
+            <line x1="0" y1="90" x2="640" y2="90" stroke="#E2E2DD"/>
+            <g fill="#12130F">
+              <rect x="4"   y="76" width="14" height="44"/><rect x="26"  y="70" width="14" height="50"/>
+              <rect x="48"  y="80" width="14" height="40"/><rect x="70"  y="62" width="14" height="58"/>
+              <rect x="92"  y="66" width="14" height="54"/><rect x="114" y="54" width="14" height="66"/>
+              <rect x="136" y="58" width="14" height="62"/><rect x="158" y="48" width="14" height="72"/>
+              <rect x="180" y="52" width="14" height="68"/><rect x="202" y="44" width="14" height="76"/>
+              <rect x="224" y="50" width="14" height="70"/><rect x="246" y="40" width="14" height="80"/>
+              <rect x="268" y="46" width="14" height="74"/><rect x="290" y="36" width="14" height="84"/>
+              <rect x="312" y="42" width="14" height="78"/><rect x="334" y="34" width="14" height="86"/>
+              <rect x="356" y="38" width="14" height="82"/><rect x="378" y="30" width="14" height="90"/>
+              <rect x="400" y="34" width="14" height="86"/><rect x="422" y="26" width="14" height="94"/>
+              <rect x="444" y="32" width="14" height="88"/><rect x="466" y="24" width="14" height="96"/>
+              <rect x="488" y="28" width="14" height="92"/><rect x="510" y="20" width="14" height="100"/>
+              <rect x="532" y="26" width="14" height="94"/><rect x="554" y="18" width="14" height="102"/>
+              <rect x="576" y="22" width="14" height="98"/><rect x="598" y="14" width="14" height="106"/>
+            </g>
+            <g fill="#B3271C" opacity=".85">
+              <rect x="4"   y="76" width="14" height="14"/><rect x="26"  y="70" width="14" height="16"/>
+              <rect x="48"  y="80" width="14" height="13"/><rect x="70"  y="62" width="14" height="19"/>
+              <rect x="92"  y="66" width="14" height="17"/><rect x="114" y="54" width="14" height="21"/>
+              <rect x="136" y="58" width="14" height="20"/><rect x="158" y="48" width="14" height="23"/>
+              <rect x="180" y="52" width="14" height="22"/><rect x="202" y="44" width="14" height="25"/>
+              <rect x="224" y="50" width="14" height="23"/><rect x="246" y="40" width="14" height="26"/>
+              <rect x="268" y="46" width="14" height="24"/><rect x="290" y="36" width="14" height="27"/>
+              <rect x="312" y="42" width="14" height="25"/><rect x="334" y="34" width="14" height="28"/>
+              <rect x="356" y="38" width="14" height="27"/><rect x="378" y="30" width="14" height="29"/>
+              <rect x="400" y="34" width="14" height="28"/><rect x="422" y="26" width="14" height="31"/>
+              <rect x="444" y="32" width="14" height="29"/><rect x="466" y="24" width="14" height="31"/>
+              <rect x="488" y="28" width="14" height="30"/><rect x="510" y="20" width="14" height="33"/>
+              <rect x="532" y="26" width="14" height="31"/><rect x="554" y="18" width="14" height="33"/>
+              <rect x="576" y="22" width="14" height="32"/><rect x="598" y="14" width="14" height="35"/>
+            </g>
+          </svg>
+          <div class="foot"><span style="display:inline-block;width:9px;height:9px;background:#12130F;vertical-align:-1px"></span> total spend
+            &nbsp; <span style="display:inline-block;width:9px;height:9px;background:#B3271C;vertical-align:-1px"></span> attributed waste</div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="sec">
+          <div class="k">Sources</div>
+          <div class="srow"><span class="dot ok"></span><div style="flex:1"><div class="sname">OpenAI</div><div class="smeta">production org</div></div><span class="smeta">06:30</span></div>
+          <div class="srow"><span class="dot warn"></span><div style="flex:1"><div class="sname">Anthropic</div><div class="smeta">unreachable · retrying</div></div><span class="smeta">yest.</span></div>
+          <div style="margin-top:10px;display:grid;gap:6px">
+            <button class="btn">Connect a provider</button>
+            <button class="btn q">Upload a log file</button>
+          </div>
+          <p class="foot">Read-only. Usage counts only — token totals per day and model. No prompt text exists in that API.</p>
+        </div>
+        <div class="sec">
+          <div class="k">Alerts</div>
+          <div class="srow"><span class="dot warn"></span><div style="flex:1"><div class="sname">Spend up 18% d/d</div><div class="smeta">/v1/chat · 2 days ago</div></div></div>
+          <div class="srow"><span class="dot ok"></span><div style="flex:1"><div class="sname">Waste below 35% target</div><div class="smeta">this month</div></div></div>
+        </div>
+        <div class="sec">
+          <div class="k">Last statement</div>
+          <div style="font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.02em">$1,498.22</div>
+          <p class="foot">June 2026 · sent 1 Jul · archived. Statements are frozen once sent.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</body>
+</html>
