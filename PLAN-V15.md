@@ -224,6 +224,21 @@ Tests: T-POL-01 (FR-23 string survives verbatim, contiguous), T-POL-02
 carries counts-only line), figure-inventory grep (launch rails).
 **ux-reviewer gates EVERY changed surface (runs day 13).**
 
+**R-MAGIC-CONNECT (2026-07-22) adds to V-D9 (+0.5 day, absorbed):** the
+Connect flow becomes a 3-step guided wizard per provider (deep-link to the
+exact console screen + annotated screenshot; live server-side key
+validation with a plain-words verdict; a done-state stating "first audit
+tonight, nothing else to do"); on successful connect an IMMEDIATE pull +
+mini-audit runs in the background so the dashboard shows real numbers in
+the first session. Wizard copy carries zero jargon and its help text lives
+in the registry like every other string.
+Tests: T-WIZ-01 (live validation verdicts: a usage-readable key vs one
+without the scope, both plain-words, neither leaking the key), T-WIZ-02
+(connect triggers an immediate pull+audit, and the dashboard is non-empty
+without waiting for the tick), T-WIZ-03 (wizard strings resolve from the
+help registry — a missing key fails, per T-HELP law), T-WIZ-04 (jargon
+guard: the wizard never renders "org admin key" or a raw scope name).
+
 ### V-D10 (day 14) — HARDEN + SHIP (ships whatever exists — hard condition b)
 Full suite exit-code-verified; goldens byte-identical; deploy via
 provision.sh at tag v1.5.0; VPS smoke; launch-asset refresh (figure

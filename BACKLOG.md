@@ -51,6 +51,15 @@ promotion still requires a PRD amendment.
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
   (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
+- **Concierge onboarding** (R-MAGIC-CONNECT 2026-07-22 §4) — GTM register,
+  NOT a build item: for early customers, "book 10 minutes, we do it on a
+  call with you". The solo-founder advantage incumbents cannot match.
+  Revisit as a product feature only if it stops scaling.
+- **Provider OAuth for usage scopes** (R-MAGIC-CONNECT 2026-07-22 §5) —
+  TRIPWIRE: the day OpenAI or Anthropic ships OAuth covering usage
+  reporting, it promotes immediately as the connect path and the paste
+  wizard becomes the fallback. Until then the wizard is the state of the
+  art. Notify the founder when either provider announces it.
 - **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
   per-pipeline / per-knowledge-base attribution views, the T4-era
   architect dashboard. Registered, NOT built: arrives with T4 span data,

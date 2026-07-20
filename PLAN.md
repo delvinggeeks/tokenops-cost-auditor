@@ -513,6 +513,31 @@ finding." (3) SECTION PURPOSE LINES: every sidebar destination opens with
 one plain sentence of "what you do here" (sourced from the help
 registry) — the ecosystem's workflow made legible page by page.
 
+**R-MAGIC-CONNECT (founder, 2026-07-22) — WP-7 scope detail; +0.5 day
+absorbed in the polish milestone already in plan.** (1) GUIDED KEY WIZARD:
+Connect becomes a hand-held 3-step wizard per provider — (a) "Open your
+provider's key page" as a deep-link button to the exact console screen,
+with an annotated screenshot beside it showing precisely what to click and
+which permission to pick (read-only/usage scope); (b) paste field with LIVE
+validation — on paste we test the key server-side immediately and show
+"✓ Connected — we can see your usage (read-only). We can never see prompts
+or make calls." or a plain-words error ("this key can't read usage — here's
+the screenshot of the right permission"); (c) done-state setting
+expectations in one line: "First audit tonight. Your dashboard fills by
+morning. Nothing else to do — ever." (2) INSTANT GRATIFICATION PULL: on
+successful connect, fire an immediate first pull + mini-audit in the
+background rather than waiting for the nightly tick, so the dashboard shows
+real numbers within minutes — the magic moment is THE FIRST SESSION, not
+tomorrow. (3) COPY LAW for the wizard: zero jargon (never "org admin key";
+say "a read-only key to your usage reports"), every screenshot
+current-version, wizard help keys live in the registry (T-HELP coverage
+applies). (4) CONCIERGE FALLBACK recorded in the GTM register, NOT built:
+for early customers, "book 10 minutes, we do it on a call with you" — the
+solo-founder superpower incumbents cannot offer. (5) REGISTERED, NOT BUILT:
+provider OAuth adoption tripwire — the day OpenAI/Anthropic ship OAuth for
+usage scopes it promotes immediately as the sign-in path; until then the
+wizard IS the state of the art.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply
