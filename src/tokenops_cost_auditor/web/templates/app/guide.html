@@ -1,0 +1,35 @@
+{% extends "app/_shell.html" %}
+{% block title %}Guide — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-guide"/></svg>
+      <h2>Guide</h2>
+    </div>
+    {% for p in pages %}
+      <p><a href="/guide/{{ p.slug }}">{{ p.title }}</a><br>
+        <small class="muted">Who this is for: {{ p.audience }}</small></p>
+    {% endfor %}
+    <form method="post" action="/tour/replay">
+      <button class="btn" type="submit">Replay the guided tour</button>
+    </form>
+  </section>
+
+  <section class="widget w-8">
+    {% if page_body %}
+      <div class="widget-head"><h2>{{ page_body.title }}</h2></div>
+      {# Audience tag opens every guide page (R-PERSONA §3) #}
+      <p class="tells">Who this is for: <strong>{{ page_body.audience }}</strong></p>
+      <p>{{ page_body.body }}</p>
+    {% else %}
+      <div class="widget-head"><h2>Start here</h2></div>
+      <p class="tells">Who this is for: <strong>Both</strong></p>
+      <p>Each page is one screen. Pick the one that matches what you are trying to do —
+        or replay the tour to walk the dashboard itself.</p>
+    {% endif %}
+    <div class="provenance">Guide content and the "?" popovers share one source, so
+      they cannot disagree.</div>
+  </section>
+</div>
+{% endblock %}

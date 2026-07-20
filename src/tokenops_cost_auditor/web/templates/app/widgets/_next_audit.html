@@ -1,0 +1,13 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-4" id="w-next_audit">
+  {{ widget_head("i-clock", "next_audit", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>Scheduled audits run weekly once a source is connected.</p>
+      <a class="btn btn-quiet" href="/sources">Connect a source</a>
+    </div>
+  {% else %}
+    <div class="stat-lg">{{ w.data.countdown }}</div>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

@@ -57,6 +57,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     # single-use magic links: tokens issued at/before this instant are dead (FR-17)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # v1.5 V-D4g: guided-tour dismissal, server-side so it survives devices;
+    # "Replay tour" clears it (R-DESIGN-V3 §2a).
+    tour_dismissed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Audit(Base):
@@ -69,6 +72,9 @@ class Audit(Base):
     status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
     provider_mix: Mapped[str | None] = mapped_column(String(200))
     row_count: Mapped[int | None] = mapped_column(Integer)
+    # v1.5: distinct UTC days the audit covered — R-Q9 needs it to gate
+    # verified savings on a post-application audit of >= 7 days.
+    observed_days: Mapped[int | None] = mapped_column(Integer)
     valid_pct: Mapped[float | None] = mapped_column(Float)
     total_spend_usd: Mapped[float | None] = mapped_column(Float)
     projected_spend_usd: Mapped[float | None] = mapped_column(Float)

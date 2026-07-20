@@ -1,0 +1,71 @@
+{# Depth (c), fixed order (R-CLARITY §1): why → evidence → fix → verify →
+   methodology. This is the engineer's complete answer; the owner's complete
+   answer is the row above it. #}
+<div class="swap-in">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);">
+    <div>
+      <h2 style="margin-bottom:4px">{{ h.plain }}</h2>
+      <span class="sev sev-{{ row.severity }}">{{ row.severity }}</span>
+      <span class="badge badge-estimate">{{ row.confidence }}</span>
+      {# technical identifier: depth (c) only #}
+      <small class="muted">{{ h.technical }} · <code>{{ row.detector }}</code> ·
+        finding <code>{{ row.finding_id }}</code></small>
+    </div>
+    <div style="text-align:right">
+      <div class="money money-lg" style="color: var(--waste);">
+        ${{ "{:,.2f}".format(row.monthly_impact_usd) }}</div>
+      <small class="muted">per month</small>
+    </div>
+  </div>
+
+  <h3>Why this was flagged</h3>
+  <p>{{ h.why }}</p>
+
+  <h3>Evidence</h3>
+  {% if row.evidence_sample %}
+    <table class="ledger">
+      <thead><tr><th>UTC time</th><th>Model</th><th class="money">Tokens</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for e in row.evidence_sample[:20] %}
+        <tr><td>{{ e.ts }}</td><td>{{ e.model }}</td>
+          <td class="money">{{ "{:,}".format(e.tokens) }}</td><td>{{ e.note }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <small class="muted">No prompt text is ever stored — token counts, timestamps and
+      hashes only.</small>
+  {% else %}
+    <p class="muted">This finding is derived from daily aggregates, so there are no
+      per-call rows to show. Upload a request log export to get call-level evidence.</p>
+  {% endif %}
+
+  <h3>The fix</h3>
+  <p>{{ h.fix }}</p>
+  <pre class="snippet">{{ row.fix_text }}</pre>
+
+  <h3>How you'll know it worked</h3>
+  <p>{{ h.verify }}</p>
+
+  <div style="margin-top:var(--s2); display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
+    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
+          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
+      <input type="hidden" name="verdict" value="applied">
+      <button class="btn btn-primary" type="submit"
+        {% if verdict == "applied" %}disabled{% endif %}>Applied</button>
+    </form>
+    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
+          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
+      <input type="hidden" name="verdict" value="dismissed">
+      <button class="btn" type="submit">Dismissed</button>
+    </form>
+    <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
+          hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
+      <input type="hidden" name="verdict" value="not_relevant">
+      <button class="btn btn-quiet" type="submit">Not relevant</button>
+    </form>
+    <a class="btn btn-quiet" href="{{ h.methodology_url }}">Methodology →</a>
+  </div>
+  <div class="provenance">Finding <code>{{ row.finding_id }}</code> in audit
+    <code>{{ audit.id[:4] }}…{{ audit.id[-3:] }}</code> · verified amount will be capped
+    at this estimate</div>
+</div>

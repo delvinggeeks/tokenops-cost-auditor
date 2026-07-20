@@ -200,6 +200,7 @@ def run_source_audit(
             )
         )
     audit.row_count = total_calls
+    audit.observed_days = observed
     audit.provider_mix = source.provider
     audit.total_spend_usd = total
     audit.projected_spend_usd = report.monthly_optimized_usd

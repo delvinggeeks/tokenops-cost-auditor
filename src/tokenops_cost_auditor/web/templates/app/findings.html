@@ -1,0 +1,59 @@
+{% extends "app/_shell.html" %}
+{% block title %}Findings — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+  <section class="widget w-12">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-findings"/></svg>
+      <h2>{{ items|length }} findings</h2>
+    </div>
+    {% if not items %}
+      <div class="empty">
+        <p>No findings yet — run an audit and they appear here, ranked by dollars.</p>
+        <a class="btn btn-primary" href="/sources">Connect a source</a>
+        <a class="btn" href="/upload">Upload a log file</a>
+      </div>
+    {% else %}
+      <table class="ledger">
+        <thead><tr>
+          <th class="sortable">Finding</th>
+          <th class="sortable">Severity</th>
+          <th class="sortable">Confidence</th>
+          <th class="sortable money" aria-sort="descending">Monthly impact</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+        {% for it in items %}
+          {# Headline depth: plain phrasing only — the detector id lives in the
+             drawer at depth (c) (R-PERSONA jargon law). #}
+          <tr>
+            <td>{{ it.plain }}</td>
+            <td><span class="sev sev-{{ it.severity }}">{{ it.severity }}</span></td>
+            <td><span class="badge badge-{{ 'estimate' if it.confidence == 'estimated' else 'neutral' }}">
+              {{ it.confidence }}</span></td>
+            <td class="money">${{ "{:,.2f}".format(it.monthly_usd) }}</td>
+            <td>
+              {% if it.verdict == "applied" %}<span class="badge badge-verified">applied</span>{% endif %}
+              <button class="btn btn-quiet"
+                      hx-get="/findings/{{ audit.id }}/{{ it.finding_id }}"
+                      hx-target="#drawer" hx-swap="innerHTML">Details</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+    <div class="provenance">
+      {% if audit %}Audit {{ audit.id[:4] }}…{{ audit.id[-3:] }} ·
+        {{ audit.row_count or 0 }} calls · {{ audit.observed_days or 0 }} days{% else %}
+        No audits yet{% endif %}</div>
+  </section>
+
+  {# Row → drawer expansion, the pattern a Datadog/Stripe user already knows
+     (R-CLARITY §2 familiarity principle). #}
+  <section class="widget w-12" id="drawer" aria-live="polite">
+    <p class="muted">Select a finding to see why it was flagged, its evidence, the fix,
+      and what your next audit will show.</p>
+  </section>
+</div>
+{% endblock %}

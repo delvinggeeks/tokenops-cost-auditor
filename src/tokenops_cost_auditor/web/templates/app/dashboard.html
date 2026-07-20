@@ -1,0 +1,98 @@
+{% extends "app/_shell.html" %}
+{% block title %}Overview — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+
+  {# W0 — the holistic spine. Deliberately NOT a .widget: it is a full-bleed
+     strip with its own 1px chrome (R-DESIGN-SHELL §3). #}
+  <section class="w-12">
+    {% set h = help.widget("pipeline") %}
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-detector"/></svg>
+      <h2>{{ h.title }}</h2>
+      <details class="help">
+        <summary aria-label="What is this?">?</summary>
+        <div class="help-body">
+          <dl>
+            <dt>What this shows</dt><dd>{{ h.what }}</dd>
+            <dt>Where the number comes from</dt><dd>{{ h.where }}</dd>
+            <dt>What to do with it</dt><dd>{{ h.do }}</dd>
+          </dl>
+          <a href="{{ h.link }}">{{ h.link_text }} →</a>
+        </div>
+      </details>
+    </div>
+    <p class="tells">{{ h.tells }}</p>
+    <div class="ribbon" id="pipeline-ribbon">
+      <div class="seg {{ 'active' if not widgets.sources.empty else 'waiting' }}">
+        <div class="stage-name">Input</div>
+        <div class="stage-state">
+          {{ widgets.sources.data['items']|length if not widgets.sources.empty else "Start here" }}
+          {{ "source(s)" if not widgets.sources.empty else "" }}</div>
+        <div class="stage-note">{{ widgets.sources.provenance }}</div>
+      </div>
+      <div class="seg {{ 'active' if not widgets.spend_trend.empty else 'waiting' }}">
+        <div class="stage-name">Analyze</div>
+        <div class="stage-state">
+          {{ "%.0f days"|format(widgets.spend_trend.data.days) if not widgets.spend_trend.empty else "Waiting" }}</div>
+        <div class="stage-note">{{ widgets.spend_trend.provenance }}</div>
+      </div>
+      <div class="seg {{ 'active' if not widgets.top_findings.empty else 'waiting' }}">
+        <div class="stage-name">Report</div>
+        <div class="stage-state">
+          {{ widgets.top_findings.data.total if not widgets.top_findings.empty else "Waiting" }}
+          {{ "findings" if not widgets.top_findings.empty else "" }}</div>
+        <div class="stage-note">
+          {{ "${:,.2f}/mo identified".format(widgets.savings.data.identified)
+             if not widgets.savings.empty else "Findings ranked by dollars" }}</div>
+      </div>
+      <div class="seg {{ 'active' if widgets.savings.data.get('verified_count') else 'waiting' }}">
+        <div class="stage-name">Act</div>
+        <div class="stage-state">
+          {{ widgets.savings.data.get('verified_count', 0) }} applied</div>
+        <div class="stage-note">
+          {{ "${:,.2f}/mo verified".format(widgets.savings.data.verified)
+             if not widgets.savings.empty else "Apply a fix, we verify the saving" }}</div>
+      </div>
+      <div class="seg waiting">
+        <div class="stage-name">Prevent</div>
+        <div class="stage-state">Waiting</div>
+        <div class="stage-note">Alerts watch between audits</div>
+      </div>
+    </div>
+  </section>
+
+  {% with w = widgets.savings %}{% include "app/widgets/_savings.html" %}{% endwith %}
+  {% with w = widgets.spend_trend %}{% include "app/widgets/_spend_trend.html" %}{% endwith %}
+  {% with w = widgets.waste_trend %}{% include "app/widgets/_waste_trend.html" %}{% endwith %}
+  {% with w = widgets.top_findings %}{% include "app/widgets/_top_findings.html" %}{% endwith %}
+  {% with w = widgets.sources %}{% include "app/widgets/_sources.html" %}{% endwith %}
+  {% with w = widgets.next_audit %}{% include "app/widgets/_next_audit.html" %}{% endwith %}
+</div>
+
+{% if show_tour %}
+  {# Guided tour, step 1 of 5 (R-DESIGN-V3 §2a). Progressive: the markup is
+     inert without JS, and dismissal persists server-side. #}
+  <div id="tour" class="tour-pop" data-step="1"
+       style="left: var(--s4); bottom: var(--s4); position: fixed;">
+    <div class="step">Step <span id="tour-n">1</span> of 5</div>
+    <h3 id="tour-title">This strip is the whole product</h3>
+    <p id="tour-body">Usage comes in, we price and analyse it, you get a ranked report,
+      you apply a fix, and alerts watch for the next surprise. Whatever is lit is where
+      you are right now.</p>
+    <div class="row">
+      <div class="tour-dots" aria-hidden="true">
+        <i class="on"></i><i></i><i></i><i></i><i></i>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" hx-post="/tour/dismiss" hx-target="#tour"
+              hx-swap="outerHTML">Skip tour</button>
+      <button class="btn btn-primary" id="tour-next">Next</button>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if show_tour %}<script src="/static/tour.js" defer></script>{% endif %}
+{% endblock %}

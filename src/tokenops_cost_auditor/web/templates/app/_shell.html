@@ -1,0 +1,60 @@
+{# App shell (R-DESIGN-SHELL §1): stage-grouped sidebar, slim topbar with the
+   freshness stamp. Only shipped modules appear — no "coming soon", ever. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page|title }} — TokenOps Cost Auditor{% endblock %}</title>
+  <link rel="stylesheet" href="/static/wa-design.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+{% include "app/_sprite.html" %}
+{% macro icon(name, cls="i") %}<svg class="{{ cls }}" aria-hidden="true"><use href="#{{ name }}"/></svg>{% endmacro %}
+{% macro nav_item(dest, ic, label, href) %}
+  <a href="{{ href }}"{% if page == dest %} aria-current="page"{% endif %}>{{ icon(ic) }}{{ label }}</a>
+{% endmacro %}
+<div class="app">
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">TokenOps Cost Auditor</div>
+    <nav class="nav-group">
+      <div class="label">Monitor</div>
+      {{ nav_item("overview", "i-overview", "Overview", "/dashboard") }}
+      {{ nav_item("findings", "i-findings", "Findings", "/findings") }}
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Connect</div>
+      {{ nav_item("sources", "i-source", "Sources", "/sources") }}
+      {{ nav_item("get_logs", "i-upload", "Get your logs", "/upload") }}
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Help</div>
+      {{ nav_item("guide", "i-guide", "Guide", "/guide") }}
+      <form method="post" action="/tour/replay" style="display:contents">
+        <button class="btn btn-quiet" style="width:100%;text-align:left;padding:6px 24px;">
+          {{ icon("i-replay") }}Replay tour</button>
+      </form>
+      <a href="/docs-site/" >{{ icon("i-method") }}Documentation</a>
+    </nav>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">{{ page|replace("_", " ")|title }}</span>
+      <span class="plan-badge">{{ plan|title }}</span>
+      <span class="spacer"></span>
+      <span class="freshness">{{ freshness }}</span>
+      <span class="muted">{{ user_email }}</span>
+    </header>
+    <main class="main">
+      {# Section purpose line (R-CLARITY §3): what you do here, in one sentence #}
+      <p class="tells" style="margin-top:0">{{ purpose }}</p>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -147,6 +147,26 @@ R-Q1 law pinned by test: D4/D5/D6 NEVER emit on aggregates
 D2-agg target = the account's own best observed bucket share — never an
 invented benchmark; D3-agg needs ≥3 buckets for its median.
 
+## R-Q9 verified-savings formula (PLAN-V15 V-D4, 2026-07-21) — derivation
+
+Founder formula: verified(month) = Σ over Applied findings of
+max(0, baseline_monthly_impact - recomputed_impact_same_detector_and_route),
+counted only after >=1 post-application audit covering >=7 days, each
+finding capped at its original estimate.
+
+| Case | Derivation | Golden |
+|---|---|---|
+| Applied + re-audited | baseline 1000.00, same route recomputed 250.00 → max(0, 750.00), cap 1000 → 750.00 | **750.00** |
+| Applied, no qualifying audit | later audit covers 3 days < 7 → excluded; counted as pending, not savings | **0.00** |
+| Route regressed | baseline 500.00, recomputed 900.00 → max(0, -400.00) | **0.00** |
+| Customer-reported | savings_realized 333.00 on a dismissed finding → separate line only | verified **0.00**, reported **333.00** |
+| Unapplied | two findings 400.00 + 600.00, no feedback | identified **1000.00**, verified **0.00** |
+
+Route identity = (detector, detail["model"] if present else finding_id) —
+the stable key a re-audit reproduces for the same traffic. The >=7-day gate
+reads audits.observed_days, persisted by BOTH audit producers (runner.py and
+source_audit.py) in the same commit as this formula.
+
 ## Founder verification log
 
 - 2026-07-17 | Founder verification: ledger row 1 (post-UAT-D5) —
