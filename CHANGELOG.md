@@ -5,7 +5,7 @@ appended by the person deploying, same day.
 
 (entries append below)
 
-- 2026-07-23 · v15-d10 (pre-tag rehearsal, NOT a deploy) · V-D10 DEPLOY
+- 2026-07-23 · v15-d10 @ ec50ca0 (pre-tag rehearsal, NOT a deploy) · V-D10 DEPLOY
   REHEARSAL on a production-shaped copy. Real topology, isolated: the live
   local stack was already up with populated pgdata/uploads/reports volumes,
   so the rehearsal ran as a separate compose project (tokenops-rehearsal)
@@ -30,8 +30,23 @@ appended by the person deploying, same day.
   printed nothing at all, because env.py never applied alembic.ini's logging
   config, leaving an operator unable to tell 7 applied revisions from a
   no-op; (3) alembic path_separator deprecation pinned. Rehearsal stack and
-  volumes destroyed afterwards. NO PRODUCTION DEPLOY: that remains a
-  separate founder GO after the gates.
+  volumes destroyed afterwards.
+  SECOND PASS (this commit), after the ops gate flagged that pass 1 only ever
+  migrated from empty: rehearsed the INCREMENTAL path a real deploy takes —
+  migrated to 006 (production's current revision), wrote live user + statement
+  rows at that schema, then ran `alembic upgrade head` over them. 007 applied,
+  every live row survived byte-intact, and the new users.statement_emails
+  column lands NULL on pre-existing rows, which both read sites deliberately
+  treat as opted-IN (routes_settings.py:66, scripts/monthly_statements.py:54,
+  matching 007's docstring) — so existing customers keep receiving statements
+  after the deploy rather than being silently opted out. This pass also caught
+  a defect in the pass-1 logging fix (see below).
+  KNOWN GAPS, not covered by either pass and not claimed: (a) an in-place
+  `up -d --build` over an already-running stack — container_name is pinned
+  globally, and rehearsing that locally would have meant recreating the live
+  stack; (b) magic-link delivery, since the rehearsal ran on dummy secrets
+  with the real Postmark token deliberately unread.
+  NO PRODUCTION DEPLOY: that remains a separate founder GO after the gates.
 
 - 2026-07-19 · d13-live → d13-live.1 (8bd96a6) · FIRST PRODUCTION DEPLOY —
   https://tokenops.cloud on founder VPS (Contabo Cloud VPS 4: x86, 4 vCPU,

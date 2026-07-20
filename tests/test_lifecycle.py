@@ -105,7 +105,11 @@ class TestTLIF03AuditTrail:
         assert entries[0].detail == {"mode": "scheduled"}
 
 
-class TestPurgeCliEntrypoint:
+class TestFR21PurgeCliEntrypoint:
+    """Named for the requirement, not a T-LIF id: docs/05 defines T-LIF-01..04
+    and none of them covers the cron entrypoint. Follows the naming precedent
+    set by TestFR26KeysPurgeWithUploads below (V-D10 vv gate f.8)."""
+
     def test_the_purge_job_actually_runs_end_to_end(
         self, app: FastAPI, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:

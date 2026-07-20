@@ -1165,3 +1165,38 @@ Terms §4/§6 still describe a per-audit business only; they do not mention
 subscriptions at all, and §6 caps liability at "the amount you paid for the
 audit in question", which is undefined for a subscriber. I did not author
 contract language for that — founder/legal call.
+
+### V-D10 gate round (2026-07-23) — three gates, all PASS-WITH-NOTES
+
+ops-engineer, spec-guard FINAL SWEEP and vv full all returned
+PASS-WITH-NOTES on the settled diff. Notes actioned:
+
+- ops f.1 (REAL, and my fix for it was itself wrong twice): the pass-1 fix
+  used logging.config.fileConfig, the stock alembic template, which rebuilds
+  every logger named in the ini INCLUDING root — and alembic is driven
+  in-process here (tests/test_runner.py:233 calls command.upgrade in the same
+  interpreter as pytest), so it would tear the JSON handler off root
+  mid-session. Replaced with configuration of the `alembic` logger alone.
+  That replacement then silently did nothing, because it guarded on
+  `if log.handlers` and the alembic package ships a NullHandler on its own
+  logger — so the guard was always true and skipped the whole function. Now
+  tests for a NON-Null handler and raises the level either way. Caught only
+  because the second rehearsal pass re-ran the real command and saw silence
+  again; the code looked correct both times.
+- ops f.4b (REAL GAP): pass 1 migrated only from empty. Second pass rehearsed
+  the incremental path over live data — see CHANGELOG. Result: additive
+  migration verified safe, NULL statement_emails correctly reads as opted-in.
+- ops f.4a / f.4c: recorded as known gaps rather than papered over.
+- ops f.5: CHANGELOG entry now carries the rehearsed SHA.
+- vv f.1: purge.main() now disposes its engine — as a cron one-shot process
+  exit covered it, but main() is callable in-process (and now is, from the
+  test) where each call leaked a live connection.
+- vv f.8: test class renamed TestFR21PurgeCliEntrypoint, following the
+  TestFR26... precedent rather than inventing a T-LIF id docs/05 lacks.
+- spec-guard f.1 (it could not verify under its charter; I did): the asset
+  claim "no prompt text in that API, so there is none in our database" is
+  TRUE — openai_usage.py:46-47 and anthropic_usage.py:57-58 map provider
+  usage-report fields to counts only.
+- spec-guard f.6 / vv f.7 confirm no traceability row is owed: nothing here
+  implements a new FR, and the Terms price change is a copy correction, not
+  an estimator change, so CLAUDE.md rule 4 does not apply.
