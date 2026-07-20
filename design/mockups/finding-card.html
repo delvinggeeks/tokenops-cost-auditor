@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Finding card, the atomic unit (R-DESIGN §4c) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<style>
+  .stage-note { margin: var(--s4) 0 var(--s2); }
+  .fc { max-width: 720px; }
+  .fc-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); }
+  .fc-impact { text-align: right; }
+  .fc-actions { margin-top: var(--s2); display: flex; gap: var(--s1); align-items: center; }
+  .copy-wrap { position: relative; margin-top: var(--s2); }
+  .copy-wrap .btn { position: absolute; top: 8px; right: 8px; padding: 4px 10px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Finding card — one component, three renderers</h1>
+  <p class="muted">Anatomy: plain-English title → monthly $ (big) → confidence badge →
+  evidence expander → fix as copyable snippet → Applied / Dismissed / Not relevant.</p>
+
+  <p class="stage-note muted">Renderer 1 of 3 — dashboard/web (interactive):</p>
+
+  <article class="card fc" aria-labelledby="f1-title">
+    <div class="fc-head">
+      <div>
+        <h2 id="f1-title" style="margin-bottom: 4px;">Your agent re-sends a 28,000-token
+        prefix uncached, 1,900 times a day</h2>
+        <span class="badge badge-estimate">estimate</span>
+        <small class="muted">D2 · missing prompt cache · claude-sonnet-5</small>
+      </div>
+      <div class="fc-impact">
+        <div class="money money-lg" style="color: var(--waste);">$1,120.10</div>
+        <small class="muted">per month</small>
+      </div>
+    </div>
+
+    <details class="evidence">
+      <summary>Evidence — 20 sampled calls (counts only)</summary>
+      <div>
+        <table class="ledger">
+          <thead><tr><th>UTC time</th><th>Model</th><th class="money">Prompt tokens</th>
+            <th class="money">Cached</th><th class="money">Billed as-if-cached</th></tr></thead>
+          <tbody>
+            <tr><td>Jul 18 09:14:02</td><td>claude-sonnet-5</td>
+              <td class="money">28,412</td><td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+            <tr><td>Jul 18 09:14:31</td><td>claude-sonnet-5</td>
+              <td class="money">28,412</td><td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+            <tr><td>Jul 18 09:15:07</td><td>claude-sonnet-5</td>
+              <td class="money">28,395</td><td class="money">0</td><td class="money">$0.0568 → $0.0071</td></tr>
+          </tbody>
+        </table>
+        <small class="muted">No prompt text is ever stored — token counts, timestamps and
+        hashes only.</small>
+      </div>
+    </details>
+
+    <div class="copy-wrap">
+      <pre class="snippet">"system": [{"type": "text", "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"}}]</pre>
+      <button class="btn">Copy</button>
+    </div>
+
+    <div class="fc-actions">
+      <button class="btn btn-primary">Applied</button>
+      <button class="btn">Dismissed</button>
+      <button class="btn btn-quiet">Not relevant</button>
+      <small class="muted">Applied findings are recomputed on the next audit;
+      the verified delta joins your headline.</small>
+    </div>
+  </article>
+
+  <p class="stage-note muted">Renderer 3 of 3 — PDF/static (same tokens via print styles;
+  actions and expander removed, evidence always open):</p>
+
+  <article class="card fc" style="box-shadow: none;">
+    <div class="fc-head">
+      <div>
+        <h2 style="margin-bottom: 4px;">Your agent re-sends a 28,000-token prefix
+        uncached, 1,900 times a day</h2>
+        <span class="badge badge-estimate">estimate</span>
+        <small class="muted">D2 · missing prompt cache · claude-sonnet-5</small>
+      </div>
+      <div class="fc-impact">
+        <div class="money money-lg" style="color: var(--waste);">$1,120.10</div>
+        <small class="muted">per month</small>
+      </div>
+    </div>
+    <p><strong>Fix:</strong> mark the stable system prefix with
+    <code>cache_control: ephemeral</code>; your first call each 5 minutes writes the
+    cache, the other ~1,899 read it at 1/10th the input rate.</p>
+  </article>
+
+  <p class="muted" style="margin: var(--s4) 0;">MOCKUP — sample data only.
+  Delight: the evidence expander spring (press-scale is the system-wide micro-confirmation, not this surface's delight).</p>
+</div>
+</body>
+</html>

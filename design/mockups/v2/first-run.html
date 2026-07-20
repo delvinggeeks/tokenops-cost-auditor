@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v2 — First run inside the shell (R-DESIGN-SHELL §5) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../../wa-design.css">
+</head>
+<body>
+<!-- MOCKUP v2. Minute one: the SAME shell, the SAME widgets, each in its
+     designed empty state. Nothing is hidden and nothing is faked — the
+     product looks like itself before any data exists. -->
+<div class="app">
+
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">TokenOps Cost Auditor</div>
+    <nav class="nav-group">
+      <div class="label">Monitor</div>
+      <a href="#" aria-current="page">Overview</a>
+      <a href="#">Findings</a>
+      <a href="#">Reports &amp; audits</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Connect</div>
+      <a href="#">Sources</a>
+      <a href="#">Get your logs</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Act</div>
+      <a href="#">Alerts</a>
+      <a href="#">Savings statements</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Account</div>
+      <a href="#">Settings</a>
+      <a href="#">Billing</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Engineering</div>
+      <a href="#">Detector detail</a>
+      <a href="#">Methodology</a>
+    </nav>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <button class="btn btn-quiet sidebar-toggle" aria-expanded="true">Menu</button>
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">Overview</span>
+      <span class="plan-badge">Free</span>
+      <span class="spacer"></span>
+      <span class="freshness">No data yet — connect a source or upload a log file</span>
+      <button class="btn btn-quiet">lokesh@…</button>
+    </header>
+
+    <main class="main">
+      <div class="grid">
+
+        <!-- W0 — the spine, honest about where he is: nothing pretends to be running -->
+        <section class="w-12" aria-labelledby="w0">
+          <h2 id="w0" style="margin-bottom: 2px;">Your pipeline, right now</h2>
+          <p class="tells" style="margin-bottom: var(--s2);">What this tells you:
+            the whole loop, and the one step waiting on you.</p>
+          <div class="ribbon">
+            <div class="seg active">
+              <div class="stage-name">Input</div>
+              <div class="stage-state">Start here</div>
+              <div class="stage-note">Connect a provider or upload a log export</div>
+            </div>
+            <div class="seg waiting">
+              <div class="stage-name">Analyze</div>
+              <div class="stage-state">Waiting</div>
+              <div class="stage-note">Six detectors, priced at a verified rate card</div>
+            </div>
+            <div class="seg waiting">
+              <div class="stage-name">Report</div>
+              <div class="stage-state">Waiting</div>
+              <div class="stage-note">Findings ranked by dollars</div>
+            </div>
+            <div class="seg waiting">
+              <div class="stage-name">Act</div>
+              <div class="stage-state">Waiting</div>
+              <div class="stage-note">Apply a fix, we verify the saving</div>
+            </div>
+            <div class="seg waiting">
+              <div class="stage-name">Prevent</div>
+              <div class="stage-state">Waiting</div>
+              <div class="stage-note">Alerts watch between audits</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- W1 — hero slot: no fabricated number (R-Q9); it teaches the next action -->
+        <section class="widget w-12" aria-labelledby="w1">
+          <h2 id="w1">Verified savings</h2>
+          <p class="tells">What this tells you: money you are no longer spending,
+            recomputed from your own logs after you apply a fix.</p>
+          <div class="empty">
+            <p>Your first audit fills this in. Most people are three minutes away
+              from it — connect a provider for daily pulls, or upload a log export
+              for the full six-detector audit.</p>
+            <a class="btn btn-primary" href="#">Connect OpenAI</a>
+            <a class="btn btn-primary" href="#">Connect Anthropic</a>
+            <a class="btn" href="#">Upload a log file</a>
+            <a class="btn btn-quiet" href="#">See a sample report first</a>
+          </div>
+          <div class="provenance">No audits yet · nothing you send us contains prompt
+            text — token counts and metadata only</div>
+        </section>
+
+        <section class="widget w-6" aria-labelledby="w2">
+          <h2 id="w2">Spend trend</h2>
+          <p class="tells">What this tells you: what you are paying now versus the
+            last 30 days.</p>
+          <div class="empty">
+            <p>We chart this from your first pull. A connected source backfills
+              30 days immediately, so this is rarely empty for long.</p>
+            <a class="btn" href="#">Connect a source</a>
+          </div>
+          <div class="provenance">Awaiting first pull</div>
+        </section>
+
+        <section class="widget w-6" aria-labelledby="w3">
+          <h2 id="w3">Waste share</h2>
+          <p class="tells">What this tells you: how much of your spend our detectors
+            can account for as avoidable.</p>
+          <div class="empty">
+            <p>Needs one audit. On connected sources we run three detectors; on
+              uploaded request logs, all six.</p>
+            <a class="btn btn-quiet" href="#">What each detector finds</a>
+          </div>
+          <div class="provenance">Awaiting first audit</div>
+        </section>
+
+        <section class="widget w-8" aria-labelledby="w4">
+          <h2 id="w4">Top findings by monthly impact</h2>
+          <p class="tells">What this tells you: the biggest things worth fixing,
+            ranked by dollars.</p>
+          <div class="empty">
+            <p>Nothing yet. The sample report shows exactly what a finding looks
+              like — plain-English title, dollar impact, the evidence behind it,
+              and a fix you can paste.</p>
+            <a class="btn" href="#">Open the sample report</a>
+          </div>
+          <div class="provenance">Awaiting first audit</div>
+        </section>
+
+        <section class="widget w-4" aria-labelledby="w6">
+          <h2 id="w6">Next scheduled audit</h2>
+          <p class="tells">What this tells you: when your numbers refresh.</p>
+          <div class="empty">
+            <p>Scheduled audits run weekly on Pro. On Free you get one full
+              audit of an uploaded log file.</p>
+            <a class="btn btn-quiet" href="#">Compare plans</a>
+          </div>
+          <div class="provenance">Free plan · no schedule</div>
+        </section>
+
+        <section class="widget w-4" aria-labelledby="w5">
+          <h2 id="w5">Sources</h2>
+          <p class="tells">What this tells you: whether we are receiving your usage
+            data.</p>
+          <div class="empty">
+            <p>No sources connected. A connection reads usage counts from your
+              provider's admin API — never prompt or completion text.</p>
+            <a class="btn btn-primary" href="#">Connect a source</a>
+          </div>
+          <div class="provenance">0 connections</div>
+        </section>
+
+        <section class="widget w-4" aria-labelledby="w7">
+          <h2 id="w7">Recent alerts</h2>
+          <p class="tells">What this tells you: surprises we caught between audits.</p>
+          <div class="empty">
+            <p>Alerts start watching once you have an audit to compare against.</p>
+            <a class="btn btn-quiet" href="#">See what we can alert on</a>
+          </div>
+          <div class="provenance">No rules armed</div>
+        </section>
+
+        <section class="widget w-4" aria-labelledby="w8">
+          <h2 id="w8">Savings statement</h2>
+          <p class="tells">What this tells you: the one-page summary you can forward
+            to whoever signs off on the bill.</p>
+          <div class="empty">
+            <p>Your first statement is issued at the end of your first full month.</p>
+            <a class="btn btn-quiet" href="#">See an example statement</a>
+          </div>
+          <div class="provenance">No statements yet</div>
+        </section>
+
+      </div>
+
+      <p class="muted" style="margin-top: var(--s4); font-size: 13px;">
+        MOCKUP v2 — first-run state. One designed delight per flow: here it is the
+        pipeline ribbon showing the whole loop with exactly one step lit.
+        No number is invented before an audit exists.</p>
+    </main>
+  </div>
+</div>
+</body>
+</html>

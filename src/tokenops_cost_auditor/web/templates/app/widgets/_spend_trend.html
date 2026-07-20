@@ -1,0 +1,31 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-6" id="w-spend_trend">
+  {{ widget_head("i-trend-up", "spend_trend", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>We chart this from your first pull. A connected source backfills 30 days
+        immediately.</p>
+      <a class="btn" href="/sources">Connect a source</a>
+    </div>
+  {% else %}
+    <div class="money money-lg">${{ "{:,.2f}".format(w.data.run_rate_usd) }}<span
+      class="muted" style="font-size:14px;font-family:var(--sans)"> /mo run-rate</span></div>
+    {% set vmax = (w.series | map(attribute="value") | max) or 1 %}
+    <svg class="chart" viewBox="0 0 342 140" role="img"
+         aria-label="Daily spend across the audited window">
+      {% for gy in [20, 50, 80, 110] %}
+        <line class="grid-line" x1="34" y1="{{ gy }}" x2="342" y2="{{ gy }}"/>
+      {% endfor %}
+      <g transform="translate(34,0)">
+        <polyline class="plot draw" stroke="var(--accent)" points="
+          {%- for p in w.series -%}
+            {{ loop.index0 * (308 / [w.series|length - 1, 1]|max) }},{{ 120 - (p.value / vmax * 100) }}{{ " " }}
+          {%- endfor -%}"/>
+      </g>
+      <text class="axis-label" x="0" y="23">${{ "%.0f"|format(vmax) }}</text>
+      <text class="axis-label" x="34" y="134">{{ w.series[0].label }}</text>
+      <text class="axis-label" x="342" y="134" text-anchor="end">{{ w.series[-1].label }}</text>
+    </svg>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

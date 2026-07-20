@@ -39,6 +39,12 @@ publicly ("—" = internal-only, no public page needed).
 | FR-29  | Ops | scripts/pricing_refresh.py                 | T-OPS-04 | concepts/pricing-data |
 | FR-30  | C5  | report/model (equiv-spend flag), _report_body | T-REP-09 | quickstart |
 | FR-31  | v1.5 | PLANNED (GRAND ORDER v2, WP-2 dashboard "My audits"; purged rows metadata-only) | test IDs assigned in PLAN-V15 | — |
+| V15 R-Q1 | C4,C5 | rules/aggregate (d1/d2/d3 aggregate estimators; INACTIVE law), connectors/source_audit (tier+coverage) | T-AGG-01..05, T-SA-01..03, T-REP-03 | engineering/performance (tier note pending WP-7) |
+| V15 R-CONNECT | C6 | connectors/{openai,anthropic}_usage, pull (idempotent upsert + stats), schedule (tick), crypto (HKDF/Fernet) | T-CON-01..06, T-SCH-01..03, T-KEY-01..03, T-V15-MIG-01 | — |
+| V15 R-Q5/Q6 | C6 | web/routes_sources (plan gating, revoke deletes ciphertext) | tests/test_sources_routes.py | — |
+| V15 WP-3b alerts | C6 | services/alerts (observe-only), web/routes_alerts (threshold editor — the single editor, linked from Settings) | T-ALR-01..05, tests/test_alerts.py::TestAlertsPage | — |
+| V15 WP-4 statement | C5,C6 | services/statements/build (R-Q9 + R-STMT-MONTH), web/routes_statements | T-STMT-01..03 | — |
+| V15 WP-5 settings | C6 | web/routes_settings, services/lifecycle/purge (one purge_one primitive: scheduled/admin/customer) | T-SET-01..03 + purge scoping/idempotence | — |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 | concepts/how-it-works, engineering/testing |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) | engineering/security |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 | api/overview |

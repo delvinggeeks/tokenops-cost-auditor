@@ -124,6 +124,87 @@ re-read signature 6 >= 5, "agent loop suspected"):
 
 | UAT-D5 exporter dedup + D4 id guard (founder refusal 2026-07-18) | Claude Code exporter emitted one row per transcript EVENT (streaming updates + cross-file session replays), not per completed call — founder-side verification found 3,106 rows vs 1,304 unique request_ids and REFUSED ledger row 1. Fix: exporter dedupes by request_id (max-complete usage tuple wins, ties → latest event; dedup summary printed every run); ingest warns loudly when duplicate ids exceed 1% of rows; D4 drops duplicate request_ids before clustering (same id = same call, never a retry). Estimator formulas UNCHANGED; goldens unaffected (fixtures carry unique ids) — suite re-verified green same commit. All prior Claude Code-derived figures (ledger row 1, uat1 dogfood) invalidated and regenerated | claude_code_export.py, ingest/__init__.py, d4_retry_storm.py |
 
+## T2 aggregate estimators (PLAN-V15 R-Q1, 2026-07-20) — derivations
+
+Fixture: tests/fixtures/aggregate_usage.json (anthropic, observed_days=10,
+monthly scale ×3). Rates used (2026-07): opus-4-8 in 5.0 / out 25.0 / cr
+0.5; sonnet-5 2.0 / 10.0 / 0.2; haiku-4-5 1.0 / 5.0 / 0.1. Bucket cost is
+as-billed: uncached×input + cached×cache_read + completion×output (cache
+WRITES unobservable in aggregates — omitted on BOTH sides of every
+comparison, conservative direction). All aggregate findings
+confidence=estimated. One finding per (detector, model).
+
+| Estimator | Derivation | Golden |
+|---|---|---|
+| D1-agg (opus-4-8→sonnet-5; avg completion 15,000/150 = 100 < 150) | A: cost@opus (1M×5.0 + 10k×25.0)/1e6 = 5.25; cost@sonnet (1M×2.0 + 10k×10.0)/1e6 = 2.10; Δ 3.15. B: cost@opus (400k×5.0 + 100k×0.5 + 5k×25.0)/1e6 = 2.175; cost@sonnet (400k×2.0 + 100k×0.2 + 5k×10.0)/1e6 = 0.87; Δ 1.305. Window 4.455 × 3 | **13.365** |
+| D2-agg sonnet-5 (target share = own best bucket = 0.5) | bucket D extra-cached 0.5×2M − 0 = 1M × (2.0−0.2)/1e6 = 1.80 × 0.8 haircut = 1.44 × 3 | **4.32** |
+| D2-agg opus-4-8 (target 100k/500k = 0.2) | bucket A extra 0.2×1M = 200k × (5.0−0.5)/1e6 = 0.90 × 0.8 = 0.72 × 3 | **2.16** |
+| D2-agg haiku (target 500k/2.5M = 0.2) | E,F,G extra 200k each = 600k × (1.0−0.1)/1e6 = 0.54 × 0.8 = 0.432 × 3 | **1.296** |
+| D3-agg haiku (median avg-prompt 10k; bucket H avg 25k > 2×10k) | excess (25k−10k)×100 = 1.5M tokens × eff-rate (2M×1.0 + 500k×0.1)/2.5M = 0.82 /1e6 = 1.23 × 3 | **3.69** |
+
+R-Q1 law pinned by test: D4/D5/D6 NEVER emit on aggregates
+(INACTIVE_ON_AGGREGATE + labeled upgrade-path rows at the report layer).
+D2-agg target = the account's own best observed bucket share — never an
+invented benchmark; D3-agg needs ≥3 buckets for its median.
+
+## R-Q9 verified-savings formula (PLAN-V15 V-D4, 2026-07-21) — derivation
+
+Founder formula: verified(month) = Σ over Applied findings of
+max(0, baseline_monthly_impact - recomputed_impact_same_detector_and_route),
+counted only after >=1 post-application audit covering >=7 days, each
+finding capped at its original estimate.
+
+| Case | Derivation | Golden |
+|---|---|---|
+| Applied + re-audited | baseline 1000.00, same route recomputed 250.00 → max(0, 750.00), cap 1000 → 750.00 | **750.00** |
+| Applied, no qualifying audit | later audit covers 3 days < 7 → excluded; counted as pending, not savings | **0.00** |
+| Route regressed | baseline 500.00, recomputed 900.00 → max(0, -400.00) | **0.00** |
+| Customer-reported | savings_realized 333.00 on a dismissed finding → separate line only | verified **0.00**, reported **333.00** |
+| Unapplied | two findings 400.00 + 600.00, no feedback | identified **1000.00**, verified **0.00** |
+
+Route identity = (detector, findings.route or finding_id), where `route`
+is the model id persisted by BOTH audit producers —
+the stable key a re-audit reproduces for the same traffic. The >=7-day gate
+reads audits.observed_days, persisted by BOTH audit producers (runner.py and
+source_audit.py) in the same commit as this formula.
+
+### R-Q9 correctness rules added after the V-D4 cold-review FAIL (2026-07-21)
+
+The formula alone under-specified three cases that would each have inflated
+the headline. Rules and their goldens:
+
+| Rule | Why it matters | Golden |
+|---|---|---|
+| R1 one credit per route | weekly audits re-emit an unfixed finding, each with its own feedback row; naive summing bills the same dollars weekly | applied in 2 successive audits at baseline 1000, later route at 200 → **800.00 once** (not 1600) |
+| R2 vanished ≠ fixed | a route absent from the later audit may be retired, not fixed; crediting it would invent savings | gone + no traffic on the model → **0.00, pending**; gone + traffic present → **1000.00 verified** |
+| R3 no double booking | a settled route must not also inflate `identified` | route applied then re-found at 400 → verified **600.00**, identified **0.00** |
+
+Route identity is credited against the EARLIEST applied feedback (the
+baseline in force when the customer acted). Traffic evidence for R2 reads
+call_aggregates for the audit; a finding with no route recorded can never
+be credited on disappearance (conservative by construction).
+
+### Statement month-credit rule (V-D6, 2026-07-22) — RATIFIED AS LAW
+### (R-STMT-MONTH, founder 2026-07-22; was a recorded default)
+
+R-Q9 says verified_savings(MONTH); it does not say which month a saving
+lands in when the fix ships in one month and the proving audit runs in the
+next. DEFAULT TAKEN: credit the month of the audit that PROVED it.
+
+Rationale: a statement is an archived artifact that is emailed and then
+forwarded. Crediting the application month would require restating an
+already-sent statement once proof arrives, which the archive rule forbids.
+Crediting the proving month means every statement is true when written and
+never changes afterwards. Implemented as a `period` filter inside the ONE
+compute() — a second copy of the formula for statements would be a
+money-math hazard.
+
+Statement golden (tests/test_statements.py, June 2026 fixture):
+baseline 1000.00 - recomputed 250.00 = **750.00 verified**; 300.00
+identified (dismissed, still open); 75.00 customer-reported; 600.00/mo
+spend. The three figures appear in three labelled sections and are never
+summed (a summed 1,125.00 is asserted absent).
+
 ## Founder verification log
 
 - 2026-07-17 | Founder verification: ledger row 1 (post-UAT-D5) —

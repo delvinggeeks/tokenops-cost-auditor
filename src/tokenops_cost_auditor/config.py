@@ -111,6 +111,23 @@ class Settings(BaseSettings):
     # Display (NFR-11: USD internal; INR display via fixed configurable rate)
     inr_per_usd_display: float = 90.0
 
+    # ---- v1.5 MONITOR (PLAN-V15 §0 rulings) ----
+    # Plans (R-Q11: INR list FIXED IN CONFIG; display both currencies)
+    plan_pro_usd: float = 99.0
+    plan_team_usd: float = 299.0
+    plan_pro_inr: float = 8999.0
+    plan_team_inr: float = 26999.0
+    # R-Q5/Q6: a "source" = one active provider org connection
+    plan_source_limits: dict[str, int] = {"free": 0, "pro": 1, "team": 5}
+    # Connect (T2): first-connect backfill window (accepted default Q2)
+    connect_backfill_days: int = 30
+    # Alerts (WP-3, observe-and-alert only; accepted defaults Q10 — see STATUS M1)
+    alert_spend_spike_dod_pct: float = 30.0
+    alert_waste_target_pct: float = 25.0
+    # Dunning (R-Q12): day 7 read-only, day 21 cancelled -> Free
+    dunning_readonly_days: int = 7
+    dunning_cancel_days: int = 21
+
 
 @lru_cache
 def get_settings() -> Settings:

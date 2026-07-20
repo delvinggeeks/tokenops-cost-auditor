@@ -121,8 +121,6 @@ class TestFR26KeysPurgeWithUploads:
             assert purge_due(session, WINDOW_DAYS) == [audit_id]
         with app.state.session_factory() as session:
             remaining = list(
-                session.scalars(
-                    select(IdempotencyKey).where(IdempotencyKey.audit_id == audit_id)
-                )
+                session.scalars(select(IdempotencyKey).where(IdempotencyKey.audit_id == audit_id))
             )
         assert remaining == []  # key gone with the upload

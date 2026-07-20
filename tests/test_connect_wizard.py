@@ -1,0 +1,340 @@
+"""T-WIZ-01..05 (PLAN-V15 V-D9 / R-MAGIC-CONNECT).
+
+The wizard is the product's first minute. These tests hold it to the
+ruling: plain words, no jargon, a live verdict, an immediate first pull,
+and a provider outage that degrades instead of blocking.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from tokenops_cost_auditor.persistence.models import Source, Subscription, User
+from tokenops_cost_auditor.services.connectors import validate
+from tokenops_cost_auditor.web import help as help_registry
+
+EMAIL = "owner@example.com"
+HDR = {"X-User-Email": EMAIL}
+JARGON = re.compile(r"org admin key|admin key|api\.openai|usage\.read|scope[s]?\b", re.I)
+TAGS = re.compile(r"<[^>]+>")
+
+
+def visible(html: str) -> str:
+    return TAGS.sub(" ", html)
+
+
+def give_plan(app: FastAPI, plan: str = "pro") -> str:
+    with app.state.session_factory() as session:
+        user = session.execute(select(User).where(User.email == EMAIL)).scalar_one_or_none()
+        if user is None:
+            user = User(email=EMAIL)
+            session.add(user)
+            session.flush()
+        session.add(Subscription(user_id=user.id, provider="stripe", plan=plan))
+        session.commit()
+        return user.id
+
+
+class FakeHTTP:
+    """Stands in for the provider during validation."""
+
+    def __init__(self, behaviour: str) -> None:
+        self.behaviour = behaviour
+        self.status_code = 200
+
+    def get(self, url: str, params: dict, headers: dict) -> FakeHTTP:
+        if self.behaviour == "no_scope":
+            self.status_code = 403
+        elif self.behaviour == "down":
+            raise RuntimeError("connection refused")
+        return self
+
+    def json(self) -> dict:
+        return {"data": [], "has_more": False}
+
+    def raise_for_status(self) -> None:
+        return None
+
+
+class TestValidationVerdicts:
+    def test_01_three_verdicts_in_plain_words_without_leaking_the_key(self) -> None:
+        """T-WIZ-01: a readable key, one without the permission, and an
+        unreachable provider — each a plain-words answer."""
+        ok = validate.validate_key("openai", "sk-good", FakeHTTP("ok"))
+        assert ok.status == validate.OK and ok.can_save is True
+        assert "read-only" in ok.detail.lower()
+        assert "never see your prompts" in ok.detail.lower()
+
+        no_scope = validate.validate_key("openai", "sk-limited", FakeHTTP("no_scope"))
+        assert no_scope.status == validate.NO_SCOPE and no_scope.can_save is False
+
+        down = validate.validate_key("openai", "sk-good", FakeHTTP("down"))
+        assert down.status == validate.UNREACHABLE
+        assert down.can_save is True, "R-WIZ-DEGRADE: an outage must not block"
+
+        for verdict in (ok, no_scope, down):
+            assert "sk-" not in verdict.headline + verdict.detail
+
+    def test_05_degrade_path_saves_the_key_and_offers_a_retry(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """T-WIZ-05: provider unreachable → key saved, plain-words state,
+        retry affordance, never a hang or a dead end."""
+        give_plan(app)
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.UNREACHABLE]
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-x"}
+        )
+        assert resp.status_code == 200
+        assert "reach your provider" in resp.text  # apostrophe is HTML-escaped
+        assert "check it again on the first pull" in resp.text
+        assert "Try again" in resp.text
+        with app.state.session_factory() as session:
+            saved = session.execute(select(Source)).scalars().all()
+            assert len(saved) == 1 and saved[0].credentials_encrypted is not None
+
+    def test_no_scope_saves_nothing(self, app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+        give_plan(app)
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.NO_SCOPE]
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-x"}
+        )
+        assert "read usage reports" in resp.text  # apostrophe is HTML-escaped
+        assert "Nothing was saved" in resp.text
+        with app.state.session_factory() as session:
+            assert session.execute(select(Source)).scalars().all() == []
+
+
+class TestInstantFirstPull:
+    def test_02_connecting_kicks_off_a_pull_without_waiting_for_the_tick(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """T-WIZ-02: the magic moment is THIS session, not tomorrow."""
+        give_plan(app)
+        started: list[str] = []
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        monkeypatch.setattr(
+            routes_sources,
+            "_kickoff_first_pull",
+            lambda request, source_id: started.append(source_id),
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        assert resp.status_code == 200
+        assert "Go to my dashboard" in resp.text
+        assert "nothing else to do" in resp.text.lower()  # the ONE-line promise
+        assert len(started) == 1, "the first pull must start immediately"
+
+    def test_a_failing_first_pull_never_breaks_the_connect(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The scheduled tick remains the guarantee, so a bad first pull is
+        invisible to the customer."""
+        give_plan(app)
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.services.connectors import pull
+
+        monkeypatch.setattr(
+            pull, "run_pull", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        assert resp.status_code == 200 and "Connected" in resp.text
+
+
+class TestWizardCopy:
+    def test_03_every_string_comes_from_the_help_registry(self, app: FastAPI) -> None:
+        """T-WIZ-03: wizard copy lives in the registry like everything else."""
+        give_plan(app)  # Free allows no connections, so the page would be the gate
+        for provider in help_registry.wizard_providers():
+            copy = help_registry.wizard(provider)
+            assert {
+                "step1_title",
+                "step1_body",
+                "console_url",
+                "permission_hint",
+                "step2_title",
+                "step2_body",
+                "step3_title",
+                "step3_body",
+                "provider_name",
+            } <= set(copy)
+            page = TestClient(app).get(f"/sources/connect/{provider}", headers=HDR)
+            assert page.status_code == 200
+            assert copy["step1_title"] in page.text
+            assert copy["permission_hint"] in page.text
+        with pytest.raises(KeyError):
+            help_registry.wizard("does-not-exist")
+
+    def test_04_no_jargon_reaches_the_customer(self, app: FastAPI) -> None:
+        """T-WIZ-04: 'a read-only key to your usage reports', never
+        'org admin key' or a raw scope name."""
+        give_plan(app)
+        for provider in ("openai", "anthropic"):
+            text = visible(TestClient(app).get(f"/sources/connect/{provider}", headers=HDR).text)
+            assert not JARGON.search(text), f"jargon leaked in the {provider} wizard"
+            assert "read-only" in text.lower()
+
+    def test_wizard_states_what_we_cannot_see(self, app: FastAPI) -> None:
+        give_plan(app)
+        page = TestClient(app).get("/sources/connect/openai", headers=HDR).text
+        assert "never see" in page and "prompts" in page
+        assert "Upload a file instead" in page  # the no-connection escape hatch
+
+    def test_unknown_provider_is_404(self, app: FastAPI) -> None:
+        assert TestClient(app).get("/sources/connect/acme", headers=HDR).status_code == 404
+        assert (
+            TestClient(app)
+            .post("/sources/connect/acme/validate", headers=HDR, data={"api_key": "x"})
+            .status_code
+            == 404
+        )
+
+
+class TestWizardPlanGate:
+    def test_at_limit_explains_instead_of_failing_at_the_end(self, app: FastAPI) -> None:
+        user_id = give_plan(app, "pro")
+        with app.state.session_factory() as session:
+            session.add(
+                Source(
+                    user_id=user_id, provider="openai", label="existing", credentials_encrypted="x"
+                )
+            )
+            session.commit()
+        page = TestClient(app).get("/sources/connect/openai", headers=HDR).text
+        assert "already in use" in page
+        assert "Compare plans" in page
+        assert "Check and connect" not in page, "do not invite a paste that must fail"
+
+
+class TestColdReviewRegressionsV9:
+    """V-D9 cold-review (2026-07-23) — f.1..f.5."""
+
+    def test_f1_a_user_at_their_limit_is_refused_before_we_call_the_provider(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Never spend a customer's provider quota on a request we already
+        know we will refuse."""
+        user_id = give_plan(app, "pro")
+        with app.state.session_factory() as session:
+            session.add(
+                Source(
+                    user_id=user_id,
+                    provider="anthropic",
+                    label="existing",
+                    credentials_encrypted="x",
+                )
+            )
+            session.commit()
+        called: list[str] = []
+        monkeypatch.setattr(
+            validate,
+            "validate_key",
+            lambda *a, **k: called.append("called") or validate.VERDICTS[validate.OK],
+        )
+        resp = TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-x"}
+        )
+        assert resp.status_code == 403
+        assert called == [], "the provider must not be contacted for a refused request"
+
+    def test_f2_the_user_row_survives_a_rejected_key(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A brand-new user creating their account and pasting a bad key must
+        still exist afterwards."""
+        give_plan(app)
+        with app.state.session_factory() as session:
+            session.query(User).delete()
+            session.commit()
+        give_plan(app)  # re-create with a plan
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.NO_SCOPE]
+        )
+        TestClient(app).post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-bad"}
+        )
+        with app.state.session_factory() as session:
+            assert session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+
+    def test_f3_a_double_submit_cannot_create_two_connections(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Double-click must not buy two connections and two first-pulls."""
+        give_plan(app, "team")  # room for several, so only idempotency can stop it
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        pulls: list[str] = []
+        monkeypatch.setattr(
+            routes_sources,
+            "_kickoff_first_pull",
+            lambda request, source_id: pulls.append(source_id),
+        )
+        client = TestClient(app)
+        first = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        second = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-good"}
+        )
+        assert first.status_code == 200 and second.status_code == 409
+        with app.state.session_factory() as session:
+            sources = session.execute(select(Source)).scalars().all()
+            assert len(sources) == 1
+        assert len(pulls) == 1, "one connection, one first pull"
+
+    def test_f4_the_sample_fixtures_ship_with_the_package(self) -> None:
+        """/sample is public: it must not depend on the test tree, which is
+        absent from an installed wheel."""
+        from tokenops_cost_auditor.services.report import sample
+
+        assert sample.FIXTURES.is_dir()
+        assert "site-packages" not in str(sample.FIXTURES) or sample.FIXTURES.exists()
+        for name in sample.SAMPLE_SOURCES:
+            assert (sample.FIXTURES / name).exists(), name
+        # and it lives inside the installed package, not beside it
+        import tokenops_cost_auditor
+
+        pkg_root = Path(tokenops_cost_auditor.__file__).parent
+        assert pkg_root in sample.FIXTURES.parents
+
+    def test_f5_the_sample_is_rendered_once_not_per_request(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A public unauthenticated page must not re-run the engine per hit."""
+        from tokenops_cost_auditor.services.report import sample
+
+        sample._RENDERED = None
+        builds: list[int] = []
+        real_build = sample.build_sample
+        monkeypatch.setattr(
+            sample,
+            "build_sample",
+            lambda s, t: (builds.append(1), real_build(s, t))[1],
+        )
+        client = TestClient(app)
+        for _ in range(3):
+            assert client.get("/sample").status_code == 200
+        assert len(builds) == 1, f"engine ran {len(builds)} times for 3 requests"
+        sample._RENDERED = None

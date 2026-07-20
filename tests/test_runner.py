@@ -148,6 +148,9 @@ class TestTREP03JsonSchema:
         "findings": list,
         "methodology": str,
         "data_handling": str,
+        # v1.5 (R-Q1): tier + honest per-tier coverage keys on every report
+        "tier": str,
+        "coverage": list,
     }
 
     def test_schema_shape(self, app: FastAPI, settings) -> None:

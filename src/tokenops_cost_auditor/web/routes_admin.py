@@ -4,8 +4,6 @@ append-only audit_log. Paths per docs/03 §5 (/admin — web layer, not /api/v1)
 from __future__ import annotations
 
 import secrets
-import shutil
-from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
@@ -15,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import Audit, User
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
-from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments.base import grant_payment
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -98,11 +96,7 @@ def purge_audit(
         audit = session.get(Audit, audit_id)
         if audit is None:
             raise HTTPException(status_code=404, detail="audit not found")
-        if audit.upload_path:
-            shutil.rmtree(Path(audit.upload_path).parent, ignore_errors=True)
-        audit.upload_path = None
-        audit.purged_at = datetime.now(UTC)
-        auditlog.append(session, actor, "audit.purged", audit_id, {"mode": "manual"})
+        purge.purge_one(session, audit, actor=actor, mode="manual")
         session.commit()
     return {"status": "purged", "audit_id": audit_id}
 

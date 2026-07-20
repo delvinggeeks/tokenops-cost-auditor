@@ -1,0 +1,21 @@
+{# Widget header + "?" help popover. Copy comes from the help registry, so
+   popovers and docs share one source (R-DESIGN-V3 §2b). #}
+{% macro widget_head(icon_name, key, help) %}
+  {% set h = help.widget(key) %}
+  <div class="widget-head">
+    <svg class="i i-lg" aria-hidden="true"><use href="#{{ icon_name }}"/></svg>
+    <h2>{{ h.title }}</h2>
+    <details class="help">
+      <summary aria-label="What is this?">?</summary>
+      <div class="help-body">
+        <dl>
+          <dt>What this shows</dt><dd>{{ h.what }}</dd>
+          <dt>Where the number comes from</dt><dd>{{ h.where }}</dd>
+          <dt>What to do with it</dt><dd>{{ h.do }}</dd>
+        </dl>
+        <a href="{{ h.link }}">{{ h.link_text }} →</a>
+      </div>
+    </details>
+  </div>
+  <p class="tells">{{ h.tells }}</p>
+{% endmacro %}

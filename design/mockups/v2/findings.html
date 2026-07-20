@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v2 — Findings: the card inside the shell (R-DESIGN-SHELL §5) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../../wa-design.css">
+<style>
+  .fc-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); }
+  .fc-impact { text-align: right; }
+  .fc-actions { margin-top: var(--s2); display: flex; gap: var(--s1); align-items: center; flex-wrap: wrap; }
+  .copy-wrap { position: relative; margin-top: var(--s2); }
+  .copy-wrap .btn { position: absolute; top: 8px; right: 8px; padding: 4px 10px; font-size: 12px; }
+</style>
+</head>
+<body>
+<!-- MOCKUP v2. The finding card (unchanged atomic unit) inheriting the shell.
+     Same component renders in the web report and, minus the controls, in the PDF. -->
+<div class="app">
+
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">TokenOps Cost Auditor</div>
+    <nav class="nav-group">
+      <div class="label">Monitor</div>
+      <a href="#">Overview</a>
+      <a href="#" aria-current="page">Findings</a>
+      <a href="#">Reports &amp; audits</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Connect</div>
+      <a href="#">Sources</a>
+      <a href="#">Get your logs</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Act</div>
+      <a href="#">Alerts</a>
+      <a href="#">Savings statements</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Account</div>
+      <a href="#">Settings</a>
+      <a href="#">Billing</a>
+    </nav>
+    <nav class="nav-group">
+      <div class="label">Engineering</div>
+      <a href="#">Detector detail</a>
+      <a href="#">Methodology</a>
+    </nav>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <button class="btn btn-quiet sidebar-toggle" aria-expanded="true">Menu</button>
+      <strong>TokenOps Cost Auditor</strong>
+      <span class="muted">Findings</span>
+      <span class="plan-badge">Pro</span>
+      <span class="spacer"></span>
+      <span class="freshness">Data as of <b>2026-07-21 06:30 UTC</b> · audit
+        <code>a7f2…c91</code></span>
+      <button class="btn btn-quiet">lokesh@…</button>
+    </header>
+
+    <main class="main">
+      <div class="grid">
+        <section class="widget w-12" aria-labelledby="fh">
+          <h2 id="fh">11 findings · $2,931.20/mo identified · $1,284.40/mo verified</h2>
+          <p class="tells">What this tells you: everything the detectors found in
+            this audit, ranked by monthly dollars. Applied fixes move into the
+            verified figure after the next audit covering ≥7 days.</p>
+          <div class="provenance">Audit <code>a7f2…c91</code> · 1.24M calls · 31 days ·
+            rate card v2026-07-17</div>
+        </section>
+
+        <article class="widget w-12" aria-labelledby="f1-title">
+          <div class="fc-head">
+            <div>
+              <h2 id="f1-title" style="margin-bottom: 4px;">Your agent re-sends a
+                28,000-token prefix uncached, 1,900 times a day</h2>
+              <span class="badge badge-estimate">estimate</span>
+              <small class="muted">D2 · missing prompt cache · claude-sonnet-5</small>
+            </div>
+            <div class="fc-impact">
+              <div class="money money-lg" style="color: var(--waste);">$1,120.10</div>
+              <small class="muted">per month</small>
+            </div>
+          </div>
+
+          <details class="evidence">
+            <summary>Evidence — 20 sampled calls (counts only)</summary>
+            <div>
+              <table class="ledger">
+                <thead><tr><th>UTC time</th><th>Model</th><th class="money">Prompt tokens</th>
+                  <th class="money">Cached</th><th class="money">Billed → as-if-cached</th></tr></thead>
+                <tbody>
+                  <tr><td>Jul 18 09:14:02</td><td>claude-sonnet-5</td>
+                    <td class="money">28,412</td><td class="money">0</td>
+                    <td class="money">$0.0568 → $0.0071</td></tr>
+                  <tr><td>Jul 18 09:14:31</td><td>claude-sonnet-5</td>
+                    <td class="money">28,412</td><td class="money">0</td>
+                    <td class="money">$0.0568 → $0.0071</td></tr>
+                  <tr><td>Jul 18 09:15:07</td><td>claude-sonnet-5</td>
+                    <td class="money">28,395</td><td class="money">0</td>
+                    <td class="money">$0.0568 → $0.0071</td></tr>
+                </tbody>
+              </table>
+              <small class="muted">No prompt text is ever stored — token counts,
+                timestamps and hashes only.</small>
+            </div>
+          </details>
+
+          <div class="copy-wrap">
+            <pre class="snippet">"system": [{"type": "text", "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"}}]</pre>
+            <button class="btn">Copy</button>
+          </div>
+
+          <div class="fc-actions">
+            <button class="btn btn-primary">Applied</button>
+            <button class="btn">Dismissed</button>
+            <button class="btn btn-quiet">Not relevant</button>
+            <small class="muted">Applied findings are recomputed on the next audit;
+              the verified delta joins your headline.</small>
+          </div>
+          <div class="provenance">Finding <code>D2-003</code> in audit
+            <code>a7f2…c91</code> · estimate capped at this figure when verified</div>
+        </article>
+
+        <article class="widget w-12" aria-labelledby="f2-title">
+          <div class="fc-head">
+            <div>
+              <h2 id="f2-title" style="margin-bottom: 4px;">Retry storms on the
+                checkout service — we can see the cost, not the cause</h2>
+              <span class="badge badge-waste">requires per-request logs</span>
+              <small class="muted">D4 · retry storm · not available on connected sources</small>
+            </div>
+            <div class="fc-impact">
+              <div class="money money-lg muted">—</div>
+              <small class="muted">no estimate</small>
+            </div>
+          </div>
+          <p>Provider usage APIs report daily totals, not individual calls, so we
+            cannot identify retry clusters from a connection alone — and we will not
+            print a number we cannot stand behind. Upload a request log export, or
+            run the collector, and this detector turns on.</p>
+          <div class="fc-actions">
+            <a class="btn btn-primary" href="#">Upload a log file</a>
+            <a class="btn btn-quiet" href="#">How the collector works</a>
+          </div>
+          <div class="provenance">Coverage: 3 of 6 detectors active on connected
+            sources · all 6 on uploaded request logs</div>
+        </article>
+      </div>
+
+      <p class="muted" style="margin-top: var(--s4); font-size: 13px;">
+        MOCKUP v2 — sample data. Delight on this surface: the evidence expander
+        spring. Determinism: the same logs produce this same page, byte for byte.</p>
+    </main>
+  </div>
+</div>
+</body>
+</html>

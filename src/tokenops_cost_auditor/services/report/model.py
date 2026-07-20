@@ -81,6 +81,12 @@ class ReportModel:
     # (18GB RSS). JSON always carries EVERY finding; web/PDF show the top N by
     # impact plus an explicit "M more in report.json" line — never silent.
     render_cap: int = 50
+    # v1.5 (PLAN-V15 R-Q1 / docs/12): which ingestion tier produced this audit
+    # ("file" = upload/CLI, "account" = T2 connector) and the per-tier detector
+    # coverage. Inactive detectors appear as labeled rows carrying NO savings
+    # number — the honest-coverage law.
+    tier: str = "file"
+    coverage: tuple[dict[str, object], ...] = ()
 
     @classmethod
     def build(

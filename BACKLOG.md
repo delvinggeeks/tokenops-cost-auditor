@@ -27,7 +27,16 @@ Recorded triggers, not build items. When a trigger fires, notify the founder;
 promotion still requires a PRD amendment.
 
 - **API keys / programmatic access** — trigger: first customer request.
-  Treat the request itself as a BUYING SIGNAL and notify the founder immediately.
+  Treat the request itself as a BUYING SIGNAL and notify the founder
+  immediately. [R-APIKEYS 2026-07-20, build detail when fired: keys issued
+  in Settings, hashed at rest, per-key scopes (submit/read), per-key rate
+  limits riding the existing NFR-12 limiter, usage counted per key (the
+  metering seed for future usage-based pricing), revocation instant,
+  every key event audit-logged. Until then: sessions + CLI cover all
+  real users.]
+  [R-SKILL 2 (2026-07-23): WP-MCP fires on this SAME event — a request for
+  programmatic access is a request for the MCP surface. One trigger, two
+  deliverables; do not treat them as separate signals.]
 - **Queue/workers (replacing BackgroundTasks + NFR-13 cap)** — trigger: the
   MAX_CONCURRENT_AUDITS cap regularly saturated (queue depth alerts in digest).
 - **Orgs/SSO** (X-03 stands) — trigger: first team customer.
@@ -45,6 +54,69 @@ promotion still requires a PRD amendment.
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
   (scripts/provision.sh / deploy/tf, WP-DEPLOY-1), human-observed.
+- **Concierge onboarding** (R-MAGIC-CONNECT 2026-07-22 §4) — GTM register,
+  NOT a build item: for early customers, "book 10 minutes, we do it on a
+  call with you". The solo-founder advantage incumbents cannot match.
+  Revisit as a product feature only if it stops scaling.
+- **Provider OAuth for usage scopes** (R-MAGIC-CONNECT 2026-07-22 §5) —
+  TRIPWIRE: the day OpenAI or Anthropic ships OAuth covering usage
+  reporting, it promotes immediately as the connect path and the paste
+  wizard becomes the fallback. Until then the wizard is the state of the
+  art. Notify the founder when either provider announces it.
+- **D7 EXPORT-CANDIDATE detector** (R-ZTA 2026-07-22 b) — near-identical
+  inference calls recurring on a schedule or loop: work that could be
+  inferred once and exported to code. Output: the recurring shape, its full
+  monthly cost, and the zero-token recommendation; recurrence + similarity
+  thresholds; confidence=estimated; the quality caveat verbatim. Promotion:
+  day-45 gate, or the first customer exhibiting the pattern — whichever
+  comes first.
+- **Act-stage "export this loop" playbooks** (R-ARCH-PATTERNS 2026-07-22 c)
+  — per D7 finding, a guide from recurring inference to a script or tool,
+  quality caveat attached. The services bridge.
+- **TASK DECLARATION layer** (R-INTENT-LADDER 2026-07-22 c) — optional
+  route/tag purpose declarations via config or dashboard; detectors consume
+  them to sharpen findings (task-tier mismatch, declared-repetitive → D7
+  priority, budget-per-purpose). Declarations are counts-safe metadata —
+  FR-22 untouched.
+- **WP-SKILL — "tokenops-audit" Claude Code skill** (R-SKILL 2026-07-23 §1)
+  — SKILL.md plus scripts wrapping the T1 exporter and the CLI: runs
+  entirely on the user's own machine over their own transcripts (UAT-D5
+  dedup law, counts-only by construction, nothing transmitted), opens the
+  report, and closes with ONE pointer to the monitored product. Distribution:
+  skill lists + a docs page. TRIGGER: immediately post-v1.5 launch, est. 1
+  day. Its README states the ZTA credential plainly — the skill performs
+  zero inference beyond its own invocation.
+- **WP-MCP — MCP server over /api/v1** (R-SKILL 2026-07-23 §2) — submit an
+  export, poll audit status, fetch findings, so agents and frameworks can
+  call TokenOps as a tool. TRIGGER: the existing API-key buying signal
+  (same event, modern surface) — see the API-keys entry above.
+- **WP-REPORT-VISUAL — report web page visual pass** (V-D9 deferral,
+  founder-ratified 2026-07-23 §1) — the /report web surface still wears the
+  pre-design-constitution styling while every v1.5 app surface moved to
+  wa-design.css. DEFERRED TO ITS OWN POST-LAUNCH GATED MILESTONE, not a
+  polish-commit rider, because the template is SHARED with the PDF renderer
+  and pinned by golden-determinism tests: a change that looks like CSS can
+  silently move a byte in a deliverable customers pay $500 for. It gets a
+  full gate (ux + vv golden re-verification), or it does not get touched.
+- **Architect lens** (R-PERSONA 2026-07-21 §4) — per-agent /
+  per-pipeline / per-knowledge-base attribution views, the T4-era
+  architect dashboard. Registered, NOT built: arrives with T4 span data,
+  never before (R-AGENTIC-DIMENSIONS + R-RAG already reserve the
+  dimensions in the T4 mapping spec). No persona-forked dashboard — it
+  is a lens inside the one shell (R-PERSONA §5).
+- **Dark mode** (R-DESIGN 2026-07-20 §2) — deferred by the design
+  constitution; wa-design.css tokens are structured to admit it later.
+- **RAG waste pattern pack** (R-RAG 2026-07-20) — D2/D3 sub-findings
+  specialized for retrieval traffic: cache-breaking chunk placement,
+  over-retrieval signature, embedding/re-index spend line. Trigger:
+  >=2 customers show RAG-dominant traffic. Boundary: economics only;
+  every RAG finding carries the quality-validation caveat.
+- **Provider/tool expansion queue** (R-AGNOSTIC 2026-07-20) —
+  pull-sequenced, never speculative; each addition = pricing rows with
+  founder-verified goldens and/or ONE adapter into an existing tier.
+  Seeded order: Gemini, Bedrock, Azure-OpenAI (T2); Copilot admin
+  exports (AGG); per-tool T1 parsers on first customer request each.
+  No per-tool forks — frame contract keeps everything provider-neutral.
 - **Stuck-audit auto-recovery** (D13 deploy evidence 2026-07-19) — audits
   orphaned in `processing` when the serving process dies (observed twice
   under the uvicorn multi-worker ping-kill, fixed by --workers 1; a crash

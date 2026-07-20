@@ -55,6 +55,15 @@ any default interacting with X-scope, FR-22, or the honesty law is
 ESCALATED, never defaulted. Chosen defaults are listed in STATUS at the
 end of M1.
 
+**R-DESIGN + R-DESIGN-ADDENDUM (founder, 2026-07-20; full text PLAN
+§0.1).** Binding on WP-2/WP-7 and all future surfaces: auditor's
+aesthetic + precision-luxury elevation, one wa-design.css token sheet,
+three-second rule as ux acceptance, workflow specs a-i, motion system
+with number moments, WP-2 starts with static mockups (dashboard +
+finding card + first-run) gated by ux-reviewer BEFORE wiring. G-V1 stop
+deliverables amended to include the mockup set for founder
+three-second-rule review. Zero scope/date change.
+
 Laws in force, unchanged: TE-1..TE-11 token economy; K-1..K-4 kill switches;
 golden money-math discipline (engine untouched — byte-identical goldens are a
 standing regression gate); FR-22 counts-only at every tier's door; X-05
@@ -117,6 +126,39 @@ T-DASH-02 (trends from fixtures), T-DASH-03 (auth scoping — no
 cross-user leakage), T-DASH-04 (FR-31 purged-row metadata-only),
 T-DASH-05 (zero-state honesty).
 
+**R-PERSONA (2026-07-21) applies to V-D4/V-D4g/V-D9 as copy discipline:**
+every widget reads at three depths (owner headline · manager context ·
+engineer expander); detector identifiers never surface at headline depth;
+the help registry stores BOTH phrasings per key; Guide pages open with
+"who this is for". Adds test coverage to V-D4g: T-HELP-04 (registry has
+plain + technical phrasing for every key; a headline-depth string
+containing a detector id fails the test).
+
+**R-CLARITY (2026-07-21) — same milestones, adds structure.** The help
+registry schema per detector becomes: `plain` / `technical` phrasing +
+a `why` (rule sentence + threshold values, rendered from the live
+Settings values so docs cannot drift from config) + `fix` (copyable
+snippet or exact config change) + `verify` (what the next audit shows if
+applied) + `methodology_url`. Depth (c) renders those five in that
+fixed order. Sidebar destinations render a `purpose` line from the same
+registry. Familiarity principle governs interaction choices — novelty
+budget spent only on the ribbon and the double rule.
+Tests added to V-D4g: T-HELP-05 (every detector key has the full
+why/fix/verify triple + methodology url; a missing field fails),
+T-HELP-06 (threshold values in `why` render from Settings, not
+hard-coded strings — changing a threshold changes the help text),
+T-HELP-07 (every sidebar destination has a purpose line).
+
+### V-D4g (+1 day, R-DESIGN-V3 §2; founder-accepted scope addition) — In-product guidance
+Guided tour (5 spotlight steps, vanilla JS + CSS, server-persisted
+dismiss, replayable), per-widget "?" help popovers, HELP sidebar group
+with 4 one-screen Guide pages, workflow breadcrumbs. Help content lives
+ONCE in a YAML registry rendered SSR — docs-site and popovers read the
+same source and cannot drift.
+Tests: T-HELP-01 (registry renders every widget's help; missing key =
+test failure), T-HELP-02 (tour dismiss persists per user + replay
+resets), T-HELP-03 (docs/popover parity — same registry keys).
+
 ### V-D5 (day 7) — WP-3b Alerts + L0 feedback capture (mandatory)
 Alert rules: spend spike DoD, waste % above target, new HIGH finding,
 soft budget crossed (observe-and-alert ONLY — X-02 test asserts no
@@ -128,6 +170,11 @@ formula gets a golden-style derivation row in pricing_golden_NOTES.md
 Tests: T-ALR-01..04 (one per rule, incl. threshold edge), T-ALR-05
 (observe-only guard), T-FB-01 (capture + idempotent re-vote), T-FB-02
 (delta computation golden), T-FB-03 (savings-realized flows to headline).
+ID map (V-D5 gate): T-ALR-01..05 tests/test_alerts.py::TestRules /
+TestObserveOnly; T-FB-01 tests/test_dashboard.py::TestFindingsAndFeedback::
+test_03; T-FB-02 tests/test_verified_savings.py::TestVerifiedSavings::
+test_01; T-FB-03 same file test_04 + tests/test_alerts.py::
+TestColdReviewRegressionsV5::test_f1.
 
 ### V-D6 (day 8) — WP-4 SAVINGS STATEMENT
 Monthly one-page CFO-forwardable email: spend, waste found, fixes
@@ -147,6 +194,16 @@ controls (purge now — reuses FR-21 path with audit_log entry); billing
 portal link.
 Tests: T-SET-01 (threshold persistence + validation), T-SET-02
 (purge-now = FR-21 semantics), T-SET-03 (revoke flow e2e).
+
+**SCOPE RECONCILIATION (V-D7 vv gate, 2026-07-22).** Alert thresholds
+shipped EARLY, in V-D5's /alerts page (the founder's WP-3b order included
+the settings form), so V-D7 links to them instead of building a second
+control for the same rows — one editor per setting. T-SET-01 therefore
+maps to: threshold persistence + validation at
+tests/test_alerts.py::TestAlertsPage::test_settings_round_trip and
+::test_unparseable_threshold_falls_back, plus the Settings page-facts test
+at tests/test_settings.py::TestSettingsPage::test_01_page_groups_render_
+with_live_facts. Nothing was dropped; the editor moved milestone.
 
 ### V-D8 (days 10-11) — WP-6 SUBSCRIPTIONS
 Razorpay + Stripe subscription mode on FR-27 dedup rails. Plans: Free =
@@ -176,6 +233,23 @@ Tests: T-POL-01 (FR-23 string survives verbatim, contiguous), T-POL-02
 (/sample serves synthetic fixture — no real data), T-POL-03 (tab copy
 carries counts-only line), figure-inventory grep (launch rails).
 **ux-reviewer gates EVERY changed surface (runs day 13).**
+
+**R-MAGIC-CONNECT (2026-07-22) adds to V-D9 (+0.5 day, absorbed):** the
+Connect flow becomes a 3-step guided wizard per provider (deep-link to the
+exact console screen + annotated DRAWN SVG illustration (R-WIZ-ILLUSTRATION,
+founder 2026-07-23: diffable and version-controlled; a provider-UI PNG rots
+silently on their next restyle); live server-side key
+validation with a plain-words verdict; a done-state stating "first audit
+tonight, nothing else to do"); on successful connect an IMMEDIATE pull +
+mini-audit runs in the background so the dashboard shows real numbers in
+the first session. Wizard copy carries zero jargon and its help text lives
+in the registry like every other string.
+Tests: T-WIZ-01 (live validation verdicts: a usage-readable key vs one
+without the scope, both plain-words, neither leaking the key), T-WIZ-02
+(connect triggers an immediate pull+audit, and the dashboard is non-empty
+without waiting for the tick), T-WIZ-03 (wizard strings resolve from the
+help registry — a missing key fails, per T-HELP law), T-WIZ-04 (jargon
+guard: the wizard never renders "org admin key" or a raw scope name).
 
 ### V-D10 (day 14) — HARDEN + SHIP (ships whatever exists — hard condition b)
 Full suite exit-code-verified; goldens byte-identical; deploy via

@@ -362,6 +362,269 @@ immediately after. [Superseded on sequencing 2026-07-20: GRAND ORDER v2
 delivers R-LAUNCH-POLISH + R-ONBOARD as v1.5 WP-7 and folds the Connect
 build into v1.5 WP-1 — see the GRAND ORDER v2 block below.]
 
+**R-DESIGN (founder, 2026-07-20) — UI/UX constitution, binding on v1.5
+WP-2/WP-7 and every future platform surface.** Claude Code reads the
+frontend-design skill before any template work; the ruling sets direction,
+the skill sets craft. (1) PHILOSOPHY "the auditor's aesthetic": premium
+audit report, not startup toy — calm, dense-but-ordered, numbers-first;
+Stripe clarity + Big-4 gravity. BANNED: purple-gradient AI clichés,
+glassmorphism, emoji in product UI, decorative illustration, dark-pattern
+urgency. (2) TOKENS (one wa-design.css across landing/app/docs/PDF): serif
+display numerals; clean sans UI; tabular-nums wherever money appears; warm
+paper neutrals; ONE accent chosen once; semantic colors only beyond it
+(green=verified savings, amber=estimate, red=waste/alert); money figures
+are the most visually weighted objects on every screen; 8px grid; ~1100px
+max content width; 1px-bordered cards; dark mode deferred (BACKLOG).
+(3) THREE-SECOND RULE as acceptance test on every screen (what is this
+screen · the one number · my next action); ux-reviewer charter AMENDED to
+test exactly these; clarity overrides delight. (4) WORKFLOW SPECS a-i
+verbatim in the founder order (first-run 3-step never-blank dashboard,
+<3min to first audit; owner hierarchy verified-savings hero → trends →
+top findings with inline L0 → sources health; finding card = one component
+three renderers; web report executive strip + collapsible methodology,
+CFO-printable; emails text-first number-in-subject one-CTA; settings
+boring-on-purpose double-confirmed destructive; landing hero = bill-shock
+question + REAL dashboard screenshot (screenshot truth, never mock), trust
+strip linking proofs; empty/error/loading designed; WCAG AA floor).
+(5) PROCESS: WP-2 begins with static HTML mockups (dashboard + finding
+card + first-run, no logic) gated by ux-reviewer against the three-second
+rule BEFORE wiring; PDF inherits wa-design.css print styles at WP-7.
+
+**R-DESIGN-ADDENDUM (founder, 2026-07-20) — experience elevation; amends
+R-DESIGN §1-2, all else stands.** (1) "Precision luxury": crisp layered
+depth — multi-tier soft shadows on elevation (2-4 tiers), 1px inner-border
+highlights, subtle surface tinting, large confident serif numerals; depth
+= crisp layers NOT embossed neumorphism (banned: low-contrast emboss,
+blurred-blob backgrounds). (2) MOTION (CSS-first, 150-250ms ease-out,
+respects prefers-reduced-motion): NUMBER MOMENTS signature — hero
+verified-savings counts up on load (600ms, once); marking Applied flows
+the $ into the headline; card hover lift; evidence expanders spring;
+audit progress = live pipeline strip with human status lines; htmx swaps
+150ms fade + 4px rise; charts draw-in; press scale(0.98); success
+checkmark draw; no toast storms. 3D BUDGET: exactly ONE hero element on
+the landing page (CSS-perspective tilting dashboard screenshot), NOWHERE
+in-app. (3) WOW-PER-WORKFLOW: one designed delight per flow, named.
+(4) ACCEPTANCE: ux-reviewer checklist — every gated surface names its
+delight and proves contrast + reduced-motion compliance; three-second
+rule overrides on conflict. Scope note: R-DESIGN + addendum are DIRECTION
+for surfaces inside frozen v1.5 scope — zero new features, zero dates.
+
+**R-DESIGN-SHELL (founder mockup review, 2026-07-21) — supersedes the
+single-page dashboard mockup; restructures V-D4 templates only (zero
+features, zero dates; SSR + htmx partials law stands).** (1) APP SHELL:
+left sidebar grouped by the ecosystem's own stages so navigation itself
+explains the platform — MONITOR (Overview · Findings · Reports & Audits) /
+CONNECT (Sources · Get your logs) / ACT (Alerts · Savings Statements) /
+ACCOUNT (Settings · Billing) / ENGINEERING (Detector detail · Methodology);
+obvious active state; collapsible on mobile; ONLY real shipped modules
+appear — no "coming soon" anywhere (the no-promises law applies in-app;
+the sidebar GROWS as rings ship, which is the platform story told
+honestly). Slim topbar: product name · plan badge · data-freshness stamp
+("data as of <last audit/pull, UTC>") · account menu. (2) OVERVIEW =
+MODULAR WIDGET GRID, each a self-contained server-rendered partial:
+W1 verified-savings hero (full width), W2 spend trend + W3 waste% trend
+(pair), W4 top findings by $ with inline Applied/Dismissed, W5 sources
+health, W6 next-audit countdown, W7 recent alerts, W8 latest Savings
+Statement. EVERY widget carries title + one-line "What this tells you"
+subtitle + provenance stamp (audit id / pull time) + designed empty state
+that teaches the next action; independently htmx-refreshable. (3) THE
+HOLISTIC SPINE — pipeline ribbon W0 at top of Overview: INPUT → ANALYZE →
+REPORT → ACT → PREVENT drawn live from real state (sources connected,
+last audit time, findings open, applied count, alerts armed); one glance =
+end-to-end comprehension. (4) DETERMINISM AS A DESIGN FEATURE: no
+skeleton-shimmer fakery; every number traceable to a stamped audit;
+identical inputs render identical screens; Engineering tab says it plainly
+("deterministic engine — same logs, same report, byte-identical");
+freshness stamps everywhere money shows. (5) PROCESS: mockup v2 =
+app-shell + Overview grid + ribbon; finding-card and first-run inherit the
+shell (first-run renders INSIDE it with widgets in guided empty states);
+ux-reviewer gates v2 per-widget against the three-second rule; then STOP
+for founder review — wiring only after founder GO.
+
+**R-DESIGN-V3 (founder mockup review #2, 2026-07-21) — enterprise polish +
+in-product guidance. FINAL mockup round: v3 → founder verdict → wiring;
+remaining polish handled as inline notes during V-D4, not further mockup
+cycles.** (1) DENSITY & RICHNESS: (a) single inline-SVG stroke icon set
+(lucide-style, self-hosted sprite, ~20 icons) on sidebar/widget
+headers/stat chips/alert types — no emoji, no icon fonts; (b) REAL charts
+in mockups (spend = area with gridlines + axis labels, waste% = line with
+target band, sparklines in stat chips) — placeholder boxes BANNED;
+(c) density pass: tightened topbar/sidebar, findings as a sortable data
+TABLE with the card as expanded state, number-first stat-chip row under
+the hero, type scale up (h1 22px, widget titles 15px/600 with icons,
+hero larger); (d) chrome: sidebar surface tint vs paper page, active-item
+accent bar, topbar hairline + lift-1, consistent 12px provenance meta.
+(2) IN-PRODUCT GUIDANCE — real feature, ADDED TO WP-2 SCOPE as V-D4g
+(+1 day, founder-accepted): (a) guided tour, 5 sequential spotlight steps
+(ribbon → hero → findings/Apply → sources → alerts), positioned popovers
+with Next/Skip, progressive vanilla JS + CSS (no library, no SPA),
+dismiss state persisted server-side, replayable from Help; (b) per-widget
+"?" help popovers (what it shows · where the number comes from in words ·
+what to do with it · Learn more → docs-site), content authored ONCE in a
+YAML help registry rendered SSR so docs and popovers cannot drift;
+(c) HELP sidebar group — Guide pages (How TokenOps works · Your first
+audit · Applying findings · Reading your Savings Statement, one screen
+each) + Replay tour + docs link; (d) workflow breadcrumbs (step 1 of 3)
+with the current step's purpose in a sentence. (3) Guardrails unchanged:
+banned list stands, determinism stamps stay, three-second rule judged
+WITH help affordances present, WCAG AA on all new chrome. (4) GATE:
+ux-reviewer on v3, then founder three-second review; deliverables =
+overview, findings-table, first-run-with-tour-step-1.
+
+**R-PERSONA (founder, 2026-07-21) — design law; applied during V-D4 wiring
+as copy/structure discipline. NO new mockup round (the v3 verdict remains
+the gate).** (1) THREE-DEPTH RULE on every surface: each widget/page must
+read correctly at three depths — (a) HEADLINE, the layman/owner sentence:
+plain words, a money number, zero jargon; (b) CONTEXT, the manager line:
+what changed, since when, provenance in words; (c) DEPTH, the engineer
+expander/tab: evidence tables, detector params, methodology links.
+ux-reviewer checks ALL THREE depths per surface at wiring gates.
+(2) JARGON LAW: detector names never appear at depth (a) — "You're paying
+full price for prompts you resend", never "D2 missing-cache". Technical
+identifiers live at depth (c) only; the help-registry YAML carries BOTH
+phrasings so popovers translate between personas. (3) AUDIENCE TAGS: each
+Guide page opens with "who this is for" (Owner · Engineer · Both), same
+discipline as the docs site. (4) ARCHITECT LENS registered, NOT built:
+per-agent / per-pipeline / per-knowledge-base attribution views are the
+T4-era architect dashboard (R-AGENTIC-DIMENSIONS + R-RAG already reserve
+the span dimensions); BACKLOG line added; arrives with T4 data, not
+before. (5) Savings Statement stays the owner artifact; report PDF stays
+the shared artifact; NO persona-forked dashboards — one shell, three
+depths, forever.
+
+**R-CLARITY (founder, 2026-07-21) — addendum to R-PERSONA; applied during
+V-D4 wiring, no mockup round.** (1) DEVELOPER DEPTH IS DESIGNED, NOT
+DUMPED: depth (c) on every finding answers, IN ORDER — WHY flagged (the
+rule in one sentence + its threshold values) · EVIDENCE (the counts
+table) · THE FIX (copyable snippet or exact config change, per finding
+type) · VERIFY (what the next audit will show if applied) · methodology
+link. A developer with zero FinOps knowledge and an owner with zero
+engineering knowledge must EACH find their complete answer on the same
+screen at their own depth. The help-registry YAML gains a why/fix/verify
+triple per detector. (2) FAMILIARITY PRINCIPLE: workflows adopt the
+conventions of the dashboards our users already live in (the
+Stripe/Datadog/Grafana grammar) — filters top-left, time-range top-right,
+row→drawer expansion, sortable headers with aria-sort, breadcrumbed
+multi-step flows, settings as grouped forms. The novelty budget stays
+spent on the pipeline ribbon + the double rule ONLY; every other
+interaction should feel pre-learned. ux-reviewer check 9: "any
+interaction pattern a Datadog/Stripe user wouldn't already know is a
+finding." (3) SECTION PURPOSE LINES: every sidebar destination opens with
+one plain sentence of "what you do here" (sourced from the help
+registry) — the ecosystem's workflow made legible page by page.
+
+**R-MAGIC-CONNECT (founder, 2026-07-22) — WP-7 scope detail; +0.5 day
+absorbed in the polish milestone already in plan.** (1) GUIDED KEY WIZARD:
+Connect becomes a hand-held 3-step wizard per provider — (a) "Open your
+provider's key page" as a deep-link button to the exact console screen,
+with an annotated ILLUSTRATION beside it showing precisely what to click
+and which permission to pick (read-only/usage scope). [AMENDED by
+R-WIZ-ILLUSTRATION, founder 2026-07-23: a DRAWN, diffable SVG replaces the
+original "annotated screenshot" — a PNG of a provider's UI rots silently on
+their next restyle; a drawn illustration is version-controlled and
+reviewable.] (b) paste field with LIVE
+validation — on paste we test the key server-side immediately and show
+"✓ Connected — we can see your usage (read-only). We can never see prompts
+or make calls." or a plain-words error ("this key can't read usage — here's
+the screenshot of the right permission"); (c) done-state setting
+expectations in one line: "First audit tonight. Your dashboard fills by
+morning. Nothing else to do — ever." (2) INSTANT GRATIFICATION PULL: on
+successful connect, fire an immediate first pull + mini-audit in the
+background rather than waiting for the nightly tick, so the dashboard shows
+real numbers within minutes — the magic moment is THE FIRST SESSION, not
+tomorrow. (3) COPY LAW for the wizard: zero jargon (never "org admin key";
+say "a read-only key to your usage reports"), every screenshot
+current-version, wizard help keys live in the registry (T-HELP coverage
+applies). (4) CONCIERGE FALLBACK recorded in the GTM register, NOT built:
+for early customers, "book 10 minutes, we do it on a call with you" — the
+solo-founder superpower incumbents cannot offer. (5) REGISTERED, NOT BUILT:
+provider OAuth adoption tripwire — the day OpenAI/Anthropic ship OAuth for
+usage scopes it promotes immediately as the sign-in path; until then the
+wizard IS the state of the art.
+
+**R-STMT-MONTH (founder, 2026-07-22) — ratifies the V-D6 default as LAW.**
+Verified savings credit to the month of the PROVING audit; pending belongs
+to the month the fix was applied. Rationale adopted verbatim: a sent
+statement is an archived artifact and must be true when written, never
+restated. The single compute() with a period filter is confirmed as the
+ONLY implementation — a second copy of that formula is forbidden forever.
+
+**R-COVERAGE-DEBT (founder, 2026-07-22).** services/mail/smtp.py (83.8%)
+and services/lifecycle/purge.py (78.9%) CARRY as recorded debt — declining
+to expand a frozen milestone was the correct call. Close them inside
+V-D10's final sweep ONLY if the day has slack; otherwise they transfer to
+BACKLOG with their numbers. Debt recorded beats scope creep every time.
+
+**R-WIZ-DEGRADE (founder, 2026-07-22) — answers the V-D9 wizard question.**
+Graceful degrade APPROVED: a provider unreachable at validation means the
+key is saved with a plain-words "we couldn't reach your provider just now;
+we'll validate on the first pull" state plus a retry affordance. Hard-fail
+REJECTED — a customer's first minute must never hang on OpenAI's status
+page. T-WIZ-05 covers the degrade path.
+
+**R-NORMALIZE-AT-EVERY-DOOR (founder, 2026-07-23) — permanent law.**
+Identity fields (email, event ids, route keys) are normalized IDENTICALLY at
+every read and write path. A lookup that can miss its own insert is the bug
+class — it produced a paid upgrade stuck in an infinite provider-retry loop
+(V-D8 f.1). Pinned by the mixed-case email test.
+
+**R-BATCH-SEND-ISOLATION (founder, 2026-07-23) — cross-cutting law.** Any
+loop that sends to multiple customers commits and isolates per iteration.
+Named after the repeat offence: the same defect appeared in alerts (V-D5
+f.2) and again in dunning (V-D8 f.4). Applies everywhere, forever.
+
+**R-SKILL (founder, 2026-07-23) — BACKLOG only, zero v1.5 change.**
+(1) WP-SKILL: a "tokenops-audit" Claude Code skill wrapping the T1 exporter
+and CLI, running locally on the user's own transcripts and transmitting
+nothing; trigger = immediately post-v1.5 launch (est. 1 day). (2) WP-MCP:
+an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
+— same event, modern surface. (3) Marketing line registered: "Install the
+auditor inside the agent that's burning the tokens."
+
+**R-ZTA (founder, 2026-07-22) — positioning; zero v1.5 scope change.**
+(a) Zero-token vocabulary in launch/landing/docs engineering page:
+"deterministic engine, no inference — we never burn your tokens to count
+your tokens." Hightower PlatformCon 2026 attribution where referenced (one
+short quote max, linked). D6 depth-(a) alias: "loop burn". (b) BACKLOG: D7
+EXPORT-CANDIDATE detector (recorded, not built). (c) Build Health metrics
+adopt "loop engineering" vocabulary when they ship.
+
+**R-ARCH-PATTERNS (founder, 2026-07-22) — name what is enforced; zero scope
+change.** (a) docs-site Engineering gains an "Architecture principles"
+section where EVERY claim cites its test/spec id — the no-uncited-prose law
+applied to our own page: ZERO-TOKEN (NFR-01 + import guard); ZERO-TRUST
+across five axes (input never trusted · network never trusted · least
+privilege · explicit verification · assume breach), each item linking its
+FR/NFR/test; LAYERED DATA VALIDATION drawn as the five-gate ladder (ingest
+validation → normalization contract → founder-verified golden pricing →
+detector conservative rails → R-Q9 proving audit → statement
+archive-freeze). (b) Sales line registered: "We run the architecture we
+audit you toward." (c) BACKLOG: Act-stage "export this loop" playbooks per
+D7 finding. (d) LAW: architecture labels are adopted only where practice
+already exists or a ruling builds it — we name what we enforce; we never
+enforce by naming.
+
+**R-INTENT-DECLARED + R-INTENT-LADDER (founder, 2026-07-22) — docs/12 +
+BACKLOG; zero v1.5 change.** (a) LAW: the platform NEVER infers developer
+intent from CONTENT and NEVER takes optimization decisions autonomously.
+Intent enters by declaration; decisions ship as recommendations only, until
+a human-approved policy exists (control-plane era, X-02 path). FR-22 and
+NFR-01 are the structural reasons. (b) THE LADDER — intent is read at three
+levels: BEHAVIORAL (deterministic shape algorithms over counts/timing/
+models/cache fields — the detector suite incl. D7: recurring shapes =
+loops, monotonic prompt growth = context bloat, burst patterns = retries/
+flail, repeat-prefix-no-cache-reads = unclaimed caching); DECLARED (task
+tags: class, quality sensitivity, expected recurrence); LEARNED (L0
+Applied/Dismissed labels → L2 threshold training). Only CONTENT-inferred
+intent is forbidden. Sales language: "your traffic's shape tells us what
+it's doing — you tell us why — we never read what it says." (c) BACKLOG:
+TASK DECLARATION layer (optional route/tag purpose declarations, consumed
+by detectors; counts-safe metadata, FR-22 untouched). (d) COPY LAW for
+depth (c): findings address the developer as the operator being handed
+efficiency wins, never the party at fault — "your pipeline, same output,
+lower bill." Owner depth stays money-verified. ux-reviewer checks tone at
+both depths.
+
 **R-PAINMOMENT (founder, 2026-07-20) — GTM targeting addendum.** Launch
 outreach targets TRIGGER MOMENTS, not cold personas: (a) X/Reddit/HN posts
 complaining about OpenAI/Anthropic/Claude Code bills — search-and-reply

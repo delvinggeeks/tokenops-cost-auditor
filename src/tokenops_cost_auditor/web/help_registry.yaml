@@ -1,0 +1,198 @@
+# Help registry (PLAN-V15 V-D4g; R-PERSONA + R-CLARITY).
+#
+# ONE source for: per-widget "?" popovers, in-app Guide pages, section
+# purpose lines, and the docs-site pages that mirror them — so popovers and
+# docs cannot drift (T-HELP-03).
+#
+# Threshold values in `why` are written as {placeholders} and rendered from
+# live Settings at request time — never hard-coded, so tuning a detector
+# threshold updates the help text automatically (T-HELP-06).
+#
+# R-PERSONA jargon law: `plain` is the ONLY string allowed at headline depth;
+# `technical` (detector ids, params) belongs to depth (c) only (T-HELP-04).
+
+destinations:
+  overview:
+    purpose: "See what your AI spend is costing you and what you have already saved."
+  findings:
+    purpose: "Work through what is worth fixing, largest dollar impact first."
+  reports:
+    purpose: "Open or download any past audit, including its full report PDF."
+  sources:
+    purpose: "Connect a provider so we pull your usage automatically, or revoke one."
+  get_logs:
+    purpose: "Export request logs from your provider or agent tooling and upload them here."
+  alerts:
+    purpose: "Choose what should reach you between audits, and at what threshold. Alerts notify you; they never change your traffic."
+  statements:
+    purpose: "Open the monthly one-page summary written for whoever signs off on the bill."
+  guide:
+    purpose: "Short walkthroughs of how the audit works and what to do with it."
+  settings:
+    purpose: "Manage your profile, data controls and email preferences."
+  billing:
+    purpose: "See your plan, invoices and payment method."
+  detectors:
+    purpose: "Read exactly what each detector looks for and the thresholds it uses."
+  methodology:
+    purpose: "Read how every number in your report is calculated."
+
+widgets:
+  pipeline:
+    title: "Your pipeline, right now"
+    tells: "Where your money is in the loop — from logs coming in to alerts watching for the next surprise."
+    what: "The five stages of the loop, with live state from your account."
+    where: "Stage counts read from your connected sources, your latest audit, your applied findings and your armed alert rules."
+    do: "Look for the stage that is waiting — that is where your next minute is best spent."
+    link_text: "How TokenOps works"
+    link: "/guide/how-it-works"
+  verified_savings:
+    title: "Verified savings"
+    tells: "Money you are no longer spending, recomputed from your own logs after you applied fixes. Not a projection."
+    what: "Money you are no longer spending, proven by a later audit of your own logs."
+    where: "Each applied finding is recomputed on the next audit covering at least 7 days; the difference, capped at the original estimate, is summed here."
+    do: "Apply more findings — each one converts an estimate into a verified number here."
+    link_text: "How we verify savings"
+    link: "/guide/verified-savings"
+  spend_trend:
+    title: "Spend trend"
+    tells: "What you are paying now versus the last 30 days."
+    what: "Daily API spend across every connected source."
+    where: "Priced from your provider's reported token counts at our human-verified rate card, not from your invoice."
+    do: "A step change usually means a deploy — compare it against the findings from the same week."
+    link_text: "Reading your spend chart"
+    link: "/guide/spend-chart"
+  waste_share:
+    title: "Waste share"
+    tells: "How much of that spend our detectors can account for as avoidable."
+    what: "The share of spend our detectors can account for as avoidable."
+    where: "Sum of every open finding's monthly impact, divided by monthly spend, capped at 100%."
+    do: "Set a target in Alerts — we tell you when the line leaves the band."
+    link_text: "How waste share is calculated"
+    link: "/guide/waste-share"
+  top_findings:
+    title: "Top findings by monthly impact"
+    tells: "The biggest single things worth fixing, ranked by dollars, not severity labels."
+    what: "The largest avoidable costs found in your latest audit."
+    where: "One row per rule per route, priced at the verified rate card and scaled to 30 days."
+    do: "Apply the top one. Its saving is re-verified on your next audit and moves into your headline."
+    link_text: "Applying findings"
+    link: "/guide/applying-findings"
+  sources:
+    title: "Sources"
+    tells: "Whether we are still receiving your usage data."
+    what: "Every provider connection and whether it is still delivering data."
+    where: "The last successful pull timestamp for each connection."
+    do: "If a source goes stale, reconnect it — the key may have been rotated or revoked."
+    link_text: "Managing sources"
+    link: "/guide/sources"
+  next_audit:
+    title: "Next scheduled audit"
+    tells: "When these numbers refresh next."
+    what: "When your next audit runs."
+    where: "Your plan's cadence, counted from the last completed audit."
+    do: "Nothing — it runs itself. Apply fixes before it runs and the next audit measures them."
+    link_text: "Scheduled audits"
+    link: "/guide/scheduled-audits"
+  alerts:
+    title: "Recent alerts"
+    tells: "Surprises we caught between audits."
+    what: "Anything that crossed a threshold you set, between audits."
+    where: "Your rules are evaluated hourly against your most recently pulled usage."
+    do: "No alerts is the good outcome. Tighten a threshold if you want earlier warning."
+    link_text: "Setting up alerts"
+    link: "/guide/alerts"
+  statement:
+    title: "Savings statement"
+    tells: "The one-page summary you can forward to whoever signs off on the bill."
+    what: "A monthly summary written for someone who never logs in here."
+    where: "Verified savings for the month, with estimates labelled as estimates and customer-reported figures kept separate."
+    do: "Forward it."
+    link_text: "Reading your Savings Statement"
+    link: "/guide/savings-statement"
+
+# R-CLARITY §1: depth (c) renders why -> evidence -> fix -> verify -> methodology,
+# in that order, for every detector.
+detectors:
+  d1_oversized_model:
+    plain: "You're using a top-tier model for work a cheaper one handles"
+    technical: "D1 oversized model"
+    why: "Flagged when a frontier model's average completion is under {d1_short_completion_t} tokens — short answers rarely need the largest model. Savings are priced at the suggested model's own rate card."
+    fix: "Route this traffic to the suggested model and keep the frontier model for genuinely long generations."
+    verify: "Your next audit prices the same routes at the new model; the difference lands in verified savings."
+    methodology_url: "/methodology/#d1-oversized-model"
+  d2_missing_cache:
+    plain: "You're paying full price for prompts you send again and again"
+    technical: "D2 missing prompt cache"
+    why: "Flagged when the same prompt prefix repeats at least {d2_cache_min_repeats} times at {d2_cache_min_prompt_tokens} tokens or more without cache reads. Savings are haircut by {d2_suffix_haircut} for prefix drift."
+    fix: "Mark the stable prefix with your provider's cache control so repeat calls read it instead of re-sending it."
+    verify: "Your next audit sees cache reads on those calls, and the finding shrinks or disappears."
+    methodology_url: "/methodology/#d2-missing-cache"
+  d3_prompt_bloat:
+    plain: "One route's prompts are far larger than the rest"
+    technical: "D3 prompt bloat"
+    why: "Flagged when a route's average prompt exceeds {d3_bloat_mult}x the median for the same model. The excess is priced at the rate those tokens were actually billed."
+    fix: "Trim the system prompt or context growth on that route — usually accumulated examples or unpruned history."
+    verify: "Your next audit measures the smaller prompts; the excess disappears from your waste share."
+    methodology_url: "/methodology/#d3-prompt-bloat"
+  d4_retry_storm:
+    plain: "The same request is being sent over and over in bursts"
+    technical: "D4 retry storm"
+    why: "Flagged when {d4_dup_min} or more identical requests land within {d4_window_s} seconds. Requires per-request logs — provider usage APIs report daily totals only."
+    fix: "Add backoff and a retry ceiling on that client, and make the retry condition narrower."
+    verify: "Your next audit shows the burst gone; the duplicate calls stop appearing."
+    methodology_url: "/methodology/#d4-retry-storm"
+  d5_unbounded_max_tokens:
+    plain: "Your output limits are set far above what you actually use"
+    technical: "D5 unbounded max_tokens"
+    why: "Flagged when the declared max_tokens is {d5_max_ratio}x or more your 95th-percentile completion. Informational: most providers bill actual output, so this is a risk signal, not a bill."
+    fix: "Set max_tokens close to your real p95 output, with headroom for the longest legitimate answer."
+    verify: "Nothing changes on your bill — this protects you from a runaway generation."
+    methodology_url: "/methodology/#d5-unbounded-max-tokens"
+  d6_chatty_loop:
+    plain: "An agent loop is making many tiny calls where fewer would do"
+    technical: "D6 chatty agent loop"
+    why: "Flagged when {d6_loop_min} or more calls under {d6_small_completion_t} completion tokens run inside {d6_run_window_s} seconds. Savings assume batching into groups of {d6_batch_sz}."
+    fix: "Batch the loop's work into fewer calls, or cache the repeated context between iterations."
+    verify: "Your next audit sees fewer, larger calls on that route and prices the difference."
+    methodology_url: "/methodology/#d6-chatty-loop"
+
+wizard:
+  openai:
+    provider_name: "OpenAI"
+    step1_title: "Open your OpenAI usage keys page"
+    step1_body: "You need a read-only key to your usage reports. On the page that opens, create a key and tick the box that lets it read usage — nothing else."
+    console_url: "https://platform.openai.com/settings/organization/admin-keys"
+    permission_hint: "Tick: read usage reports"
+    step2_title: "Paste the key here"
+    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
+    step3_title: "That's it — nothing else to do, ever."
+    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+  anthropic:
+    provider_name: "Anthropic"
+    step1_title: "Open your Anthropic key settings"
+    step1_body: "You need a read-only key to your usage reports. Create one on the page that opens and give it permission to read usage — nothing else."
+    console_url: "https://console.anthropic.com/settings/admin-keys"
+    permission_hint: "Choose: read-only usage access"
+    step2_title: "Paste the key here"
+    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
+    step3_title: "That's it — nothing else to do, ever."
+    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+
+guide_pages:
+  how-it-works:
+    title: "How TokenOps works"
+    audience: "Both"
+    body: "Your usage comes in as a log file or a provider connection. We price every call against a rate card a human verified, run six deterministic detectors over it, and rank what they find by monthly dollars. You apply a fix; the next audit measures whether it worked. Nothing about that loop involves an AI judging your bill — it is arithmetic you can check."
+  first-audit:
+    title: "Your first audit"
+    audience: "Owner"
+    body: "Connect a provider for daily pulls, or upload a log export for the full six-detector audit. A connection backfills 30 days immediately, so you usually have numbers within minutes. Your first report ranks avoidable cost by dollars — start at the top."
+  applying-findings:
+    title: "Applying findings"
+    audience: "Engineer"
+    body: "Every finding carries why it was flagged with the exact thresholds used, the evidence rows behind it, a fix you can paste, and what your next audit will show if the fix works. Mark it Applied when it ships; the next audit covering at least 7 days recomputes the same route and moves the confirmed difference into verified savings."
+  savings-statement:
+    title: "Reading your Savings Statement"
+    audience: "Owner"
+    body: "One page, once a month: what you spent, what we found, what you fixed, and what that saved — with verified figures separated from estimates, and anything you reported yourself kept separate again. It is written to be forwarded to someone who never logs in here."

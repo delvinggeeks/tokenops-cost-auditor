@@ -1,0 +1,367 @@
+/* wa-design.css — WitAura / TokenOps design tokens (R-DESIGN + ADDENDUM).
+   One sheet for landing, app, docs, PDF (print styles at end).
+   Direction: the auditor's aesthetic — premium audit report. Calm, dense,
+   numbers-first. Signature: the accountant's double rule under verified
+   totals. Accent chosen once: deep teal. Dark mode deferred (BACKLOG). */
+
+:root {
+  /* Paper neutrals (warm, calm) */
+  --paper: #faf8f4;        /* page */
+  --surface: #ffffff;      /* cards */
+  --surface-tint: #f5f2ec; /* subtle section tinting */
+  --ink: #1c1a17;          /* primary text */
+  --ink-soft: #5c574f;     /* secondary text */
+  --rule: #e3ded4;         /* 1px borders */
+  --rule-strong: #1c1a17;  /* the double rule */
+
+  /* Accent — chosen once (R-DESIGN §2) */
+  --accent: #0f5c5a;       /* deep teal */
+  --accent-ink: #0a4341;
+
+  /* Semantic — only these three beyond the accent */
+  --verified: #1e6f3e;     /* green: verified savings */
+  --estimate: #7a5500;      /* darkened from #9a6b00: 12px badge on --estimate-bg was 4.10:1, AA needs 4.5 (mockup ux gate f.1) */     /* amber: estimates */
+  --waste: #9e2b25;        /* red: waste / alert */
+  --verified-bg: #eaf3ec;
+  --estimate-bg: #f7efdc;
+  --waste-bg: #f9e9e7;
+
+  /* Type. Serif carries the numbers; sans carries the UI. */
+  --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+  --sans: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* 8px grid */
+  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
+  --content-max: 1100px;
+  --radius: 6px;
+
+  /* Precision-luxury elevation: crisp layered shadows, never emboss */
+  --lift-1: 0 1px 2px rgba(28, 26, 23, 0.06);
+  --lift-2: 0 1px 2px rgba(28, 26, 23, 0.06), 0 4px 12px rgba(28, 26, 23, 0.07);
+  --lift-3: 0 2px 4px rgba(28, 26, 23, 0.07), 0 10px 28px rgba(28, 26, 23, 0.10);
+  --inner-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85); /* 1px highlight */
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --t-fast: 150ms; --t-med: 250ms;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--s3); }
+
+h1, h2, h3 { font-family: var(--sans); font-weight: 600; margin: 0 0 var(--s2); }
+h1 { font-size: 20px; }
+h2 { font-size: 16px; }
+small, .muted { color: var(--ink-soft); }
+a { color: var(--accent); }
+
+/* Money is the most visually weighted object on every screen. */
+.money { font-family: var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.money-hero {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 72px; line-height: 1.05; font-weight: 700;
+  color: var(--verified);
+}
+.money-lg { font-size: 28px; font-weight: 700; }
+/* Non-money stats (countdowns, counts): serif for family, but deliberately
+   lighter and smaller than money — nothing outranks a dollar figure
+   (R-DESIGN §2; mockup-v2 ux gate f.1). */
+.stat-lg { font-family: var(--serif); font-variant-numeric: tabular-nums;
+  font-size: 22px; font-weight: 400; color: var(--ink); }
+.money-sm { font-size: 17px; font-weight: 600; }
+
+/* Signature: the accountant's double rule = final, verified total. */
+.total-rule { display: inline-block; padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-strong); position: relative; }
+.total-rule::after { content: ""; position: absolute; left: 0; right: 0;
+  bottom: -4px; border-bottom: 1px solid var(--rule-strong); }
+
+/* Cards: 1px border + layered lift; hover tiers up (ADDENDUM 2b) */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1), var(--inner-edge);
+  padding: var(--s3);
+  transition: box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.card:hover { box-shadow: var(--lift-2), var(--inner-edge); transform: translateY(-1px); }
+.tinted { background: var(--surface-tint); }
+
+/* Badges — semantic only */
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+.badge-verified { color: var(--verified); background: var(--verified-bg); border-color: #cfe3d4; }
+.badge-estimate { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
+.badge-waste { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+/* "needs more data" is not waste — keep red for real waste signals only
+   (mockup-v3 ux gate f.3). */
+.badge-neutral { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
+
+/* Buttons */
+.btn { font: 600 14px var(--sans); border-radius: var(--radius); cursor: pointer;
+  padding: 8px 14px; border: 1px solid var(--rule);
+  background: var(--surface); color: var(--ink);
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.btn:active { transform: scale(0.98); }             /* micro-confirmation */
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: #fff; }
+.btn-primary:hover { background: var(--accent-ink); }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--ink-soft); }
+
+/* Tables: dense but ordered; money right-aligned tabular */
+table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ledger th { text-align: left; font-weight: 600; color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule-strong); padding: 6px 8px; }
+.ledger td { border-bottom: 1px solid var(--rule); padding: 8px; }
+.ledger td.money, .ledger th.money { text-align: right; }
+
+/* Evidence expander: native details, springs open (ADDENDUM 2b) */
+details.evidence > summary { cursor: pointer; color: var(--accent); font-weight: 600;
+  list-style: none; }
+details.evidence > summary::before { content: "▸ "; transition: transform var(--t-fast) var(--ease); }
+details.evidence[open] > summary::before { content: "▾ "; }
+details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); transform-origin: top; }
+@keyframes spring-open { from { opacity: 0; transform: translateY(-4px) scaleY(0.98); }
+  to { opacity: 1; transform: none; } }
+
+/* Fix snippet: copyable */
+.snippet { font-family: var(--mono); font-size: 13px; background: var(--surface-tint);
+  border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--s2);
+  overflow-x: auto; }
+
+/* Count-up hero (ADDENDUM 2a): CSS-only, runs once, 600ms */
+@property --n { syntax: "<integer>"; inherits: false; initial-value: 0; }
+.countup { --target: 0; counter-reset: n var(--n); animation: countup 600ms var(--ease) forwards; }
+.countup::after { content: counter(n); }
+@keyframes countup { from { --n: 0; } to { --n: var(--target); } }
+
+/* Pipeline theater (first-run + audit progress) */
+.pipeline { display: flex; gap: var(--s2); align-items: center; }
+.stage { flex: 1; text-align: center; padding: var(--s2); border: 1px solid var(--rule);
+  border-radius: var(--radius); background: var(--surface); color: var(--ink-soft);
+  font-size: 13px; font-weight: 600; }
+.stage.done { color: var(--verified); border-color: #cfe3d4; background: var(--verified-bg); }
+.stage.live { color: var(--accent); border-color: var(--accent);
+  animation: stage-pulse 1.6s var(--ease) infinite; }
+@keyframes stage-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(15, 92, 90, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(15, 92, 90, 0); } }
+
+/* htmx swap default (wired at V-D4): 150ms fade + 4px rise */
+.swap-in { animation: swap-in var(--t-fast) var(--ease); }
+@keyframes swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Focus + accessibility floor */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Reduced motion: everything designed degrades to instant (ADDENDUM 2) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .countup { --n: var(--target); }
+}
+
+/* ---- APP SHELL (R-DESIGN-SHELL 2026-07-21) ---- */
+
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+
+.sidebar { background: var(--surface-tint); border-right: 1px solid var(--rule);
+  padding: var(--s3) 0; }
+.sidebar .brand { font-weight: 700; padding: 0 var(--s3) var(--s3); }
+.nav-group { margin-bottom: var(--s3); }
+.nav-group > .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-soft); padding: 0 var(--s3) 6px; }
+.nav-group a { display: block; padding: 7px var(--s3); color: var(--ink);
+  text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+.nav-group a:hover { background: rgba(28, 26, 23, 0.04); }
+.nav-group a[aria-current="page"] { font-weight: 600; color: var(--accent-ink);
+  background: var(--surface); border-left-color: var(--accent); }
+
+.topbar { display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s2) var(--s4); border-bottom: 1px solid var(--rule);
+  background: var(--surface); }
+.topbar .spacer { flex: 1; }
+.freshness { font-size: 13px; color: var(--ink-soft); }
+.freshness b { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.plan-badge { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--paper); }
+.main { padding: var(--s4); }
+
+.sidebar-toggle { display: none; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--rule); }
+  .sidebar.collapsed .nav-group { display: none; }
+  .sidebar-toggle { display: inline-block; }
+  .main { padding: var(--s3) var(--s2); }
+}
+
+/* ---- WIDGET GRID ---- */
+
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s3); }
+.w-12 { grid-column: span 12; } .w-6 { grid-column: span 6; }
+.w-4 { grid-column: span 4; } .w-8 { grid-column: span 8; }
+@media (max-width: 860px) { .w-6, .w-4, .w-8 { grid-column: span 12; } }
+
+.widget { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-1), var(--inner-edge);
+  padding: var(--s3); display: flex; flex-direction: column;
+  transition: box-shadow var(--t-fast) var(--ease); }
+.widget:hover { box-shadow: var(--lift-2), var(--inner-edge); }
+.widget > h2 { margin-bottom: 2px; }
+/* "What this tells you" — mandatory one-liner on every widget */
+.widget > .tells { font-size: 13px; color: var(--ink-soft); margin: 0 0 var(--s2); }
+/* Provenance: determinism made visible — every number names its source */
+.widget > .provenance { margin-top: auto; padding-top: var(--s2); font-size: 12px;
+  color: var(--ink-soft); border-top: 1px solid var(--rule); }
+.widget .provenance code { font-size: 11px; }
+/* Empty states teach the next action — never a shimmer, never a spinner */
+.empty { padding: var(--s3) 0; }
+.empty p { margin: 0 0 var(--s2); color: var(--ink-soft); }
+
+/* ---- PIPELINE RIBBON (W0, the holistic spine) ---- */
+
+.ribbon { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--surface); overflow: hidden; }
+.ribbon .seg { padding: var(--s2) var(--s3); border-right: 1px solid var(--rule);
+  position: relative; }
+.ribbon .seg:last-child { border-right: none; }
+.ribbon .seg .stage-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-soft); }
+.ribbon .seg .stage-state { font-family: var(--serif); font-size: 19px; font-weight: 700;
+  font-variant-numeric: tabular-nums; margin-top: 2px; }
+.ribbon .seg .stage-note { font-size: 12px; color: var(--ink-soft); }
+.ribbon .seg.active { background: var(--surface-tint); }
+.ribbon .seg.active .stage-name { color: var(--accent-ink); }
+.ribbon .seg.waiting .stage-state { color: var(--ink-soft); font-weight: 400; }
+/* chevron seam: the strip reads left-to-right as one flow */
+.ribbon .seg::after { content: ""; position: absolute; right: -7px; top: 50%;
+  width: 12px; height: 12px; transform: translateY(-50%) rotate(45deg);
+  border-top: 1px solid var(--rule); border-right: 1px solid var(--rule);
+  background: inherit; z-index: 1; }
+.ribbon .seg:last-child::after { display: none; }
+@media (max-width: 860px) {
+  .ribbon { grid-template-columns: 1fr; }
+  .ribbon .seg { border-right: none; border-bottom: 1px solid var(--rule); }
+  .ribbon .seg::after { display: none; }
+}
+
+/* ---- ICON SYSTEM (R-DESIGN-V3 §1a): one self-hosted stroke sprite ---- */
+.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none;
+  stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -3px; }
+.i-lg { width: 20px; height: 20px; vertical-align: -4px; }
+.nav-group a .i { margin-right: 10px; color: var(--ink-soft); }
+.nav-group a[aria-current="page"] .i { color: var(--accent); }
+
+/* ---- DENSITY PASS (§1c/§1d) ---- */
+h1 { font-size: 22px; letter-spacing: -0.01em; }
+.widget > h2, .widget-head h2 { font-size: 15px; font-weight: 600; }
+.widget-head { display: flex; align-items: center; gap: var(--s1); margin-bottom: 2px; }
+.widget-head h2 { margin: 0; flex: 1; }
+.money-hero { font-size: 84px; }
+.sidebar { padding: var(--s2) 0; }
+.sidebar .brand { padding: 0 var(--s3) var(--s2); font-size: 15px; }
+.nav-group { margin-bottom: var(--s2); }
+.nav-group a { padding: 6px var(--s3); display: flex; align-items: center; }
+.topbar { padding: 10px var(--s4); box-shadow: var(--lift-1); }
+.provenance, .freshness, .meta { font-size: 12px; }
+
+/* Stat chips: number-first row under the hero */
+.chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s2); }
+@media (max-width: 860px) { .chips { grid-template-columns: repeat(2, 1fr); } }
+.chip { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: 10px var(--s2);
+  box-shadow: var(--lift-1), var(--inner-edge); }
+.chip .k { display: flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--ink-soft); font-weight: 600; }
+.chip .v { font-family: var(--serif); font-variant-numeric: tabular-nums;
+  font-size: 21px; font-weight: 700; margin-top: 2px; }
+.chip .spark { display: block; margin-top: 4px; }
+
+/* Sortable data table (findings list view) */
+.ledger th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.ledger th.sortable .i { opacity: 0.55; }
+.ledger th[aria-sort] .i { opacity: 1; color: var(--accent); }
+.ledger tbody tr { transition: background var(--t-fast) var(--ease); }
+.ledger tbody tr:hover { background: var(--surface-tint); }
+.ledger tbody tr.expanded { background: var(--surface-tint); }
+.sev { font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 1px 7px; border-radius: 3px;
+  border: 1px solid transparent; }
+.sev-high { color: var(--waste); background: var(--waste-bg); border-color: #ecc9c5; }
+.sev-med { color: var(--estimate); background: var(--estimate-bg); border-color: #e8d9b0; }
+.sev-low { color: var(--ink-soft); background: var(--surface-tint); border-color: var(--rule); }
+
+/* Charts: real axes, gridlines, target bands (§1b) */
+.chart { width: 100%; height: auto; display: block; }
+.chart .grid-line { stroke: var(--rule); stroke-width: 1; }
+.chart .axis-label { font: 10px var(--sans); fill: var(--ink-soft); }
+.chart .area { opacity: 0.12; }
+.chart .target-band { fill: var(--verified); opacity: 0.10; }
+.chart .target-line { stroke: var(--verified); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .plot { fill: none; stroke-width: 2; stroke-linejoin: round; }
+/* draw-in on first paint (ADDENDUM 2d) */
+.chart .plot.draw { stroke-dasharray: 1000; stroke-dashoffset: 1000;
+  animation: draw 900ms var(--ease) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* ---- HELP AFFORDANCES (§2b): "?" per widget ---- */
+.help { position: relative; display: inline-flex; }
+.help > summary { list-style: none; cursor: pointer; width: 20px; height: 20px;
+  border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-soft);
+  display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.help > summary:hover { color: var(--accent); border-color: var(--accent); }
+.help[open] > summary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.help-body { position: absolute; right: 0; top: 26px; z-index: 30; width: 300px;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-3); padding: var(--s2);
+  font-size: 13px; text-align: left; animation: swap-in var(--t-fast) var(--ease); }
+.help-body dt { font-weight: 600; margin-top: var(--s1); }
+.help-body dt:first-child { margin-top: 0; }
+.help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
+
+/* ---- GUIDED TOUR (§2a): spotlight + popover ---- */
+.tour-veil { position: fixed; inset: 0; background: rgba(28, 26, 23, 0.45);
+  z-index: 40; }
+.tour-spot { position: absolute; z-index: 41; border-radius: var(--radius);
+  box-shadow: 0 0 0 4px rgba(15, 92, 90, 0.55), 0 0 0 9999px rgba(28, 26, 23, 0.45);
+  pointer-events: none; }
+.tour-pop { position: absolute; z-index: 42; width: 340px; background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--lift-3); padding: var(--s3); }
+.tour-pop .step { font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--accent); }
+.tour-pop h3 { margin: 4px 0 var(--s1); font-size: 16px; }
+.tour-pop p { margin: 0 0 var(--s2); font-size: 14px; color: var(--ink-soft); }
+.tour-pop .row { display: flex; align-items: center; gap: var(--s1); }
+.tour-pop .row .spacer { flex: 1; }
+.tour-dots { display: flex; gap: 5px; }
+.tour-dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--rule); }
+.tour-dots i.on { background: var(--accent); }
+
+/* ---- WORKFLOW BREADCRUMBS (§2d) ---- */
+.steps-bar { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s2); }
+.steps-bar .step-n { display: grid; place-items: center; width: 22px; height: 22px;
+  border-radius: 999px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--rule); color: var(--ink-soft); }
+.steps-bar .cur .step-n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.steps-bar .done .step-n { background: var(--verified-bg); border-color: #cfe3d4;
+  color: var(--verified); }
+.steps-bar .lbl { font-size: 13px; color: var(--ink-soft); }
+.steps-bar .cur .lbl { color: var(--ink); font-weight: 600; }
+
+/* Print = CFO-forwardable (report + statement inherit at WP-7) */
+@media print {
+  body { background: #fff; font-size: 12px; }
+  .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
+  .no-print { display: none !important; }
+}

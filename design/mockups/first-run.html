@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — First run: never blank (R-DESIGN §4a) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<style>
+  .steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s3); margin: var(--s4) 0; }
+  .step .k { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--accent); }
+  .theater { margin: var(--s4) 0; }
+  .status-line { margin-top: var(--s2); font-size: 14px; color: var(--ink-soft); }
+  @media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div style="padding: var(--s2) 0; border-bottom: 1px solid var(--rule); margin-bottom: var(--s4);">
+    <strong>TokenOps Cost Auditor</strong>
+  </div>
+
+  <h1>Let's find out what your AI spend is hiding.</h1>
+  <p class="muted" style="max-width: 560px;">Three steps, under three minutes. Nothing you
+  send us contains prompt text — token counts and metadata only, deleted within 7 days.</p>
+
+  <!-- 3-step guided state: the dashboard is NEVER blank -->
+  <div class="steps">
+    <div class="card step">
+      <div class="k">1</div>
+      <h2>Connect or upload</h2>
+      <p>Paste a provider admin key for daily pulls, or upload a JSONL log export
+      for the full six-detector audit.</p>
+      <a class="btn btn-primary" href="#">Connect OpenAI</a>
+      <a class="btn" href="#">Upload logs</a>
+    </div>
+    <div class="card step">
+      <div class="k">2</div>
+      <h2>We audit</h2>
+      <p>Deterministic detectors price every waste class against our
+      human-verified rate card. No AI judges your bill — arithmetic does.</p>
+      <a href="#">How the math works</a>
+    </div>
+    <div class="card step">
+      <div class="k">3</div>
+      <h2>You see savings</h2>
+      <p>A dollar-ranked report. Apply a fix, and the next audit verifies what
+      you actually saved — that number becomes your headline.</p>
+      <a href="#">See a sample report</a>
+    </div>
+  </div>
+
+  <!-- Pipeline theater: processing is legible, never a bare spinner -->
+  <div class="card theater" aria-label="Audit progress">
+    <h2>Your first audit, live</h2>
+    <div class="pipeline">
+      <div class="stage done">Ingest ✓ 1.2M calls</div>
+      <div class="stage done">Price ✓ rate card v2026-07-17</div>
+      <div class="stage live" aria-current="step">Detect — scanning retry storms…</div>
+      <div class="stage">Report</div>
+    </div>
+    <div class="status-line">Found 3 cache-miss routes so far. Large exports take a
+    few minutes on the detect stage — this page updates itself.</div>
+  </div>
+
+  <!-- Three-second-rule note (mockup ux gate f.2): pre-audit there is
+  deliberately NO headline number — R-Q9 forbids fabricating savings before
+  data exists; the "one number" appears with the first audit result. -->
+  <p class="muted">MOCKUP — sample data only. Delight: pipeline theater with human
+  status lines. Empty state teaches the next action (step 1 buttons are the
+  only primary CTAs on screen).</p>
+</div>
+</body>
+</html>

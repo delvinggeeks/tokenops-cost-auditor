@@ -3,7 +3,13 @@
    R-ICP agent-fleet; stats per docs/09 §6 policy). Invariants (T-WEB-01):
    FR-23 string verbatim; exactly ONE primary class="cta"; attributed stats only. #}
 {% block content %}
+{# Hero A/B (R-PAINMOMENT). Sticky per visitor so the page never changes
+   under someone mid-read; the variant is logged for counting. #}
+{% if hero_variant == "billshock" %}
+<h1>Just got an AI bill you can't explain?</h1>
+{% else %}
 <h1>Take control of your AI spend.</h1>
+{% endif %}
 <p class="muted" style="font-size:1.1rem">
   Claude Code, Codex, and your production LLM features leave a paper trail — their logs.
   Step one of controlling that spend is knowing exactly where it leaks: upload your

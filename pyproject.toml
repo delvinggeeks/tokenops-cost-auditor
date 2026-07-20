@@ -19,6 +19,8 @@ dependencies = [
     "slowapi",
     "pyyaml>=6.0.3",
     "python-multipart>=0.0.32",
+    "cryptography>=49.0.0",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
@@ -48,6 +50,9 @@ packages = ["src/tokenops_cost_auditor"]
 line-length = 100
 target-version = "py314"
 src = ["src", "tests"]
+# design/ holds mockups and the script that generates them — HTML-in-strings
+# design artifacts, not application code. Product code stays fully linted.
+exclude = ["design"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]

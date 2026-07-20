@@ -15,6 +15,9 @@ class MailPort(Protocol):
 
     def magic_link(self, to_email: str, link_url: str) -> None: ...
 
+    # v1.5 WP-3b: the subject carries the number (R-DESIGN §4e)
+    def alert(self, to_email: str, subject: str, body: str) -> None: ...
+
 
 class LogMailAdapter:
     """Structured-log delivery — never sends network mail (PLAN §0.2 MAIL)."""
@@ -24,3 +27,6 @@ class LogMailAdapter:
 
     def magic_link(self, to_email: str, link_url: str) -> None:
         log.info("mail.magic_link", to=to_email, url=link_url)
+
+    def alert(self, to_email: str, subject: str, body: str) -> None:
+        log.info("mail.alert", to=to_email, subject=subject)

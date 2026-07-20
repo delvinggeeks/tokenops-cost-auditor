@@ -172,6 +172,7 @@ class AuditRunner:
                         audit_id=audit_id,
                         finding_id=f.id,
                         detector=f.detector,
+                        route=str(f.detail.get("model")) if f.detail else None,
                         severity=str(f.severity),
                         monthly_impact_usd=f.monthly_cost_impact_usd,
                         confidence=str(f.confidence),
@@ -181,6 +182,8 @@ class AuditRunner:
                 )
             for row in aggregates:
                 session.add(CallAggregate(audit_id=audit_id, **row))
+            audit.observed_days = report.observed_days
+            audit.equiv_spend = report.equiv_spend  # FR-30
             audit.total_spend_usd = report.total_spend_usd
             audit.projected_spend_usd = report.monthly_optimized_usd
             audit.savings_pct = report.savings_pct

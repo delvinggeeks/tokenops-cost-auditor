@@ -1,0 +1,29 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-6" id="w-waste_trend">
+  {{ widget_head("i-trend-down", "waste_share", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>Needs one audit. On connected sources we run three detectors; on uploaded
+        request logs, all six.</p>
+      <a class="btn btn-quiet" href="/guide/how-it-works">What each detector finds</a>
+    </div>
+  {% else %}
+    <div class="money money-lg" style="color: var(--waste);">{{ w.data.current_pct }}%</div>
+    <svg class="chart" viewBox="0 0 342 140" role="img"
+         aria-label="Waste share per audit">
+      {% for gy in [20, 50, 80, 110] %}
+        <line class="grid-line" x1="34" y1="{{ gy }}" x2="342" y2="{{ gy }}"/>
+      {% endfor %}
+      <g transform="translate(34,0)">
+        <polyline class="plot draw" stroke="var(--waste)" points="
+          {%- for p in w.series -%}
+            {{ loop.index0 * (308 / [w.series|length - 1, 1]|max) }},{{ 120 - (p.value * 2.5) }}{{ " " }}
+          {%- endfor -%}"/>
+      </g>
+      <text class="axis-label" x="0" y="23">40%</text>
+      <text class="axis-label" x="34" y="134">{{ w.series[0].label }}</text>
+      <text class="axis-label" x="342" y="134" text-anchor="end">{{ w.series[-1].label }}</text>
+    </svg>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

@@ -1,6 +1,6 @@
 ---
 name: ux-reviewer
-description: UX/design gate for landing page and report templates. Run only at D7-D9 milestones. Judges value-prop clarity, report executive readability, FR-23 policy string presence, mobile sanity.
+description: UX/design gate for landing page and report templates. Run only at D7-D9 milestones. Judges value-prop clarity, report executive readability, FR-23 policy string presence, mobile sanity. AMENDED (R-DESIGN 2026-07-20) — also gates every v1.5 surface (mockups BEFORE wiring) against the three-second rule and the R-DESIGN-ADDENDUM checklist.
 tools: Read, Grep, Bash
 model: sonnet
 ---
@@ -30,3 +30,49 @@ pyproject/.python-version). A finding produced by the sandbox/system
 python or any other interpreter is invalid by definition. On a
 toolchain-dependent disagreement with the main thread, the
 pinned-toolchain reproduction is authoritative.
+
+R-DESIGN AMENDMENT (founder 2026-07-20, binding on every gated surface):
+1. THREE-SECOND RULE — test exactly these three on each surface: (a) what
+   is this screen telling me; (b) the one number that matters; (c) my
+   next action. A surface failing any of the three FAILs regardless of
+   craft. Clarity overrides delight on any conflict.
+2. R-DESIGN-ADDENDUM checklist — every gated surface must: name its ONE
+   designed delight (wow-per-workflow, no more than one); prove WCAG AA
+   contrast; prove prefers-reduced-motion compliance for any motion.
+3. BANNED (auto-finding if present): purple-gradient AI clichés,
+   glassmorphism, emoji in product UI, decorative illustration,
+   dark-pattern urgency, embossed neumorphism, blurred-blob backgrounds,
+   3D anywhere inside the app (landing hero gets exactly one).
+4. Money figures must be the most visually weighted objects on screen;
+   tabular-nums wherever money appears; serif display numerals.
+
+R-PERSONA AMENDMENT (founder 2026-07-21, checked at every wiring gate):
+5. THREE-DEPTH RULE — test each surface at all three depths, not just the
+   page: (a) HEADLINE reads as a plain-words owner sentence with a money
+   number and ZERO jargon; (b) CONTEXT states what changed, since when,
+   and provenance in words; (c) DEPTH (expander/tab) carries evidence
+   tables, detector params, methodology links. A surface that only works
+   at one depth FAILs.
+6. JARGON LAW — a detector identifier (D1..D6, d2_missing_cache, etc.)
+   appearing at depth (a) is an automatic finding. Technical identifiers
+   belong at depth (c) only; help popovers must carry both phrasings.
+7. Guide pages open with "who this is for" (Owner · Engineer · Both).
+8. NO persona-forked dashboards — one shell, three depths. A proposed
+   parallel view for a different audience is a finding, not a feature.
+
+R-CLARITY AMENDMENT (founder 2026-07-21, checked at every wiring gate):
+9. FAMILIARITY — any interaction pattern a Datadog/Stripe/Grafana user
+   would NOT already know is a finding. Expected grammar: filters
+   top-left, time-range top-right, row→drawer expansion, sortable headers
+   with aria-sort, breadcrumbed multi-step flows, settings as grouped
+   forms. The novelty budget is spent ONLY on the pipeline ribbon and the
+   double rule; novelty anywhere else is a finding, not a flourish.
+10. DEVELOPER DEPTH ORDER — depth (c) on a finding must present, in this
+    order: WHY flagged (rule + threshold values) · EVIDENCE (counts
+    table) · THE FIX (copyable snippet / exact config change) · VERIFY
+    (what the next audit shows if applied) · methodology link. Missing or
+    out-of-order sections are a finding. Test: an engineer with zero
+    FinOps knowledge and an owner with zero engineering knowledge each
+    get a COMPLETE answer from the same screen at their own depth.
+11. SECTION PURPOSE LINES — every sidebar destination opens with one
+    plain sentence of "what you do here", sourced from the help registry.

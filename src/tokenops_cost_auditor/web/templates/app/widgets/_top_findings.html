@@ -1,0 +1,39 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-8" id="w-top_findings">
+  {{ widget_head("i-findings", "top_findings", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>Nothing yet. The sample report shows what a finding looks like — plain-English
+        title, dollar impact, the evidence behind it, and a fix you can paste.</p>
+      <a class="btn" href="/sample">Open the sample report</a>
+    </div>
+  {% else %}
+    <table class="ledger">
+      <thead><tr>
+        <th>Finding</th><th>Severity</th><th class="money">Monthly</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for it in w.data['items'] %}
+        <tr>
+          <td>{{ help.detector_plain(it.detector) }}</td>
+          <td><span class="sev sev-{{ it.severity }}">{{ {"high": "High", "med": "Medium", "low": "Low"}.get(it.severity, it.severity) }}</span></td>
+          <td class="money">${{ "{:,.2f}".format(it.monthly_usd) }}</td>
+          <td>
+            {% if it.verdict == "applied" %}
+              <span class="badge badge-verified">applied</span>
+            {% else %}
+              <form hx-post="/findings/{{ it.audit_id }}/{{ it.finding_id }}/feedback"
+                    hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
+                <input type="hidden" name="verdict" value="applied">
+                <button class="btn btn-primary" type="submit">Applied</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p style="margin-top:var(--s2)"><a href="/findings">See all {{ w.data.total }} findings →</a></p>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

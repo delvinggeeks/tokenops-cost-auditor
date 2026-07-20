@@ -3,6 +3,483 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## V-D9 GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES (all 8 notes closed)
+
+ux (3, closed): done-state cut to ONE line per R-MAGIC-CONNECT §1c (the
+rest belongs on the dashboard); an orphaned hidden form removed from the
+unreachable branch; the counts-only promise restated INLINE under the key
+input — a reassurance one visual hop from the hand is half-read.
+cold-review (5, closed): (f.1) validation ran BEFORE the plan check, so a
+customer at their limit spent provider quota and six seconds to earn a 403
+— now authorize-then-validate, with a test asserting the provider is never
+contacted for a refused request. (f.2) a new user's row was discarded when
+a bad key rolled the transaction back; user creation now commits
+independently of the verdict. (f.3) no idempotency: a double-click bought
+two connections and two first-pulls — now 409 with a re-check inside the
+lock for the race. (f.4) the sample fixtures lived in tests/, absent from a
+wheel, so /sample would have errored for real installs; they now ship
+INSIDE the package and I verified it by building a wheel and listing its
+contents rather than assuming. (f.5) sample_html claimed to render once and
+did not — a public unauthenticated page re-running the engine per hit;
+memoised, with a test that fails if the engine runs twice for three
+requests. Suite green across 3 consecutive runs; ruff/mypy clean.
+STILL DEFERRED (unchanged, founder's call): report web visual pass and
+pricing-page Savings-Statement framing — the report shares its template
+with the PDF and the golden-determinism tests.
+
+## V-D8 GATE CLOSED
+
+R-WIZ-ILLUSTRATION ratified and the ruling text amended in PLAN §0.1 +
+PLAN-V15 (drawn diffable SVG replaces "annotated screenshot").
+POLISH HALF: /sample (FR-16) runs the committed synthetic fixtures through
+the REAL engine — ingest → price → detect → assemble — so every figure on
+the shareable page is arithmetic the shipped detectors produced, not a
+mock-up; it is deterministic run-to-run, needs no login, and carries a
+banner saying plainly that the arithmetic is real even though the company
+is not. /upload became the guided "Get your logs" flow: five routes in
+(Connect wizard · Claude Code exporter · OpenAI · Anthropic · CSV), each
+carrying its OWN counts-only promise beside the instruction rather than a
+footer nobody reads (test asserts exactly five). Landing hero A/B per
+R-PAINMOMENT: cookie-bucketed so a visitor sees one hero and never watches
+it change mid-read.
+FLAKE CAUGHT AND FIXED BEFORE THE GATE: the A/B made an EXISTING
+R-GTM-CONTROL test intermittent (it asserts the control headline, now
+shown ~half the time). Both that test and my own new one now pin their
+variant explicitly — a coin-flip assertion has no place in a suite I call
+deterministic. 3 consecutive clean full runs after the fix.
+10 polish tests (T-POL-01..03 + sample determinism + hero arms);
+sample.py 96.9%, routes_pages.py 100%; total 95.5%.
+DEFERRED, stated honestly: the report web page's visual pass and the
+pricing-page Savings-Statement framing are NOT done — the report shares
+its template with the PDF and the golden-determinism tests, so restyling
+it is a change I want gated on its own, not smuggled into a polish commit.
+
+## V-D8 GATE CLOSED
+
+R-NORMALIZE-AT-EVERY-DOOR + R-BATCH-SEND-ISOLATION recorded as permanent
+laws, each naming the defect that produced it. WIZARD (R-MAGIC-CONNECT):
+3 steps per provider — deep-link to the exact console screen with an
+annotated SVG of the permission box (drawn, not a screenshot binary, so it
+cannot rot silently in version control), live server-side validation, and a
+done-state that promises nothing further. Three verdicts in plain words:
+connected (read-only, states what we can NEVER see), can't-read-usage
+(saves nothing), unreachable (R-WIZ-DEGRADE: SAVES the key, says so, offers
+retry — a 6s timeout so a customer's first minute never hangs on a
+provider's status page). On success an immediate pull+audit runs in a
+background thread so the dashboard fills THIS session; a failure there is
+invisible because the tick remains the guarantee. Wizard copy lives in the
+help registry like every other string — and the T-WIZ-04 jargon guard
+promptly caught MY OWN copy ("Anthropic admin keys page"), which is exactly
+what the law is for; fixed the copy, not the test. Plan gate explains at
+the START rather than failing after a paste. 12 tests; validate.py 94.7%;
+suite green and deterministic; total 95.5%.
+REMAINING for V-D9: /sample, guided get-your-logs tabs, landing hero A/B,
+report visual pass, pricing framing — then the gates.
+
+## V-D8 GATE CLOSED — cold-reviewer FAIL→FIXED · vv FAIL→FIXED (both re-verified)
+
+The founder's instruction to attack money paths paid for itself twice over.
+cold-review (6 findings, all closed): (f.1) email was normalised on CREATE
+but not on LOOKUP, so a mixed-case address from checkout missed the lookup,
+hit users.email UNIQUE on insert, and the provider retried forever — a paid
+upgrade stuck in a permanent failure loop, invisible to the customer.
+(f.2) the day-0 dunning EMAIL was unreachable: apply_event set status
+past_due synchronously, so the sweep's idempotency guard always saw
+stage == status and skipped — the R-Q11/12 "day 0 email" promise could
+never fire in production, and my own test masked it by jumping to day 8.
+Day 0 now emails at the transition. (f.3) the plan came from
+provider-echoed metadata with no validation — "team" in a Pro checkout's
+metadata escalated the tier; unknown values now keep the existing plan and
+log. (f.4) I repeated the alerts mistake: emails sent inside a loop with
+one commit at the end, so a later failure rolled back a rung whose email
+had already gone — now committed per rung. (f.5) N+1 entitlement queries
+per source → batched. (f.6) dead code in the billing route.
+vv FAIL (4 findings, closed): (f.2, serious) every webhook-route test was
+SKIPPING because the shared fixture has no webhook secret — the FR-27
+dedup rail for subscriptions was never actually exercised. A dedicated
+test-mode webhook app now runs all four; repo-wide skips are down to the
+single environment-gated postgres test. stripe_link.py 77.8%→94.4% (its
+whole subscription branch was untested while razorpay's was covered);
+T-SUB-03 now exists by name for source counts AND scheduler cadence;
+determinism double-run completed here (2 runs, identical, EXIT=0).
+Total 95.6%. NEXT: STOP for founder review; V-D9 (polish + wizard) on go.
+
+## V-D8 BUILT (founder GO 2026-07-22) — build record
+
+ONE price config (services/payments/plans.py): every amount renders from
+Settings, both currencies shown for paid plans (R-Q11), and a test greps
+templates/routes for inline literals so a price change can never half-land.
+Free is genuinely free — no price, no card, no scheduler, and the billing
+page says "No card required" even on the row you are already on.
+WEBHOOKS ride the EXISTING FR-27 rails: signature → timestamp tolerance →
+event-id dedup, now shared by one-shot payments AND subscription events
+(the dedup helper gained a structural protocol instead of assuming a
+payment shape — it would have AttributeError'd on every subscription
+event otherwise). Replay of a subscription event is acknowledged, never
+reprocessed. DUNNING per R-Q11/12 exactly, as a PURE function of
+(failed_at, now) so the rungs are testable without clocks: day 0 past_due
++ email, day 7 read_only, day 21 cancelled → Free. Two edges pinned: a
+REPEATED failure must not restart the clock (or the ladder never reaches
+day 7 and a failing customer keeps a paid plan), and a successful charge
+clears it. Read-only touches exactly ONE capability — scheduled audits
+pause; dashboard, reports and connections all stay, asserted. Cancellation
+reverts to Free and deletes NOTHING (founder ruling verbatim; the email
+says so). Scheduler now gates due audits on entitlements, which surfaced
+that Free accounts must not get scheduled audits — the old scheduler
+fixtures implied a source without a plan, which cannot happen (R-Q5/Q6);
+fixtures corrected. 16 tests (T-SUB-01..05 + edges); plans.py and
+routes_billing.py both 100%; suite green and deterministic; total 95.0%.
+NEXT: gate verdicts, then STOP.
+
+## V-D7 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
+
+cold-review (3 findings, all closed): (f.1, promise-breaking) opting out of
+the statement EMAIL also skipped archiving it, so Settings' own words —
+"you can always read it here" — became false; the job now ALWAYS builds and
+archives, and only the send is optional. (f.2) purge_one's guard missed the
+upload_path=None + purged_at=None case, so an admin purge of a failed audit
+that never stored a file would stamp purged_at and write an audit-log entry
+claiming a deletion that never happened; the guard is now simply "no file,
+nothing to purge". (f.3) the job's summary conflated opted-out with
+already-sent — separate counters. WRITING THE f.3 FIX EXPOSED A LATENT
+CRASH: the summary line still referenced a counter I had renamed, a
+NameError that would have fired on every real run and that no
+import-only test could see — now covered by a test that actually executes
+main().
+vv PASS-WITH-NOTES; note CLOSED: PLAN-V15's V-D7 entry still claimed alert
+thresholds, which had shipped early in V-D5's /alerts page. Reconciled in
+the plan (one editor per setting; Settings links to it) with T-SET-01
+remapped to the tests that actually cover threshold persistence and
+validation. Traceability rows added for WP-3b/4/5. purge.py 80.0% with
+every remaining miss the pre-existing CLI main() — the carried debt,
+unchanged. Suite green and deterministic; total 95.4%.
+
+## V-D7 BUILT (founder GO 2026-07-22) — build record
+
+Rulings recorded first: R-STMT-MONTH (V-D6 default ratified as law — single
+compute(), a second copy forbidden forever), R-COVERAGE-DEBT (smtp/purge
+carry; close in V-D10 only if slack), R-WIZ-DEGRADE (graceful degrade
+approved for the wizard; T-WIZ-05 added to V-D9).
+BUILT: one grouped Settings page (R-DESIGN §4f) — account facts, email
+preference, connected sources with revoke, data controls, billing link.
+Email: a statement-email toggle (migration 007, NULL = opted in) honoured
+by the monthly job; the page states plainly that sign-in links and
+report-ready mail always send, because they are how the product works.
+DATA CONTROLS: "delete my uploads now" states its consequences in words
+BEFORE asking, then requires the exact typed phrase; a near-miss deletes
+nothing. REFACTOR FOUND A REAL GAP: the admin manual purge had drifted
+from the scheduled one — it never deleted the FR-26 idempotency keys.
+Extracted ONE purge_one() primitive now shared by scheduled, admin and
+customer paths, which closes that gap and is pinned by a regression.
+Purge is account-scoped (another account's uploads untouched, tested) and
+idempotent. 10 tests (T-SET-01..03 + scoping/idempotence/primitive).
+purge.py 77.5%→80.0%: every remaining uncovered line is the pre-existing
+CLI main(), i.e. exactly the debt the founder ruled to carry — no new
+uncovered code. Suite green and deterministic; total 95.4%.
+NEXT: gate verdicts, then STOP.
+
+## V-D6 GATE CLOSED — cold-reviewer FAIL→FIXED · vv PASS-WITH-NOTES (note closed)
+
+vv: coverage TOTAL 95.4%, statements/build.py AND dashboard/savings.py both
+100% (money-math floor met), T-STMT-01..03 verified non-trivial, the
+month-credit default confirmed recorded in the SAME commit, migration chain
+001→006 intact, equiv_spend confirmed written by both producers, and the
+hand derivation independently recomputed (750/300/75/600 — matches).
+Note CLOSED: my new regression loaded the monthly job through a
+CWD-relative path, so it could fail when pytest ran from elsewhere — now
+repo-relative via Path(__file__), proven by running the file from /tmp.
+STANDING DEBT REPORTED, NOT SILENTLY FIXED (pre-existing, untouched by this
+diff): services/mail/smtp.py 83.8% and services/lifecycle/purge.py 78.9%
+are below the 85% services floor — v1 code, outside V-D6 scope; founder's
+call whether to close them now or carry them.
+
+## V-D6 — cold-review record
+
+cold-review (4 findings, all closed): (f.1) pending_count was NOT
+period-scoped while verified was, so July's statement could report a fix
+applied in June as "awaiting confirmation" — the artifact contradicting
+itself. Pending now belongs to the month the fix was APPLIED, verified to
+the month an audit PROVED it. (f.2) _month_bounds closed at 23:59:59 while
+compute() matched on year/month, so an audit in the final second of a month
+was dropped from build()'s own query — a statement could print "No audit
+ran this month" above a verified figure sourced from exactly that audit.
+Both now share one exclusive [start, next-month-start) bound. (f.3)
+POST /statements/{period}/send parsed the path segment with int() — "2026-13"
+and "abcd-ef" were uncaught 500s; now a 400 via one validated parser.
+(f.4) the monthly job had no per-user isolation, so one rejected mailbox
+would silently cost every later user that month's statement. Regressions
+added for each. savings.py AND statements/build.py both at 100%; suite
+green and deterministic; total 95.4%.
+
+## V-D6 BUILT (founder GO 2026-07-22) — build record
+
+Inherits R-Q9 wholesale as ruled: VERIFIED-only headline (and subject),
+identified + customer-reported in their own labelled sections that are
+never summed with it, a provenance stamp per audit, and the FR-30
+equiv-spend line verbatim when any audit in the period could not assume
+metered billing — which required persisting audits.equiv_spend (migration
+006) from both producers, since the flag lived only in the report model.
+MONEY-MATH DEFAULT RECORDED (NOTES): R-Q9 does not say which month a saving
+lands in when the fix ships in one month and the proof arrives in the next
+— credited to the month of the audit that PROVED it, because a statement is
+archived and emailed, and crediting the application month would mean
+restating an artifact already in someone's inbox. Implemented as a `period`
+filter inside the ONE compute(); a second copy of the formula would be a
+money-math hazard. Archive law: one row per user per month, a re-run
+refreshes a DRAFT, a SENT statement is frozen (test asserts the body does
+not move even when the figures do); send is at-most-once like alerts, with
+resend delivering the archived artifact unchanged. Statements page + detail
++ resend; monthly ofelia job (1st, 06:00 UTC); Savings statements earns its
+nav entry (it ships). 9 tests incl. hand-derived arithmetic; suite green
+and deterministic, coverage 95.3%. NEXT: gate verdicts, then STOP.
+
+## V-D5 GATE — cold-reviewer FAIL→FIXED, vv FAIL→FIXED; both re-verified, awaiting founder review
+
+cold-review (4 findings, all closed): (f.1, the serious one) the
+savings-realized form posted verdict="{{ verdict or 'applied' }}", so a
+customer typing a figure they saw on their own bill would silently mark the
+finding APPLIED — feeding R-Q9's verified headline with a decision they
+never made. The figure now rides WHICHEVER verdict they explicitly click
+(three submit buttons, no defaulted hidden field). (f.2) the at-most-once
+claim was false: the commit sat at the end of the per-user batch, so a
+later send failure rolled back an event whose email had already gone —
+each event now commits before its own send; the trade-off is stated in the
+test (a failed send is a MISSED alert, never a duplicate). (f.3) threshold
+truthiness read a deliberate 0 as "unset" — now `is not None`, so "alert me
+on any spend" works. (f.4) the alert stage could kill a tick whose pulls
+and audits had already committed — now isolated like every other stage.
+vv FAIL (2 objective gates, both closed): dispatch.py was 64.7% (run_all's
+loop never exercised directly) → 100% via a real per-user test incl. error
+isolation; T-FB-01/02 existed as behaviour but carried no test IDs, so
+traceability was fiction — now labelled in place with an ID map in
+PLAN-V15. Also fixed a mypy narrowing error my own run caught. Suite green
+and deterministic across runs; total coverage 95.1%.
+
+## V-D5 BUILT (founder GO 2026-07-22) — build record
+
+WP-3b: four rules per the ruling (spend spike DoD, waste above target, new
+HIGH finding, soft budget), each evaluated against audits the customer
+already has, each message leading with the NUMBER and naming its audit.
+OBSERVE-ONLY is enforced, not just asserted: T-ALR-05 parses the alerts
+package with ast (docstrings stripped, so prose naming the forbidden verbs
+does not self-trip) and fails on any enforcement-shaped code; a second test
+asserts no alert body claims we paused/blocked/capped anything. Dispatch
+records the AlertEvent BEFORE sending so a mail failure cannot re-fire the
+same alert (at-most-once beats at-least-once when the payload is customer
+email); one alert per rule per audit. Delivery rides the existing adapter
+(new `alert` method on the protocol + both adapters). Hourly connector tick
+now evaluates alerts right after audits land, so a new finding reaches the
+customer in the pass that found it. /alerts is a grouped settings form
+(familiar shape, unparseable input falls back rather than erroring) with a
+20-event history. PREVENT ribbon stage now reads real armed-rule state and
+Alerts earned its sidebar entry — it ships, so it appears (no-promises law).
+L0: the drawer gained the optional savings-realized input, labelled
+customer-reported and stated as never touching the verified headline
+(R-Q9). Suite green exit-code-checked; ruff/format/mypy clean.
+NEXT: gate verdicts, then STOP.
+
+## V-D4 + V-D4g GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer FAIL→FIXED→re-verified · vv PASS-WITH-NOTES
+
+ux (3 notes, all closed): Prevent ribbon stage was static placeholder text —
+the "coming soon" the shell forbids — now renders REAL armed-rule state
+("Not set up" at zero); sortable headers were a false affordance, now do
+real server-side sorting via SSR links; severity/confidence render as words.
+cold-reviewer FAIL (6 findings, all closed, commit 362dee0) — THREE were
+money-math defects that would have inflated the customer-facing headline:
+(R1) weekly audits re-emit an unfixed finding with a fresh feedback row and
+the old code summed them, billing the same saved dollars every week — now
+ONE credit per route against the EARLIEST applied feedback; (R2) a route
+vanishing from a later audit was credited in full even if the feature was
+simply retired — now a disappearance counts only when call_aggregates prove
+the route still carried traffic, else pending; (R3) the same finding could
+book as both identified and verified. Enabling fix: findings.route persisted
+by BOTH producers (migration 005) — "same detector and route" was otherwise
+uncheckable. Also fixed: drawer showed a stale null verdict so an applied
+route invited re-applying (the R1 trigger), overdue audits collapsed to
+"today", malformed help placeholders could 500 a page.
+PROCESS NOTE (mine): the first vv gate FAILed on a "non-deterministic
+suite" — I had launched gates and then edited the same files, so it sampled
+half-applied states. Gates review a FIXED diff; re-run on the settled tree
+gave PASS-WITH-NOTES with determinism independently confirmed (2 runs, 280
+tests, identical, EXIT=0). vv's coverage note (anthropic_usage 53.2%,
+pre-existing from M1) closed too: fetch-path tests bring it to 95.7% and the
+suite total to 95.1%. Money math savings.py 100%. NEXT: STOP for founder
+review per order; V-D5 (alerts + L0 deltas) on go.
+
+## V-D4 + V-D4g BUILT (founder GO on mockup v3, 2026-07-21) — build record
+
+Founder v3 verdict: all three surfaces PASS, GO to wire; digest arrival
+CONFIRMED. BUILT: R-Q9 verified-savings service (money math — 6 exact-value
+goldens + NOTES derivation; the >=7-day gate reads a NEW audits.
+observed_days column persisted by BOTH audit producers, since the rule was
+otherwise unenforceable); metrics module (one function per widget, each
+carrying its own provenance stamp); app shell (stage-grouped sidebar, only
+shipped modules, freshness topbar, section purpose lines from the
+registry); 6 widgets each independently htmx-refreshable at
+/dashboard/w/<key>; pipeline ribbon from real state; findings table with
+row->drawer expansion (punch-list item 2 DONE) where the drawer is depth
+(c) in the fixed why/evidence/fix/verify/methodology order and carries the
+detector id (punch-list item 1 DONE — headline depth is plain language,
+test-enforced); L0 feedback capture that swaps the savings headline back in
+(the applied-fix-flows-into-the-number moment); guided tour (vanilla JS,
+5 steps, server-persisted dismissal, replay from Help); YAML help registry
+as the single source for popovers + Guide + purpose lines with thresholds
+rendered from live Settings; vendored htmx 2.0.4 + static mount (no CDN,
+provenance in web/static/VENDORED.md); design-asset drift tests pinning the
+shipped CSS/sprite to design/. Migration 004 additive. Suite 122 green
+exit-code-checked, ruff+format+mypy clean. NEXT: gate verdicts, then STOP.
+
+## R-CLARITY RECORDED (founder 2026-07-21) — designed developer depth + familiarity principle; still NO mockup round
+
+Addendum to R-PERSONA in PLAN §0.1 + PLAN-V15. (1) Depth (c) on every
+finding renders a FIXED order: why flagged (rule + threshold values) →
+evidence table → the fix (copyable) → verify (what the next audit shows)
+→ methodology link. Help-registry schema per detector therefore becomes
+plain/technical phrasing + why/fix/verify + methodology_url; thresholds
+render FROM Settings so help text cannot drift from config. New tests:
+T-HELP-05 (full triple per detector), T-HELP-06 (thresholds live, not
+hard-coded — changing a threshold changes the help text), T-HELP-07
+(purpose line per sidebar destination). (2) FAMILIARITY: Stripe/Datadog/
+Grafana grammar — filters top-left, time-range top-right, row→drawer,
+aria-sort headers, breadcrumbed flows, grouped settings forms; novelty
+budget spent ONLY on the pipeline ribbon + double rule. ux-reviewer
+charter gained checks 9-11 (familiarity, developer-depth order,
+section purpose lines). (3) Every sidebar destination opens with one
+plain "what you do here" sentence from the registry. Mockup v3 unchanged
+— founder verdict remains the only gate on wiring.
+
+## R-PERSONA RECORDED (founder 2026-07-21) — three-depth law; NO new mockup round, v3 verdict still the gate
+
+Design law recorded in PLAN §0.1 and PLAN-V15 (applies to V-D4/V-D4g/V-D9
+as copy/structure discipline, not a new milestone): every surface reads at
+three depths (owner headline in plain words with a money number · manager
+context with provenance in words · engineer expander with evidence,
+detector params, methodology); JARGON LAW — detector identifiers never at
+headline depth, help-registry YAML carries both phrasings per key
+(T-HELP-04 added: a headline-depth string containing a detector id fails
+the test); Guide pages open with "who this is for" (Owner · Engineer ·
+Both); architect lens (per-agent/pipeline/knowledge-base attribution)
+REGISTERED NOT BUILT on BACKLOG — arrives with T4 span data; no
+persona-forked dashboards, one shell three depths, Savings Statement stays
+the owner artifact and the report PDF the shared one. ux-reviewer charter
+amended with checks 5-8 (three depths per surface, jargon auto-finding,
+audience tags, no forked views). Mockup v3 is UNCHANGED and remains the
+open gate.
+
+## MOCKUP v3 (R-DESIGN-V3) GATED — ux PASS-WITH-NOTES, all 4 notes closed; FINAL round, awaiting founder verdict → wiring
+
+R-DESIGN-V3 recorded (PLAN §0.1); V-D4g added to PLAN-V15 as the
+founder-accepted +1-day guidance package with T-HELP-01..03. DELIVERED
+design/mockups/v3/{overview,findings-table,first-run-tour}.html +
+design/icons.svg (22-symbol self-hosted stroke sprite, no emoji/icon
+font) + v3 CSS layer (icons, stat chips, sortable table, help popovers,
+tour spotlight, breadcrumbs, density pass: h1 22px, 15px/600 widget
+titles with icons, 84px hero, tightened chrome). REAL charts: spend =
+area with gridlines + $ axis + date axis; waste% = line with 25% target
+band; sparklines inside chips — zero placeholder boxes. GUIDANCE: 5-step
+tour (step 1 spotlighting the ribbon, Next/Skip, progress dots),
+per-widget "?" popovers (what it shows · where the number comes from in
+words · what to do · Learn more) from a single YAML registry at build,
+HELP sidebar group, breadcrumbs stating each step's purpose in a
+sentence. ux gate v3: PASS-WITH-NOTES, ALL CLOSED — f.1 one canonical
+finding title across table row + expanded card + overview; f.2 trend
+widgets gained their own next actions; f.3 "requires logs" moved to a
+neutral badge (red reserved for real waste); f.4 un-carded ribbon
+confirmed deliberate in-file. Contrast AA-clear on all new chrome
+(sev chips 5.9-6.4:1, axis labels 7.2:1, target label 5.4:1).
+NEXT: founder verdict on v3 → wiring begins (V-D4), remaining polish as
+inline notes, no further mockup cycles.
+
+## SUPERSEDED — mockup v2 (R-DESIGN-SHELL) — ux PASS-WITH-NOTES, 4 notes closed
+
+R-DESIGN-SHELL recorded in PLAN §0.1 (app shell, widget grid, pipeline
+ribbon, determinism-as-design; zero scope/date change). Built
+design/mockups/v2/{overview,first-run,findings}.html on shell components
+added to wa-design.css. SHELL: sidebar grouped MONITOR/CONNECT/ACT/
+ACCOUNT/ENGINEERING — only shipped modules, zero "coming soon" (grep
+clean); topbar = product name · page · plan badge · freshness stamp ·
+account. OVERVIEW: W0 ribbon (INPUT→ANALYZE→REPORT→ACT→PREVENT from real
+state) + W1-W8 widgets, each with title, "What this tells you" line,
+provenance stamp, designed empty state. FIRST-RUN renders in the SAME
+shell with every widget in its guided empty state (no shimmer, no invented
+numbers — R-Q9 held). ux gate v2: PASS-WITH-NOTES, all 4 closed — f.1
+non-money stats got .stat-lg so nothing outranks a dollar figure; f.2 W1
+hero gained its own next action; f.3 topbar now carries the product name;
+f.4 overview names its delight. Contrast measured AA-clear on all new
+pairs (sidebar active 11.1:1, ribbon 9.9:1, provenance 6.4-7.4:1).
+NEXT: founder three-second re-review of v2 → GO → V-D4 wiring.
+
+## SUPERSEDED — R-DESIGN v1 mockup set (single-page dashboard) — ux PASS-WITH-NOTES, 3 notes closed
+
+Consolidated order 2026-07-20 applied: Part 1 verified verbatim-identical
+to the prior approval (already executed — skipped); R-DESIGN + ADDENDUM
+recorded in PLAN §0.1, ux-reviewer charter amended (three-second rule +
+delight/contrast/reduced-motion checklist + banned list); R-AGENTIC-
+DIMENSIONS + R-RAG into docs/12 (T4 mapping preserves agent + vector-DB
+span dimensions; policy grammar = the platform's "autonomous mode"
+definition; L3 fires mid-cycle); R-APIKEYS build detail on the BACKLOG
+trigger; R-AGNOSTIC expansion law in docs/12 + BACKLOG queue (Gemini,
+Bedrock, Azure-OpenAI T2; Copilot AGG); dark-mode + RAG-pack BACKLOG
+lines. MOCKUPS (frontend-design skill read first): design/wa-design.css
+(tokens: paper neutrals, deep-teal accent chosen once, serif tabular
+money, 2-4 tier crisp shadows, count-up/pipeline/spring motion with
+reduced-motion neutralization, print styles) + design/mockups/
+{dashboard,finding-card,first-run}.html. Signature: the accountant's
+DOUBLE RULE under verified totals. ux-reviewer mockup gate:
+PASS-WITH-NOTES — f.1 estimate-amber contrast 4.10:1 → darkened to
+#7a5500 (AA); f.2 first-run's deliberate no-number state annotated as the
+R-Q9 exception; f.3 delight de-scoped to exactly one per surface. All
+closed same day. WIRING BLOCKED until founder three-second review of the
+mockup set (R-DESIGN §5).
+
+## G-V1 GATE COMPLETE — vv PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES · spec-guard PASS-WITH-NOTES (all notes closed same day)
+
+vv: suite green EXIT=0 pinned toolchain; 93.9% total; money-math same-
+commit discipline verified (07e70e6, 12ea389); notes CLOSED — T-AGG-06
+empty/clean false-positive guard committed, T-AGG-07 covers findings.py:99
+(money-math 100% restored) [77ab0b6]. cold-reviewer 4 findings CLOSED
+[b186ac8]: f.1 connect plan-cap race → user-row lock; f.2 dead
+delete-by-new-id removed + append-history semantics documented (weekly
+audit series IS the dashboard trend history; FR-21 derived-aggregates
+clause); f.3 unpriced-skip semantics documented (FR-28 surface; unpriced
+d1 target skips conservatively — engine stays pure); f.4 provenance
+latest-wins documented (PullStats log is history). spec-guard notes
+answered in-record: n.4 the never-logged guard IS executable
+(test_v15_foundations.py::TestKeyEncryption::test_03, its grep missed the
+method name); n.6 future-WP schema in V-D1 is per PLAN-V15 §1 V-D1
+foundations (inert, test-covered). M1 STOPPED for founder review per
+approval order; V-D4 dashboard next on go.
+
+## v1.5 M1 BUILT (V-D1..V-D3, branch v15-m1) — at G-V1 gate
+
+Foundations: 7 additive tables (migration 003), HKDF/Fernet source-key
+encryption (decrypt only in pull path; revoke deletes ciphertext;
+never-logged guard T-KEY-03), v1.5 config knobs + .env.example. WP-1: T2
+aggregate estimators per R-Q1 (d1/d2/d3 variants, hand-derived goldens
+13.365/4.32/2.16/1.296/3.69, derivations in golden NOTES same commit;
+d4/d5/d6 NEVER emit on aggregates — labeled upgrade-path coverage rows);
+OpenAI+Anthropic usage clients (fixture-driven, documented mapping,
+injectable SupportsGet); pull.py idempotent upsert with PullStats summary
+logged every pull; source_audit.py account-tier reports (tier+coverage
+keys added to report JSON, T-REP-03 updated same commit; row_count = Σ
+provider calls; equiv_spend=false); connect/revoke SSR UI (plan-gated
+R-Q5/Q6, key never rendered). WP-3a: ofelia hourly connector-tick
+(no-overlap) → due daily pulls + weekly audits from last_*_at stamps,
+re-entrant, per-source error isolation. Suite 96 green exit-code-checked;
+ruff+mypy clean. ACCEPTED DEFAULTS (per approval order; guardrails
+honored): Q2 backfill 30d; Q3 ofelia-tick→due-queue; Q4 cryptography dep
++ httpx promoted dev→runtime (unasked, recorded); Q10 alert threshold
+knobs seeded (spend-spike DoD 30%, waste target 25%; delivery lands
+V-D5); money-math defaults (D2-agg target = account's own best bucket
+share; D3-agg needs ≥3 buckets) recorded in golden NOTES. DEFERRED to
+their milestones: Q7 statement anchor (V-D6), Q8 savings-realized
+enforcement (V-D5), Q13 htmx vendoring (V-D4), Q14 FR-31 retention
+(V-D4), Q15 hero A/B (V-D9), Q17 early-access untouched, Q18 day-45
+metric = MRR + one-shot combined (paperwork). Nothing escalated: no
+default touched X-scope/FR-22/honesty law. NEXT: G-V1 verdicts, then
+STOP for founder review; V-D4 dashboard after. Walkthrough (R-WALKTHROUGH)
+scheduled day 3 — founder held to it.
+
 ## GRAND CONSOLIDATED ORDER v2 APPLIED (founder 2026-07-20) — STOPPED at PLAN-V15 approval gate
 
 Part A: vision recorded verbatim PLAN §0.0. Part B: docs/12-FLYWHEEL.md

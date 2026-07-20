@@ -81,7 +81,12 @@ def verify(request: Request, token: str) -> HTMLResponse | RedirectResponse:
         issue_session(settings.secret_key, email),
         max_age=settings.session_ttl_days * 86400,
         httponly=True,
-        secure=True,
+        # HTTPS-only everywhere it matters. Scoped rather than hard-coded
+        # because a secure cookie is never sent over plain http, so on a
+        # local dev/preview run the customer signs in and is immediately
+        # signed out again — found by the founder-preview build, 2026-07-22.
+        # Production is unaffected: app_env=prod keeps secure=True.
+        secure=settings.app_env == "prod",
         samesite="lax",
     )
     return response

@@ -1,0 +1,128 @@
+{% extends "app/_shell.html" %}
+{% block title %}Settings — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+<div class="grid">
+
+  {# Profile — read-only facts, no controls that do nothing #}
+  <section class="widget w-6">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-settings"/></svg>
+      <h2>Account</h2>
+    </div>
+    <table class="ledger">
+      <tbody>
+        <tr><td>Email</td><td>{{ user_email }}</td></tr>
+        <tr><td>Plan</td><td>{{ plan }}</td></tr>
+        <tr><td>Connected sources</td>
+          <td>{{ sources | length }} of {{ source_limit }}</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top: var(--s2);"><a class="btn btn-quiet" href="/billing">
+      Billing and invoices</a></p>
+    <div class="provenance">Sign-in is by emailed link — there is no password to manage.</div>
+  </section>
+
+  {# Email — transactional mail is never opt-out, and we say so #}
+  <section class="widget w-6">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-statement"/></svg>
+      <h2>Email</h2>
+    </div>
+    <form method="post" action="/settings/email">
+      <label style="display:flex; gap:var(--s1); align-items:flex-start;">
+        <input type="checkbox" name="statement_emails" value="1"
+               {% if statement_emails %}checked{% endif %}>
+        <span>Email me the monthly Savings Statement<br>
+          <small class="muted">One page, at month end. You can always read it here.</small></span>
+      </label>
+      <p style="margin-top: var(--s2);">
+        <button class="btn btn-primary" type="submit">Save email preferences</button></p>
+    </form>
+    <p><a href="/alerts">Alert emails are configured separately →</a></p>
+    <div class="provenance">Sign-in links and "your report is ready" always send —
+      they are how the product works, not marketing.</div>
+  </section>
+
+  {# Sources — the same routes as /sources, surfaced where people look #}
+  <section class="widget w-12">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
+      <h2>Connected sources</h2>
+    </div>
+    <p class="tells">What this tells you: which providers we pull usage from, and
+      how to stop us.</p>
+    {% if not sources %}
+      <div class="empty">
+        <p>No sources connected. A connection reads usage counts from your
+          provider's admin API — never prompt or completion text.</p>
+        <a class="btn btn-primary" href="/sources">Connect a source</a>
+      </div>
+    {% else %}
+      <table class="ledger">
+        <thead><tr><th>Provider</th><th>Label</th><th>Last pull</th><th></th></tr></thead>
+        <tbody>
+        {% for s in sources %}
+          <tr>
+            <td>{{ s.provider }}</td>
+            <td>{{ s.label }}</td>
+            <td>{{ s.last_pull_at.strftime("%Y-%m-%d %H:%M") ~ " UTC" if s.last_pull_at
+                   else "never" }}</td>
+            <td>
+              <form method="post" action="/sources/{{ s.id }}/revoke"
+                    onsubmit="return confirm('Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.');">
+                <button class="btn" type="submit">Revoke</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <p style="margin-top: var(--s2);"><a class="btn" href="/sources">Connect another</a></p>
+    {% endif %}
+    <div class="provenance">Revoking deletes the stored key — it is not just disabled.</div>
+  </section>
+
+  {# Data controls — destructive, so the consequence is stated in words and
+     the confirmation is typed, not clicked (R-DESIGN §4f) #}
+  <section class="widget w-12">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-upload"/></svg>
+      <h2>Your data</h2>
+    </div>
+    <p class="tells">What this tells you: what we are holding, and how to make us
+      delete it right now.</p>
+    <p>Raw uploads are deleted automatically {{ retention_days }} days after their
+      report is generated. Right now we are holding
+      <strong>{{ held_uploads }}</strong> uploaded file{{ "" if held_uploads == 1 else "s" }}.</p>
+
+    {% if purged is not none and purged >= 0 %}
+      <p><span class="badge badge-verified">Deleted {{ purged }} upload{{ "" if purged == 1 else "s" }}</span></p>
+    {% elif purged is not none %}
+      <p><span class="badge badge-neutral">Nothing deleted — the confirmation
+        phrase did not match.</span></p>
+    {% endif %}
+
+    <form method="post" action="/settings/purge">
+      <p><strong>Delete every uploaded file we still hold, now.</strong></p>
+      <ul>
+        <li>Your raw log files are deleted from disk immediately.</li>
+        <li>Your reports and the numbers in them stay — they contain counts and
+          dollars only, never your prompts.</li>
+        <li>Audits already purged are unaffected. This cannot be undone.</li>
+      </ul>
+      <label>Type <code>{{ purge_phrase }}</code> to confirm
+        <input name="confirm" autocomplete="off" placeholder="{{ purge_phrase }}"
+               aria-label="Type {{ purge_phrase }} to confirm" style="max-width: 22em">
+      </label>
+      <p style="margin-top: var(--s2);">
+        <button class="btn" type="submit"
+          {% if held_uploads == 0 %}disabled{% endif %}>Delete uploads now</button>
+        {% if held_uploads == 0 %}
+          <small class="muted">Nothing to delete — we are holding no uploads.</small>
+        {% endif %}
+      </p>
+    </form>
+    <div class="provenance">Every deletion is written to an append-only audit log.</div>
+  </section>
+</div>
+{% endblock %}
