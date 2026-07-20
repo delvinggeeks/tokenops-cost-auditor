@@ -122,6 +122,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.limiter = limiter
     app.middleware("http")(request_id_middleware)
+
+    @app.middleware("http")
+    async def no_store_html(request, call_next):  # type: ignore[no-untyped-def]
+        """HTML is never cached (wiring item 3d). Every page here is
+        session-dependent — a shared cache or a browser back-button could
+        otherwise show one account's dashboard to whoever sits down next.
+        Static assets keep their own caching; only HTML is marked."""
+        response = await call_next(request)
+        ctype = response.headers.get("content-type", "")
+        if ctype.startswith("text/html"):
+            response.headers["Cache-Control"] = "no-store, must-revalidate"
+        return response
+
     app.include_router(audits_router)  # FR-25: /api/v1 prefix set on the router
     app.include_router(webhooks_router)  # /api/v1/webhooks/* (FR-18/FR-27)
     app.include_router(report_router)  # web report page (FR-15), not under /api

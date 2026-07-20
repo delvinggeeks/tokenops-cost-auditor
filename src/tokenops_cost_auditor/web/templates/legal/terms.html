@@ -1,28 +1,100 @@
-{% extends "base.html" %}
-{% block title %}Terms of Service · TokenOps Cost Auditor{% endblock %}
+{% extends "_public_shell.html" %}
+{% block title %}Terms of Service — TokenOps Cost Auditor{% endblock %}
 {% block content %}
-<h1>Terms of Service</h1>
-<p class="muted">Effective 2026-07-17 · TokenOps Cost Auditor (Delving Geeks / WitAura)</p>
-<div class="panel">
-<p><strong>1. The service.</strong> TokenOps Cost Auditor analyzes LLM API usage logs
-you upload and produces a cost-audit report. One paid audit covers one uploaded log
-set up to the published size limit.</p>
-<p><strong>2. Your data.</strong> You must have the right to upload the logs you submit.
-We process them solely to produce your report: logs are analyzed then deleted; nothing
-is retained beyond 7 days; your data is never used for training. Details in the
-<a href="/legal/privacy">privacy policy</a> and <a href="/legal/dpa">DPA-lite</a>.</p>
-<p><strong>3. Estimates, not guarantees.</strong> Savings figures are conservative
-estimates computed from your logs and published provider rates. They are decision
-support, not a promise of realized savings; model suitability requires your own
-quality evaluation.</p>
-<p><strong>4. Payment.</strong> One-off audits are prepaid ({{ one_shot }} per audit
-unless agreed otherwise). Payment links are provided by Razorpay (INR) or Stripe
-(USD). Refund: if we cannot produce a report from your upload, we refund in full.</p>
-<p><strong>5. Acceptable use.</strong> No attempts to breach, overload, or reverse the
-service; no uploading data you lack rights to.</p>
-<p><strong>6. Liability.</strong> Service provided "as is"; our aggregate liability is
-capped at the amount you paid for the audit in question.</p>
-<p><strong>7. Changes.</strong> We may update these terms; material changes are dated
-here. Contact: support contact listed on the landing page.</p>
+<div class="legal-layout">
+  <nav class="toc" aria-label="Clauses">
+    <p class="label">Terms</p>
+    <a href="#c1">1 · The service</a>
+    <a href="#c2">2 · Your data</a>
+    <a href="#c3">3 · Estimates</a>
+    <a href="#c4">4 · Payment</a>
+    <a href="#c5">5 · Acceptable use</a>
+    <a href="#c6">6 · Liability</a>
+    <a href="#c7">7 · Changes</a>
+    <p class="label" style="margin-top:var(--s4)">Also</p>
+    <a href="/legal/privacy">Privacy policy</a>
+    <a href="/legal/dpa">DPA-lite</a>
+  </nav>
+
+  <article>
+    <div class="legal-head">
+      <h1>Terms of Service</h1>
+      <p class="meta">Effective 2026-07-17 · TokenOps Cost Auditor (Delving Geeks / WitAura)</p>
+    </div>
+
+    <section class="clause" id="c1">
+      <h2><strong>1. The service.</strong></h2>
+      <p>TokenOps Cost Auditor analyzes LLM API usage logs you upload and
+      produces a cost-audit report. One paid audit covers one uploaded log set
+      up to the published size limit.</p>
+    </section>
+
+    <section class="clause" id="c2">
+      <h2><strong>2. Your data.</strong></h2>
+      {# FR-23 canonical string, verbatim. This clause previously PARAPHRASED it
+         ("nothing IS retained… YOUR DATA IS never used"), the same failure as
+         Terms quoting a price we do not charge: a binding document restating a
+         published promise in its own words. #}
+      <p>You must have the right to upload the logs you submit. We process them
+      solely to produce your report: logs are analyzed then deleted; nothing
+      retained beyond 7 days; never used for training. Details in the
+      <a href="/legal/privacy">privacy policy</a> and
+      <a href="/legal/dpa">DPA-lite</a>.</p>
+      <div class="plain">
+        <b>In plain words:</b> we read counts, not conversations. Your prompts
+        and completions are never stored, and the file itself is gone within a week.
+      </div>
+    </section>
+
+    <section class="clause" id="c3">
+      <h2><strong>3. Estimates, not guarantees.</strong></h2>
+      <p>Savings figures are conservative estimates computed from your logs and
+      published provider rates. They are decision support, not a promise of
+      realized savings; model suitability requires your own quality evaluation.</p>
+    </section>
+
+    <section class="clause" id="c4">
+      <h2><strong>4. Payment.</strong></h2>
+      {# R-TERMS-SUBS (founder-approved 2026-07-24). Subscription mechanics
+         stated plainly; the ladder describes exactly what R-Q11/12 implements.
+         Every figure renders from the one price config, never inline. #}
+      <p>Subscriptions renew automatically each month until cancelled.
+      Cancelling takes effect at the end of the current period — you keep the
+      plan you paid for until then. The Free plan never requires a card.</p>
+      <p>If a payment fails, the subscription is marked past due; access becomes
+      read-only after 7 days and reverts to Free after 21 days. Your reports and
+      archived statements stay readable on Free, and cancellation does not change
+      the data lifecycle described in clause 2.</p>
+      <p>One-off audits are prepaid ({{ one_shot }} per audit unless agreed
+      otherwise). Payment links are provided by Razorpay (INR) or Stripe (USD).
+      Refund: if we cannot produce a report from your upload, we refund in full.</p>
+      <div class="plain">
+        <b>In plain words:</b> nothing is charged without a card you entered, a
+        failed payment never deletes your data, and you can leave at the end of
+        any month.
+      </div>
+    </section>
+
+    <section class="clause" id="c5">
+      <h2><strong>5. Acceptable use.</strong></h2>
+      <p>No attempts to breach, overload, or reverse the service; no uploading
+      data you lack rights to.</p>
+    </section>
+
+    <section class="clause" id="c6">
+      <h2><strong>6. Liability.</strong></h2>
+      {# R-TERMS-SUBS a: replaces the per-audit cap, which was undefined for a
+         subscriber who never bought "an audit". #}
+      <p>Service provided "as is"; our aggregate liability is capped at the
+      greater of the amounts you paid to WitAura in the twelve months preceding
+      the claim.</p>
+    </section>
+
+    <section class="clause" id="c7">
+      <h2><strong>7. Changes.</strong></h2>
+      <p>We may update these terms; material changes are dated here.
+      Contact: support contact listed on the landing page.</p>
+    </section>
+  </article>
 </div>
 {% endblock %}

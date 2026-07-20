@@ -1,0 +1,65 @@
+{#
+  PUBLIC SHELL — the logged-out surfaces (sign-in, legal, and later the
+  landing). Replaces base.html, which carried its own inline palette and so
+  made the public funnel look like a different product from the app.
+
+  Loads wa-design.css FIRST (tokens, buttons, badges, money) then
+  wa-public.css (layout only). The brand mark comes from wa-design.css so both
+  shells render one logo, not two (v4 ux gate f.1).
+#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TokenOps Cost Auditor{% endblock %}</title>
+  <link rel="stylesheet" href="/static/wa-design.css">
+  <link rel="stylesheet" href="/static/wa-public.css">
+</head>
+<body>
+
+<header class="pub-top">
+  <div class="wrap">
+    <a class="pub-brand brand" href="/"><span class="mark" aria-hidden="true"></span> TokenOps Cost Auditor</a>
+    <nav class="pub-nav" aria-label="Primary">
+      <a href="/sample">Sample report</a>
+      <a href="/legal/privacy">Privacy</a>
+      {% if user_email %}
+        <a href="/dashboard">Dashboard</a>
+      {% else %}
+        <a href="/login">Log in</a>
+        <a class="btn btn-primary" href="/signup">Start free</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main class="pub-main">
+  <div class="wrap">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<footer class="pub-foot">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a href="/sample">Sample report</a>
+        <a href="/upload">Audit your logs</a>
+      </div>
+      <div>
+        <a href="/legal/terms">Terms</a>
+        <a href="/legal/privacy">Privacy</a>
+        <a href="/legal/dpa">DPA</a>
+      </div>
+    </div>
+    {# FR-23 verbatim — the canonical string, byte-for-byte. #}
+    {# One line, deliberately: FR-23 is a verbatim string and wrapping it in
+       source silently breaks every exact-match check. #}
+    <p class="foot-policy">Your data: logs are analyzed then deleted; nothing retained beyond 7 days; never used for training.</p>
+  </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

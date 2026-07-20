@@ -33,12 +33,33 @@ class TestMP9LegalSingleSourcing:
         ) or FR23 in re.sub(r"\s+", " ", web)
         assert FR23 in re.sub(r"\s+", " ", docs)
 
+    def test_fr23_verbatim_in_terms_too(self) -> None:
+        """Terms PARAPHRASED the data promise — "nothing IS retained… YOUR DATA
+        IS never used" — while privacy.html and every other surface quoted the
+        canonical string. A binding document restating a published promise in
+        its own words is the same defect class as the Terms page quoting a price
+        we do not charge, and no test covered it (v4 ux gate f.4)."""
+        for path in (
+            TEMPLATES / "terms.html",
+            DOCS / "legal/terms.md",
+        ):
+            text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+            assert FR23 in text, f"{path}: FR-23 must appear verbatim, not paraphrased"
+
     def test_clause_structure_matches(self) -> None:
         """Every bold clause heading on a web legal page appears in its docs mirror."""
         for name in ("terms", "privacy", "dpa"):
             web = re.sub(r"\s+", " ", (TEMPLATES / f"{name}.html").read_text(encoding="utf-8"))
             docs = re.sub(r"\s+", " ", (DOCS / f"legal/{name}.md").read_text(encoding="utf-8"))
-            for clause in strong_clauses(web):
+            found = strong_clauses(web)
+            # Non-vacuity: this loop asserts nothing if the template stops using
+            # <strong> for clause headings, so the v4 shell rebuild could have
+            # silently disabled the guard rather than failing it.
+            assert len(found) >= 5, (
+                f"{name}: found only {len(found)} clause headings — the MP-9 guard "
+                f"is inspecting <strong> and would pass vacuously if the markup moved"
+            )
+            for clause in found:
                 assert clause in bold_clauses(docs), (
                     f"legal drift: clause {clause!r} on web {name} page missing from "
                     f"docs-site/legal/{name}.md (MP-9 single-sourcing)"

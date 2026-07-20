@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.obs.ratelimit import limiter
@@ -106,13 +106,62 @@ def sample_report(request: Request) -> HTMLResponse:
     return HTMLResponse(html.replace("<body>", f"<body>{banner}", 1))
 
 
+SIGNIN_COPY = {
+    # One form, two voices: a returning user wants the door, a first-timer
+    # wants to know what they are walking into (wiring item 3b).
+    "login": {
+        "heading": "Log in",
+        "lede": "Enter your email and we'll send you a sign-in link.",
+        "submit_label": "Email me a link",
+        "show_reassurance": False,
+        "show_get_logs": False,
+    },
+    "signup": {
+        "heading": "Start free",
+        "lede": "One full audit of your logs, free. No card, no install, "
+        "nothing in your request path.",
+        "submit_label": "Email me a sign-in link",
+        "show_reassurance": True,
+        "show_get_logs": True,
+    },
+}
+
+
+def _signin_page(request: Request, mode: str) -> HTMLResponse:
+    return _render(request, "signin.html", mode=mode, user_email=None, **SIGNIN_COPY[mode])
+
+
+@router.get("/login", response_class=HTMLResponse)
+def login_page(request: Request) -> HTMLResponse:
+    if session_email(request):
+        return RedirectResponse("/dashboard", status_code=303)  # type: ignore[return-value]
+    return _signin_page(request, "login")
+
+
+@router.get("/signup", response_class=HTMLResponse)
+def signup_page(request: Request) -> HTMLResponse:
+    if session_email(request):
+        return RedirectResponse("/dashboard", status_code=303)  # type: ignore[return-value]
+    return _signin_page(request, "signup")
+
+
 @router.get("/upload", response_class=HTMLResponse)
 def upload_page(request: Request) -> HTMLResponse:
+    email = session_email(request)
+    if not email:
+        # No session means no app nav to render, so the signed-out state is the
+        # public shell rather than an app page with an empty sidebar.
+        return _signin_page(request, "signup")
     return _render(
         request,
-        "upload.html",
-        user_email=session_email(request),
+        "app/upload.html",
+        user_email=email,
         max_upload_mb=request.app.state.settings.max_upload_mb,
+        page="upload",
+        plan=None,
+        purpose="",
+        freshness="",
+        show_tour=False,
     )
 
 

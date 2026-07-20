@@ -1,0 +1,145 @@
+/* wa-public.css — PUBLIC SHELL for logged-out surfaces (landing, sign-in, legal).
+ * Loaded ALONGSIDE wa-design.css, never instead of it.
+ *
+ * Extends wa-design.css. Adds NO new colour, type family, radius or shadow: a
+ * visitor and a signed-in user must be looking at one product, and the surest
+ * way to fail that is a second palette invented for "marketing". Everything
+ * here is layout only.
+ *
+ * Why a separate shell at all: the app shell is sidebar + topbar, which needs
+ * an authenticated nav. A logged-out visitor has nowhere to navigate to, so
+ * they get a hairline topbar and a single reading column instead — same
+ * tokens, same double rule, same serif money.
+ */
+
+.pub-top {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  box-shadow: var(--lift-1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.pub-top .wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 56px;
+}
+.pub-brand {
+  font: 700 15px var(--sans);
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+/* .brand .mark is defined once in wa-design.css and shared by both shells. */
+.pub-nav {
+  margin-left: auto;
+  display: flex;
+  gap: var(--s3);
+  align-items: center;
+}
+.pub-nav a {
+  font: 500 14px var(--sans);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.pub-nav a:hover { color: var(--ink); }
+.pub-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.pub-main { padding: var(--s6) 0 var(--s6); }
+.pub-section { padding: var(--s6) 0; border-top: 1px solid var(--rule); }
+.pub-section:first-child { border-top: 0; }
+
+.eyebrow {
+  font: 600 12px var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 var(--s2);
+}
+
+/* The reading measure for prose surfaces (legal). Content max stays 1100px
+   for app-like pages; prose caps at 68ch because legal text is READ, and a
+   1100px line length is where readers give up. */
+.prose { max-width: 68ch; }
+.prose h2 { font: 600 18px var(--sans); margin: var(--s5) 0 var(--s1); }
+.prose p { color: var(--ink-soft); line-height: 1.65; margin: 0 0 var(--s2); }
+.prose strong { color: var(--ink); font-weight: 600; }
+
+.pub-foot {
+  border-top: 1px solid var(--rule);
+  background: var(--surface-tint);
+  padding: var(--s5) 0;
+  margin-top: var(--s6);
+}
+.pub-foot .cols { display: flex; gap: var(--s6); flex-wrap: wrap; }
+.pub-foot a { color: var(--ink-soft); text-decoration: none; font-size: 14px; display: block; padding: 3px 0; }
+.pub-foot a:hover { color: var(--accent); }
+.foot-policy {
+  margin-top: var(--s4);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 68ch;
+}
+
+@media (max-width: 720px) {
+  .pub-nav { display: none; } /* brand + CTA only; nav duplicates the footer */
+  .pub-section { padding: var(--s5) 0; }
+}
+
+/* ---- Legal pages. Read, not scanned: measure and rhythm are the whole
+   design job here. .panel is kept as a plain card so privacy/dpa render
+   unchanged without base.html's inline styles. ---- */
+.panel {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: var(--s3); box-shadow: var(--lift-1);
+  max-width: 68ch;
+}
+.panel p { color: var(--ink-soft); line-height: 1.7; max-width: 68ch; }
+.panel strong { color: var(--ink); font-weight: 600; }
+
+.legal-layout { display: grid; grid-template-columns: 200px 1fr; gap: var(--s6); align-items: start; }
+.toc { position: sticky; top: 76px; font-size: 13px; }
+.toc .label { font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 var(--s2); }
+.toc a { display: block; padding: 4px 0 4px var(--s2); color: var(--ink-soft); text-decoration: none; border-left: 2px solid var(--rule); line-height: 1.4; }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legal-head { border-bottom: 3px double var(--rule-strong); padding-bottom: var(--s2); margin-bottom: var(--s4); }
+.legal-head h1 { font: 600 26px var(--sans); margin: 0 0 4px; letter-spacing: -0.015em; }
+.legal-head .meta { font-size: 13px; color: var(--ink-soft); margin: 0; }
+.clause { scroll-margin-top: 76px; margin: 0 0 var(--s4); }
+.clause h2 { font: 600 16px var(--sans); margin: 0 0 var(--s1); }
+.clause h2 strong { font-weight: 600; }
+.clause p { color: var(--ink-soft); line-height: 1.7; margin: 0 0 var(--s2); max-width: 68ch; }
+.plain {
+  background: var(--surface-tint); border-left: 2px solid var(--accent);
+  padding: var(--s2) var(--s3); margin: var(--s2) 0; font-size: 13px;
+  color: var(--ink-soft); max-width: 68ch; line-height: 1.6;
+}
+.plain b { color: var(--ink); }
+@media (max-width: 860px) { .legal-layout { grid-template-columns: 1fr; } .toc { display: none; } }
+
+/* ---- Sign in / sign up. One form, two voices. ---- */
+.signin { max-width: 52ch; margin: 0 auto; }
+.signin-lede { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0 0 var(--s3); }
+.signin-form { display: flex; flex-direction: column; gap: var(--s1); margin: var(--s3) 0 var(--s2); }
+.signin-form label { font: 600 13px var(--sans); }
+.signin-form input {
+  padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--radius);
+  font: 15px var(--sans); background: var(--surface); color: var(--ink);
+}
+.signin-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.signin-form button { align-self: flex-start; }
+.signin-note { font-size: 13px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 var(--s3); }
+.signin-reassure { list-style: none; padding: 0; margin: 0 0 var(--s4); font-size: 14px; color: var(--ink-soft); }
+.signin-reassure li { padding: 4px 0 4px 18px; position: relative; line-height: 1.5; }
+.signin-reassure li::before { content: "·"; position: absolute; left: 5px; color: var(--accent); font-weight: 700; }
+.signin-logs { margin: var(--s4) 0; }
+.signin-alt { font-size: 14px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: var(--s2); }
+.signin-alt a { color: var(--accent); }

@@ -1,0 +1,53 @@
+{% extends "app/_shell.html" %}
+{% block title %}Get your logs — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{#
+  Signed-in upload, on the app shell. The designed sidebar links here, so this
+  page rendering base.html navigated users out of the product's own design
+  (v4 unify). The signed-OUT state is a separate template on the public shell,
+  because a visitor with no session has no app nav to render.
+#}
+<h1 class="page-h1">Audit a log file</h1>
+<p class="purpose-line">
+  Drop in a log export and we'll price every call against a versioned rate card,
+  then rank what was wasted by the dollars attached.
+</p>
+
+<section class="widget">
+  <div class="widget-head"><h2>Don't have an export yet?</h2></div>
+  {% include "_get_logs_tabs.html" %}
+</section>
+
+<section class="widget" style="margin-top:var(--s4)">
+  <div class="widget-head">
+    <svg class="i i-lg" aria-hidden="true"><use href="#i-upload"/></svg>
+    <h2>Upload</h2>
+  </div>
+  <p class="counts-note">
+    We read <b>counts and metadata only</b> — model, timestamps, token totals.
+    Files are analyzed then deleted — nothing retained beyond 7 days.
+    <a href="/legal/privacy">How we handle your data →</a>
+  </p>
+  <form method="post" action="/api/v1/audits" enctype="multipart/form-data">
+    <div class="drop">
+      <h3>Choose your log export</h3>
+      <p>OpenAI JSONL, Anthropic JSONL, or our documented CSV.</p>
+      <label for="file" class="sr-only">Log file (.jsonl or .csv)</label>
+      <input type="file" id="file" name="file" required accept=".jsonl,.json,.csv">
+      <p style="margin-top:var(--s3)">
+        <button class="btn btn-primary" type="submit">Start the audit</button>
+      </p>
+      <div class="limits">
+        <span>Up to {{ max_upload_mb }}MB</span>
+        <span>.jsonl · .csv</span>
+        <span>Deleted within 7 days</span>
+      </div>
+    </div>
+  </form>
+  <p class="muted" style="font-size:13px;margin-top:var(--s2)">
+    You'll get an email with your private report link when it's ready (usually
+    minutes). If a payment is required, we'll show you the payment link first.
+  </p>
+</section>
+
+{% endblock %}

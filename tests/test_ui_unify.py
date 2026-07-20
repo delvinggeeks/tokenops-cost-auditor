@@ -1,0 +1,124 @@
+"""v4 UI unification — the seam between the two design systems.
+
+The app shipped with two shells: app/_shell.html on wa-design.css, and
+base.html with its own inline palette for landing, /upload, /sources and
+/legal. The designed sidebar linked to /upload and /sources, so the product
+navigated its own users out of its own design, and the connect flow crossed
+the seam twice. These tests pin it closed.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+TEMPLATES = Path(__file__).parents[1] / "src/tokenops_cost_auditor/web/templates"
+DESIGNED = "/static/wa-design.css"
+
+
+class _Recorder:
+    def __init__(self) -> None:
+        self.magic_links: list[tuple[str, str]] = []
+
+    def magic_link(self, to_email: str, link_url: str) -> None:
+        self.magic_links.append((to_email, link_url))
+
+    def report_ready(self, to_email: str, report_url: str) -> None:
+        pass
+
+
+def signed_in(app: FastAPI) -> TestClient:
+    """A client holding a real session cookie, obtained through the real
+    magic-link flow rather than by forging a cookie — the redirect behaviour
+    under test depends on the session actually verifying."""
+    recorder = _Recorder()
+    app.state.mail = recorder
+    # https base URL so the Secure session cookie is sent back (app_env=test
+    # drops Secure, but the app-shell pages are the same either way).
+    client = TestClient(app, base_url="https://testserver")
+    client.post("/auth/magic-link", data={"email": "seam@example.com"})
+    client.get(recorder.magic_links[-1][1], follow_redirects=False)
+    return client
+
+
+class TestNoSurfaceIsLeftOnTheOldShell:
+    def test_only_the_landing_still_extends_base(self) -> None:
+        """base.html is being retired surface by surface. The landing is the
+        last holdout and it is deliberate — R-LANDING-2 rebuilds it as its own
+        deploy. If anything ELSE appears here, a page regressed onto the old
+        inline-style shell and the seam is back."""
+        stragglers = sorted(
+            p.relative_to(TEMPLATES).as_posix()
+            for p in TEMPLATES.rglob("*.html")
+            if '{% extends "base.html" %}' in p.read_text(encoding="utf-8")
+        )
+        assert stragglers == ["landing.html"], (
+            f"unexpected pages still on the old shell: {stragglers}. Every surface "
+            f"except the landing was unified in v4; the landing waits on R-LANDING-2."
+        )
+
+    def test_sources_renders_in_the_designed_shell(self, app: FastAPI) -> None:
+        """The whole point of the fix: the sidebar links here, so this page must
+        not be a different product when the user arrives."""
+        page = signed_in(app).get("/sources").text
+        assert DESIGNED in page
+        assert 'class="sidebar"' in page
+
+    def test_upload_renders_in_the_designed_shell_when_signed_in(self, app: FastAPI) -> None:
+        page = signed_in(app).get("/upload").text
+        assert DESIGNED in page and 'class="sidebar"' in page
+
+    def test_legal_pages_render_in_the_public_shell(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        for path in ("/legal/terms", "/legal/privacy", "/legal/dpa"):
+            page = client.get(path).text
+            assert DESIGNED in page, path
+            assert "/static/wa-public.css" in page, path
+
+
+class TestSignInSurfaces:
+    def test_signed_out_upload_offers_the_public_shell_not_an_empty_sidebar(
+        self, app: FastAPI
+    ) -> None:
+        page = TestClient(app).get("/upload").text
+        assert "/static/wa-public.css" in page
+        assert 'class="sidebar"' not in page  # no app nav for someone with no account
+
+    def test_login_and_signup_share_the_form_but_not_the_words(self, app: FastAPI) -> None:
+        """One mechanism, two audiences: a returning user wants the door, a
+        first-timer wants to know what they are walking into."""
+        client = TestClient(app)
+        login = client.get("/login").text
+        signup = client.get("/signup").text
+        assert "Log in" in login and "Start free" in signup
+        # the reassurance block is for newcomers only
+        assert "no card, ever" in signup
+        assert "no card, ever" not in login
+        # both post to the same magic-link endpoint
+        assert login.count('action="/auth/magic-link"') == 1
+        assert signup.count('action="/auth/magic-link"') == 1
+
+    def test_signed_in_users_are_sent_to_the_dashboard_not_the_form(self, app: FastAPI) -> None:
+        client = signed_in(app)
+        for path in ("/login", "/signup"):
+            resp = client.get(path, follow_redirects=False)
+            assert resp.status_code == 303, path
+            assert resp.headers["location"] == "/dashboard", path
+
+
+class TestHtmlIsNeverCached:
+    def test_html_responses_carry_no_store(self, app: FastAPI) -> None:
+        """Every page is session-dependent. A shared cache or a back-button
+        could otherwise hand one account's dashboard to the next person."""
+        client = TestClient(app)
+        for path in ("/", "/login", "/legal/terms"):
+            resp = client.get(path)
+            assert "no-store" in resp.headers.get("cache-control", ""), path
+
+    def test_static_assets_are_still_cacheable(self, app: FastAPI) -> None:
+        """no-store on CSS would re-download the design system on every view."""
+        resp = TestClient(app).get("/static/wa-design.css")
+        assert resp.status_code == 200
+        assert "no-store" not in resp.headers.get("cache-control", "")

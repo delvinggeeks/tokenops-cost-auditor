@@ -62,13 +62,23 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             else []
         )
         plan = user_plan(session, user.id) if user else "free"
-        tpl = request.app.state.jinja.get_template("sources.html")
+        active_count = sum(1 for s in sources if s.status == "active")
+        # Rendered in the APP shell now, not base.html: the designed sidebar
+        # links here, so rendering the old shell navigated users out of the
+        # product's own design (v4 unify).
+        tpl = request.app.state.jinja.get_template("app/sources.html")
         return HTMLResponse(
             tpl.render(
                 sources=sources,
                 plan=plan,
                 limit=settings.plan_source_limits.get(plan, 0),
+                active_count=active_count,
                 providers=PROVIDERS,
+                page="sources",
+                purpose=help_registry.purpose("sources"),
+                freshness="",
+                user_email=user_email,
+                show_tour=False,
             )
         )
 

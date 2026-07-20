@@ -365,3 +365,78 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
   .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
   .no-print { display: none !important; }
 }
+
+
+/* ============================================================
+   v4 UNIFY — surfaces the design system had never reached.
+   Added when /sources, /upload and /legal were brought onto the
+   system; the app shell's own sidebar had been linking OUT of
+   the design into base.html pages.
+   ============================================================ */
+
+/* The brand mark, shared by both shells. Previously the public shell drew a
+   double-rule mark and the app sidebar rendered plain text, so the logo
+   changed as a visitor crossed into the product (v4 ux gate f.1). ONE
+   definition here rather than a copy per shell. */
+.brand .mark {
+  width: 16px; height: 16px; flex: 0 0 16px; display: inline-block;
+  border: 1.5px solid var(--accent); border-bottom-width: 4px; border-radius: 2px;
+}
+.sidebar .brand { display: flex; align-items: center; gap: var(--s1); }
+
+.page-h1 { font: 600 22px var(--sans); margin: 0 0 var(--s1); letter-spacing: -0.015em; }
+.purpose-line { font-size: 14px; color: var(--ink-soft); max-width: 68ch; margin: 0 0 var(--s3); line-height: 1.6; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.addbar { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; margin-bottom: var(--s3); }
+.addbar-note { font-size: 13px; }
+.inline-form { display: inline; }
+
+.sources-table { width: 100%; border-collapse: collapse; }
+.src-name { display: flex; align-items: center; gap: var(--s2); }
+.src-name b { font-weight: 600; }
+.src-name .sub { display: block; font-size: 12px; color: var(--ink-soft); font-weight: 400; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+.dot-ok { background: var(--verified); }
+.dot-warn { background: var(--estimate); }
+.row-actions { text-align: right; white-space: nowrap; }
+
+.drawer { background: var(--surface-tint); }
+.drawer td { padding: var(--s3); }
+.dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px var(--s3); font-size: 13px; margin: 0; }
+.dl dt { color: var(--ink-soft); }
+.dl dd { margin: 0; font-family: var(--mono); font-size: 12px; word-break: break-all; }
+
+.empty-cta { text-align: center; padding: var(--s6) var(--s3); }
+.empty-cta h3 { font: 600 17px var(--sans); margin: 0 0 var(--s1); }
+.empty-cta p { color: var(--ink-soft); font-size: 14px; max-width: 46ch; margin: 0 auto var(--s3); line-height: 1.6; }
+
+/* The counts-only promise, stated where the risk is felt rather than buried
+   in the privacy policy (FR-22 discipline). */
+.counts-note {
+  font-size: 13px; color: var(--ink-soft); border-left: 2px solid var(--accent);
+  padding-left: var(--s2); margin: var(--s3) 0 0; max-width: 68ch; line-height: 1.6;
+}
+
+/* Upload */
+.drop {
+  border: 1.5px dashed var(--rule); border-radius: var(--radius); background: var(--surface);
+  padding: var(--s6) var(--s3); text-align: center;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.drop:hover, .drop:focus-within { border-color: var(--accent); background: var(--surface-tint); }
+.drop h3 { font: 600 17px var(--sans); margin: 0 0 var(--s1); }
+.drop p { color: var(--ink-soft); font-size: 14px; margin: 0 auto var(--s3); max-width: 44ch; line-height: 1.6; }
+.limits { display: flex; gap: var(--s3); justify-content: center; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); margin-top: var(--s3); }
+.limits span { padding-left: var(--s2); border-left: 1px solid var(--rule); }
+.limits span:first-child { border-left: 0; padding-left: 0; }
+
+@media (max-width: 720px) {
+  .sources-table thead { display: none; }
+  .sources-table td { display: block; border-bottom: 0; padding: 4px var(--s2); }
+  .sources-table tr { display: block; border-bottom: 1px solid var(--rule); padding: var(--s2) 0; }
+  .row-actions { text-align: left; }
+}
