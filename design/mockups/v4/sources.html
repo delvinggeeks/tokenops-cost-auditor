@@ -6,6 +6,16 @@
 <title>v4 mockup — connected sources (app shell)</title>
 <link rel="stylesheet" href="../../../src/tokenops_cost_auditor/web/static/wa-design.css">
 <style>
+/* ux gate f.1: the public shell's brand carries a double-rule mark and the app
+   sidebar's did not, so the logo visibly changed when crossing from marketing
+   into the product -- a seam inside the very fix meant to remove seams.
+   WIRING: promote this rule into wa-design.css next to .sidebar .brand so both
+   shells read it from one place rather than each keeping a copy. */
+.sidebar .brand { display: flex; align-items: center; gap: var(--s1); }
+.sidebar .brand .mark {
+  width: 16px; height: 16px; flex: 0 0 16px;
+  border: 1.5px solid var(--accent); border-bottom-width: 4px; border-radius: 2px;
+}
 /* Sources-only composition. No new tokens. */
 .purpose { font-size: 14px; color: var(--ink-soft); max-width: 68ch; margin: 0 0 var(--s3); line-height: 1.6; }
 .ledger th { font: 600 12px var(--sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); text-align: left; padding: 0 var(--s2) var(--s1); border-bottom: 1px solid var(--rule); }
@@ -41,7 +51,7 @@
 
 <div class="app">
   <aside class="sidebar" aria-label="Sections">
-    <div class="brand">TokenOps Cost Auditor</div>
+    <div class="brand"><span class="mark" aria-hidden="true"></span>TokenOps Cost Auditor</div>
     <nav class="nav-group">
       <div class="label">Monitor</div>
       <a href="#">Overview</a>
