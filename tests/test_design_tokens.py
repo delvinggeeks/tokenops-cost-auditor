@@ -32,6 +32,38 @@ def token_block_and_body(css: str) -> tuple[str, str]:
     return css[: end + 1], css[end + 1 :]
 
 
+def mood_tokens(mood: str) -> dict[str, str]:
+    """Every --token: value declared for a mood's selector block."""
+    css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
+    sel = ':root,\n[data-mood="sanchaya"]' if mood == "sanchaya" else f'[data-mood="{mood}"]'
+    i = css.index(sel)
+    body = css[i : css.index("\n}", i)]
+    return {m[0]: m[1].strip() for m in re.findall(r"(--[a-z0-9-]+):([^;]+);", body)}
+
+
+def rgb(value: str) -> tuple[int, int, int]:
+    v = value.strip().lstrip("#")
+    if len(v) == 3:
+        v = "".join(c * 2 for c in v)
+    return int(v[0:2], 16), int(v[2:4], 16), int(v[4:6], 16)
+
+
+def _lin(c: int) -> float:
+    s = c / 255
+    return s / 12.92 if s <= 0.03928 else ((s + 0.055) / 1.055) ** 2.4
+
+
+def luminance(value: str) -> float:
+    r, g, b = rgb(value)
+    return 0.2126 * _lin(r) + 0.7152 * _lin(g) + 0.0722 * _lin(b)
+
+
+def contrast(fg: str, bg: str) -> float:
+    a, b = luminance(fg), luminance(bg)
+    hi, lo = max(a, b), min(a, b)
+    return (hi + 0.05) / (lo + 0.05)
+
+
 class TestNoRawColoursOutsideTheTokenBlock:
     def test_wa_design_css_body_is_hex_free(self) -> None:
         css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
@@ -90,36 +122,136 @@ class TestRoleTokensExist:
         "--lift-1",
         "--lift-2",
         "--lift-3",
+        "--control-depth",
     )
+    MOODS = ("sanchaya", "aura")
 
     def test_every_role_is_defined(self) -> None:
         css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
         missing = [r for r in self.ROLES if f"{r}:" not in css]
         assert not missing, f"role tokens missing from the map: {missing}"
 
-    def test_a_second_mood_would_be_a_value_swap_only(self) -> None:
-        """§2: theming is a data-mood attribute swapping VALUES. The selector
-        has to already accept a mood or 'Night Audit' becomes a refactor
-        instead of a value sheet."""
+    def test_both_shipping_moods_are_selectable(self) -> None:
         css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
-        assert '[data-mood="ledger"]' in css, (
-            "the token block must be selectable by mood, or promoting Night Audit "
-            "means touching components rather than adding values"
+        for mood in self.MOODS:
+            assert f'[data-mood="{mood}"]' in css, f"mood {mood!r} not selectable"
+
+    def test_moods_define_identical_token_names(self) -> None:
+        """The symmetry IS the feature: same names, different values is what
+        makes the topbar toggle free and a third mood a value sheet. A token
+        present in one mood and missing in another paints half a screen."""
+        for a, b in zip(self.MOODS, self.MOODS[1:], strict=False):
+            ka, kb = set(mood_tokens(a)), set(mood_tokens(b))
+            assert ka == kb, (
+                f"token names diverge between {a} and {b}: "
+                f"only in {a}: {sorted(ka - kb)} · only in {b}: {sorted(kb - ka)}"
+            )
+
+
+class TestDepthIsSplitByPurpose:
+    """R-LOOK-FINAL 1a/1b — neumorphic depth on CONTROLS AND WIDGETS; data
+    surfaces, tables, charts and every money figure stay flat-crisp.
+
+    The reason is legibility, not taste: a bevel softens the edge of a numeral,
+    and money is the one thing this product cannot afford to render ambiguously.
+    """
+
+    CONTROL_HINTS = (
+        ".btn",
+        "input",
+        "select",
+        "textarea",
+        ".chip",
+        ".stat",
+        ".step",
+        ".sidebar a",
+        ".rail a",
+        ".toggle",
+        ".source-card",
+        ".widget-head",
+        ".nav",
+        ".tab",
+        "summary",
+        "--control-depth",
+    )
+    DATA_HINTS = (
+        ".ledger",
+        "table",
+        " td",
+        " th",
+        ".money",
+        ".num",
+        ".chart",
+        ".evidence",
+        ".total-rule",
+    )
+
+    def test_no_paired_inset_on_data_money_or_table_surfaces(self) -> None:
+        css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
+        offenders = []
+        for rule in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+            selector, body = rule[0].strip(), rule[1]
+            if "box-shadow" not in body or body.count("inset") < 2:
+                continue
+            if any(h in selector for h in self.CONTROL_HINTS):
+                continue  # controls are EXEMPT — the family clause allows it
+            if any(h in selector for h in self.DATA_HINTS):
+                offenders.append(selector)
+        assert not offenders, (
+            f"paired-inset (neumorphic) depth on data/money/table surfaces: {offenders}. "
+            f"A bevel eats the edge of a numeral; dollars stay flat-crisp "
+            f"(R-LOOK-FINAL 1b). Controls and widget chrome are exempt."
         )
 
-    def test_neumorphic_depth_is_not_adopted(self) -> None:
-        """A recorded, deliberate divergence from the family language: emboss
-        softens numeral edges and money legibility outranks family consistency.
+    def test_control_depth_exists_and_is_paired(self) -> None:
+        """The converse: controls SHOULD carry it, or we have quietly shipped
+        the austere look under a new name."""
+        for mood in ("sanchaya", "aura"):
+            val = mood_tokens(mood).get("--control-depth", "")
+            assert val.count("inset") >= 2, f"{mood}: --control-depth is not paired-inset"
 
-        Checks the CSS SIGNATURE of emboss — a shadow carrying a paired inset
-        (one light, one dark) — not the word, which legitimately appears in the
-        rationale comment above the tokens. Our --inner-edge is a single inset
-        highlight, which is a crisp edge rather than a soft bevel.
-        """
-        css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
-        for line in css.splitlines():
-            if "--lift" in line or "--inner-edge" in line:
-                assert line.count("inset") <= 1, (
-                    f"paired inset shadow (emboss) reintroduced: {line.strip()!r}. "
-                    f"Not adopted, deliberately — re-argue it, do not add it by habit."
-                )
+
+class TestContrastMeetsAA:
+    """R-LOOK-FINAL 3a — AA in EVERY mood, computed rather than eyeballed.
+
+    A dark mood is exactly where contrast quietly fails: the values look
+    confident on a bright monitor and disappear on a dim one.
+    """
+
+    PAIRS = (
+        ("--ink", "--ground", 4.5),
+        ("--ink", "--surface", 4.5),
+        ("--ink", "--surface-raised", 4.5),
+        ("--ink-soft", "--surface", 4.5),
+        ("--ink-soft", "--ground", 4.5),
+        ("--on-accent", "--accent", 4.5),
+        ("--money", "--surface", 4.5),
+        ("--verified", "--verified-bg", 4.5),
+        ("--estimate", "--estimate-bg", 4.5),
+        ("--waste", "--waste-bg", 4.5),
+    )
+
+    def test_every_text_pair_meets_aa_in_every_mood(self) -> None:
+        failures = []
+        for mood in ("sanchaya", "aura"):
+            tok = mood_tokens(mood)
+            for fg, bg, minimum in self.PAIRS:
+                if fg not in tok or bg not in tok:
+                    continue
+                ratio = contrast(tok[fg], tok[bg])
+                if ratio < minimum:
+                    failures.append(f"{mood}: {fg} on {bg} = {ratio:.2f}:1 (need {minimum})")
+        assert not failures, "AA contrast failures:\n  " + "\n  ".join(failures)
+
+
+class TestSemanticColourLaw:
+    def test_meanings_never_remap_only_values(self) -> None:
+        """verified=green, estimate=amber, waste=red in EVERY mood. Values move
+        between moods; meanings do not. A mood that made 'waste' green would be
+        a lie the tokens told for us."""
+        for mood in ("sanchaya", "aura"):
+            tok = mood_tokens(mood)
+            v, e, w = (rgb(tok[k]) for k in ("--verified", "--estimate", "--waste"))
+            assert v[1] > v[0], f"{mood}: --verified is not green-dominant {v}"
+            assert w[0] > w[1], f"{mood}: --waste is not red-dominant {w}"
+            assert e[0] > e[2] and e[1] > e[2], f"{mood}: --estimate is not amber {e}"

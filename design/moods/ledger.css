@@ -1,0 +1,21 @@
+/* ARCHIVED MOOD — "Ledger" (the auditor's-paper austerity look).
+   Retained per R-LOOK-FINAL 2: it costs nothing to keep and, because moods are
+   value swaps over the role map, restoring it is this file plus an AA pass —
+   zero component changes. Not loaded by the app.
+   Superseded as the default by "sanchaya" on 2026-07-25. */
+[data-mood="ledger"] {
+  --ground:#faf8f4; --surface:#ffffff; --surface-raised:#f5f2ec;
+  --ink:#1c1a17; --ink-soft:#5c574f;
+  --rule:#e3ded4; --rule-strong:#1c1a17;
+  --accent:#0f5c5a; --accent-ink:#0a4341; --on-accent:#ffffff;
+  --money:#1c1a17;
+  --verified:#1e6f3e; --verified-bg:#eaf3ec; --verified-line:#cfe3d4;
+  --estimate:#7a5500; --estimate-bg:#f7efdc; --estimate-line:#e8d9b0;
+  --waste:#9e2b25;    --waste-bg:#f9e9e7;    --waste-line:#ecc9c5;
+  --control-depth: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(28,26,23,.06), 0 1px 2px rgba(28,26,23,.05);
+  --control-depth-pressed: inset 0 2px 4px rgba(28,26,23,.12), inset 0 -1px 0 rgba(255,255,255,.5);
+  --lift-1:0 1px 2px rgba(28,26,23,.06);
+  --lift-2:0 1px 2px rgba(28,26,23,.06), 0 4px 12px rgba(28,26,23,.07);
+  --lift-3:0 2px 4px rgba(28,26,23,.07), 0 10px 28px rgba(28,26,23,.10);
+  --inner-edge: inset 0 1px 0 rgba(255,255,255,.85);
+}

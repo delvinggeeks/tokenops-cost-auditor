@@ -581,6 +581,44 @@ an MCP server over /api/v1, triggered by the EXISTING API-key buying signal
 — same event, modern surface. (3) Marketing line registered: "Install the
 auditor inside the agent that's burning the tokens."
 
+**R-LOOK-FINAL (founder, 2026-07-25) — THE LOOK DECISION, FINAL UNTIL DAY-45.
+Ends aesthetic re-litigation; every review from here judges CLARITY and
+FUNCTION only.** (1) The v6 ultra-modern hybrid ships as the DEFAULT mood
+"sanchaya" (warm light): neumorphic depth on CONTROLS AND WIDGETS per the
+family constitution's own clause; DATA SURFACES FLAT-CRISP — tables, charts,
+evidence expanders and every money figure stay flat, high-contrast,
+tabular-nums, because a bevel eats the edge of a numeral and money legibility
+is the one thing this product cannot trade. (2) MOODS: sanchaya default, AURA
+(dark) SHIPS AT LAUNCH as a value sheet + AA re-verification with a visible
+topbar toggle; "Ledger" retained as an archived value sheet; Awaaz NOT adopted
+(no voice surface in this product) — its editorial tone informs EmptyState copy
+only. (3) NON-NEGOTIABLES, mood-independent and test-enforced: AA in every mood;
+semantic colour law (verified=green, estimate=amber, waste=red — values remap
+per mood, MEANINGS NEVER); the three signatures survive re-skinning (pipeline
+ribbon, accountant's double rule under verified totals, Applied→headline
+money-flow); honest states (EmptyState teaches, ErrorState says what happened
+and what to do, money never shimmers); motion always has a reduced-motion
+equivalent and meaning is never carried by motion alone.
+
+**SUPERSESSION RECORDED:** R-DESIGN's AESTHETIC sections (auditor's-paper
+austerity) are formally superseded by R-LOOK-FINAL. Rationale, founder's:
+founder conviction is a launch asset, and the role-token architecture landed by
+R-DESIGN-TOKENS-2 makes the swap safe — the look changed by editing values in
+one block, with zero component changes and a green suite. R-DESIGN's
+NON-aesthetic law (three-second rule, three-depth rule, jargon law, familiarity
+principle, banned dark patterns, WCAG floor) survives untouched. v4 and v5 are
+ARCHIVED EXPLORATIONS, retained in design/mockups/ for the record.
+THE DESIGN SYSTEM IS NOW: one role map · one kit · moods as values · sanchaya
+default.
+APPLIED 2026-07-25: token values swapped to sanchaya + aura sheets over the
+existing roles; --control-depth / --control-depth-pressed split from the
+flat-crisp --lift tiers; divergence test re-scoped to fail paired-inset on
+data/money/table selectors while exempting controls; AA now COMPUTED per mood
+(it caught white-on-violet at 4.36:1 in aura — accent darkened to #6f4ff5,
+5.11:1); mood token-name symmetry pinned (it caught --radius declared in one
+mood only); semantic colour law pinned by hue dominance. design/moods/ledger.css
+archived.
+
 **R-DESIGN-TOKENS-2 (founder, 2026-07-25) — design-system constitution
 upgrade, adapted from the WitAura family design language. Applies at
 v15-ui-unify wiring + R-LANDING-2. No new mockup round; NO visual re-theme —

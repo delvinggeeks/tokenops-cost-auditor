@@ -5,68 +5,105 @@
    totals. Accent chosen once: deep teal. Dark mode deferred (BACKLOG). */
 
 /* ============================================================
-   ROLE TOKENS (R-DESIGN-TOKENS-2 §1)
-   The ONLY place in this file where a colour literal may appear.
-   Components reference ROLES, never hues, so a mood is a value swap
-   and never a component change (§2). Enforced by
-   tests/test_design_tokens.py — a hex outside this block FAILS.
+   ROLE TOKENS (R-DESIGN-TOKENS-2 §1 · values per R-LOOK-FINAL)
+   The ONLY place a colour literal may appear. Components reference
+   ROLES, so a mood is a value swap and never a component change.
+   Enforced by tests/test_design_tokens.py.
 
-   MOOD: "Ledger" — the approved warm-paper auditor's light, shipped
-   as the only mood. "Night Audit" is designed-not-built: promoting it
-   means adding a sibling value block below and re-verifying AA. By
-   construction it costs zero component changes.
+   MOODS: "sanchaya" (warm light, DEFAULT) and "aura" (dark) both
+   ship at launch. Identical token NAMES, different values — that
+   symmetry is what makes the topbar toggle free.
+
+   DEPTH IS SPLIT BY PURPOSE (R-LOOK-FINAL 1a/1b):
+     --control-depth  soft paired-inset neumorphic depth. Controls and
+                      widget chrome ONLY: buttons, inputs, toggles,
+                      wizard steps, source cards, stat-chip chrome, nav.
+     --lift-1/2/3     flat-crisp elevation for DATA surfaces. Tables,
+                      charts, evidence expanders and every money figure
+                      stay flat and high-contrast — dollars never sit
+                      inside a soft shadow, because a bevel eats the
+                      edge of a numeral and legibility of money is the
+                      one thing this product cannot trade.
    ============================================================ */
 :root,
-[data-mood="ledger"] {
-  /* ground / surfaces */
-  --ground: #faf8f4;          /* the page */
-  --surface: #ffffff;         /* cards, panels */
-  --surface-raised: #f5f2ec;  /* tinted surface: sidebars, drawers, callouts */
+[data-mood="sanchaya"] {
+  --ground: #fafaf8;
+  --surface: #ffffff;
+  --surface-raised: #f4f4f0;
+  --ink: #15171a;
+  --ink-soft: #565b62;
+  --rule: #e4e4dd;
+  --rule-strong: #15171a;
+  --accent: #0e6e5e;
+  --accent-ink: #0a564a;
+  --on-accent: #ffffff;
+  --money: #15171a;
+  --verified: #0e6e5e;  --verified-bg: #e4f1ee;  --verified-line: #c6e0da;
+  --estimate: #8a5a0b;  --estimate-bg: #faf0de;  --estimate-line: #ecd9b0;
+  --waste:    #b02f22;  --waste-bg:    #fbeae8;  --waste-line:    #f0cbc6;
 
-  /* ink */
-  --ink: #1c1a17;
-  --ink-soft: #5c574f;
+  /* controls + widget chrome: soft, paired-inset (family constitution) */
+  --control-depth:
+    inset 0 1px 0 rgba(255,255,255,.92),
+    inset 0 -1px 0 rgba(21,23,26,.07),
+    0 1px 2px rgba(21,23,26,.05);
+  --control-depth-pressed:
+    inset 0 2px 4px rgba(21,23,26,.12),
+    inset 0 -1px 0 rgba(255,255,255,.5);
 
-  /* structure */
-  --rule: #e3ded4;            /* 1px borders */
-  --rule-strong: #1c1a17;     /* the accountant's double rule (§4 signature) */
+  /* data surfaces: flat-crisp */
+  --lift-1: 0 1px 2px rgba(21,23,26,.05);
+  --lift-2: 0 1px 2px rgba(21,23,26,.05), 0 6px 18px -8px rgba(21,23,26,.12);
+  --lift-3: 0 2px 4px rgba(21,23,26,.06), 0 18px 44px -14px rgba(21,23,26,.18);
+  --inner-edge: inset 0 1px 0 rgba(255,255,255,.85);
+}
 
-  /* accent — chosen once, used sparingly */
-  --accent: #0f5c5a;
-  --accent-ink: #0a4341;
-  --on-accent: #ffffff;       /* text/icons ON accent; never a raw #fff */
+/* AURA — dark, ships at launch. Values only; no component knows. */
+[data-mood="aura"] {
+  --ground: #0a0c10;
+  --surface: #111419;
+  --surface-raised: #161a21;
+  --ink: #e9edf3;
+  --ink-soft: #98a2b0;
+  --rule: #222833;
+  --rule-strong: #e9edf3;
+  --accent: #6f4ff5;   /* 5.11:1 with --on-accent; #7b5cff was 4.36 and failed AA */
+  --accent-ink: #5a3ade;
+  --on-accent: #ffffff;
+  --money: #e9edf3;
+  /* meanings never remap, only values (R-LOOK-FINAL 3a) */
+  --verified: #4ade9b;  --verified-bg: #102a1e;  --verified-line: #1c4433;
+  --estimate: #f5c661;  --estimate-bg: #2a2211;  --estimate-line: #4a3a1a;
+  --waste:    #ff8b80;  --waste-bg:    #2c1512;  --waste-line:    #4d221d;
 
-  /* money is its own role: it must be able to diverge from --ink when a
-     future mood needs the figure to carry more weight than body copy */
-  --money: #1c1a17;
+  --control-depth:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    inset 0 -1px 0 rgba(0,0,0,.45),
+    0 1px 2px rgba(0,0,0,.5);
+  --control-depth-pressed:
+    inset 0 2px 5px rgba(0,0,0,.55),
+    inset 0 -1px 0 rgba(255,255,255,.05);
 
-  /* signal roles — meaning, never decoration */
-  --verified: #1e6f3e;   --verified-bg: #eaf3ec;   --verified-line: #cfe3d4;
-  --estimate: #7a5500;   --estimate-bg: #f7efdc;   --estimate-line: #e8d9b0;
-  --waste:    #9e2b25;   --waste-bg:    #f9e9e7;   --waste-line:    #ecc9c5;
+  /* in the dark a drop shadow is invisible; depth is a light edge */
+  --lift-1: inset 0 1px 0 rgba(255,255,255,.04);
+  --lift-2: inset 0 1px 0 rgba(255,255,255,.05), 0 14px 34px -20px #000;
+  --lift-3: inset 0 1px 0 rgba(255,255,255,.06), 0 26px 60px -24px #000;
+  --inner-edge: inset 0 1px 0 rgba(255,255,255,.05);
+}
 
-  /* depth: crisp layered tiers + a 1px inner highlight (R-DESIGN-ADDENDUM).
-     Neumorphic/emboss shadow roles are DELIBERATELY NOT ADOPTED from the
-     family language — low-contrast emboss softens numeral edges, and money
-     legibility outranks family consistency here. Recorded divergence. */
-  --lift-1: 0 1px 2px rgba(28, 26, 23, 0.06);
-  --lift-2: 0 1px 2px rgba(28, 26, 23, 0.06), 0 4px 12px rgba(28, 26, 23, 0.07);
-  --lift-3: 0 2px 4px rgba(28, 26, 23, 0.07), 0 10px 28px rgba(28, 26, 23, 0.10);
-  --inner-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-
-  /* type / space / motion — mood-invariant */
+/* mood-invariant: type, space, motion */
+:root {
   --serif: "Charter", "Iowan Old Style", "Georgia", "Times New Roman", serif;
-  --sans: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --sans: "Inter", system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
   --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
   --content-max: 1100px;
-  --radius: 6px;
+  --radius: 10px;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --t-fast: 150ms; --t-med: 250ms;
 
-  /* ---- legacy aliases. The role names above are canonical; these keep the
-     already-shipped components working while they migrate screen by screen.
-     Adding a NEW rule that uses one of these is a ux-reviewer finding. ---- */
+  /* legacy aliases — canonical names are the roles above. A NEW rule using
+     one of these is a ux-reviewer finding. */
   --paper: var(--ground);
   --surface-tint: var(--surface-raised);
 }
@@ -134,10 +171,11 @@ a { color: var(--accent); }
 
 /* Buttons */
 .btn { font: 600 14px var(--sans); border-radius: var(--radius); cursor: pointer;
+  box-shadow: var(--control-depth);
   padding: 8px 14px; border: 1px solid var(--rule);
   background: var(--surface); color: var(--ink);
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
-.btn:active { transform: scale(0.98); }             /* micro-confirmation */
+.btn:active { transform: scale(0.98); box-shadow: var(--control-depth-pressed); }             /* micro-confirmation */
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn-primary { background: var(--accent); border-color: var(--accent-ink); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-ink); }
