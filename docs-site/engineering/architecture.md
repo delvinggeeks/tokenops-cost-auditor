@@ -42,6 +42,64 @@ The full life of an audit, as verified against the implementation:
 --8<-- "docs/uml/audit-seq.mmd"
 ```
 
+## Architecture principles
+
+Named because they are enforced — by a test, a spec id, or a ruling you can
+ask us for. The house law: **we name what we enforce; we never enforce by
+naming.** A label with no test behind it does not appear on this page.
+<!-- src: R-ARCH-PATTERNS (d), founder ruling 2026-07-22 -->
+
+### Zero-token engine
+
+The analysis engine performs no AI inference of any kind: `services/rules`
+and `services/pricing` import zero network and zero LLM libraries, enforced
+by an AST-walking import-guard test that fails the build on violation. Your
+audit is arithmetic, reproducible bit-for-bit, and can never leak a prompt
+to a model because no model is ever called. <!-- src: NFR-01; T-NFR-01 -->
+
+### Zero-trust, five axes
+
+- **Input is never trusted.** Every uploaded row passes the validator and
+  the normalization contract before anything downstream sees it; rejected
+  rows are named, counted, and downloadable — never silently dropped.
+  <!-- src: FR-02, FR-03; T-ING-05..09 -->
+- **The network is never trusted.** TLS terminates at the edge; payment
+  webhooks are HMAC-verified and replay-deduplicated; OAuth callbacks
+  require a signed state pinned to the initiating browser's cookie —
+  a validly-signed token from someone else's flow is refused.
+  <!-- src: NFR-02; FR-27, T-PAY-06..07; tests/test_federation.py -->
+- **Least privilege.** Provider keys are added read-only and used only to
+  pull usage metadata; we persist counts, models, and timestamps — prompt
+  and completion text is never stored, at any tier.
+  <!-- src: R-CONNECT; FR-22, T-LIF-04, T-RUL-EV-01 -->
+- **Explicit verification.** Sign-in links work once and expire; federated
+  sign-in accepts only provider-verified email addresses; savings are
+  "verified" only when measured on your subsequent usage, never projected.
+  <!-- src: FR-17, T-AUTH-01..04; tests/test_federation.py; R-Q9 -->
+- **Assume breach.** Credentials are envelope-encrypted at rest; revoking a
+  source deletes the ciphertext itself; every sensitive action lands in an
+  append-only audit log. <!-- src: T-KEY-01..03; R-Q5/Q6,
+  tests/test_sources_routes.py; FR-21, T-LIF-01..03 -->
+
+### Layered data validation — the five-gate ladder
+
+Five gates stand between a raw log line and a number we archive:
+
+1. **Ingest validation** — malformed rows rejected by name, with the
+   row-errors file to prove it. <!-- src: FR-03; T-ING-08..09 -->
+2. **Normalization contract** — every source normalizes to one record
+   shape before pricing sees it. <!-- src: FR-02; T-ING-05..07 -->
+3. **Founder-verified golden pricing** — the rate card carries its source
+   URLs and a human-verified date; CI warns when it ages.
+   <!-- src: FR-05, NFR-15; T-PRC-01..03 -->
+4. **Detector conservative rails** — every estimator rounds against our
+   own claim, pinned by golden files that a commit cannot change silently.
+   <!-- src: R-Q3, R-GOLDEN; T-RUL-D1..D6 -->
+5. **The proving audit → archive freeze** — a fix's saving is measured on
+   later usage before the word "verified" appears, and archived statements
+   are frozen — the number you saw is the number that stays.
+   <!-- src: R-Q9; R-STMT-MONTH; tests/test_statements.py -->
+
 ## Decision records
 
 The architecture decisions (monolith over services, single report assembly,

@@ -58,6 +58,21 @@ promotion still requires a PRD amendment.
   (SAML/OIDC), SCIM after. Trigger unchanged.
 - **SOC2 track** — trigger: enterprise procurement blocker.
 - **Helm chart** — trigger: first VPC/self-hosted customer. [R-MARKETPLACE a]
+- **Kubernetes attribution at T4** — design note (founder question
+  2026-07-22, "how does this sit inside cloud infra"): when T4 STREAM
+  builds, k8s workload attribution comes FREE from OTel resource
+  attributes (k8s.namespace/deployment/pod ride the same spans as
+  gen_ai.usage.* token counts) — per-team/per-service tokenomics is a
+  GROUP BY, not an agent. No sidecar/eBPF until a customer's stack
+  can't emit OTel. Trigger: T4 build (first streaming customer).
+- **Self-hosted inference metering (vLLM/TGI/Triton)** — design note:
+  self-hosted LLM servers expose prompt/generation token counters on
+  Prometheus /metrics; a T3-family scraper prices them against a
+  GPU-hour-derived rate card (cost-per-token computed from the
+  customer's node cost, not a provider price sheet) — tokenomics for
+  enterprises running their OWN models, a surface no API-key tool
+  covers. Needs a rate-card ruling (money-math discipline applies).
+  Trigger: first customer running self-hosted inference.
 - **AWS/Azure/GCP Marketplace listings + IaC templates (ARM/Bicep, CFN/CDK,
   Terraform)** — trigger: second enterprise deal, or first requiring
   marketplace procurement. Azure Marketplace private offers noted as future
