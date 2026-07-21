@@ -106,6 +106,12 @@ steps (no UptimeRobot/DNS credential lives in this repo or on the box):
 
 ## 4. Backup & restore (NFR-08)
 
+DOCS-SITE SHIP RULE (incident 2026-07-22, ~60s docs outage): ./site is
+bind-mounted read-only into caddy. NEVER `rm -rf site` on the host — the
+container keeps the deleted inode and serves 404s from an empty mount.
+Overwrite in place (`tar -xf -` over the existing dir), or if a clean
+replace is required, `docker compose restart caddy` immediately after.
+
 Backup: scripts/backup.sh — pg_dump -Fc → /backups/tokenops_%F.dump,
 rotate 14 days, rclone copy to object storage (B2/R2 free tier).
 Reports/ snapshotted same job as reports_%F.tar.gz (the postgres image has

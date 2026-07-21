@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.17 (475ee89) · R-DOCS-PUBLIC live. Public docs =
+  product usage + API + legal ONLY; the entire Engineering section
+  (requirements, architecture, traceability incl. live matrix
+  transclusion, testing, standards, self-audit) withdrawn from the
+  public build (repo-retained); every HTML citation comment stripped
+  from served pages and search index by build hook. INCIDENT logged:
+  ~60s docs outage from rm -rf on the bind-mounted site dir (container
+  held the deleted inode) — fixed by caddy restart; ship rule added to
+  runbook §4 + memory. SMOKE PASS: docs root/api/legal 200,
+  /engineering/* 404, zero internal names in the shipped site.
+
 - 2026-07-22 · v1.5.16 (3f178f5) · DOCS REACHABLE. Walkthrough punch
   "there is no docs, rate limiting, API documentation" → diagnosis: all
   three EXISTED (docs-site live at docs.tokenops.cloud; NFR-03/12
