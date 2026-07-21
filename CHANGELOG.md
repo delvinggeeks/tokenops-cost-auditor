@@ -5,6 +5,14 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.11 (e15800c) · TOOL-COVERAGE LINE live: Cursor/Lovable
+  checked against the record — in NO spec; R-AGNOSTIC (founder's own law)
+  pull-sequences tool adapters and neither exposes a usage API. The TRUE
+  claim ships: tools on customer keys (Claude Code, Codex, Cursor,
+  LangChain) land in provider usage automatically — one connection covers
+  all. Both queued in BACKLOG under R-AGNOSTIC with the honest constraint.
+  SMOKE PASS.
+
 - 2026-07-21 · v1.5.10 (b0f1618) · CONNECT-ONLY MARKETING live (founder
   ruling, round 7): upload leaves the pitch — hero and workflow speak
   business language (connect your account, the platform does everything
