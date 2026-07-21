@@ -86,6 +86,26 @@ class TestOneCurrencyPerView:
         page = client.get("/", headers={"Accept-Language": "en-IN,en;q=0.9"}).text
         assert "₹499/mo" in page and "$19/mo" not in page
 
+    def test_timezone_detection_drives_the_currency_cookie(self, client: TestClient) -> None:
+        """Walkthrough fix: Accept-Language lies (Indian browsers ship en-US)
+        so region detection rides the browser CLOCK — India is one timezone.
+        The detection script must be on the page, and the server must honor
+        the cookie it sets, even under an en-US locale."""
+        page = client.get("/").text
+        assert "Asia/Kolkata" in page  # the early detection script
+        client.cookies.set("ccy", "INR")
+        inr = client.get("/", headers={"Accept-Language": "en-US,en;q=0.9"}).text
+        assert "₹499/mo" in inr and "$19/mo" not in inr
+
+    def test_explicit_toggle_beats_the_detection_cookie_and_persists(
+        self, client: TestClient
+    ) -> None:
+        client.cookies.set("ccy", "INR")
+        page = client.get("/?ccy=USD")
+        assert "$19/mo" in page.text and "₹499/mo" not in page.text
+        # the choice sticks: the server rewrites the detection cookie
+        assert "ccy=USD" in page.headers.get("set-cookie", "")
+
     def test_the_qualifying_line_and_anchor_are_on_the_page(self, client: TestClient) -> None:
         page = " ".join(client.get("/").text.split())  # templates wrap lines
         assert "Pro pays for itself" in page  # §5 worth test: self-qualification

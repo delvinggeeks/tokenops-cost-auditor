@@ -103,6 +103,7 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
             user.id,
             request.query_params.get("ccy"),
             request.headers.get("accept-language", ""),
+            request.cookies.get("ccy"),
         )
         ctx = _shell_ctx(session, request, user, "alerts")
         return _render(

@@ -53,6 +53,7 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             user.id,
             request.query_params.get("ccy"),
             request.headers.get("accept-language", ""),
+            request.cookies.get("ccy"),
         )
         launch = plans.launch_open(session, settings, currency)
         ctx = _shell_ctx(session, request, user, "billing")

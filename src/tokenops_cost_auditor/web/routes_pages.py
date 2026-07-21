@@ -59,8 +59,11 @@ def landing(request: Request) -> HTMLResponse:
     # R-PRICING-FINAL-2: ONE currency per viewer (toggle available); launch
     # pricing shows while the market's first-N cohort has room — the flip to
     # list is computed here, in code, from subscription rows.
+    ccy_param = request.query_params.get("ccy")
     currency = plans.pick_currency(
-        request.query_params.get("ccy"), request.headers.get("accept-language", "")
+        ccy_param,
+        request.headers.get("accept-language", ""),
+        request.cookies.get("ccy"),
     )
     with request.app.state.session_factory() as db:
         launch = plans.launch_open(db, settings, currency)
@@ -83,6 +86,9 @@ def landing(request: Request) -> HTMLResponse:
         response.set_cookie(
             HERO_COOKIE, variant, max_age=30 * 86400, httponly=False, samesite="lax"
         )
+    if ccy_param and currency != request.cookies.get("ccy"):
+        # an explicit toggle choice persists across pages and visits
+        response.set_cookie("ccy", currency, max_age=365 * 86400, httponly=False, samesite="lax")
     log.info("landing.hero", variant=variant)
     return response
 

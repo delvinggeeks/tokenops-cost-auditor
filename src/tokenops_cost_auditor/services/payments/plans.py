@@ -152,17 +152,28 @@ def provider_for_currency(currency: str) -> str:
     return "razorpay" if currency.upper() == "INR" else "stripe"
 
 
-def pick_currency(ccy_param: str | None, accept_language: str = "") -> str:
+def pick_currency(
+    ccy_param: str | None, accept_language: str = "", ccy_cookie: str | None = None
+) -> str:
     """Which price set a VIEWER sees (checkout still decides by billing
-    country). An explicit toggle choice wins; otherwise an Indian locale
-    hint shows INR; the default is USD."""
+    country). Precedence: explicit toggle choice > the detection cookie >
+    locale hint > USD. The cookie is set client-side from the browser's
+    TIMEZONE (Asia/Kolkata) — walkthrough 2026-07-22 found the locale hint
+    useless in practice: most Indian browsers ship with en-US, so an Indian
+    visitor saw dollars. India is a single timezone; the clock doesn't lie."""
     if ccy_param and ccy_param.upper() in CURRENCIES:
         return ccy_param.upper()
+    if ccy_cookie and ccy_cookie.upper() in CURRENCIES:
+        return ccy_cookie.upper()
     return "INR" if "-in" in accept_language.lower() else "USD"
 
 
 def viewer_currency(
-    session: Session, user_id: str | None, ccy_param: str | None, accept_language: str = ""
+    session: Session,
+    user_id: str | None,
+    ccy_param: str | None,
+    accept_language: str = "",
+    ccy_cookie: str | None = None,
 ) -> str:
     """One rule for every signed-in surface: a subscribed account sees its
     own billing currency; everyone else gets the viewer pick."""
@@ -172,7 +183,7 @@ def viewer_currency(
         ).scalar_one_or_none()
         if sub is not None and (sub.currency or "").upper() in CURRENCIES:
             return str(sub.currency).upper()
-    return pick_currency(ccy_param, accept_language)
+    return pick_currency(ccy_param, accept_language, ccy_cookie)
 
 
 def cohort_used(session: Session, currency: str) -> int:

@@ -13,6 +13,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}TokenOps Cost Auditor{% endblock %}</title>
+  <script>
+    /* R-PRICING-FINAL-2 region detection (walkthrough fix 2026-07-22):
+       Accept-Language lies (Indian browsers ship en-US), the clock doesn't —
+       India is one timezone. Runs ONCE per browser: sets the ccy cookie the
+       server renders from; an explicit toggle (?ccy=) always outranks it. */
+    (function () {
+      try {
+        if (document.cookie.indexOf("ccy=") !== -1) return;
+        var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+        var ccy = (tz === "Asia/Kolkata" || tz === "Asia/Calcutta") ? "INR" : "USD";
+        document.cookie = "ccy=" + ccy + ";path=/;max-age=31536000;samesite=lax";
+        if (ccy === "INR" && location.search.indexOf("ccy=") === -1) {
+          location.reload();
+        }
+      } catch (e) { /* detection is best-effort; USD default stands */ }
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="{{ asset('/static/land/favicon.svg') }}">
   {% block head %}{% endblock %}
   <link rel="stylesheet" href="{{ asset('/static/wa-design.css') }}">
