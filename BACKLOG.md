@@ -250,3 +250,34 @@ in the customer's VPC per the deployment contract, post-trust.
   today; consolidate on next touch.
 - F15 landing mobile: hero capture below the fold (copy+CTA above it) —
   revisit with post-launch funnel data.
+
+## WP-FRAMEWORK-ADAPT — frontend framework migration path (founder, 2026-07-26)
+
+Recorded per CLAUDE.md rule 1: an X-05 change is a founder ruling, never a
+drive-by. Today's stack (SSR + Jinja + htmx, semantic role tokens, one kit,
+no build step) is deliberate: §5 server authority, values-only mood swaps,
+JS<15KB budgets, single-artifact deploy, one pinned toolchain. If the product
+outgrows it, we ADAPT rather than resist — but on triggers, not fashion.
+
+TRIGGERS (any one, reviewed at day-45 or later):
+- A surface genuinely needs heavy client state: live editable tables,
+  optimistic updates, collaborative sessions, chart brushing/zooming.
+- htmx + vanilla passes ~30KB total app JS or interaction latency starts
+  costing comprehension (measured, not felt).
+- Team scaling makes framework familiarity the hiring bottleneck.
+
+MIGRATION PATH (what makes this cheap later — protect these now):
+- The KIT is the unit of migration: each macro's semantic markup + role
+  tokens port 1:1 into components; migrate as ISLANDS on the pages that
+  triggered the need, never a big-bang rewrite.
+- The token map survives any framework: components must keep referencing
+  roles (--accent, --money…), never utility hues — moods stay value sheets.
+  Tailwind, if adopted, is configured to EMIT the role tokens, not replace
+  them; the hex-grep/AA/mood-symmetry tests keep running unchanged.
+- §5 stays law: client components render server-decided payloads; every
+  money-affecting mutation still round-trips with server re-check + the
+  consequence-in-words ask.
+- Budgets are re-negotiated at the ruling, not silently blown; the three
+  signatures and honest-states law are framework-independent and survive.
+
+Until a trigger fires: new ideas here, never into code.
