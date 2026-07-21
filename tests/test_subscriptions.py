@@ -86,8 +86,9 @@ class TestPriceConfig:
         # both currencies are shown wherever a paid plan is (R-Q11)
         both = cat["pro"].display_both()
         assert "$" in both and "₹" in both
-        # Free is genuinely free — no price, no card
-        assert cat["free"].usd is None and cat["free"].sources == 0
+        # Free is genuinely free — no price, no card. R-FREE-CONNECT
+        # (2026-07-27) superseded R-Q5's zero: one connection, one metered audit.
+        assert cat["free"].usd is None and cat["free"].sources == 1
         assert cat["free"].scheduled_audits is False
 
     def test_currency_routing_follows_billing_country(self) -> None:
@@ -651,7 +652,8 @@ class TestPlanGating:
         subscriptions.apply_event(session, settings, "stripe", event("cancelled", "team", "c1"))
         session.commit()
         free = subscriptions.entitlements(session, settings, user.id)
-        assert free["sources_allowed"] == 0 and free["scheduled_audits"] is False
+        # R-FREE-CONNECT: one source; still never scheduled
+        assert free["sources_allowed"] == 1 and free["scheduled_audits"] is False
 
     def test_03b_scheduler_honours_the_gate(self, session: Session, settings: Settings) -> None:
         """The cadence gate is only real if the scheduler applies it."""

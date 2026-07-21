@@ -23,6 +23,7 @@ from tokenops_cost_auditor.services.connectors import validate
 from tokenops_cost_auditor.services.connectors.crypto import encrypt_credential
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
+from tokenops_cost_auditor.services.payments.base import unconsumed_credit
 from tokenops_cost_auditor.web import help as help_registry
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -200,11 +201,20 @@ def wizard_validate(
             saved = True
             source_id = source.id
 
+    free_no_credit = False
     if saved and verdict.status == validate.OK:
         # INSTANT GRATIFICATION (R-MAGIC-CONNECT §2): pull and audit NOW, in
-        # the background, so the dashboard has real numbers in this session
-        # rather than tomorrow.
-        _kickoff_first_pull(request, source_id)
+        # the background. R-FREE-CONNECT §3: on Free, the first-pull audit is
+        # metered by the signup credit — no credit, no audit, said plainly.
+        if plan in ("pro", "team"):
+            _kickoff_first_pull(request, source_id)
+        else:
+            with _session(request) as session:
+                credit = unconsumed_credit(session, user_id)
+            if credit is not None:
+                _kickoff_first_pull(request, source_id, claim_for_user=user_id)
+            else:
+                free_no_credit = True
 
     tpl = request.app.state.jinja.get_template("app/_wizard_verdict.html")
     return HTMLResponse(
@@ -213,13 +223,24 @@ def wizard_validate(
             copy=help_registry.wizard(provider),
             provider=provider,
             saved=saved,
+            free_no_credit=free_no_credit,
         )
     )
 
 
-def _kickoff_first_pull(request: Request, source_id: str) -> None:
+def _kickoff_first_pull(
+    request: Request, source_id: str, claim_for_user: str | None = None
+) -> None:
     """Best-effort immediate pull + audit. Failure here NEVER surfaces as a
-    connect error — the scheduled tick will do it anyway."""
+    connect error — the scheduled tick will do it anyway (paid plans; free
+    sources are never scheduled, so a failed free kickoff keeps its credit).
+
+    claim_for_user (R-FREE-CONNECT §3): on Free the audit consumes the signup
+    credit, claimed atomically once the audit row exists. The window between
+    the route's credit check and this claim is microscopic and bounded by the
+    provider-idempotency guard on connects; if another spender won the race
+    the audit still ran and the account is exactly one audit ahead of its
+    meter — accepted and audit-logged, never a customer-facing error."""
     import threading
 
     settings = request.app.state.settings
@@ -229,6 +250,7 @@ def _kickoff_first_pull(request: Request, source_id: str) -> None:
     def run() -> None:
         from tokenops_cost_auditor.services.connectors.pull import run_pull
         from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
+        from tokenops_cost_auditor.services.payments.base import claim_credit
 
         try:
             with factory() as session:
@@ -237,7 +259,11 @@ def _kickoff_first_pull(request: Request, source_id: str) -> None:
                     return
                 run_pull(session, settings, source)
                 session.commit()
-                run_source_audit(session, settings, table, source)
+                audit_id = run_source_audit(session, settings, table, source)
+                if claim_for_user is not None:
+                    claimed = claim_credit(session, claim_for_user, audit_id)
+                    if claimed is None:
+                        log.info("connect.free_credit_race", audit_id=audit_id)
                 session.commit()
         except Exception as exc:
             log.info("connect.first_pull_deferred", error=str(exc)[:160])

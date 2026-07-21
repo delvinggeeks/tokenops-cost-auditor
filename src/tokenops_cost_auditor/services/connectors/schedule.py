@@ -21,7 +21,7 @@ from tokenops_cost_auditor.persistence.models import Source
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.connectors.pull import run_pull
 from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
-from tokenops_cost_auditor.services.payments import subscriptions
+from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
@@ -36,13 +36,23 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
-def due_pulls(session: Session, now: datetime) -> list[Source]:
+def due_pulls(session: Session, now: datetime, settings: Settings | None = None) -> list[Source]:
     sources = session.execute(select(Source).where(Source.status == "active")).scalars().all()
-    return [
+    due = [
         s
         for s in sources
         if s.credentials_encrypted
         and (s.last_pull_at is None or now - _aware(s.last_pull_at) >= PULL_EVERY)
+    ]
+    if settings is None or not due:
+        return due
+    # R-FREE-CONNECT §4: the scheduler never touches Free sources — their one
+    # audit ran at connect time and the tier's COGS bound is exactly that.
+    # PLAN-based, not read_only-adjusted: R-Q12 dunning accounts keep pulling
+    # (only their scheduled audits pause).
+    ents = subscriptions.entitlements_for(session, settings, [s.user_id for s in due])
+    return [
+        s for s in due if plans.get(settings, str(ents[s.user_id]["plan_key"])).scheduled_audits
     ]
 
 
@@ -74,7 +84,7 @@ def tick(
     """One scheduler pass. Failures on one source never block the others."""
     now = now or datetime.now(UTC)
     stats = {"pulled": 0, "pull_errors": 0, "audited": 0, "audit_errors": 0}
-    for source in due_pulls(session, now):
+    for source in due_pulls(session, now, settings):
         try:
             run_pull(session, settings, source)
             session.commit()

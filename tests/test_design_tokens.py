@@ -23,6 +23,10 @@ HEX = re.compile(r"#[0-9A-Fa-f]{3,8}\b")
 EXEMPT = {
     # base.html's exemption died with the file itself (R-LANDING-2, 2026-07-25).
     "_report_style.html": "report/PDF styles — WP-REPORT-VISUAL, its own gated milestone",
+    # Permanent by nature, not a debt: the Google sign-in mark's colours are
+    # Google's brand, not ours — tokenizing a third party's logo would be
+    # repainting it.
+    "signin.html": "Google brand mark in the federation button (permanent)",
 }
 
 

@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # with stdlib HMAC (PLAN.md §0.2 PAYMENT-SDKS).
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
+    # Signup federation (founder order 2026-07-27): Google OAuth sign-in.
+    # Config-gated end to end — with no client id the button never renders,
+    # because a dead button is a promise (R-GTM-CONTROL).
+    google_client_id: str = ""
+    google_client_secret: str = ""
     razorpay_webhook_secret: str = ""
     razorpay_payment_link_url: str = ""
     stripe_webhook_secret: str = ""
@@ -118,7 +123,10 @@ class Settings(BaseSettings):
     plan_pro_inr: float = 8999.0
     plan_team_inr: float = 26999.0
     # R-Q5/Q6: a "source" = one active provider org connection
-    plan_source_limits: dict[str, int] = {"free": 0, "pro": 1, "team": 5}
+    # R-FREE-CONNECT (founder-ratified 2026-07-27): Free connects ONE source;
+    # its single audit is metered by the signup comp credit, and the
+    # scheduler never pulls free sources (entitlement filter).
+    plan_source_limits: dict[str, int] = {"free": 1, "pro": 1, "team": 5}
     # Connect (T2): first-connect backfill window (accepted default Q2)
     connect_backfill_days: int = 30
     # Alerts (WP-3, observe-and-alert only; accepted defaults Q10 — see STATUS M1)

@@ -742,6 +742,24 @@ docs/12-FLYWHEEL.md from the 2026-07-22 vision order, which is complete and is
 not a landing skeleton. Paused and reported per R-PREMISE-CHECK rather than
 executed literally. See STATUS for the open questions blocking a start.
 
+**R-FREE-CONNECT (founder-ratified, 2026-07-27).** Free allows ONE active
+connection; scheduled_audits stays False on Free (no weekly loop, alerts
+stay Pro per §5 plan_watches, statements per R-STMT-GATING activity rule).
+ONE free audit, either path, one meter: signup grants one comp credit
+(Q8 mechanics) consumed by whichever runs first — the connect-time
+first-pull audit or a file upload; atomic claim_credit prevents double-
+spend. Free connect without credit: connection saves, no audit, honest
+copy + upsell. The scheduler's entitlement filter (never pulls Free
+sources) becomes load-bearing and test-pinned. Churn guard = credits,
+not connections; COGS bound: one pull + one audit per signup ever.
+DISCOVERY closed by §2: the marketed free audit was UNWIRED — no signup
+credit existed anywhere, so "Start free — 1 audit, no card" 402'd at the
+payment gate with payment links; no test walked the stranger through an
+upload, so it shipped unseen. Ratification message also ordered: signup
+federation (OAuth) implementation, payment-gateway activation audit, and
+market-grounded pricing (deep-research commissioned) — tracked as the
+same-day follow-on workstreams.
+
 **R-PIPELINE-UI-SEQ (founder, 2026-07-27).** Option A confirmed:
 WP-PIPELINE-UI (runs list, per-stage drill-in incl. rows-rejected and
 detector honest-zeros evidence, connector pull lineage, alert evaluation

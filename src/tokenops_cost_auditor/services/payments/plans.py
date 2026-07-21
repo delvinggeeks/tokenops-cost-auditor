@@ -61,14 +61,14 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             name="Free",
             usd=None,
             inr=None,
-            sources=limits.get(FREE, 0),
+            sources=limits.get(FREE, 1),
             scheduled_audits=False,
             uploads="one audit of an uploaded log file",
-            # R-STMT-GATING: say the email behaviour out loud — archived
-            # always, mailed when there is something to show.
-            blurb="One full audit of a usage file you drop in — we show you "
-            "exactly where to get it. No card. Statements archived in-app; "
-            "emailed when there's something to show.",
+            # R-FREE-CONNECT: the free audit runs on a connection OR a file.
+            # R-STMT-GATING: the email behaviour stays said out loud.
+            blurb="Connect a provider free — your first audit on us. Or drop "
+            "in a usage file; we show you exactly where to get it. No card. "
+            "Statements archived in-app; emailed when there's something to show.",
         ),
         PRO: Plan(
             key=PRO,

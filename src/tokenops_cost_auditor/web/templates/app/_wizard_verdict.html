@@ -9,8 +9,19 @@
       <span class="cur lbl">{{ copy.step3_title }}</span>
     </div>
     <p><span class="badge badge-verified">{{ verdict.headline }}</span>
-      {{ copy.step3_body }}</p>
-    <a class="btn btn-primary" href="/dashboard">Go to my dashboard</a>
+      {% if free_no_credit %}
+        Connected and reading usage. Your free audit is already used, so no
+        audit runs from this connection — Pro audits it weekly and starts with
+        a full backfill. Your existing reports are untouched.
+      {% else %}
+        {{ copy.step3_body }}
+      {% endif %}</p>
+    {% if free_no_credit %}
+      <a class="btn btn-primary" href="/billing">See plans</a>
+      <a class="btn" href="/dashboard">Go to my dashboard</a>
+    {% else %}
+      <a class="btn btn-primary" href="/dashboard">Go to my dashboard</a>
+    {% endif %}
   {% elif verdict.status == "unreachable" %}
     <p><span class="badge badge-neutral">{{ verdict.headline }}</span></p>
     <p>{{ verdict.detail }}</p>

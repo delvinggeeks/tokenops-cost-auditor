@@ -48,6 +48,26 @@ scripts/daily_digest.py.
 Alert conditions: healthz down 2 checks; any audit status=failed; disk
 >80%; backup absent >26h (checker in digest).
 
+## 3a. Activation steps — payments + federation (founder-owned credentials)
+
+The CODE for both ships dark until credentials exist; no dashboard step here
+requires a deploy.
+
+PAYMENTS (FR-18/R-Q11 link+webhook design, already implemented):
+1 Stripe: create a Payment Link per plan (Pro/Scale monthly), copy webhook
+  signing secret → .env STRIPE_PAYMENT_LINK_URL / STRIPE_WEBHOOK_SECRET;
+  point the webhook at /api/v1/webhooks/stripe. 2 Razorpay: same shape →
+  RAZORPAY_* vars, webhook /api/v1/webhooks/razorpay. 3 `docker compose up
+  -d` re-reads .env; the billing page switches from "Checkout opens once
+  billing is switched on" to live Pay links automatically. Until then,
+  admin mark-paid (Q8) remains the manual fulfillment path.
+
+GOOGLE SIGN-IN (federation, 2026-07-27):
+1 console.cloud.google.com → OAuth client (web), authorized redirect URI
+  https://tokenops.cloud/auth/google/callback. 2 .env GOOGLE_CLIENT_ID /
+  GOOGLE_CLIENT_SECRET; restart. 3 The "Continue with Google" button renders
+  on /login + /signup only once configured (dead buttons are promises).
+
 ## 3b. Status page (R-SAAS-BASICS 3)
 
 status.tokenops.cloud = UptimeRobot public status page. Founder-dashboard

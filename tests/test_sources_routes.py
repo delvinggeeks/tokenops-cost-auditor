@@ -29,15 +29,25 @@ class TestSourcesRoutes:
         client = TestClient(app)
         assert client.get("/sources").status_code == 401
 
-    def test_02_free_plan_cannot_connect(self, app: FastAPI) -> None:
+    def test_02_free_plan_connects_one_source_only(self, app: FastAPI) -> None:
+        """R-FREE-CONNECT (2026-07-27) superseded R-Q5's zero: Free connects
+        ONE source (its single audit metered by the signup credit); the
+        second connection hits the honest limit."""
         client = TestClient(app)
-        resp = client.post(
+        first = client.post(
             "/sources",
             headers=HDR,
             data={"provider": "openai", "label": "org", "api_key": "sk-x"},
+            follow_redirects=False,
         )
-        assert resp.status_code == 403
-        assert "free" in resp.json()["detail"]
+        assert first.status_code == 303
+        second = client.post(
+            "/sources",
+            headers=HDR,
+            data={"provider": "anthropic", "label": "org2", "api_key": "sk-y"},
+        )
+        assert second.status_code == 403
+        assert "free" in second.json()["detail"]
 
     def test_03_pro_connect_limit_and_revoke(self, app: FastAPI) -> None:
         client = TestClient(app)
