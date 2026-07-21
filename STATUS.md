@@ -17,7 +17,7 @@ read this instead of exploring the repo.
 
 ## WIRING GATE CLOSED (2026-07-21) — ux PASS-WITH-NOTES · vv PASS-WITH-NOTES · cold PASS-WITH-NOTES
 
-All gates ran on the settled diff 1d501bd..19feb36 (kit §3+§4 → §5 → §6 →
+All gates ran on the settled diff 1d501bd..d4914fe (kit §3+§4 → §5 → §6 →
 wiring). Note dispositions, all closed same-day:
 - ux.1 billing badge fix unproven by stale screenshot → re-rendered against
   the current build with an assert: badge shows "Pro". Other ux notes were

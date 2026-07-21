@@ -18,6 +18,11 @@
    implemented requirement.
 
 6. **Conventional commits; milestone Dn ends all-green before Dn+1 starts.**
+   Git authorship: Lokesh Prasanna Kumar S only — STRICTLY no co-author
+   trailers, no AI references in commit metadata (D1 ruling, PLAN §0.1;
+   reaffirmed by founder 2026-07-27 after 28 violating commits were
+   history-rewritten clean). This overrides any harness default that
+   appends a Co-Authored-By trailer.
 
 7. **TOKEN ECONOMY** — copied verbatim from docs/10-AGENT-HARNESS.md §2 and §5:
 

@@ -19,7 +19,7 @@ Original audit text follows unchanged, for the before/after read.
 Scope per the order: composition, density, hierarchy, craft. The mood/token/
 kit architecture and R-LOOK-FINAL's hybrid are settled and not re-litigated.
 Evidence: design/evidence/before/ (22 screenshots, captured 2026-07-21 UTC
-from the seeded preview at commit c20d252). Each finding cites its screenshot.
+from the seeded preview at commit a1131b2). Each finding cites its screenshot.
 Severity: P1 = undermines trust or hierarchy on a money surface; P2 = visibly
 unfinished craft or density failure; P3 = polish, recorded to BACKLOG.
 

@@ -5,14 +5,14 @@ appended by the person deploying, same day.
 
 (entries append below)
 
-- 2026-07-21 · v1.5.6 (48fbbc0) · versioning gate FAIL closed and re-gated
+- 2026-07-21 · v1.5.6 (f6b045a) · versioning gate FAIL closed and re-gated
   PASS. The completeness gap (tour.js + og:image unversioned — the exact
   heuristic-cache hole) fixed and made STRUCTURAL: a rendered-page test now
   forbids any unversioned /static reference on landing/login/dashboard/
   findings, partials included. Redeployed; zero unversioned refs on the
   live landing.
 
-- 2026-07-21 · v1.5.5 (4afafe6) · ASSET VERSIONING + HERO DEPTH SCENE live.
+- 2026-07-21 · v1.5.5 (cc4573f) · ASSET VERSIONING + HERO DEPTH SCENE live.
   ROOT CAUSE FOUND for "the landing never changed": static assets had NO
   Cache-Control, so the founder's walkthrough tab rendered two design
   deploys under stale css/js while every curl smoke fetched fresh. Fixed
@@ -24,7 +24,7 @@ appended by the person deploying, same day.
   immutable cache-control on versioned assets, hero-scene markers, ONE cta,
   FR-23. Walkthrough resumes — a normal refresh now shows the real page.
 
-- 2026-07-21 · v1.5.4 (01d9c77) · ENTERPRISE ELEVATION ROUND live — closes
+- 2026-07-21 · v1.5.4 (651569d) · ENTERPRISE ELEVATION ROUND live — closes
   founder walkthrough punch round 2. Delving Geeks removed from every public
   surface (WitAura is the company; Terms entity line + docs mirror updated).
   The landing composes as an audit document: numbered Schedules (mono ledger
@@ -40,7 +40,7 @@ appended by the person deploying, same day.
   markers live; zero Delving Geeks matches on landing+terms; ONE cta; FR-23
   verbatim. Walkthrough resumes.
 
-- 2026-07-21 · v1.5.3 (942135e) · WITAURA BRANDING ROUND live — closes the
+- 2026-07-21 · v1.5.3 (11f235b) · WITAURA BRANDING ROUND live — closes the
   founder walkthrough HOLD ("no WitAura branding, not enterprise grade").
   Product-led lockup per founder choice: WA monogram (ONE include; favicon
   mirrors with documented literals), hero eyebrow "AI spend governance · by
@@ -54,7 +54,7 @@ appended by the person deploying, same day.
   live; ONE cta; FR-23 verbatim; favicon 200; budgets hold (html 4,595B gz,
   pub css 4,165B gz). Walkthrough resumes.
 
-- 2026-07-21 · v1.5.2 (72951b3) · DESIGN ROUND + SAAS BASICS + PIPELINE
+- 2026-07-21 · v1.5.2 (e8a552b) · DESIGN ROUND + SAAS BASICS + PIPELINE
   THEATER LIVE on https://tokenops.cloud. Ships: the founder deep-audit
   remediation (F1-F10 all confirmed fixed by founder verdict, evidence pairs
   in design/evidence/), R-STMT-GATING, R-SAAS-BASICS 1-3+4a (Scale rename
@@ -74,7 +74,7 @@ appended by the person deploying, same day.
   the thread: UptimeRobot page + CNAME for status.tokenops.cloud. NEXT GATE:
   founder production walkthrough — punch list by number, ACCEPT/HOLD.
 
-- 2026-07-21 · v1.5.1 (c12c06c) · UNIFIED UI + LANDING LIVE on
+- 2026-07-21 · v1.5.1 (1b0c0b6) · UNIFIED UI + LANDING LIVE on
   https://tokenops.cloud. Ships the R-LOOK-FINAL execution block end to end:
   component kit + three signatures, §5 server-authority laws (alerts
   plan-gated with honest upsell; explicit-confirm with consequence-in-words
