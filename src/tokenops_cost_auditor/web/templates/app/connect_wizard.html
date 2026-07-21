@@ -1,7 +1,10 @@
 {% extends "app/_shell.html" %}
 {% block title %}Connect {{ copy.provider_name }} — TokenOps Cost Auditor{% endblock %}
 {% block content %}
-<div class="grid">
+<div class="grid" style="align-items: start">
+  {# align-items:start — audit F7: the wizard panel must take its content's
+     height, not stretch to the side panel's; at-limit was a message floating
+     in a phantom-height void. #}
   <section class="widget w-8">
     {# Breadcrumbs: the step's purpose stated in a sentence (R-DESIGN-V3 §2d) #}
     <div class="steps-bar" aria-label="Connect {{ copy.provider_name }}, step 1 of 3">
