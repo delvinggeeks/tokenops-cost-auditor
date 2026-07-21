@@ -5,6 +5,21 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.13 (3e45159) · FEDERATION MAJORS live (R-FED-MAJORS —
+  founder: "why only Google"). The Google route pair generalized to a
+  FEDERATIONS registry; Microsoft (Entra v2 common — work/school +
+  personal) and GitHub (OAuth2 + verified /user/emails) join Google. One
+  shared login path keeps the R-FREE-CONNECT one-meter law through every
+  door; each provider gates independently on its FULL credential pair
+  (id-without-secret stays dark). Cold-review PASS-WITH-NOTES; all three
+  notes fixed in-round and test-pinned: cookie-pinned OAuth state (CSRF
+  hardening over signature-only), server-side logging of exchange
+  failures, full-pair gating. Apple recorded as a BACKLOG trigger
+  (private-relay vs work-email identity); SAML/Okta stays X-03.
+  Activation per provider: runbook §3a. SMOKE PASS: healthz ok, 0 buttons
+  rendered (nothing configured), unconfigured routes 404, /auth/verify
+  not shadowed, landing 200.
+
 - 2026-07-21 · v1.5.12 (8c378a3) · R-FREE-CONNECT + FEDERATION live. Free
   now truly starts free: signup grants the single comp credit (the marketed
   free audit had been UNWIRED — it 402'd at the payment gate; found while
