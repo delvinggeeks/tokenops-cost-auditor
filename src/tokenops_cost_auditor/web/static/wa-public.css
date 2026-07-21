@@ -482,3 +482,5 @@
   border-top: 1px solid var(--rule); padding-top: var(--s1); }
 .gov-lede { color: var(--ink-soft); max-width: 68ch; margin: 0 0 var(--s4); line-height: 1.7; }
 @media (max-width: 860px) { .connect-cards { grid-template-columns: 1fr; } }
+.connect-tools { color: var(--ink-soft); font-size: 14.5px; max-width: 62ch;
+  line-height: 1.65; margin: 0 0 var(--s3); }

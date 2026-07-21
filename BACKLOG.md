@@ -309,3 +309,9 @@ it under R-PIPELINE-UI-SEQ.
 - F16 (connect-first gate, 2026-07-27): wa-public.css carries raw px font
   sizes throughout; tokenize a public type scale next time the sheet is
   touched broadly.
+- R-AGNOSTIC queue addition (founder walkthrough, 2026-07-27): Cursor and
+  Lovable recorded as candidate AGG/T1 adapters — blocked today by the
+  honest constraint that neither exposes a public usage/billing API; lands
+  on (first customer request) AND (an export/API existing). Usage from
+  these tools on customer-owned provider keys is ALREADY captured by the
+  shipped T2 connectors — now stated on the landing.
