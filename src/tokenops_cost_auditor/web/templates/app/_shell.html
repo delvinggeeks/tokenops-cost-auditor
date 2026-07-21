@@ -11,8 +11,8 @@
        No attribute = sanchaya (the :root default), so this only ever ADDS. */
     try { var m = localStorage.getItem("mood"); if (m === "aura") document.documentElement.setAttribute("data-mood", m); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="/static/wa-design.css">
-  <script src="/static/htmx.min.js" defer></script>
+  <link rel="stylesheet" href="{{ asset('/static/wa-design.css') }}">
+  <script src="{{ asset('/static/htmx.min.js') }}" defer></script>
 </head>
 <body>
 {% include "app/_sprite.html" %}

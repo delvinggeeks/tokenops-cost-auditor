@@ -119,7 +119,9 @@
      rAF-throttled; ±6° Y / ±3° X about left center, 120ms catch-up. */
   var shot = document.querySelector("[data-tilt]");
   if (shot && !reduced && window.matchMedia("(pointer: fine)").matches) {
-    var img = shot.querySelector("img");
+    /* the tilt drives the layered scene when present (C9), the bare image
+       otherwise — one handler, both generations of the hero */
+    var img = shot.querySelector(".scene-inner") || shot.querySelector("img");
     img.style.transition = "transform 120ms var(--ease)";
     var pending = false, px = 0, py = 0;
     shot.addEventListener("pointermove", function (e) {

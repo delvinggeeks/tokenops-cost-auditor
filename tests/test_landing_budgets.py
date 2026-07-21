@@ -30,7 +30,8 @@ def landing_assets(app: FastAPI) -> tuple[str, dict[str, Path]]:
     html = TestClient(app).get("/").text
     paths: dict[str, Path] = {}
     for url in re.findall(r'(?:src|href)="(/static/[^"]+)"', html):
-        paths[url] = STATIC / url.removeprefix("/static/")
+        # asset() appends ?v=<hash> — the file lives at the query-less path
+        paths[url] = STATIC / url.split("?")[0].removeprefix("/static/")
     return html, paths
 
 

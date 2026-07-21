@@ -118,6 +118,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # §6 i18n: components reference keys, the locale supplies values — a
     # global, so no route has to remember to pass it.
     app.state.jinja.globals["t"] = i18n.t
+
+    # Asset versioning (walkthrough round 3): static assets carried NO
+    # Cache-Control, so browsers heuristically cached them and two design
+    # deploys rendered with STALE css/js for the founder — the page "never
+    # changed". Content-hashed URLs bust on every deploy; the middleware
+    # below makes versioned assets immutable-cacheable.
+    static_root = Path(__file__).parent / "web" / "static"
+    _asset_cache: dict[str, str] = {}
+
+    def asset(path: str) -> str:
+        if path not in _asset_cache:
+            import hashlib
+
+            file = static_root / path.removeprefix("/static/")
+            digest = hashlib.md5(file.read_bytes()).hexdigest()[:8]
+            _asset_cache[path] = f"{path}?v={digest}"
+        return _asset_cache[path]
+
+    app.state.jinja.globals["asset"] = asset
     app.state.runner = AuditRunner(
         settings=settings,
         table=app.state.pricing_table,
@@ -137,6 +156,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ctype = response.headers.get("content-type", "")
         if ctype.startswith("text/html"):
             response.headers["Cache-Control"] = "no-store, must-revalidate"
+        elif request.url.path.startswith("/static/") and "v" in request.query_params:
+            # content-hashed URL: the content IS the address — cache forever
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 
     app.include_router(audits_router)  # FR-25: /api/v1 prefix set on the router

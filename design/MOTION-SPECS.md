@@ -122,6 +122,17 @@ the §4 signature earning its place on the landing). C8 is the one orchestrated
 page-load moment. All three gate on prefers-reduced-motion in JS and default
 to the finished state.
 
+**C9 — hero depth scene (founder walkthrough round 3, 2026-07-27).**
+
+| # | Effect | Trigger | Behavior | Duration + easing | Reduced-motion | Tokens |
+|---|--------|---------|----------|-------------------|----------------|--------|
+| C9 | Hero depth float (`@keyframes hero-float`) | ambient, on load; suspended while the pointer drives C1 | the layered scene (dashboard exhibit + two floating stat cards at translateZ depths) drifts ±4px / ±0.4° in slow alternation — the 3D moment breathing | 6s ease-in-out infinite alternate | static, layered, full lift — depth reads from shadows alone | `--lift-2/3`, `--ease` |
+
+C9 extends the ruled 3D moment (R-LANDING-2 §1), not the cut-listed parallax:
+one scene, one ambient motion, and C1's pointer tilt takes over on hover.
+The float cards carry the fold's live figures (labeled sample data) as TYPE,
+not pixels — closing the elevation gate's hero note.
+
 **Cut list — considered and rejected.** Parallax on the hero (fights the tilt,
 two competing depth cues), number odometer roll on scroll-back (re-animating a
 figure the reader already read implies it changed), and card entrance stagger

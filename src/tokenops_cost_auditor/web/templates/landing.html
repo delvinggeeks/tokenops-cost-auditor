@@ -51,12 +51,30 @@
       {# THE 3D MOMENT (spec C1): a real dashboard capture from the seeded
          demonstration account, tilting on pointer. Reduced-motion/no-JS:
          static, flat, full lift — the fallback carries the same information. #}
-      <div class="hero-shot" data-tilt>
-        <img src="/static/land/hero-dashboard-sample.webp" width="1080" height="645"
-             alt="The TokenOps dashboard: a verified-savings headline over the audit pipeline — sample data from a seeded demonstration account">
-        {# every screenshot on this page is an EXHIBIT — the audit's own
-           evidence language, and the honesty label in one device #}
-        <p class="exhibit">Exhibit A — the dashboard · seeded demonstration account</p>
+      {# THE 3D MOMENT, deepened (C1 tilt + C9 float): a layered scene — the
+         dashboard exhibit with the fold's live figures floating above it at
+         real z-depths, as TYPE, labeled sample data. #}
+      <div class="hero-scene" data-tilt>
+        <div class="scene-inner">
+          <div class="hero-shot">
+            <img src="{{ asset('/static/land/hero-dashboard-sample.webp') }}" width="1080" height="645"
+                 alt="The TokenOps dashboard: a verified-savings headline over the audit pipeline — sample data from a seeded demonstration account">
+            {# every screenshot on this page is an EXHIBIT — the audit's own
+               evidence language, and the honesty label in one device #}
+            <p class="exhibit">Exhibit A — the dashboard · seeded demonstration account</p>
+          </div>
+          <div class="float-card float-a">
+            <span class="fc-k">Verified savings</span>
+            <span class="fc-v money">$940.10<span class="fc-unit">/mo</span></span>
+            <span class="fc-rule" aria-hidden="true"></span>
+            <span class="fc-s">sample data</span>
+          </div>
+          <div class="float-card float-b">
+            <span class="fc-k">Waste share</span>
+            <span class="fc-v money">19.8%</span>
+            <span class="fc-s">sample data</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -66,6 +84,11 @@
     <div class="wrap">
       <p class="sched">Schedule 01 · The problem</p>
       <p class="strip-line">Waste hides in shapes invoices can&rsquo;t show.</p>
+      <p class="strip-lede">Your AI bill tells you what you spent. It cannot
+        tell you which prompts were paid for twice, which routes ran a frontier
+        model on trivial work, or which agent re-sent the same context a
+        thousand times. The invoice is one number — the waste hides in the
+        millions of calls underneath it. That is the layer this product reads.</p>
       <div class="stat-cards">
         <div class="statcard">
           <div class="statcard-n">79%</div>
@@ -157,7 +180,7 @@
           <p><span class="tour-n money" data-count="1365.20" data-prefix="$">$1,365.20</span>/mo
             identified across <span class="tour-n" data-count="4">4</span> findings —
             ranked by dollars, not severity labels.</p>
-          <img src="/static/land/tour-findings.webp" width="1080" height="562" loading="lazy"
+          <img src="{{ asset('/static/land/tour-findings.webp') }}" width="1080" height="562" loading="lazy"
                alt="The findings table: plain-language findings with severity, confidence and monthly impact — sample data">
           <p class="exhibit">Exhibit B — the findings ledger · seeded demonstration account</p>
         </div>
@@ -165,7 +188,7 @@
           <p><span class="tour-n money" data-count="940.10" data-prefix="$">$940.10</span>/mo
             verified — applied fixes are re-measured by the next audit, and only
             the proven difference counts.</p>
-          <img src="/static/land/tour-applied.webp" width="1080" height="562" loading="lazy"
+          <img src="{{ asset('/static/land/tour-applied.webp') }}" width="1080" height="562" loading="lazy"
                alt="A finding drawer with the fix applied and the verified savings joining the headline — sample data">
           <p class="exhibit">Exhibit C — the money moment · seeded demonstration account</p>
         </div>
@@ -173,7 +196,7 @@
           <p><span class="tour-n" data-count="4">4</span> things worth an email —
             spend spikes, waste above target, new high-impact findings, a soft
             budget. Nothing is ever paused.</p>
-          <img src="/static/land/tour-alerts.webp" width="1080" height="562" loading="lazy"
+          <img src="{{ asset('/static/land/tour-alerts.webp') }}" width="1080" height="562" loading="lazy"
                alt="Alert settings: four watchable conditions with thresholds — sample data">
           <p class="exhibit">Exhibit D — alerts · seeded demonstration account</p>
         </div>
@@ -293,5 +316,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/land/landing.js" defer></script>
+<script src="{{ asset('/static/land/landing.js') }}" defer></script>
 {% endblock %}

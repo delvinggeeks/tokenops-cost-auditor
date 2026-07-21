@@ -217,7 +217,7 @@ class TestTheBrandMark:
 
     def test_the_branding_is_on_the_page(self, app: FastAPI) -> None:
         page = TestClient(app).get("/").text
-        assert page.count('_wa_mark') == 0  # include resolved, not leaked
+        assert page.count("_wa_mark") == 0  # include resolved, not leaked
         assert page.count('class="wa-mark"') >= 2  # header + footer
         assert "by WitAura" in page and "© 2026 WitAura" in page
         assert 'rel="icon"' in page and "og:image" in page

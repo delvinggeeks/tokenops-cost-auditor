@@ -345,3 +345,32 @@
 @media (max-width: 860px) {
   .finds-grid { grid-template-columns: 1fr; }
 }
+
+/* Hero depth scene (C1 tilt + C9 float): real z-depths; figures as type. */
+.hero-scene { position: relative; perspective: 1100px; }
+.scene-inner { position: relative; transform-style: preserve-3d;
+  animation: hero-float 6s ease-in-out infinite alternate; }
+.hero-scene:hover .scene-inner { animation-play-state: paused; }
+@keyframes hero-float {
+  from { transform: translateY(-3px) rotateX(0.4deg) rotateY(-0.4deg); }
+  to   { transform: translateY(3px)  rotateX(-0.4deg) rotateY(0.6deg); }
+}
+.float-card { position: absolute; background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--lift-3); padding: 12px 16px; display: grid; gap: 2px; }
+.float-a { right: -18px; bottom: 22%; transform: translateZ(70px); }
+.float-b { left: -26px; top: 14%; transform: translateZ(45px); }
+.fc-k { font: 700 10.5px var(--mono); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-soft); }
+.fc-v { font-size: 24px; font-weight: 680; letter-spacing: -0.02em; }
+.fc-unit { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.fc-rule { display: block; height: 4px; border-top: 1px solid var(--rule-strong);
+  border-bottom: 2.5px double var(--rule-strong); margin: 2px 0; }
+.fc-s { font: 600 10px var(--mono); color: var(--ink-soft); letter-spacing: 0.06em; }
+
+.strip-lede { max-width: 62ch; color: var(--ink-soft); font-size: 15.5px;
+  line-height: 1.7; margin: 0 0 var(--s4); }
+
+@media (max-width: 860px) {
+  .float-a { right: 4px; } .float-b { left: 4px; }
+}
