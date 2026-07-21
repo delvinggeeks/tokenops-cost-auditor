@@ -28,6 +28,17 @@
   <h1 class="page-h1">{{ heading }}</h1>
   <p class="signin-lede">{{ lede }}</p>
 
+  {% if show_get_logs %}
+  {# Kept on the signed-out page too: a visitor should be able to see how to
+     produce an export, and read the counts-only promise, BEFORE handing over
+     an email address. #}
+  <p class="counts-note">We read <b>counts and metadata only</b> — model, timestamps, token totals. Prompt and completion text is never stored.</p>
+  <section class="signin-logs">
+    <h2 class="page-h1" style="font-size:17px">Don't have an export yet?</h2>
+    {% include "_get_logs_tabs.html" %}
+  </section>
+  {% endif %}
+
   <form method="post" action="/auth/magic-link" class="signin-form">
     <label for="email">Work email</label>
     <input type="email" id="email" name="email" required
@@ -48,17 +59,6 @@
   </ul>
   {% endif %}
 
-
-  {% if show_get_logs %}
-  {# Kept on the signed-out page too: a visitor should be able to see how to
-     produce an export, and read the counts-only promise, BEFORE handing over
-     an email address. #}
-  <p class="counts-note">We read <b>counts and metadata only</b> — model, timestamps, token totals. Prompt and completion text is never stored.</p>
-  <section class="signin-logs">
-    <h2 class="page-h1" style="font-size:17px">Don't have an export yet?</h2>
-    {% include "_get_logs_tabs.html" %}
-  </section>
-  {% endif %}
 
   <p class="signin-alt">
     {% if mode == "signup" %}

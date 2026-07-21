@@ -135,13 +135,18 @@ SIGNIN_COPY = {
         "nothing in your request path.",
         "submit_label": "Email me a sign-in link",
         "show_reassurance": True,
-        "show_get_logs": True,
+        # round 5: /signup's one job is the ask — the counts-note above the
+        # form carries the promise; the full get-logs tabs stay on the
+        # signed-out /upload variant where teaching IS the job (T-POL-01
+        # ordering law holds there: promise before the ask).
+        "show_get_logs": False,
     },
 }
 
 
-def _signin_page(request: Request, mode: str) -> HTMLResponse:
-    return _render(request, "signin.html", mode=mode, user_email=None, **SIGNIN_COPY[mode])
+def _signin_page(request: Request, mode: str, **overrides: object) -> HTMLResponse:
+    ctx: dict[str, object] = {**SIGNIN_COPY[mode], **overrides}
+    return _render(request, "signin.html", mode=mode, user_email=None, **ctx)
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -163,8 +168,10 @@ def upload_page(request: Request) -> HTMLResponse:
     email = session_email(request)
     if not email:
         # No session means no app nav to render, so the signed-out state is the
-        # public shell rather than an app page with an empty sidebar.
-        return _signin_page(request, "signup")
+        # public shell rather than an app page with an empty sidebar. THIS
+        # variant teaches how to get logs (T-POL-01: the counts-only promise
+        # travels before the ask), unlike the plain /signup.
+        return _signin_page(request, "signup", show_get_logs=True)
     return _render(
         request,
         "app/upload.html",
