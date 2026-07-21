@@ -37,7 +37,9 @@ tier (reports state which detectors a tier can and cannot feed).
   time. RAG boundary: economics only — every RAG finding carries the
   quality-validation caveat.]
 - **T5 GATEWAY** — in-VPC control plane (Phase 2; X-01/X-02 intact for
-  the audit product; deployment contract applies).
+  the audit product; deployment contract applies). [Firing condition
+  registered, founder-approved 2026-07-22: the first enterprise deal where
+  procurement states in-VPC deployment as a blocking requirement.]
 
 ## INTENT LAW (R-INTENT-DECLARED + R-INTENT-LADDER, founder 2026-07-22)
 

@@ -72,10 +72,17 @@ provider-side closures per digest.
     self-hosted-inference metering · queue/workers · SOC2 — each with its
     registered trigger in BACKLOG.
 
-## 6. Parked WITHOUT a trigger — needs a ruling to either register or drop
+## 6. Parked items — triggers REGISTERED (founder "approved proceed" 2026-07-22)
 
-Task-declaration layer · Act-stage playbooks (rides D7) · Night Audit
-mood · Indic locales · public changelog · control-plane early-access
-threshold · concierge onboarding limit · T5 firing condition · F11-F16
-"next design touch" batch. Reply with numbers to assign triggers, or
-"PARK ALL" to leave them as-is.
+All nine now carry explicit firing conditions in BACKLOG.md / the flywheel:
+task-declaration → T4 spec conversations · Act-stage playbooks → rides the
+D7 detector's trigger · Night Audit mood → first on-call customer request ·
+Indic locales → 25% India-billed base or first hi-IN request · dark mode →
+superseded in-app by the aura toggle, public-site toggle on first request ·
+public changelog → first post-launch docs batch · control-plane early
+access → 25 cumulative signups notifies the founder · concierge onboarding
+→ automates at >5 new paying customers/week · T5 GATEWAY → first deal where
+procurement states in-VPC as blocking · F11-F16 → fold into
+WP-PIPELINE-UI/WP-REPORT-VISUAL, whichever touches each surface first.
+Nothing in the record is now untracked: every idea is shipped, founder-
+owned, or trigger-registered.

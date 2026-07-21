@@ -79,6 +79,9 @@ promotion still requires a PRD amendment.
   procurement channel. [R-MARKETPLACE a; R-ENTERPRISE-READY c]
 - **Control-plane early access** — signup counts (landing CTA, R-GTM-CONTROL)
   are Phase-2 trigger evidence; weekly count in the daily digest.
+  [Trigger registered, founder-approved 2026-07-22: 25 cumulative signups →
+  founder notification line in the daily digest; that is the evidence bar
+  for opening the Phase-2 conversation.]
 - **CD / auto-deploy-on-tag** (R-DEPLOY-AUTOMATION 2) — trigger: (a) >1 app
   ships from the monorepo (post WP-PLAT-0), OR (b) deploy frequency exceeds
   1/week for a month. Until then deploys are founder-initiated, ONE command
@@ -86,7 +89,9 @@ promotion still requires a PRD amendment.
 - **Concierge onboarding** (R-MAGIC-CONNECT 2026-07-22 §4) — GTM register,
   NOT a build item: for early customers, "book 10 minutes, we do it on a
   call with you". The solo-founder advantage incumbents cannot match.
-  Revisit as a product feature only if it stops scaling.
+  [Limit registered, founder-approved 2026-07-22: >5 new paying customers
+  in any week = the call stops scaling → onboarding automation becomes a
+  build item.]
 - **Provider OAuth for usage scopes** (R-MAGIC-CONNECT 2026-07-22 §5) —
   TRIPWIRE: the day OpenAI or Anthropic ships OAuth covering usage
   reporting, it promotes immediately as the connect path and the paste
@@ -101,12 +106,17 @@ promotion still requires a PRD amendment.
   comes first.
 - **Act-stage "export this loop" playbooks** (R-ARCH-PATTERNS 2026-07-22 c)
   — per D7 finding, a guide from recurring inference to a script or tool,
-  quality caveat attached. The services bridge.
+  quality caveat attached. The services bridge. [Trigger registered,
+  founder-approved 2026-07-22: rides the D7 export-candidate detector's own
+  trigger (day-45 gate or first pattern-exhibiting customer) — one event,
+  two deliverables.]
 - **TASK DECLARATION layer** (R-INTENT-LADDER 2026-07-22 c) — optional
   route/tag purpose declarations via config or dashboard; detectors consume
   them to sharpen findings (task-tier mismatch, declared-repetitive → D7
   priority, budget-per-purpose). Declarations are counts-safe metadata —
-  FR-22 untouched.
+  FR-22 untouched. [Trigger registered, founder-approved 2026-07-22: the T4
+  STREAM spec conversations (declaration is a streaming-era config surface);
+  promotion still needs a PRD amendment per the INTENT LAW.]
 - **WP-SKILL** — SUPERSEDED 2026-07-23 by R-CC-LINK. Folded into WP-CC-LINK
   below as step 2 of the one-command install; the skill is no longer a
   separate deliverable, because shipping it alone would have asked a customer
@@ -136,12 +146,20 @@ promotion still requires a PRD amendment.
   it is a sibling `[data-mood="night-audit"]` value block plus an AA
   re-verification pass, with ZERO component changes by construction. The
   architecture landed 2026-07-25; only the values and the contrast audit remain.
+  [Trigger registered, founder-approved 2026-07-22: first on-call/ops
+  customer request — ships as one value block + AA pass, zero component
+  changes by construction.]
 - **Indic locales** (R-DESIGN-TOKENS-2 §6, 2026-07-25) — the translation-key
   layer ships with the wiring (en only). Adding a locale is then a catalogue,
   not a refactor, which is the entire reason the key layer goes in early.
-  Bhasha-era synergy.
-- **Dark mode** (R-DESIGN 2026-07-20 §2) — deferred by the design
-  constitution; wa-design.css tokens are structured to admit it later.
+  Bhasha-era synergy. [Trigger registered, founder-approved 2026-07-22:
+  India-billed accounts reach 25% of the paying base, OR the first explicit
+  hi-IN customer request — whichever first.]
+- **Dark mode** (R-DESIGN 2026-07-20 §2) — LARGELY SUPERSEDED: the app
+  shell ships the sanchaya/aura mood toggle (v1.5.1+), which IS dark mode
+  for app surfaces. Remaining scope is a public-site toggle only.
+  [Trigger registered, founder-approved 2026-07-22: first customer request
+  for a dark public site.]
 - **RAG waste pattern pack** (R-RAG 2026-07-20) — D2/D3 sub-findings
   specialized for retrieval traffic: cache-breaking chunk placement,
   over-retrieval signature, embedding/re-index spend line. Trigger:
@@ -271,6 +289,10 @@ intact for the audit product; recorded rationale: in-path components live
 in the customer's VPC per the deployment contract, post-trust.
 
 ## Design-audit P3s (founder deep-audit order 2026-07-26; numbered per design/DESIGN-AUDIT.md)
+
+[Batch trigger registered, founder-approved 2026-07-22: F11-F16 fold into
+WP-PIPELINE-UI / WP-REPORT-VISUAL — whichever first touches each item's
+surface; none warrants its own round.]
 - F11 severity chips: mono-caps boxes read as debug badges; consider dot+word
   (Linear label grammar) next time findings surfaces are touched.
 - F12 findings sort glyphs render small/cropped; redraw the sprite arrow.
@@ -322,6 +344,9 @@ Until a trigger fires: new ideas here, never into code.
 - Customer API keys: first integration request.
 - PWA/native: only after analytics show repeat mobile usage.
 - Public changelog page: docs backlog; CHANGELOG.md remains the record.
+  [Trigger registered, founder-approved 2026-07-22: first post-launch docs
+  batch (week 1-2 after the thread) — generated from CHANGELOG.md, no
+  second record.]
 
 
 ## WP-PIPELINE-UI — FIRST post-launch gated milestone (R-PIPELINE-UI-SEQ, 2026-07-27)
