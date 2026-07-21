@@ -5,6 +5,18 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.5 (4afafe6) · ASSET VERSIONING + HERO DEPTH SCENE live.
+  ROOT CAUSE FOUND for "the landing never changed": static assets had NO
+  Cache-Control, so the founder's walkthrough tab rendered two design
+  deploys under stale css/js while every curl smoke fetched fresh. Fixed
+  with content-hashed asset() URLs (bust on deploy by construction) +
+  immutable caching for versioned assets. Round-3 asks shipped: layered
+  hero depth scene (C9 speced first) with the fold's live figures floating
+  as sample-data-labeled TYPE, tilt drives the whole scene; explicit
+  problem statement opens Schedule 01. SMOKE PASS: versioned urls live,
+  immutable cache-control on versioned assets, hero-scene markers, ONE cta,
+  FR-23. Walkthrough resumes — a normal refresh now shows the real page.
+
 - 2026-07-21 · v1.5.4 (01d9c77) · ENTERPRISE ELEVATION ROUND live — closes
   founder walkthrough punch round 2. Delving Geeks removed from every public
   surface (WitAura is the company; Terms entity line + docs mirror updated).
