@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.19 (0faa4ed) · SINGLE-CURRENCY DOLLAR PRICING live
+  (founder clarification). One display currency everywhere; the region
+  changes the value: global $19→$29 / $59→$99; India $4.99→$9.99 /
+  $149 flat, one-shot $199 — paired with unchanged INR charges
+  (₹499/₹999/₹14,999/₹20,000 via Razorpay), each India price carrying
+  the charge-truth line "Billed in India as ₹X incl. GST." Toggle now
+  "Global pricing / India pricing"; timezone detection picks the
+  region. SMOKE PASS: India view $4.99/$9.99/$149/$199 + billed lines,
+  zero global values; global view $19/$29/$59/$99, zero India values.
+
 - 2026-07-22 · v1.5.18 (2c54278) · REGION DETECTION live (walkthrough
   punch: Indian browser showed $19). Root cause: detection leaned on
   Accept-Language en-IN, but Indian browsers ship en-US. Now: early
