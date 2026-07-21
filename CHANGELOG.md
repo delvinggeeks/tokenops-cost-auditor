@@ -5,6 +5,13 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.6 (48fbbc0) · versioning gate FAIL closed and re-gated
+  PASS. The completeness gap (tour.js + og:image unversioned — the exact
+  heuristic-cache hole) fixed and made STRUCTURAL: a rendered-page test now
+  forbids any unversioned /static reference on landing/login/dashboard/
+  findings, partials included. Redeployed; zero unversioned refs on the
+  live landing.
+
 - 2026-07-21 · v1.5.5 (4afafe6) · ASSET VERSIONING + HERO DEPTH SCENE live.
   ROOT CAUSE FOUND for "the landing never changed": static assets had NO
   Cache-Control, so the founder's walkthrough tab rendered two design
