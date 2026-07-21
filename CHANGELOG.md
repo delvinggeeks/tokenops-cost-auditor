@@ -5,6 +5,18 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.16 (3f178f5) · DOCS REACHABLE. Walkthrough punch
+  "there is no docs, rate limiting, API documentation" → diagnosis: all
+  three EXISTED (docs-site live at docs.tokenops.cloud; NFR-03/12
+  limiter with Retry-After, tested; api/overview + endpoints pages) but
+  every product link pointed at /docs-site/, a path the app never
+  serves — a 404 behind every Docs click. Fixed: ONE config origin
+  (settings.docs_url Jinja global) across all 10 link sites,
+  regression-pinned; api/overview gains concrete limits (10/min
+  uploads, 5/min auth) + the live /openapi.json pointer. SMOKE PASS:
+  landing renders 5 absolute docs hrefs and zero dead paths;
+  docs root + api overview 200 with new content serving.
+
 - 2026-07-22 · v1.5.15 (073b5dd) · COMPLETENESS SWEEP + R-ARCH-PATTERNS(a)
   live. Founder order "implement everything planned, miss nothing" → three
   parallel record sweeps (FR/NFR vs traceability; all §0.1 rulings vs the
