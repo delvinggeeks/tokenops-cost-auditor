@@ -5,6 +5,15 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.10 (b0f1618) · CONNECT-ONLY MARKETING live (founder
+  ruling, round 7): upload leaves the pitch — hero and workflow speak
+  business language (connect your account, the platform does everything
+  else), the free path reframed jargon-free ('drop in a usage file — we
+  show you exactly where to get it'), Free blurb de-jargoned everywhere it
+  renders. Upload stays fully shipped as the option behind /upload. Gate
+  PASS-WITH-NOTES (its FR-23 note was grep scope — the string lives in the
+  shared shell footer; the rendered-page test is green). SMOKE PASS.
+
 - 2026-07-21 · v1.5.9 (f8b629d) · CONNECT-FIRST LANDING live (walkthrough
   round 6). Founder challenged upload-led marketing as off-spec; the RECORD
   showed the platform per spec (X-01/X-02 forbid in-path components;
