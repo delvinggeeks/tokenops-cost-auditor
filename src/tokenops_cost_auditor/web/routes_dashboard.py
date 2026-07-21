@@ -29,6 +29,7 @@ from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_sources import user_plan
 
@@ -71,9 +72,13 @@ def _shell_ctx(session: Session, request: Request, user: User, page: str) -> dic
         if latest
         else "No data yet — connect a source or upload a log file"
     )
+    plan_key = user_plan(session, user.id)
     return {
         "page": page,
-        "plan": user_plan(session, user.id),
+        "plan": plan_key,
+        # Display name from THE catalogue — `plan|title` on the internal key
+        # would resurrect "Team" after the R-SAAS-BASICS rename.
+        "plan_name": plans.get(request.app.state.settings, plan_key).name,
         "freshness": freshness,
         "user_email": user.email,
         "purpose": help_registry.purpose(page),

@@ -281,3 +281,15 @@ MIGRATION PATH (what makes this cheap later — protect these now):
   signatures and honest-states law are framework-independent and survive.
 
 Until a trigger fires: new ideas here, never into code.
+
+
+## R-SAAS-BASICS deliberate absences (founder, 2026-07-26) — triggers, not gaps
+- Data export (JSON zip of counts/reports): first customer request OR first
+  EU enterprise review.
+- Provider API-key payment adapters (programmatic subscription cancel; ends
+  the manual provider-side closure step in close-account): first paid-plan
+  churn month, or sooner if closures exceed ~1/week.
+- SSO / multi-user orgs: X-03 trigger (first genuine team-seat demand).
+- Customer API keys: first integration request.
+- PWA/native: only after analytics show repeat mobile usage.
+- Public changelog page: docs backlog; CHANGELOG.md remains the record.

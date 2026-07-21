@@ -104,5 +104,36 @@
     </form>
     <div class="provenance">Every deletion is written to an append-only audit log.</div>
   {{ kit.surface_close() }}
+
+  {# R-SAAS-BASICS 4a — leaving is a first-class, honest path. #}
+  {{ kit.surface_open(title="Close account", icon="settings", span=12) }}
+    <p class="tells">What this tells you: how to leave, and exactly what happens
+      when you do.</p>
+    <form method="post" action="/settings/close-account">
+      <p><strong>Closing your account does all of this, immediately:</strong></p>
+      <ul>
+        <li>Every raw upload we still hold is deleted from disk.</li>
+        <li>Every connected provider key is revoked and its stored ciphertext deleted.</li>
+        <li>Your subscription is cancelled on our side and scheduled audits stop.
+          We close the payment-provider record within 1 business day — you will
+          not be charged again.</li>
+        <li>You are signed out. Archived statements and reports remain readable
+          if you sign back in — nothing is charged for that.</li>
+        <li>All of it is written to an append-only audit log.</li>
+      </ul>
+      <label>Type <code>{{ close_phrase }}</code> to confirm
+        <input name="confirm" autocomplete="off" placeholder="{{ close_phrase }}"
+               aria-label="Type {{ close_phrase }} to confirm" style="max-width: 22em">
+      </label>
+      <p style="margin-top: var(--s2);">
+        {{ kit.button("Close my account") }}
+        {% if closed is not none and closed < 0 %}
+          <small class="muted">Nothing closed — the confirmation phrase did not match.</small>
+        {% endif %}
+      </p>
+    </form>
+    <div class="provenance">Questions first? <a href="mailto:support@tokenops.cloud">support@tokenops.cloud</a>
+      — replies within 1 business day.</div>
+  {{ kit.surface_close() }}
 </div>
 {% endblock %}

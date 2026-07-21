@@ -742,6 +742,29 @@ docs/12-FLYWHEEL.md from the 2026-07-22 vision order, which is complete and is
 not a landing skeleton. Paused and reported per R-PREMISE-CHECK rather than
 executed literally. See STATUS for the open questions blocking a start.
 
+**R-SAAS-BASICS (founder, 2026-07-26) — gap-audit corrections, items 1-3+4a
+shipped.** (1) Plan SOLD as "Scale" ("5 connected sources, priority support");
+the internal key stays "team" — subscription rows are data and migrations are
+additive-only; every display path now goes through the catalogue (str.title()
+on the key was silently resurrecting "Team"); ruled test: no rendered public
+surface says Team as a plan name. Multi-user seats remain at the X-03 trigger.
+(2) Contact support (mailto support@tokenops.cloud, replies within 1 business
+day) in the app Help group, public footer and billing. (3) status.tokenops.cloud
+linked in the footer; UptimeRobot public page + CNAME are founder-dashboard
+steps recorded in the runbook (no UptimeRobot/DNS credential exists in this
+system). (4a) Close account: typed-phrase explicit-confirm with every
+consequence in words; executes purge (ONE definition), revokes all keys and
+deletes ciphertext, cancels the subscription locally, kills the session,
+audit-logs. DEVIATION, recorded: provider-side cancellation cannot be
+programmatic — the payment adapters are link+webhook only, no provider API
+credential exists — so the audit-log entry + daily digest carry the manual
+task to the founder inside the 1-business-day promise; programmatic cancel
+lands with API-key adapters (BACKLOG trigger). (5) Gap audit performed;
+remaining absences DELIBERATE with triggers recorded in BACKLOG: data export
+(first request or first EU enterprise review), SSO/orgs (X-03), API keys
+(first integration request), PWA/native (never before repeat mobile usage in
+analytics), public changelog page (docs backlog).
+
 **R-PREMISE-CHECK (founder, 2026-07-24) — PERMANENT LAW.** An order whose
 stated premise is false is PAUSED and reported, never executed literally.
 Established when the v1.5 deploy order specified an incremental migration

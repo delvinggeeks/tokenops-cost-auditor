@@ -46,6 +46,9 @@
     <nav class="nav-group">
       <div class="label">Help</div>
       {{ nav_item("guide", "i-guide", "Guide", "/guide") }}
+      {# R-SAAS-BASICS 2: a human is reachable, and we say how fast. #}
+      <a href="mailto:support@tokenops.cloud" title="Replies within 1 business day">
+        {{ icon("i-alert") }}Contact support</a>
       <form method="post" action="/tour/replay" style="display:contents">
         <button class="btn btn-quiet" style="width:100%;text-align:left;padding:6px 24px;">
           {{ icon("i-replay") }}Replay tour</button>
@@ -58,7 +61,8 @@
     <header class="topbar">
       <strong>TokenOps Cost Auditor</strong>
       <span class="muted">{{ page|replace("_", " ")|title }}</span>
-      <span class="plan-badge">{{ plan|title }}</span>
+      {%- set badge = plan_name or (plan|title if plan else "") %}
+      {%- if badge %}<span class="plan-badge">{{ badge }}</span>{% endif %}
       <span class="spacer"></span>
       <span class="freshness">{{ freshness }}</span>
       {# R-LOOK-FINAL §2: aura ships at launch behind a VISIBLE toggle. The

@@ -22,6 +22,7 @@ from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.connectors import validate
 from tokenops_cost_auditor.services.connectors.crypto import encrypt_credential
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web import help as help_registry
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -71,6 +72,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             tpl.render(
                 sources=sources,
                 plan=plan,
+                plan_name=plans.get(settings, plan).name,
                 limit=settings.plan_source_limits.get(plan, 0),
                 active_count=active_count,
                 providers=PROVIDERS,
@@ -111,6 +113,7 @@ def wizard_page(
                 provider=provider,
                 page="sources",
                 plan=plan,
+                plan_name=plans.get(settings, plan).name,
                 purpose=help_registry.purpose("sources"),
                 freshness="",
                 user_email=user.email,

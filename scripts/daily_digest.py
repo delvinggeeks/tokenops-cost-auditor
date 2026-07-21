@@ -94,6 +94,25 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
     ]
     lines.append(f"Purges (24h): {len(purges)}")
 
+    # R-SAAS-BASICS 4a: closures carrying a provider-side cancellation the
+    # founder must complete manually (link+webhook adapters hold no provider
+    # API credential). The settings page promises 1 business day — this line
+    # is what keeps that promise.
+    closures = [
+        e
+        for e in session.scalars(
+            select(AuditLogEntry).where(AuditLogEntry.action == "account.closed")
+        )
+        if _as_utc(e.ts) >= since
+    ]
+    if closures:
+        needing = [e for e in closures if (e.detail or {}).get("provider_cancellation_required")]
+        lines.append(
+            f"Accounts closed (24h): {len(closures)} — "
+            f"{len(needing)} NEED provider-side subscription cancellation: "
+            + ", ".join(e.actor for e in needing)
+        )
+
     # R-GTM-CONTROL: weekly early-access signups = Phase-2 trigger evidence
     week_ago = now - timedelta(days=7)
     signups = [

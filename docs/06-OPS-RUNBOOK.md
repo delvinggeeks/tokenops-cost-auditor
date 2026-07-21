@@ -48,6 +48,16 @@ scripts/daily_digest.py.
 Alert conditions: healthz down 2 checks; any audit status=failed; disk
 >80%; backup absent >26h (checker in digest).
 
+## 3b. Status page (R-SAAS-BASICS 3)
+
+status.tokenops.cloud = UptimeRobot public status page. Founder-dashboard
+steps (no UptimeRobot/DNS credential lives in this repo or on the box):
+1 UptimeRobot -> Status Pages -> create public page from the existing
+  healthz monitor. 2 Set custom domain status.tokenops.cloud; UptimeRobot
+  shows the CNAME target. 3 At the DNS provider add
+  CNAME status -> <target from step 2>. 4 Verify https://status.tokenops.cloud
+  serves the page; the site footer already links it.
+
 ## 4. Backup & restore (NFR-08)
 
 Backup: scripts/backup.sh — pg_dump -Fc → /backups/tokenops_%F.dump,

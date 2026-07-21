@@ -81,14 +81,18 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             "Savings Statement emailed every month.",
         ),
         TEAM: Plan(
+            # R-SAAS-BASICS 1: SOLD as "Scale" — the old name promised seats
+            # the product can't cash (multi-user stays at the X-03 trigger).
+            # The internal key stays "team": subscription rows and config keys
+            # are data, and migrations are additive-only.
             key=TEAM,
-            name="Team",
+            name="Scale",
             usd=settings.plan_team_usd,
             inr=settings.plan_team_inr,
             sources=limits.get(TEAM, 5),
             scheduled_audits=True,
             uploads="unlimited manual uploads",
-            blurb="Five connected sources with priority processing.",
+            blurb="Five connected sources with priority support.",
         ),
     }
 

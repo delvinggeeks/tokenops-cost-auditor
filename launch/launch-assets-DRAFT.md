@@ -16,7 +16,7 @@ Figure inventory (the ONLY numbers permitted in any asset):
   calls from 159,571 events (58% duplicates) · $8,757.75/mo API-equivalent ·
   $2,846.62/mo est. waste · 32.5%
 - Price list, as shipped (renders from the one price config, never inline):
-  Free $0 no card · Pro $99/mo · ₹8,999/mo · Team $299/mo · ₹26,999/mo ·
+  Free $0 no card · Pro $99/mo · ₹8,999/mo · Scale $299/mo · ₹26,999/mo ·
   one-off audit $500 · ₹45,000
 - Defect narrative: the 228% claim our golden discipline caught; the ledger
   row our own verification gate refused (UAT-D5)

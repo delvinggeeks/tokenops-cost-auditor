@@ -13,9 +13,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
-from tokenops_cost_auditor.persistence.models import Audit, Source
+from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, utcnow
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
+from tokenops_cost_auditor.services.payments import subscriptions
+from tokenops_cost_auditor.web.auth import SESSION_COOKIE
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 from tokenops_cost_auditor.web.routes_sources import PROVIDERS, user_plan
 
@@ -23,11 +25,17 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 # Typed exactly, because it destroys data (R-DESIGN §4f double-confirm)
 PURGE_PHRASE = "DELETE MY UPLOADS"
+# R-SAAS-BASICS 4a — closing an account outranks purging uploads, so it gets
+# its own phrase, never a shared one.
+CLOSE_PHRASE = "CLOSE MY ACCOUNT"
 
 
 @router.get("", response_class=HTMLResponse)
 def settings_page(
-    request: Request, purged: int | None = None, user_email: str = Depends(current_user)
+    request: Request,
+    purged: int | None = None,
+    closed: int | None = None,
+    user_email: str = Depends(current_user),
 ) -> HTMLResponse:
     settings = request.app.state.settings
     with _session(request) as session:
@@ -67,18 +75,21 @@ def settings_page(
             held_uploads=len(held),
             retention_days=settings.purge_after_days,
             purge_phrase=PURGE_PHRASE,
+            close_phrase=CLOSE_PHRASE,
             purged=purged,
+            closed=closed,
             show_tour=False,
             **{k: v for k, v in ctx.items() if k != "plan"},
         )
 
 
 def plan_display(plan: str, settings: object) -> str:
-    prices = {
-        "pro": f"${getattr(settings, 'plan_pro_usd', 99):,.0f}/mo",
-        "team": f"${getattr(settings, 'plan_team_usd', 299):,.0f}/mo",
-    }
-    return f"{plan.title()} — {prices[plan]}" if plan in prices else plan.title()
+    """Display name comes from THE catalogue — str.title() on the internal
+    key resurrected "Team" after the R-SAAS-BASICS rename."""
+    from tokenops_cost_auditor.services.payments import plans as catalogue
+
+    p = catalogue.get(settings, plan)  # type: ignore[arg-type]
+    return f"{p.name} — ${p.usd:,.0f}/mo" if p.usd else p.name
 
 
 @router.post("/email", response_model=None)
@@ -131,3 +142,76 @@ def purge_now(
         auditlog.append(session, user.email, "settings.purge_now", user.email, {"count": count})
         session.commit()
     return RedirectResponse(f"/settings?purged={count}", status_code=303)
+
+
+@router.post("/close-account", response_model=None)
+def close_account(
+    request: Request,
+    confirm: str = Form(default=""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """R-SAAS-BASICS 4a. Everything stated on the page happens, in order:
+    raw uploads purged (ONE purge definition), connected keys revoked and
+    their ciphertext deleted, the subscription cancelled on our side, this
+    session ended — all audit-logged.
+
+    Provider-side subscription closure: the payment adapters are link+webhook
+    only (no provider API credential exists in this system), so the provider
+    record is closed manually within 1 business day; the audit-log entry and
+    the daily digest carry the task to the founder. The page says exactly
+    this — a promise the code cannot keep never ships as copy.
+    """
+    if confirm.strip() != CLOSE_PHRASE:
+        return RedirectResponse("/settings?closed=-1", status_code=303)
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        audits = (
+            session.execute(
+                select(Audit).where(
+                    Audit.user_id == user.id,
+                    Audit.upload_path.is_not(None),
+                    Audit.purged_at.is_(None),
+                )
+            )
+            .scalars()
+            .all()
+        )
+        purged = sum(
+            1
+            for audit in audits
+            if purge.purge_one(session, audit, actor=user.email, mode="customer")
+        )
+        # keys must not outlive the decision to leave
+        sources = (
+            session.execute(
+                select(Source).where(Source.user_id == user.id, Source.status != "revoked")
+            )
+            .scalars()
+            .all()
+        )
+        for source in sources:
+            source.status = "revoked"
+            source.credentials_encrypted = None
+            source.revoked_at = utcnow()
+        sub = session.execute(
+            select(Subscription).where(Subscription.user_id == user.id)
+        ).scalar_one_or_none()
+        had_paid_sub = bool(sub and sub.status != subscriptions.CANCELLED)
+        if had_paid_sub and sub is not None:
+            sub.status = subscriptions.CANCELLED
+        auditlog.append(
+            session,
+            user.email,
+            "account.closed",
+            user.email,
+            {
+                "purged": purged,
+                "sources_revoked": len(sources),
+                # the founder's manual task, carried by log + daily digest
+                "provider_cancellation_required": had_paid_sub,
+            },
+        )
+        session.commit()
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie(SESSION_COOKIE)
+    return response

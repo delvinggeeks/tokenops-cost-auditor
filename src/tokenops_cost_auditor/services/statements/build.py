@@ -62,7 +62,7 @@ def should_email(session: Session, settings: Settings, user: User, year: int, mo
     """R-STMT-GATING (founder, 2026-07-25): who gets the monthly EMAIL.
 
     Archiving is unconditional for every plan — that is the caller's job and
-    this function has no say in it. Pro/Team get the email every month; Free
+    this function has no say in it. Pro/Scale get the email every month; Free
     only for a month with activity (an audit ran, or a finding changed state),
     because a monthly email of zeros to a dormant Free account is spam, while
     an activity statement showing identified-but-unverified savings is the
