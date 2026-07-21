@@ -5,6 +5,20 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.12 (8c378a3) · R-FREE-CONNECT + FEDERATION live. Free
+  now truly starts free: signup grants the single comp credit (the marketed
+  free audit had been UNWIRED — it 402'd at the payment gate; found while
+  drafting the ruling, closed by test), Free connects ONE source whose
+  first-pull audit shares that one meter with uploads, the scheduler
+  excludes Free from pulls and audits (plan-based; dunning accounts keep
+  pulling per R-Q12). Google sign-in shipped config-gated (no client id =
+  no button; activation = runbook §3a, founder credentials). Payments were
+  already implemented as link+webhook — activation steps documented; the
+  billing page goes live the moment .env carries the links. Pricing
+  research (103-agent verified run) delivered launch/PRICING-PROPOSAL.md:
+  current $99/$299 sit at the FinOps 1-3%-of-spend norm; ruling options
+  A/B/C await the founder. Gate clean PASS. SMOKE PASS.
+
 - 2026-07-21 · v1.5.11 (e15800c) · TOOL-COVERAGE LINE live: Cursor/Lovable
   checked against the record — in NO spec; R-AGNOSTIC (founder's own law)
   pull-sequences tool adapters and neither exposes a usage API. The TRUE
