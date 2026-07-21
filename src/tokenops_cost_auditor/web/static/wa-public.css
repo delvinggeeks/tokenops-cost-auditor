@@ -264,3 +264,40 @@
 .cta-secondary { font: 600 14px var(--sans); color: var(--ink); background: var(--surface);
   border: 1px solid var(--rule-strong); border-radius: var(--radius); padding: 10px 16px;
   cursor: pointer; box-shadow: var(--control-depth); }
+
+/* ============================================================
+   BRAND ROUND (founder walkthrough punch item, 2026-07-27):
+   WitAura lockup + display scale + dark anchor + footer block.
+   Tokens only; the dark band is aura's own value sheet.
+   ============================================================ */
+.wa-mark { width: 28px; height: 28px; flex: 0 0 28px; }
+.pub-brand { display: inline-flex; align-items: center; gap: 10px; }
+.pub-brand-name { font-weight: 700; letter-spacing: -0.015em; }
+
+.hero-eyebrow { font: 700 12px var(--sans); letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 var(--s2); }
+.hero-copy h1 { font-size: clamp(34px, 4.6vw, 58px); line-height: 1.06;
+  letter-spacing: -0.032em; }
+.hero-proof { list-style: none; display: flex; gap: var(--s2); flex-wrap: wrap;
+  padding: 0; margin: var(--s3) 0 0; }
+.hero-proof li { font: 600 12.5px var(--sans); color: var(--ink-soft);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 999px;
+  padding: 6px 12px; box-shadow: var(--control-depth); }
+
+/* the dark anchor band: aura's ground/ink arrive via the data-mood attribute;
+   this rule only stretches the band and recolours its own chrome */
+/* the band must SET color from the vars: elements that declare no color
+   (h3, li) otherwise inherit body's computed sanchaya ink and vanish on
+   the dark ground — found by rendering. */
+.land-gov[data-mood="aura"] { background: var(--ground); color: var(--ink);
+  border-block: none; }
+
+.pub-foot { padding-top: var(--s5); }
+.foot-brand { display: flex; gap: var(--s2); align-items: flex-start;
+  max-width: 520px; margin-bottom: var(--s4); }
+.foot-brand .wa-mark { width: 34px; height: 34px; flex: 0 0 34px; }
+.foot-brand strong { font-size: 15px; }
+.foot-brand p { margin: 4px 0 0; font-size: 13px; line-height: 1.6; }
+.col-h { display: block; font: 700 11px var(--sans); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+.foot-copy { font-size: 12.5px; margin-top: var(--s3); }
