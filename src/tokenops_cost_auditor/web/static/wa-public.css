@@ -468,3 +468,17 @@
 @media (min-width: 861px) {
   .auth-brand { position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
 }
+
+/* Connect-first round: connector cards + the infra answer. */
+.connect-row { margin-top: var(--s5); border-top: 1px solid var(--rule); padding-top: var(--s4); }
+.connect-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); }
+.connect-card { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: var(--s3); box-shadow: var(--control-depth);
+  display: flex; flex-direction: column; gap: var(--s1); }
+.connect-card-alt { background: var(--surface-raised); }
+.cc-name { font: 680 16px var(--sans); letter-spacing: -0.01em; }
+.connect-card p { color: var(--ink-soft); font-size: 13.5px; line-height: 1.6; margin: 0; flex: 1; }
+.cc-meta { font: 600 10.5px var(--mono); letter-spacing: 0.06em; color: var(--ink-soft);
+  border-top: 1px solid var(--rule); padding-top: var(--s1); }
+.gov-lede { color: var(--ink-soft); max-width: 68ch; margin: 0 0 var(--s4); line-height: 1.7; }
+@media (max-width: 860px) { .connect-cards { grid-template-columns: 1fr; } }

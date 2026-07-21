@@ -29,16 +29,18 @@
       {% else %}
       <h1>Take control of your AI spend.</h1>
       {% endif %}
-      <p class="hero-sub">Claude Code, Codex and your production LLM features
-        leave a paper trail — their logs. The audit is step one: a dollar-ranked
-        report of exactly where the money leaks and how to prevent it.
-        No SDK, no proxy, no integration.</p>
+      <p class="hero-sub">Connect a provider with one read-only key and the
+        platform does the rest — daily pulls, weekly audits, alerts between
+        them. The audit is step one: a dollar-ranked report of exactly where
+        the money leaks and how to prevent it. No SDK, no proxy, nothing in
+        your request path.</p>
       <p class="hero-ctas">
         <a class="cta" href="/signup">Start free — 1 audit, no card</a>
-        <a class="btn hero-alt" href="/upload">Upload logs — get your audit</a>
+        <a class="btn hero-alt" href="/#how-it-works">See how it connects</a>
       </p>
       <p class="hero-note">Token counts only — no prompt or completion text ever
-        reaches us. <a class="hero-sample" href="/sample">See a sample report →</a></p>
+        reaches us. Prefer zero keys? <a href="/upload">Upload a log export</a> —
+        same audit, all six detectors. <a class="hero-sample" href="/sample">Sample report →</a></p>
     </div>
     <div class="wrap">
       {# THE 3D MOMENT (C1 tilt + C9 float): the product, large, framed, lit. #}
@@ -143,6 +145,31 @@
       </ol>
       </div>
 
+      {# connectors: the platform's primary motion — one key, we do the rest #}
+      <div class="connect-row" data-reveal>
+        <h3 class="finds-h">Connect once — the heavy lifting happens on our side</h3>
+        <div class="connect-cards">
+          <div class="connect-card">
+            <span class="cc-name">OpenAI</span>
+            <p>One read-only usage key, made in the guided 3-step wizard. We pull
+              usage daily and audit weekly — you never upload anything.</p>
+            <span class="cc-meta">usage counts only · revoking deletes the key</span>
+          </div>
+          <div class="connect-card">
+            <span class="cc-name">Anthropic</span>
+            <p>Same one-key setup. Your first pull and audit run the moment the
+              key validates — numbers this session, not next week.</p>
+            <span class="cc-meta">usage counts only · revoking deletes the key</span>
+          </div>
+          <div class="connect-card connect-card-alt">
+            <span class="cc-name">Any provider, zero keys</span>
+            <p>Upload a request-log export instead — the one-off path, and the
+              only one that runs all six detectors.</p>
+            <span class="cc-meta">free tier · analyzed then deleted</span>
+          </div>
+        </div>
+      </div>
+
       {# what it finds: the six detectors, named plainly — the product's
          substance, not adjectives #}
       <div class="finds" data-reveal>
@@ -205,6 +232,10 @@
     <div class="wrap">
       <p class="sched sched-dark">The architecture</p>
       <h2>We run the architecture we audit you toward</h2>
+      <p class="gov-lede">TokenOps runs OUTSIDE your infrastructure: managed
+        cloud reading official usage APIs — read-only in, findings out. Nothing
+        installs in your VPC and nothing ever sits in your request path. That
+        is a law of the product's scope, not a roadmap item.</p>
       <div class="gov-grid">
         <div class="gov-item">
           <h3>Zero prompt text</h3>
