@@ -69,7 +69,7 @@
                    else "never" }}</td>
             <td>
               <form method="post" action="/sources/{{ s.id }}/revoke"
-                    onsubmit="return confirm('Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.');">
+                    data-confirm="Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.">
                 <button class="btn" type="submit">Revoke</button>
               </form>
             </td>

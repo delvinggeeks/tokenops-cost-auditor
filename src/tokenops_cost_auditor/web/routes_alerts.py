@@ -9,16 +9,21 @@ cannot pause, cap or throttle anything (X-02).
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
+from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import AlertEvent, AlertRule
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.services.alerts import dispatch
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS, RULES
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
+from tokenops_cost_auditor.web.routes_sources import user_plan
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -36,6 +41,11 @@ HINTS = {
 }
 
 
+def _plan_watches(session: Session, settings: Settings, user_id: str) -> bool:
+    """The web-layer edge of the ONE watching rule (dispatch.plan_watches)."""
+    return dispatch.plan_watches(settings, user_plan(session, user_id))
+
+
 def _default_threshold(settings: object, rule: str) -> float | None:
     if rule == "spend_spike_dod":
         return float(getattr(settings, "alert_spend_spike_dod_pct", 30.0))
@@ -50,27 +60,34 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
-        configured = {
-            r.rule: r
-            for r in session.execute(select(AlertRule).where(AlertRule.user_id == user.id))
-            .scalars()
-            .all()
-        }
-        rules = [
-            {
-                "key": key,
-                "label": RULE_LABELS[key],
-                "hint": HINTS[key],
-                "unit": UNITS[key],
-                "enabled": key in configured and configured[key].enabled,
-                "threshold": (
-                    configured[key].threshold
-                    if key in configured
-                    else _default_threshold(settings, key)
-                ),
+        # §5a: a capability the plan lacks is OMITTED from the payload — the
+        # rules/threshold data never reaches the template, which renders an
+        # honest upsell in its place. Not a disabled form: nothing is watching
+        # on this plan, and a grey form would imply something is.
+        watches = _plan_watches(session, settings, user.id)
+        rules = None
+        if watches:
+            configured = {
+                r.rule: r
+                for r in session.execute(select(AlertRule).where(AlertRule.user_id == user.id))
+                .scalars()
+                .all()
             }
-            for key in RULES
-        ]
+            rules = [
+                {
+                    "key": key,
+                    "label": RULE_LABELS[key],
+                    "hint": HINTS[key],
+                    "unit": UNITS[key],
+                    "enabled": key in configured and configured[key].enabled,
+                    "threshold": (
+                        configured[key].threshold
+                        if key in configured
+                        else _default_threshold(settings, key)
+                    ),
+                }
+                for key in RULES
+            ]
         history = (
             session.execute(
                 select(AlertEvent)
@@ -88,6 +105,9 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
             rules=rules,
             history=history,
             labels=RULE_LABELS,
+            # §5b honest upsell: what unlocks it and what that costs, both
+            # currencies (R-Q11), no dark patterns.
+            unlock_plan=None if watches else plans.get(settings, plans.PRO),
             show_tour=False,
             **ctx,
         )
@@ -100,6 +120,14 @@ async def save_alerts(
     form = await request.form()
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # §5d: the form not being rendered is not authority — this is. A plan
+        # without scheduled audits has nothing evaluating rules, so accepting
+        # the save would store configuration that silently does nothing.
+        if not _plan_watches(session, request.app.state.settings, user.id):
+            raise HTTPException(
+                status_code=403,
+                detail="alerts are part of the Pro plan — nothing is watching on this plan",
+            )
         existing = {
             r.rule: r
             for r in session.execute(select(AlertRule).where(AlertRule.user_id == user.id))

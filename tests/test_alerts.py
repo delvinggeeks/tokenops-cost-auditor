@@ -24,6 +24,7 @@ from tokenops_cost_auditor.persistence.models import (
     Audit,
     Base,
     FindingRow,
+    Subscription,
     User,
 )
 from tokenops_cost_auditor.services.alerts import dispatch
@@ -65,6 +66,24 @@ def make_user(session: Session) -> User:
     session.add(user)
     session.flush()
     return user
+
+
+def subscribe(session: Session, user: User, plan: str = "pro") -> None:
+    """Alerts ride the scheduled-audit capability (§5 authority laws), so
+    tests exercising delivery model a paying customer explicitly."""
+    session.add(Subscription(user_id=user.id, provider="stripe", plan=plan))
+    session.flush()
+
+
+def grant_pro(app: FastAPI, email: str = EMAIL) -> None:
+    with app.state.session_factory() as session:
+        user = session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        if user is None:
+            user = User(email=email)
+            session.add(user)
+            session.flush()
+        subscribe(session, user)
+        session.commit()
 
 
 def add_audit(
@@ -251,6 +270,7 @@ class TestObserveOnly:
 
 class TestAlertsPage:
     def test_settings_round_trip(self, app: FastAPI) -> None:
+        grant_pro(app)
         client = TestClient(app)
         page = client.get("/alerts", headers=HDR)
         assert page.status_code == 200
@@ -279,6 +299,7 @@ class TestAlertsPage:
         assert 'value="18.0"' in after or 'value="18"' in after
 
     def test_prevent_stage_goes_live_once_rules_are_armed(self, app: FastAPI) -> None:
+        grant_pro(app)
         client = TestClient(app)
         assert "Not set up" in client.get("/dashboard", headers=HDR).text
         client.post(
@@ -291,6 +312,7 @@ class TestAlertsPage:
         assert "1 armed" in page and "rule(s) armed" in page
 
     def test_unparseable_threshold_falls_back(self, app: FastAPI) -> None:
+        grant_pro(app)
         client = TestClient(app)
         r = client.post(
             "/alerts",
@@ -423,11 +445,13 @@ class TestRunAll:
         self, session: Session, settings: Settings
     ) -> None:
         good = make_user(session)
+        subscribe(session, good)
         arm(session, good.id, WASTE_ABOVE, 25.0)
         add_audit(session, good.id, T0, spend=900.0, waste=40.0)
         bad = User(email="breaks@example.com")
         session.add(bad)
         session.flush()
+        subscribe(session, bad)
         arm(session, bad.id, WASTE_ABOVE, 25.0)
         add_audit(session, bad.id, T0, spend=900.0, waste=40.0)
         session.commit()
@@ -452,7 +476,23 @@ class TestRunAll:
         self, session: Session, settings: Settings
     ) -> None:
         user = make_user(session)
+        subscribe(session, user)
         add_audit(session, user.id, T0, spend=900.0, waste=99.0)
         session.commit()
         stats = dispatch.run_all(session, settings, CapturingMail())
         assert stats == {"users": 1, "fired": 0, "errors": 0}
+
+    def test_a_plan_without_scheduled_audits_is_never_evaluated(
+        self, session: Session, settings: Settings
+    ) -> None:
+        """§5 server authority: the /alerts upsell is only honest if the
+        server really doesn't watch. A free account with leftover rules and
+        alert-worthy data must fire nothing."""
+        user = make_user(session)  # no subscription = free
+        arm(session, user.id, WASTE_ABOVE, 25.0)
+        add_audit(session, user.id, T0, spend=900.0, waste=40.0)
+        session.commit()
+        mail = CapturingMail()
+        stats = dispatch.run_all(session, settings, mail)
+        assert stats == {"users": 0, "fired": 0, "errors": 0}
+        assert mail.sent == []

@@ -19,8 +19,29 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import AlertEvent, User
 from tokenops_cost_auditor.services.alerts.rules import Firing, evaluate
+from tokenops_cost_auditor.services.payments import plans, subscriptions
 
 log = structlog.get_logger("tokenops_cost_auditor.alerts")
+
+
+def plan_watches(settings: Settings, plan_key: str) -> bool:
+    """Whether anything evaluates alert rules on this plan. Alerts ride the
+    scheduled-audit capability (the Pro blurb sells them together, and
+    dispatch only ever runs from the schedule tick), so a plan without
+    scheduled audits has no alerts — every surface that says otherwise must
+    call this, so the words and the behaviour cannot drift apart (§5).
+
+    Deliberately the plan's own capability, not the read_only-adjusted
+    entitlement: dunning pauses scheduled audits and nothing else (Terms §6),
+    so a past-due Pro account keeps its rules armed.
+    """
+    return plans.get(settings, plan_key).scheduled_audits
+
+
+def watchers(session: Session, settings: Settings, users: list[User]) -> list[User]:
+    """The users run_all may evaluate — plan_watches over a batch."""
+    ents = subscriptions.entitlements_for(session, settings, [u.id for u in users])
+    return [u for u in users if plan_watches(settings, str(ents[u.id]["plan_key"]))]
 
 
 def run_for_user(
@@ -52,10 +73,10 @@ def run_for_user(
 def run_all(
     session: Session, settings: Settings, mail: object, now: datetime | None = None
 ) -> dict[str, int]:
-    """Every user with at least one enabled rule. Failures are per-user."""
+    """Every user whose plan watches. Failures are per-user."""
     stats = {"users": 0, "fired": 0, "errors": 0}
-    users = session.execute(select(User)).scalars().all()
-    for user in users:
+    users = list(session.execute(select(User)).scalars().all())
+    for user in watchers(session, settings, users):
         try:
             fired = run_for_user(session, settings, mail, user, now=now)
             stats["users"] += 1

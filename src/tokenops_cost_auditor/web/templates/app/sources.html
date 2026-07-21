@@ -69,7 +69,8 @@
           <button class="btn btn-quiet" type="button"
                   aria-expanded="false" aria-controls="src-{{ s.id }}"
                   data-drawer="src-{{ s.id }}">Details</button>
-          <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form">
+          <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
+                data-confirm="Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.">
             <button class="btn btn-quiet" type="submit">Revoke</button>
           </form>
         </td>

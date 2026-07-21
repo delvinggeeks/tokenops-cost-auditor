@@ -59,7 +59,10 @@
         verified headline.</span>
     </label>
     <div style="display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap;">
+      {# §5c: the one verdict that feeds the verified headline asks first,
+         consequence in words. Dismissed/not-relevant move no money. #}
       <button class="btn btn-primary" type="submit" name="verdict" value="applied"
+        data-confirm="Mark this fix as applied? Your next audit re-measures the route, and the verified difference joins your headline savings — never more than this estimate."
         {% if verdict == "applied" %}disabled{% endif %}>Applied</button>
       <button class="btn" type="submit" name="verdict" value="dismissed">Dismissed</button>
       <button class="btn btn-quiet" type="submit" name="verdict" value="not_relevant">

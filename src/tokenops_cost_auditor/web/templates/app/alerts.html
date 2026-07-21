@@ -10,6 +10,20 @@
     <p class="tells">What this tells you: the four things we can watch for, and
       the level at which each one is worth an email.</p>
 
+    {% if rules is none %}
+    {# §5b honest upsell: the plan has no scheduled audits, so nothing is
+       evaluating rules — a config form here would imply otherwise. Say what
+       unlocks it and what it costs; nothing greyed out, nothing pretended. #}
+    <div class="empty">
+      <p><strong>Alerts are part of the {{ unlock_plan.name }} plan.</strong></p>
+      <p>Alerts are evaluated when a scheduled audit finishes, and your current
+        plan doesn't include scheduled audits — so there is nothing watching
+        between your uploads. {{ unlock_plan.name }}
+        ({{ unlock_plan.display_both() }}) audits your connected source weekly
+        and emails you when something crosses a line you set.</p>
+      <p><a class="btn btn-primary" href="/billing">See plans</a></p>
+    </div>
+    {% else %}
     <form method="post" action="/alerts">
       <table class="ledger">
         <thead><tr><th>Send me an email when…</th><th>Threshold</th><th>On</th></tr></thead>
@@ -43,10 +57,12 @@
       </div>
     </form>
 
+    <div class="provenance">Evaluated after each audit · at most one email per rule per audit</div>
+    {% endif %}
+
     <p class="muted" style="margin-top: var(--s2); font-size: 13px;">
       Alerts notify you. They never pause an audit, cap a source, or change
       anything about your traffic — that stays entirely in your hands.</p>
-    <div class="provenance">Evaluated after each audit · at most one email per rule per audit</div>
   </section>
 
   <section class="widget w-4">

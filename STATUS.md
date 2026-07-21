@@ -3,6 +3,38 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## §5 SERVER-AUTHORITY LAWS (R-DESIGN-TOKENS-2, 2026-07-21) — implemented
+
+Audit result: sources/wizard/feedback/widgets/statements already re-checked
+authority server-side (plan caps, ownership, signed report URLs, admin token);
+billing upsells honestly. Fixed the four §5 violations found: (1) the kit's
+data-confirm was a dead attribute — ONE delegated handler now covers both
+transports (htmx:confirm + capture-phase submit) in app/_shell.html, verified
+in real Chromium (4 cases: ask/decline/accept/no-attr); (2) Applied — the one
+verdict that feeds the verified headline — now asks first with the consequence
+in words; dismissed/not-relevant deliberately do NOT ask (confirm fatigue);
+(3) sources.html revoke had no ask (settings.html did, inline) — both now use
+data-confirm, inline onsubmit retired, a test forbids a second mechanism;
+(4) alerts shipped the full rules form to Free, whose plan nothing watches
+(dispatch only runs from the schedule tick; Free has no scheduled audits) —
+the rules payload is now OMITTED for non-watching plans (honest upsell with
+both currencies in its place, history stays), POST /alerts re-checks and 403s,
+dispatch.run_all filters by the same plan_watches() rule, and the dashboard
+alerts widget says "nothing is watched on this plan" instead of "checked
+hourly". plan_watches is deliberately the PLAN capability, not read_only-
+adjusted: dunning pauses scheduled audits only (Terms §6), so past-due Pro
+keeps its rules armed. Tests: tests/test_authority_laws.py; test_alerts.py
+run_all/page tests now model paying customers explicitly.
+
+OPEN FOUNDER QUESTION (pre-existing, surfaced by this audit): the Pro blurb
+sells "alerts and your monthly Savings Statement", but scripts/
+monthly_statements.py builds AND EMAILS statements to every user including
+Free (shipped in V-D6/V-D7, gate-passed). Terms only guarantee Free "archived
+statements remain readable". Alerts are now plan-gated per the blurb;
+statements were left as shipped — changing that is a product decision, not a
+§5 fix. Flag for the production walkthrough: either the blurb overstates or
+the monthly job over-delivers.
+
 ## V-D9 GATE CLOSED — ux PASS-WITH-NOTES · cold-reviewer PASS-WITH-NOTES (all 8 notes closed)
 
 ux (3, closed): done-state cut to ONE line per R-MAGIC-CONNECT §1c (the

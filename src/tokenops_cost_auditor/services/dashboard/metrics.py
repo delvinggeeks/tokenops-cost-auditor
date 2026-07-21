@@ -234,10 +234,18 @@ def next_audit(session: Session, user_id: str, now: datetime | None = None) -> W
     )
 
 
-def alerts_armed(session: Session, user_id: str) -> Widget:
+def alerts_armed(session: Session, user_id: str, watching: bool = True) -> Widget:
     """Prevent stage + alerts widget. Rendered from real rules only: with none
     configured this says so plainly — it never promises a future feature
     (no-promises law, R-DESIGN-SHELL §1)."""
+    if not watching:
+        # §5 honesty: dispatch skips this plan entirely, so "N armed · checked
+        # hourly" would be a false statement even if saved rules exist.
+        return Widget(
+            empty=True,
+            provenance="Alerts are part of Pro — nothing is watched on this plan",
+            data={"count": 0, "rules": []},
+        )
     rows = (
         session.execute(select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.enabled))
         .scalars()

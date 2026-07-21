@@ -66,5 +66,27 @@
   </div>
 </div>
 {% block scripts %}{% endblock %}
+<script>
+  /* §5c explicit-confirm: any control carrying data-confirm states its
+     consequence in words and asks before acting. ONE delegated handler for
+     both transports — htmx requests and native form posts — so a button can
+     never carry the attribute and silently skip the question. */
+  document.addEventListener("htmx:confirm", function (e) {
+    var src = (e.detail.triggeringEvent && e.detail.triggeringEvent.submitter) || e.detail.elt;
+    var el = src && src.closest ? src.closest("[data-confirm]") : null;
+    if (el && !window.confirm(el.getAttribute("data-confirm"))) e.preventDefault();
+  });
+  document.addEventListener("submit", function (e) {
+    var f = e.target;
+    if (["hx-get", "hx-post", "hx-put", "hx-delete"].some(function (a) { return f.hasAttribute(a); }))
+      return; /* htmx owns this form; the htmx:confirm listener asks instead */
+    var src = e.submitter || f;
+    var el = src.closest ? src.closest("[data-confirm]") : null;
+    if (el && !window.confirm(el.getAttribute("data-confirm"))) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+</script>
 </body>
 </html>

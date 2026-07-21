@@ -21,6 +21,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingFeedback,
     FindingRow,
     Source,
+    Subscription,
     User,
 )
 from tokenops_cost_auditor.web import help as help_registry
@@ -306,6 +307,15 @@ class TestUxGateFixes:
     """Regressions for the V-D4 ux-gate findings (2026-07-21)."""
 
     def test_f1_prevent_stage_reflects_real_state_never_a_promise(self, app: FastAPI) -> None:
+        # A free plan is honest about WHY nothing is armed: dispatch skips it
+        # (§5 authority laws), so the widget says so instead of inviting setup.
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "Not set up" in page and "nothing is watched on this plan" in page
+        # A watching plan with no rules reports exactly that.
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            session.add(Subscription(user_id=user.id, provider="stripe", plan="pro"))
+            session.commit()
         page = TestClient(app).get("/dashboard", headers=HDR).text
         assert "Not set up" in page and "No rules set up" in page
         # the forbidden shapes: no future-tense promise anywhere in the shell

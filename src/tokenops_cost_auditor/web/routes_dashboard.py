@@ -26,6 +26,7 @@ from tokenops_cost_auditor.persistence.models import (
     utcnow,
 )
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.web import help as help_registry
@@ -86,6 +87,7 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
         session.commit()
         w_savings, _ = metrics.savings(session, user.id)
         ctx = _shell_ctx(session, request, user, "overview")
+        watching = alerts_dispatch.plan_watches(request.app.state.settings, str(ctx["plan"]))
         return _render(
             request,
             "app/dashboard.html",
@@ -96,7 +98,7 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 "top_findings": metrics.top_findings(session, user.id),
                 "sources": metrics.sources_health(session, user.id),
                 "next_audit": metrics.next_audit(session, user.id),
-                "alerts": metrics.alerts_armed(session, user.id),
+                "alerts": metrics.alerts_armed(session, user.id, watching=watching),
             },
             show_tour=user.tour_dismissed_at is None,
             **ctx,
@@ -115,8 +117,13 @@ def widget_partial(
         session.commit()
         if key == "savings":
             widget, _ = metrics.savings(session, user.id)
+        elif key == "alerts":
+            watching = alerts_dispatch.plan_watches(
+                request.app.state.settings, user_plan(session, user.id)
+            )
+            widget = metrics.alerts_armed(session, user.id, watching=watching)
         else:
-            fn = {"sources": "sources_health", "alerts": "alerts_armed"}.get(key, key)
+            fn = {"sources": "sources_health"}.get(key, key)
             widget = getattr(metrics, fn)(session, user.id)
         return _render(request, f"app/widgets/_{key}.html", w=widget, standalone=True)
 
