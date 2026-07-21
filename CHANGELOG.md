@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.18 (2c54278) · REGION DETECTION live (walkthrough
+  punch: Indian browser showed $19). Root cause: detection leaned on
+  Accept-Language en-IN, but Indian browsers ship en-US. Now: early
+  inline script reads the browser TIMEZONE (Asia/Kolkata — India is one
+  zone), sets a ccy cookie once, reloads to the INR view; server
+  precedence param > cookie > locale > USD; explicit toggle rewrites
+  the cookie; a subscription's billing currency outranks all. Checkout
+  unchanged (billing country decides the charge). SMOKE PASS: script
+  serving, cookie-driven INR view under en-US locale, USD default
+  intact, healthz ok.
+
 - 2026-07-22 · v1.5.17 (475ee89) · R-DOCS-PUBLIC live. Public docs =
   product usage + API + legal ONLY; the entire Engineering section
   (requirements, architecture, traceability incl. live matrix
