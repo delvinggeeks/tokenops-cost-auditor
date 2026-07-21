@@ -469,7 +469,7 @@ class TestRunAll:
         stats = dispatch.run_all(session, settings, mail)
         # one user served, one isolated failure, the good email still went out
         assert stats["fired"] == 1 and stats["errors"] == 1
-        assert stats["users"] == 1
+        assert stats["watching_users"] == 1
         assert mail.sent == [EMAIL]
 
     def test_users_without_rules_cost_nothing_and_fire_nothing(
@@ -480,7 +480,7 @@ class TestRunAll:
         add_audit(session, user.id, T0, spend=900.0, waste=99.0)
         session.commit()
         stats = dispatch.run_all(session, settings, CapturingMail())
-        assert stats == {"users": 1, "fired": 0, "errors": 0}
+        assert stats == {"watching_users": 1, "fired": 0, "errors": 0}
 
     def test_a_plan_without_scheduled_audits_is_never_evaluated(
         self, session: Session, settings: Settings
@@ -494,5 +494,5 @@ class TestRunAll:
         session.commit()
         mail = CapturingMail()
         stats = dispatch.run_all(session, settings, mail)
-        assert stats == {"users": 0, "fired": 0, "errors": 0}
+        assert stats == {"watching_users": 0, "fired": 0, "errors": 0}
         assert mail.sent == []

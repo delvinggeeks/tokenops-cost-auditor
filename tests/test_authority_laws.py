@@ -162,6 +162,24 @@ class TestExplicitConfirmWithTheConsequenceInWords:
                     f"{name}: the ask must state the consequence — the key is deleted"
                 )
 
+    def test_every_applied_control_anywhere_carries_the_ask(self) -> None:
+        """Sweep, not a file list (cold-review note): the shell handler skips
+        buttons without data-confirm SILENTLY — correct for Dismissed, fatal
+        for a future Applied button someone adds without the ask. Any control
+        that casts the applied verdict, on any surface, present or future,
+        must carry data-confirm."""
+        offenders = []
+        for path in TEMPLATES.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            # a submit button named verdict/applied, or a hidden verdict=applied
+            # input whose form's submit button is the actual control
+            for m in re.finditer(r"<(button|form|input)[^>]*value=\"applied\"[^>]*>", text):
+                scope_start = max(0, m.start() - 600)
+                scope = text[scope_start : m.end() + 600]
+                if "data-confirm" not in scope:
+                    offenders.append(f"{path.relative_to(TEMPLATES).as_posix()}:{m.group(0)[:60]}")
+        assert not offenders, f"applied-verdict controls without the ask: {offenders}"
+
     def test_no_second_confirm_mechanism_survives(self) -> None:
         """Inline onsubmit=confirm was the pre-kit way. Two mechanisms means
         the next surface picks one at random and the audit here goes stale."""

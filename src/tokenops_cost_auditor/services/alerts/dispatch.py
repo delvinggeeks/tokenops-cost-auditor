@@ -74,12 +74,15 @@ def run_all(
     session: Session, settings: Settings, mail: object, now: datetime | None = None
 ) -> dict[str, int]:
     """Every user whose plan watches. Failures are per-user."""
-    stats = {"users": 0, "fired": 0, "errors": 0}
+    # "watching_users", not "users": run_all only iterates plans that watch
+    # (cold-review note — a count that quietly shrank under an old name
+    # would mislead anyone reading the tick logs).
+    stats = {"watching_users": 0, "fired": 0, "errors": 0}
     users = list(session.execute(select(User)).scalars().all())
     for user in watchers(session, settings, users):
         try:
             fired = run_for_user(session, settings, mail, user, now=now)
-            stats["users"] += 1
+            stats["watching_users"] += 1
             stats["fired"] += len(fired)
         except Exception as exc:
             session.rollback()

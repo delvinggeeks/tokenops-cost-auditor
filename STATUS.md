@@ -3,6 +3,30 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## WIRING GATE CLOSED (2026-07-21) — ux PASS-WITH-NOTES · vv PASS-WITH-NOTES · cold PASS-WITH-NOTES
+
+All gates ran on the settled diff 1d501bd..19feb36 (kit §3+§4 → §5 → §6 →
+wiring). Note dispositions, all closed same-day:
+- ux.1 billing badge fix unproven by stale screenshot → re-rendered against
+  the current build with an assert: badge shows "Pro". Other ux notes were
+  confirmations (hero rule clean in both moods, authority omission real,
+  jargon law holds at depth (c)).
+- cold.1 run_all stats["users"] silently changed meaning after the plan
+  filter → renamed "watching_users" (schedule.py only consumes fired/errors,
+  so the tick log never carried it — rename is belt-and-braces).
+- cold.3 a future Applied button could ship without the ask (the shell
+  handler skips confirm-less buttons silently, by design for Dismissed) →
+  sweep test: any value="applied" control in ANY template must carry
+  data-confirm (test_authority_laws.py).
+- cold.2/cold.4: verified non-findings (HX-Target cannot cross users —
+  _drawer_context re-checks ownership unconditionally; the one |safe wraps a
+  hardcoded literal).
+- vv.2 CARRIED DEBT (pre-existing, outside this diff): schedule.py 84.8%
+  vs the 85% services floor (lines 91-94, 100-103, 111-112). Close
+  opportunistically per the V-D10 slack rule; recorded, not chased today.
+- vv confirmed: suite EXIT=0 under uv, total coverage 95.9%, pricing/rules
+  untouched (CLAUDE.md rule 4 not triggered), money-math files at 100%.
+
 ## WIRING MILESTONE (R-LOOK-FINAL §4, 2026-07-21) — v15-ui-unify surfaces on the kit
 
 All 7 pre-kit screens migrated onto the kit (findings, _finding_drawer,
