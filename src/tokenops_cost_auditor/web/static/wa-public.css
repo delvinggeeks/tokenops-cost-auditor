@@ -338,7 +338,7 @@
 .pr-a, .pr-b { stroke-dasharray: 100; stroke-dashoffset: 0; }
 
 .compare { border: 1px solid var(--rule); border-radius: var(--radius);
-  overflow: hidden; box-shadow: var(--lift-1); background: var(--surface); }
+  overflow-x: auto; box-shadow: var(--lift-1); background: var(--surface); }
 .compare th, .compare td { padding: 14px var(--s3); }
 .compare-us th, .compare-us td { border-bottom: 3px double var(--rule-strong); }
 
