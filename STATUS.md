@@ -11,10 +11,9 @@ read this instead of exploring the repo.
    clarity + function only, punch list by number, ACCEPT/HOLD.
 3. Provider-side subscription closures whenever the daily digest flags one
    (manual until API-key adapters ship).
-4. OPEN: the §2 before/after verdict arrived as the unfilled template
-   ("exceptions by number: <none | list>") — the design-round closure needs
-   the filled verdict; the machine chain pauses at the deploy step, which is
-   founder-observed regardless.
+4. CLOSED 2026-07-27: founder verdict received filled — "F1-F10 confirmed
+   fixed, exceptions: none. GO." Design deep-audit round closed; deploy
+   authorized and founder-observed.
 
 ## WIRING GATE CLOSED (2026-07-21) — ux PASS-WITH-NOTES · vv PASS-WITH-NOTES · cold PASS-WITH-NOTES
 

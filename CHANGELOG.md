@@ -5,6 +5,26 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.2 (72951b3) · DESIGN ROUND + SAAS BASICS + PIPELINE
+  THEATER LIVE on https://tokenops.cloud. Ships: the founder deep-audit
+  remediation (F1-F10 all confirmed fixed by founder verdict, evidence pairs
+  in design/evidence/), R-STMT-GATING, R-SAAS-BASICS 1-3+4a (Scale rename
+  with the no-Team ruled test, support affordance, status link, close
+  account with typed-phrase consequence-in-words), and the R-PIPELINE-UI-SEQ
+  carve-out (live pipeline theater with honest stage lighting + row-errors
+  download; browser uploads land on the theater, JSON API unchanged). Gates:
+  design-remediation ux PASS-WITH-NOTES (closed), theater ux PASS-WITH-NOTES
+  (closed); 3b stranger smoke six-screenshot green. DEPLOY: backup first
+  (tokenops_2026-07-21.dump 4.1M), git archive -> rebuild -> alembic audible
+  no-op at d3f8a1c7e604, app healthy in 15s. SMOKE ALL PASS over real
+  DNS/TLS: healthz db:true; landing FR-23 verbatim + ONE cta + support +
+  status links + Scale (zero \bTeam\b matches on landing+terms); funnel
+  routes 200; auth-gated 401 incl. the theater endpoints; close-account
+  shipped on box; REAL Postmark magic link sent to the founder (mail.sent
+  logged). Hardware: disk 11%, mem ~1GB used of 7.9GB. Founder-owned before
+  the thread: UptimeRobot page + CNAME for status.tokenops.cloud. NEXT GATE:
+  founder production walkthrough — punch list by number, ACCEPT/HOLD.
+
 - 2026-07-21 · v1.5.1 (c12c06c) · UNIFIED UI + LANDING LIVE on
   https://tokenops.cloud. Ships the R-LOOK-FINAL execution block end to end:
   component kit + three signatures, §5 server-authority laws (alerts
