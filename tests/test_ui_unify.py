@@ -148,8 +148,11 @@ class TestEveryStaticReferenceIsVersioned:
         client = signed_in(app)
         pages = [client.get(p).text for p in ("/", "/login", "/dashboard", "/findings")]
         offenders = []
+        ref = re.compile(
+            r'(?:src|href|content)="(?:https?://[^"/]+)?(/static/[^"?#]+)(\?[^"]*)?"'
+        )
         for html in pages:
-            for m in re.finditer(r'(?:src|href|content)="(?:https?://[^"/]+)?(/static/[^"?#]+)(\?[^"]*)?"', html):
+            for m in ref.finditer(html):
                 if not (m.group(2) or "").startswith("?v="):
                     offenders.append(m.group(1))
         assert not offenders, f"unversioned static references: {sorted(set(offenders))}"
