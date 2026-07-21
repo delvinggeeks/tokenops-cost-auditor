@@ -136,7 +136,6 @@ a { color: var(--accent); }
    in the COMPONENT KIT section below. They used to be declared here too, and
    the stale copy kept cascading its serif font-family onto every figure after
    R-LOOK-FINAL — money was still rendering in the superseded face. */
-  bottom: -4px; border-bottom: 1px solid var(--rule-strong); }
 
 /* Cards: 1px border + layered lift; hover tiers up (ADDENDUM 2b) */
 .card {
@@ -291,7 +290,7 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .ribbon .seg:last-child { border-right: none; }
 .ribbon .seg .stage-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--ink-soft); }
-.ribbon .seg .stage-state { font-family: var(--serif); font-size: 19px; font-weight: 700;
+.ribbon .seg .stage-state { font-family: var(--sans); font-size: 19px; font-weight: 680;
   font-variant-numeric: tabular-nums; margin-top: 2px; }
 .ribbon .seg .stage-note { font-size: 12px; color: var(--ink-soft); }
 .ribbon .seg.active { background: var(--surface-tint); }
@@ -337,7 +336,7 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
   box-shadow: var(--lift-1), var(--inner-edge); }
 .chip .k { display: flex; align-items: center; gap: 6px; font-size: 12px;
   color: var(--ink-soft); font-weight: 600; }
-.chip .v { font-family: var(--serif); font-variant-numeric: tabular-nums;
+.chip .v { font-family: var(--sans); font-variant-numeric: tabular-nums;
   font-size: 21px; font-weight: 700; margin-top: 2px; }
 .chip .spark { display: block; margin-top: 4px; }
 
@@ -617,3 +616,46 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ============================================================
+   DESIGN AUDIT REMEDIATION (founder order 2026-07-26)
+   F1 hero band · F2 chart craft · F6 stat scale · F9 field ·
+   F10 mobile targets. Tokens only; hybrid depth law untouched.
+   ============================================================ */
+
+/* F6 — the stat scale. .stat-lg was consumed by widgets but never defined:
+   values rendered at browser-default size (audit: "4 days" read as body
+   text). Stat values sit on the money scale, flat and tabular. */
+.stat-lg { font-family: var(--sans); font-size: 26px; font-weight: 680;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--money);
+  margin: 2px 0 4px; }
+
+/* F1 — the savings band: hero left, supporting stats right. The hero column
+   distributes over the band's full height so neither side trails a void. */
+.savings-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s4); align-items: stretch; }
+.savings-grid > div:first-child { display: flex; flex-direction: column; }
+.savings-grid > div:first-child > div:last-child { margin-top: auto; padding-top: var(--s3); }
+.savings-side { display: grid; gap: var(--s2); }
+.savings-side .stat-card { margin: 0; }
+@media (max-width: 900px) { .savings-grid { grid-template-columns: 1fr; } }
+
+/* F2 — chart craft: endpoint dot + value, area fill. Flat per the law. */
+.plot-fill { opacity: .08; stroke: none; }
+.plot-dot { stroke: var(--surface-raised); stroke-width: 1.5; }
+.plot-end { font-weight: 700; fill: var(--ink); }
+
+/* F9 — inline field: the one form control on the money surface must not
+   read browser-default. */
+input.field-inline { width: 8em; border: 1px solid var(--rule); border-radius: 6px;
+  padding: 6px 8px; font: 600 13px var(--sans); text-align: right;
+  font-variant-numeric: tabular-nums; background: var(--surface-raised);
+  color: var(--ink); box-shadow: var(--control-depth); }
+input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* F10 — mobile tap targets >= 44px (WCAG 2.5.8 / audit i). */
+@media (max-width: 720px) {
+  .nav-group a, .btn, .tour-tab { min-height: 44px; display: inline-flex;
+    align-items: center; }
+  .nav-group a { display: flex; }
+}

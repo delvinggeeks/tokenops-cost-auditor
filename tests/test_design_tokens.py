@@ -255,3 +255,15 @@ class TestSemanticColourLaw:
             assert v[1] > v[0], f"{mood}: --verified is not green-dominant {v}"
             assert w[0] > w[1], f"{mood}: --waste is not red-dominant {w}"
             assert e[0] > e[2] and e[1] > e[2], f"{mood}: --estimate is not amber {e}"
+
+
+class TestTheSupersededFaceStaysRetired:
+    def test_no_rule_consumes_the_serif_token(self) -> None:
+        """R-LOOK-FINAL retired the serif; the design audit (F3, 2026-07-26)
+        found it still alive inside the pipeline ribbon — a §4 SIGNATURE —
+        and the chips. The token definition may remain (the report/PDF
+        stylesheet is its own deferred milestone), but no wa-design rule may
+        consume it: `var(--serif)` in this sheet is the superseded look
+        coming back."""
+        css = (STATIC / "wa-design.css").read_text(encoding="utf-8")
+        assert "var(--serif)" not in css, "the superseded face has consumers again"

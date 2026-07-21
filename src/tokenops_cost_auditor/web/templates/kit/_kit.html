@@ -79,15 +79,27 @@
 {% endmacro %}
 
 {# --------------------------------------------------- PipelineRibbon (§4) #}
-{% macro pipeline_ribbon(stages, current=None) %}
+{% macro pipeline_ribbon(stages, current=None, id=None) %}
   {# SIGNATURE 1 of 3: where the platform's end-to-end state lives. One
-     glance away on every app screen. #}
-  <nav class="ribbon" aria-label="{{ t('kit.ribbon.aria') }}">
+     glance away on every app screen — and ONE implementation (design audit
+     F4: the dashboard hand-rolled a second ribbon; a signature that forks
+     stops being a signature). A stage is either a plain string (compact
+     form: dot + label) or a mapping {label, value, note, state} where state
+     is "active"/"waiting" (rich form: the app spine). #}
+  <nav class="ribbon"{% if id %} id="{{ id }}"{% endif %} aria-label="{{ t('kit.ribbon.aria') }}">
     {%- for s in stages %}
+      {%- if s is mapping %}
+      <div class="seg {{ s.state or 'active' }}">
+        <div class="stage-name">{{ s.label }}</div>
+        <div class="stage-state">{{ s.value }}</div>
+        {%- if s.note %}<div class="stage-note">{{ s.note }}</div>{% endif %}
+      </div>
+      {%- else %}
       {%- set state = "done" if loop.index0 < (current or 0) else ("now" if loop.index0 == current else "next") %}
       <span class="stage stage-{{ state }}"{% if state == 'now' %} aria-current="step"{% endif %}>
         <span class="stage-dot" aria-hidden="true"></span>{{ s }}
       </span>
+      {%- endif %}
     {%- endfor %}
   </nav>
 {% endmacro %}

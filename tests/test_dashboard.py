@@ -112,7 +112,9 @@ class TestDashboard:
         page = TestClient(app).get("/dashboard", headers=HDR)
         assert page.status_code == 200
         # identified (not yet applied) shows as an estimate, never as savings
-        assert "1,808.85" in page.text and "identified (estimate)" in page.text
+        # audit F1 moved this from a badge into a stat card — same law,
+        # capitalized label: the estimate is never presented as savings
+        assert "1,808.85" in page.text and "Identified (estimate)" in page.text
         for wid in (
             "w-savings",
             "w-spend_trend",

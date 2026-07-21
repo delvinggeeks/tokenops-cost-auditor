@@ -9,20 +9,31 @@
     </div>
   {% else %}
     <div class="money money-lg" style="color: var(--waste);">{{ w.data.current_pct }}%</div>
-    <svg class="chart" viewBox="0 0 342 140" role="img"
+    {# Design audit F2 — same sparkline grammar as spend; 0–40% fixed scale. #}
+    {% set n = [w.series|length - 1, 1] | max %}
+    {% set last = w.series[-1] %}
+    <svg class="chart" viewBox="0 0 342 112" role="img"
          aria-label="Waste share per audit">
-      {% for gy in [20, 50, 80, 110] %}
-        <line class="grid-line" x1="34" y1="{{ gy }}" x2="342" y2="{{ gy }}"/>
+      {% for gy in [16, 44, 72] %}
+        <line class="grid-line" x1="34" y1="{{ gy }}" x2="296" y2="{{ gy }}"/>
       {% endfor %}
       <g transform="translate(34,0)">
+        <polygon class="plot-fill" fill="var(--waste)" points="0,88
+          {%- for p in w.series %} {{ loop.index0 * (262 / n) }},{{ 88 - (p.value * 1.8) }}{%- endfor %}
+          262,88"/>
         <polyline class="plot draw" stroke="var(--waste)" points="
           {%- for p in w.series -%}
-            {{ loop.index0 * (308 / [w.series|length - 1, 1]|max) }},{{ 120 - (p.value * 2.5) }}{{ " " }}
+            {{ loop.index0 * (262 / n) }},{{ 88 - (p.value * 1.8) }}{{ " " }}
           {%- endfor -%}"/>
+        <circle class="plot-dot" fill="var(--waste)" r="3.5"
+                cx="262" cy="{{ 88 - (last.value * 1.8) }}"/>
       </g>
-      <text class="axis-label" x="0" y="23">40%</text>
-      <text class="axis-label" x="34" y="134">{{ w.series[0].label }}</text>
-      <text class="axis-label" x="342" y="134" text-anchor="end">{{ w.series[-1].label }}</text>
+      <text class="axis-label" x="0" y="19">40%</text>
+      <text class="axis-label" x="0" y="91">0%</text>
+      <text class="axis-label plot-end" x="302" y="{{ [92 - (last.value * 1.8), 19] | max }}"
+        >{{ "%.1f"|format(last.value) }}%</text>
+      <text class="axis-label" x="34" y="106">{{ w.series[0].label }}</text>
+      <text class="axis-label" x="296" y="106" text-anchor="end">{{ w.series[-1].label }}</text>
     </svg>
   {% endif %}
   <div class="provenance">{{ w.provenance }}</div>

@@ -27,7 +27,7 @@
               <form hx-post="/findings/{{ it.audit_id }}/{{ it.finding_id }}/feedback"
                     hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
                 <input type="hidden" name="verdict" value="applied">
-                <button class="btn btn-primary" type="submit"
+                <button class="btn" type="submit"
                   data-confirm="{{ t('app.confirm.applied') }}">Applied</button>
               </form>
             {% endif %}

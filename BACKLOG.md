@@ -240,3 +240,13 @@ in the customer's VPC per the deployment contract, post-trust.
 SDK/proxy note (R-CONNECT 3): remains Phase-2 control plane — X-01/X-02
 intact for the audit product; recorded rationale: in-path components live
 in the customer's VPC per the deployment contract, post-trust.
+
+## Design-audit P3s (founder deep-audit order 2026-07-26; numbered per design/DESIGN-AUDIT.md)
+- F11 severity chips: mono-caps boxes read as debug badges; consider dot+word
+  (Linear label grammar) next time findings surfaces are touched.
+- F12 findings sort glyphs render small/cropped; redraw the sprite arrow.
+- F13 sample-report stat-card label wrapping → WP-REPORT-VISUAL (already deferred).
+- F14 `.nav-group a` declared twice (base + density pass) — values consistent
+  today; consolidate on next touch.
+- F15 landing mobile: hero capture below the fold (copy+CTA above it) —
+  revisit with post-launch funnel data.

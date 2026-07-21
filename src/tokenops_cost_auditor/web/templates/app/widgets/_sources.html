@@ -8,15 +8,19 @@
       <a class="btn btn-primary" href="/sources/connect/openai">Connect a source</a>
     </div>
   {% else %}
+    {# Design audit F6: rows, not paragraphs — density is the trust signal. #}
     {% for s in w.data['items'] %}
-      <p>
+      <div class="row alert-row">
+        <span class="dot {{ 'dot-ok' if s.healthy else 'dot-warn' }}" aria-hidden="true"></span>
+        <div class="grow">
+          <div class="row-t">{{ s.provider }} — {{ s.label }}</div>
+          <div class="rt">last pull {{ s.last_pull }}</div>
+        </div>
         <span class="badge {{ 'badge-verified' if s.healthy else 'badge-neutral' }}">
           {{ "healthy" if s.healthy else s.status }}</span>
-        <strong>{{ s.provider }} — {{ s.label }}</strong><br>
-        <small class="muted">Last pull: {{ s.last_pull }}</small>
-      </p>
+      </div>
     {% endfor %}
-    <a class="btn" href="/sources">Manage sources</a>
+    <p style="margin-top: var(--s2);"><a class="btn" href="/sources">Manage sources</a></p>
   {% endif %}
   <div class="provenance">{{ w.provenance }}</div>
 </section>

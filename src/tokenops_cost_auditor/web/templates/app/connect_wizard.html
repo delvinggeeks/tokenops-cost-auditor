@@ -12,13 +12,15 @@
     </div>
 
     {% if at_limit %}
-      <div class="empty">
-        <p>Your plan includes {{ limit }} connected source{{ "" if limit == 1 else "s" }},
-          and {{ limit }} {{ "is" if limit == 1 else "are" }} already in use. Revoke one
-          first, or move up a plan.</p>
-        <a class="btn" href="/settings">Manage sources</a>
-        <a class="btn btn-quiet" href="/billing">Compare plans</a>
-      </div>
+      {# Design audit F7: a compact taught state, not a message in a void. #}
+      {% import "kit/_kit.html" as kit %}
+      {{ kit.empty_state(
+           "Your plan is at its source limit",
+           "Your plan includes " ~ limit ~ " connected source" ~ ("" if limit == 1 else "s")
+             ~ ", and " ~ limit ~ (" is" if limit == 1 else " are") ~ " already in use.
+             Revoke one first, or move up a plan.",
+           action_label="Manage sources", action_href="/settings",
+           alt_label="Compare plans", alt_href="/billing") }}
     {% else %}
       <h2>{{ copy.step1_title }}</h2>
       <p>{{ copy.step1_body }}</p>

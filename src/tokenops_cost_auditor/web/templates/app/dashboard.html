@@ -23,45 +23,36 @@
       </details>
     </div>
     <p class="tells">{{ h.tells }}</p>
-    <div class="ribbon" id="pipeline-ribbon">
-      <div class="seg {{ 'active' if not widgets.sources.empty else 'waiting' }}">
-        <div class="stage-name">Input</div>
-        <div class="stage-state">
-          {{ widgets.sources.data['items']|length if not widgets.sources.empty else "Start here" }}
-          {{ "source(s)" if not widgets.sources.empty else "" }}</div>
-        <div class="stage-note">{{ widgets.sources.provenance }}</div>
-      </div>
-      <div class="seg {{ 'active' if not widgets.spend_trend.empty else 'waiting' }}">
-        <div class="stage-name">Analyze</div>
-        <div class="stage-state">
-          {{ "%.0f days"|format(widgets.spend_trend.data.days) if not widgets.spend_trend.empty else "Waiting" }}</div>
-        <div class="stage-note">{{ widgets.spend_trend.provenance }}</div>
-      </div>
-      <div class="seg {{ 'active' if not widgets.top_findings.empty else 'waiting' }}">
-        <div class="stage-name">Report</div>
-        <div class="stage-state">
-          {{ widgets.top_findings.data.total if not widgets.top_findings.empty else "Waiting" }}
-          {{ "findings" if not widgets.top_findings.empty else "" }}</div>
-        <div class="stage-note">
-          {{ "${:,.2f}/mo identified".format(widgets.savings.data.identified)
-             if not widgets.savings.empty else "Findings ranked by dollars" }}</div>
-      </div>
-      <div class="seg {{ 'active' if widgets.savings.data.get('verified_count') else 'waiting' }}">
-        <div class="stage-name">Act</div>
-        <div class="stage-state">
-          {{ widgets.savings.data.get('verified_count', 0) }} applied</div>
-        <div class="stage-note">
-          {{ "${:,.2f}/mo verified".format(widgets.savings.data.verified)
-             if not widgets.savings.empty else "Apply a fix, we verify the saving" }}</div>
-      </div>
-      <div class="seg {{ 'active' if not widgets.alerts.empty else 'waiting' }}">
-        <div class="stage-name">Prevent</div>
-        <div class="stage-state">
-          {{ widgets.alerts.data.count if not widgets.alerts.empty else "Not set up" }}
-          {{ "armed" if not widgets.alerts.empty else "" }}</div>
-        <div class="stage-note">{{ widgets.alerts.provenance }}</div>
-      </div>
-    </div>
+    {# ONE ribbon implementation — the kit's (design audit F4). #}
+    {% import "kit/_kit.html" as kit %}
+    {{ kit.pipeline_ribbon([
+      {"label": "Input",
+       "state": "active" if not widgets.sources.empty else "waiting",
+       "value": (widgets.sources.data['items']|length ~ " source(s)")
+                if not widgets.sources.empty else "Start here",
+       "note": widgets.sources.provenance},
+      {"label": "Analyze",
+       "state": "active" if not widgets.spend_trend.empty else "waiting",
+       "value": "%.0f days"|format(widgets.spend_trend.data.days)
+                if not widgets.spend_trend.empty else "Waiting",
+       "note": widgets.spend_trend.provenance},
+      {"label": "Report",
+       "state": "active" if not widgets.top_findings.empty else "waiting",
+       "value": (widgets.top_findings.data.total ~ " findings")
+                if not widgets.top_findings.empty else "Waiting",
+       "note": "${:,.2f}/mo identified".format(widgets.savings.data.identified)
+               if not widgets.savings.empty else "Findings ranked by dollars"},
+      {"label": "Act",
+       "state": "active" if widgets.savings.data.get('verified_count') else "waiting",
+       "value": widgets.savings.data.get('verified_count', 0) ~ " applied",
+       "note": "${:,.2f}/mo verified".format(widgets.savings.data.verified)
+               if not widgets.savings.empty else "Apply a fix, we verify the saving"},
+      {"label": "Prevent",
+       "state": "active" if not widgets.alerts.empty else "waiting",
+       "value": (widgets.alerts.data.count ~ " armed")
+                if not widgets.alerts.empty else "Not set up",
+       "note": widgets.alerts.provenance},
+    ], id="pipeline-ribbon") }}
   </section>
 
   {% with w = widgets.savings %}{% include "app/widgets/_savings.html" %}{% endwith %}

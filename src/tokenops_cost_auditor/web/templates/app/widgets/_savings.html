@@ -10,29 +10,31 @@
          action_label="Connect a source", action_href="/sources",
          alt_label="Upload a log file", alt_href="/upload") }}
   {% else %}
-    {# SIGNATURE 2: the double rule sits UNDER the figure as its own element —
-       stacking both classes on one div squashed the number into the rule's
-       3px box and struck through the digits (found by looking, not testing). #}
-    {{ kit.savings_hero("$" ~ "{:,.2f}".format(w.data.verified), cap=False) }}
-    <div style="margin-top: var(--s2);">
-      {% if w.data.verified_count %}
-        <span class="badge badge-verified">VERIFIED — {{ w.data.verified_count }} fix(es)
-          re-audited over 7+ days of data</span>
-      {% endif %}
-      {% if w.data.pending_count %}
-        <span class="badge badge-neutral">{{ w.data.pending_count }} applied, awaiting the
-          next audit</span>
-      {% endif %}
-      <span class="badge badge-estimate">${{ "{:,.2f}".format(w.data.identified) }}/mo
-        identified (estimate)</span>
-    </div>
-    {% if w.data.customer_reported %}
-      <p class="muted" style="margin: var(--s2) 0 0; font-size: 13px;">
-        Customer-reported savings (${{ "{:,.2f}".format(w.data.customer_reported) }}) are
-        tracked separately and never enter this figure.</p>
-    {% endif %}
-    <div style="margin-top: var(--s2);">
-      <a class="btn btn-primary" href="/findings">Work through your findings</a>
+    {# SIGNATURE 2: the double rule sits UNDER the figure as its own element.
+       Design audit F1: the hero shares its band with supporting stats — the
+       most important element anchors a dense row, not a void (Stripe balance-
+       overview grammar). #}
+    <div class="savings-grid">
+      <div>
+        {{ kit.savings_hero("$" ~ "{:,.2f}".format(w.data.verified), cap=False) }}
+        <div style="margin-top: var(--s2);">
+          {% if w.data.verified_count %}
+            <span class="badge badge-verified">VERIFIED — {{ w.data.verified_count }} fix(es)
+              re-audited over 7+ days of data</span>
+          {% endif %}
+        </div>
+        <div style="margin-top: var(--s2);">
+          <a class="btn btn-primary" href="/findings">Work through your findings</a>
+        </div>
+      </div>
+      <div class="savings-side">
+        {{ kit.stat("Identified (estimate)", "$" ~ "{:,.2f}".format(w.data.identified) ~ "/mo",
+             meta="what the detectors can still see") }}
+        {{ kit.stat("Applied, awaiting proof", w.data.pending_count,
+             meta="re-measured by the next audit") }}
+        {{ kit.stat("Customer-reported", "$" ~ "{:,.2f}".format(w.data.customer_reported),
+             meta="tracked separately — never in the headline") }}
+      </div>
     </div>
   {% endif %}
   <div class="provenance">{{ w.provenance }}</div>
