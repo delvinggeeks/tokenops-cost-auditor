@@ -62,11 +62,24 @@ PAYMENTS (FR-18/R-Q11 link+webhook design, already implemented):
   billing is switched on" to live Pay links automatically. Until then,
   admin mark-paid (Q8) remains the manual fulfillment path.
 
-GOOGLE SIGN-IN (federation, 2026-07-27):
-1 console.cloud.google.com → OAuth client (web), authorized redirect URI
-  https://tokenops.cloud/auth/google/callback. 2 .env GOOGLE_CLIENT_ID /
-  GOOGLE_CLIENT_SECRET; restart. 3 The "Continue with Google" button renders
-  on /login + /signup only once configured (dead buttons are promises).
+FEDERATED SIGN-IN (Google / Microsoft / GitHub — each independent, 2026-07-27):
+Every provider is config-gated by its own credential pair; its "Continue
+with …" button renders on /login + /signup only once configured (dead
+buttons are promises). Restart after each .env change.
+- Google: console.cloud.google.com → OAuth client (web), authorized redirect
+  URI https://tokenops.cloud/auth/google/callback → .env GOOGLE_CLIENT_ID /
+  GOOGLE_CLIENT_SECRET.
+- Microsoft: portal.azure.com → Entra ID → App registrations → New (web),
+  supported accounts: "any org directory + personal Microsoft accounts",
+  redirect URI https://tokenops.cloud/auth/microsoft/callback → client
+  secret under Certificates & secrets → .env MICROSOFT_CLIENT_ID /
+  MICROSOFT_CLIENT_SECRET.
+- GitHub: github.com/settings/developers → New OAuth App, callback URL
+  https://tokenops.cloud/auth/github/callback → generate client secret →
+  .env GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET.
+Deliberate absences: Apple (consumer/iOS-mandated; its private-relay
+addresses defeat the work-email identity — BACKLOG trigger) and SAML/Okta
+enterprise SSO (X-03 multi-org territory, ruled trigger).
 
 ## 3b. Status page (R-SAAS-BASICS 3)
 

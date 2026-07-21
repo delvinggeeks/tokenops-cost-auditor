@@ -145,10 +145,12 @@ SIGNIN_COPY = {
 
 
 def _signin_page(request: Request, mode: str, **overrides: object) -> HTMLResponse:
+    from tokenops_cost_auditor.web.routes_auth import enabled_federations
+
     ctx: dict[str, object] = {**SIGNIN_COPY[mode], **overrides}
-    # federation button renders ONLY when configured — a dead button is a
+    # federation buttons render ONLY when configured — a dead button is a
     # promise (R-GTM-CONTROL)
-    ctx["google_enabled"] = bool(request.app.state.settings.google_client_id)
+    ctx["federations"] = enabled_federations(request.app.state.settings)
     return _render(request, "signin.html", mode=mode, user_email=None, **ctx)
 
 

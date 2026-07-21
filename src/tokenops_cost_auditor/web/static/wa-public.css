@@ -421,8 +421,9 @@
    washed the CTA text to ink-soft on accent — found by computed style. */
 .pub-nav a.btn-primary { color: var(--on-accent); }
 
-/* federation button — renders only when configured */
-.google-btn { display: inline-flex; align-items: center; gap: 10px;
+/* federation buttons — each renders only when its provider is configured */
+.fed-btns { display: grid; gap: var(--s2); }
+.fed-btn { display: inline-flex; align-items: center; gap: 10px;
   width: 100%; justify-content: center; padding: 10px 16px; }
 .signin-or { display: flex; align-items: center; gap: var(--s2);
   color: var(--ink-soft); font-size: 12.5px; margin: var(--s2) 0; }

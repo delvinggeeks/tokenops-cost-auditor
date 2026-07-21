@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # because a dead button is a promise (R-GTM-CONTROL).
     google_client_id: str = ""
     google_client_secret: str = ""
+    microsoft_client_id: str = ""
+    microsoft_client_secret: str = ""
+    github_client_id: str = ""
+    github_client_secret: str = ""
     razorpay_webhook_secret: str = ""
     razorpay_payment_link_url: str = ""
     stripe_webhook_secret: str = ""

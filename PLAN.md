@@ -760,6 +760,19 @@ federation (OAuth) implementation, payment-gateway activation audit, and
 market-grounded pricing (deep-research commissioned) — tracked as the
 same-day follow-on workstreams.
 
+**R-FED-MAJORS (founder question 2026-07-21: "why only Google").** The
+federation set for this buyer is Google + Microsoft (Entra ID v2 common
+endpoint — the enterprise directory standard, work/school AND personal)
++ GitHub (the developer-native identity; OAuth2 + /user/emails verified
+flag, since GitHub has no OIDC). One registry (FEDERATIONS in
+routes_auth), one flow, one _record_login — the R-FREE-CONNECT one-meter
+law holds through every door; each provider config-gated by its own
+credential pair (dead-button law per provider, test-pinned). Deliberate
+absences recorded: Apple (consumer/iOS-mandated; private-relay addresses
+defeat the work-email identity — BACKLOG trigger), SAML/Okta enterprise
+SSO (X-03 multi-org, existing ruled trigger). Activation steps per
+provider: runbook §3a.
+
 **R-PIPELINE-UI-SEQ (founder, 2026-07-27).** Option A confirmed:
 WP-PIPELINE-UI (runs list, per-stage drill-in incl. rows-rejected and
 detector honest-zeros evidence, connector pull lineage, alert evaluation

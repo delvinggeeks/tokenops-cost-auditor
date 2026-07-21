@@ -26,6 +26,11 @@ platform-v1.0.0.
 Recorded triggers, not build items. When a trigger fires, notify the founder;
 promotion still requires a PRD amendment.
 
+- **Sign in with Apple** — trigger: a real iOS/App Store surface, or the
+  first customer request. [R-FED-MAJORS 2026-07-21: consumer/iOS-mandated;
+  Apple's private-relay addresses defeat the work-email identity everything
+  keys on, so it needs an identity-merge design, not just a fourth registry
+  row. Google/Microsoft/GitHub cover this buyer.]
 - **API keys / programmatic access** — trigger: first customer request.
   Treat the request itself as a BUYING SIGNAL and notify the founder
   immediately. [R-APIKEYS 2026-07-20, build detail when fired: keys issued
