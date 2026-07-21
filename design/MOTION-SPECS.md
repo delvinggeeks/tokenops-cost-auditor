@@ -86,7 +86,7 @@ only pointer listener (hero-scoped, rAF-throttled).
 | C1 | **Hero tilt** (the one 3D moment) | pointer move over hero; falls back to a static tilt with no pointer | screenshot rotates within ±6° Y / ±3° X about `left center`, following pointer at reduced amplitude | continuous follow, 120ms `--ease` catch-up | **static, untilted, flat screenshot** — no perspective, full `--lift-3` | `--lift-3`, `--inner-edge`, `--rule`, `--ease` |
 | C2 | Section reveal | IntersectionObserver, element 15% in view, fires once | opacity 0→1, `translateY(12px→0)` | 200ms `--ease` | elements render final-state visible; observer never attaches | `--ease` |
 | C3 | Pipeline stage light-up | scroll position within the pipeline section | each stage's rule goes `--rule`→`--accent`, label `--ink-soft`→`--ink`, in sequence | 200ms `--ease` per stage | **all five stages render lit** — the sequence is decorative, the content is not | `--rule`, `--accent`, `--ink`, `--ink-soft` |
-| C4 | Product-tour count-ups | tab panel becomes visible | figures count 0→target | 600ms `--ease`, once per panel | final figures rendered immediately | `--ease` |
+| C4 | Product-tour count-ups | tab panel becomes visible | figures count 0→target | 600ms cubic ease-out in JS (a computed curve cannot read `--ease`; it approximates it — same exception class as A6's loop) , once per panel | final figures rendered immediately; JS resolves to the exact markup value | none (JS-computed curve) |
 | C5 | Tab switch | click/keyboard on tab | panel cross-fades opacity 0→1 | 150ms `--ease` | instant swap | `--ease` |
 
 **Implementation constraints for C1–C5**
@@ -100,6 +100,12 @@ only pointer listener (hero-scoped, rAF-throttled).
 - C1 attaches a pointer listener to the hero only, throttled to
   `requestAnimationFrame`. No scroll listener on `document`.
 - Total landing JS budget < 15KB, per R-LANDING-2.
+- C2 carries a TOP-TO-BOTTOM INVARIANT (ux gate note, 2026-07-25): revealing
+  any section force-reveals every section above it. Jump scrolls (End key,
+  anchor links, fast flings) can skip an element's intersecting frame
+  entirely, and a reader must never find a void where a section belongs. The
+  reveal order is the document order, so nothing above a revealed section may
+  stay hidden.
 
 **Cut list — considered and rejected.** Parallax on the hero (fights the tilt,
 two competing depth cues), number odometer roll on scroll-back (re-animating a
