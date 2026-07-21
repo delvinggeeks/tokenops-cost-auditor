@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
@@ -78,7 +78,7 @@ def payment_gate(request: Request, user_email: str = Depends(current_user)) -> s
     return user_email
 
 
-@router.post("/audits", status_code=201)
+@router.post("/audits", status_code=201, response_model=None)
 @limiter.limit("10/minute")
 def create_audit(
     request: Request,
@@ -86,7 +86,7 @@ def create_audit(
     file: UploadFile,
     user_email: str = Depends(payment_gate),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-) -> JSONResponse:
+) -> JSONResponse | RedirectResponse:
     settings: Settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
@@ -144,6 +144,11 @@ def create_audit(
         audit_id = audit.id
 
     background.add_task(request.app.state.runner.run, audit_id)
+    # A browser form post landed on raw JSON until the pipeline theater
+    # (R-PIPELINE-UI-SEQ carve-out i). Browsers lead Accept with text/html;
+    # API clients don't — the JSON contract is unchanged for them.
+    if "text/html" in request.headers.get("accept", ""):
+        return RedirectResponse(f"/audits/{audit_id}/progress", status_code=303)
     return JSONResponse(status_code=201, content={"audit_id": audit_id, "replayed": False})
 
 

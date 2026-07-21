@@ -742,6 +742,23 @@ docs/12-FLYWHEEL.md from the 2026-07-22 vision order, which is complete and is
 not a landing skeleton. Paused and reported per R-PREMISE-CHECK rather than
 executed literally. See STATUS for the open questions blocking a start.
 
+**R-PIPELINE-UI-SEQ (founder, 2026-07-27).** Option A confirmed:
+WP-PIPELINE-UI (runs list, per-stage drill-in incl. rows-rejected and
+detector honest-zeros evidence, connector pull lineage, alert evaluation
+history, additive stage_events migration) is the FIRST post-launch gated
+milestone, alongside WP-REPORT-VISUAL — trust/retention surfaces and the
+strategic seed of Build Health; they get a real milestone, not a pre-launch
+cram. Post-launch backlog sequencing (PIPELINE-UI vs REPORT-VISUAL vs
+CC-LINK vs pricing-watch) is decided at day-45 by customer signal.
+PRE-LAUNCH CARVE-OUT (capped 1 day; this is R-DESIGN-ADDENDUM §2c finally
+shipping, not new scope): (i) the audit-in-flight screen becomes the live
+pipeline theater — htmx-polled status, ribbon rich-form stages lighting as
+they complete, computing_label language, terminal swap to the report link on
+done (email still sends) and plain-words failure on failed; (ii) the existing
+row-errors file surfaces as a download ("N rows rejected — see why") with the
+honest-zeros line when clean. Tests: poll ownership re-check, terminal states,
+no-cache partial. Gate: ux-reviewer on both surfaces.
+
 **R-SAAS-BASICS (founder, 2026-07-26) — gap-audit corrections, items 1-3+4a
 shipped.** (1) Plan SOLD as "Scale" ("5 connected sources, priority support");
 the internal key stays "team" — subscription rows are data and migrations are

@@ -659,3 +659,11 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
     align-items: center; }
   .nav-group a { display: flex; }
 }
+
+/* Pipeline theater (R-PIPELINE-UI-SEQ carve-out): the in-flight stage reuses
+   the A6 status pulse — a status indicator, not a transition. */
+.ribbon .seg.live { background: var(--surface-tint); border-radius: var(--radius); }
+.ribbon .seg.live .stage-name { color: var(--accent-ink);
+  animation: stage-pulse 1.6s var(--ease) infinite; border-radius: 4px; }
+.theater-done { margin-top: var(--s3); }
+.theater-rejects { margin-top: var(--s2); font-size: 13.5px; }

@@ -1,0 +1,12 @@
+{% extends "app/_shell.html" %}
+{% block title %}Audit in progress — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<div class="grid">
+  {{ kit.surface_open(title="Your audit, live", icon="detector", span=12) }}
+    <p class="tells">What this tells you: each stage lights when its data has
+      actually landed — nothing here is animated for show.</p>
+    {% include "app/_audit_progress.html" %}
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}

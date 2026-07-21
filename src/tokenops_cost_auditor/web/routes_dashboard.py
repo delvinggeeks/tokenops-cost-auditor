@@ -12,8 +12,10 @@ methodology, in that fixed order (R-CLARITY §1).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -131,6 +133,129 @@ def widget_partial(
             fn = {"sources": "sources_health"}.get(key, key)
             widget = getattr(metrics, fn)(session, user.id)
         return _render(request, f"app/widgets/_{key}.html", w=widget, standalone=True)
+
+
+def _owned_audit(session: Session, user: User, audit_id: str) -> Audit:
+    audit = session.get(Audit, audit_id)
+    if audit is None or audit.user_id != user.id:
+        raise HTTPException(status_code=404, detail="audit not found")
+    return audit
+
+
+def _rejected_rows(audit: Audit) -> int:
+    """Rows the validator rejected — read from the row_errors.csv the pipeline
+    already writes (R-PIPELINE-UI-SEQ carve-out ii). 0 when clean or purged;
+    the honest zero is a statement, not an absence."""
+    if not audit.upload_path:
+        return 0
+    path = Path(audit.upload_path).parent / "row_errors.csv"
+    if not path.exists():
+        return 0
+    return max(sum(1 for _ in path.open(encoding="utf-8")) - 1, 0)  # minus header
+
+
+def _theater_stages(audit: Audit) -> list[dict[str, object]]:
+    """The live pipeline, lit ONLY by data that has actually landed
+    (R-PIPELINE-UI-SEQ carve-out i). Two checkpoints are observable today —
+    ingest (row_count commits mid-run) and completion; price/detect/report
+    land in one final commit, so mid-run they show as pending, never as done.
+    Per-stage timings arrive with stage_events (WP-PIPELINE-UI)."""
+    ingested = audit.row_count is not None
+    done = audit.status == "done"
+    running = audit.status == "processing"
+    return [
+        {
+            "label": "Ingest",
+            "state": "active" if (ingested or done) else ("live" if running else "waiting"),
+            "value": f"{audit.row_count:,} rows" if ingested else "Reading your file",
+            "note": f"{audit.valid_pct:.1f}% parsed" if audit.valid_pct is not None else "",
+        },
+        {
+            "label": "Price",
+            "state": "active" if done else ("live" if running and ingested else "waiting"),
+            "value": f"${float(audit.total_spend_usd):,.2f} observed"
+            if done and audit.total_spend_usd is not None
+            else ("In progress" if running and ingested else "Waiting"),
+            "note": "pinned pricing table" if done else "",
+        },
+        {
+            "label": "Detect",
+            "state": "active" if done else "waiting",
+            "value": "Six deterministic detectors" if not done else "Findings ranked",
+            "note": "lands with the final commit" if running else "",
+        },
+        {
+            "label": "Report",
+            "state": "active" if done else "waiting",
+            "value": "Ready" if done else "Waiting",
+            "note": f"{audit.observed_days or 0} day(s) observed" if done else "",
+        },
+    ]
+
+
+@router.get("/audits/{audit_id}/progress", response_class=HTMLResponse)
+def audit_progress(
+    request: Request, audit_id: str, user_email: str = Depends(current_user)
+) -> HTMLResponse:
+    """The live pipeline theater — where the browser lands after an upload."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        audit = _owned_audit(session, user, audit_id)
+        # not via _shell_ctx: "upload"-adjacent pages have no help-registry
+        # destination (its KeyError guard is deliberate), so the shell fields
+        # are assembled directly — caught by rendering, not by review.
+        plan_key = user_plan(session, user.id)
+        return _render(
+            request,
+            "app/audit_progress.html",
+            audit=audit,
+            stages=_theater_stages(audit),
+            rejected=_rejected_rows(audit),
+            page="upload",
+            plan=plan_key,
+            plan_name=plans.get(request.app.state.settings, plan_key).name,
+            freshness="",
+            user_email=user.email,
+            purpose="Watch this audit move through the pipeline; the report link lands here.",
+            show_tour=False,
+        )
+
+
+@router.get("/audits/{audit_id}/progress/partial", response_class=HTMLResponse)
+def audit_progress_partial(
+    request: Request, audit_id: str, user_email: str = Depends(current_user)
+) -> HTMLResponse:
+    """The polled fragment. Ownership re-checked on EVERY poll (§5d — the
+    page not being yours must fail here too, not only at first render)."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        audit = _owned_audit(session, user, audit_id)
+        return _render(
+            request,
+            "app/_audit_progress.html",
+            audit=audit,
+            stages=_theater_stages(audit),
+            rejected=_rejected_rows(audit),
+        )
+
+
+@router.get("/audits/{audit_id}/row-errors", response_model=None)
+def audit_row_errors(
+    request: Request, audit_id: str, user_email: str = Depends(current_user)
+) -> FileResponse:
+    """The validator's rejects, as the CSV the pipeline already wrote."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        audit = _owned_audit(session, user, audit_id)
+        if not audit.upload_path:
+            raise HTTPException(status_code=404, detail="row errors purged with the upload")
+        path = Path(audit.upload_path).parent / "row_errors.csv"
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="no rows were rejected")
+        return FileResponse(path, media_type="text/csv", filename=f"row-errors-{audit_id[:8]}.csv")
 
 
 @router.get("/findings", response_class=HTMLResponse)

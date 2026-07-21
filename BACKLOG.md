@@ -293,3 +293,16 @@ Until a trigger fires: new ideas here, never into code.
 - Customer API keys: first integration request.
 - PWA/native: only after analytics show repeat mobile usage.
 - Public changelog page: docs backlog; CHANGELOG.md remains the record.
+
+
+## WP-PIPELINE-UI — FIRST post-launch gated milestone (R-PIPELINE-UI-SEQ, 2026-07-27)
+Runs list (every audit: status, trigger, duration, expandable stage
+timeline); per-stage drill-in (rows ingested vs rejected, priced vs
+unpriced, per-detector ran/found-nothing honest-zeros evidence); connector
+pull lineage (per-pull rows + failures, not just last_pull_at); alert
+evaluation history ("checked, nothing crossed" — not only firings);
+additive stage_events migration for real per-stage timings. Kit-composed
+throughout (runs = table_open, timeline = ribbon rich form, live =
+computing_label). Sequenced against WP-REPORT-VISUAL at day-45 by signal.
+Pre-launch carve-out (live theater + row-errors download) shipped ahead of
+it under R-PIPELINE-UI-SEQ.

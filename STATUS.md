@@ -3,6 +3,19 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## FOUNDER-OWNED TASKS (consolidated order 2026-07-27 §4)
+
+1. UptimeRobot public status page + CNAME status.tokenops.cloud (runbook
+   §3b, ~5 min) — the footer link must resolve BEFORE the launch thread.
+2. Production walkthrough immediately after the unified-deploy verdict:
+   clarity + function only, punch list by number, ACCEPT/HOLD.
+3. Provider-side subscription closures whenever the daily digest flags one
+   (manual until API-key adapters ship).
+4. OPEN: the §2 before/after verdict arrived as the unfilled template
+   ("exceptions by number: <none | list>") — the design-round closure needs
+   the filled verdict; the machine chain pauses at the deploy step, which is
+   founder-observed regardless.
+
 ## WIRING GATE CLOSED (2026-07-21) — ux PASS-WITH-NOTES · vv PASS-WITH-NOTES · cold PASS-WITH-NOTES
 
 All gates ran on the settled diff 1d501bd..19feb36 (kit §3+§4 → §5 → §6 →

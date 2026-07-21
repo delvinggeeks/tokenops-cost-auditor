@@ -1,0 +1,53 @@
+{# The polled theater fragment (R-PIPELINE-UI-SEQ carve-out i). Non-terminal
+   states re-arm the poll by carrying hx-get on the wrapper; terminal states
+   render without it, so polling stops by construction. #}
+{% import "kit/_kit.html" as kit %}
+<div id="theater"
+     {% if audit.status in ("queued", "processing") %}
+     hx-get="/audits/{{ audit.id }}/progress/partial" hx-trigger="every 2500ms"
+     hx-swap="outerHTML"
+     {% endif %}>
+
+  {{ kit.pipeline_ribbon(stages) }}
+
+  {% if audit.status == "queued" %}
+    {{ kit.computing_label("Waiting for a worker slot") }}
+  {% elif audit.status == "processing" %}
+    {{ kit.computing_label("Auditing — this page updates itself") }}
+  {% elif audit.status == "done" %}
+    <div class="theater-done">
+      <p><span class="badge badge-verified">Done</span>
+        {{ "{:,}".format(audit.row_count or 0) }} calls audited over
+        {{ audit.observed_days or 0 }} day(s).</p>
+      <p>
+        {{ kit.button("Open your findings", href="/findings", variant="primary") }}
+        {{ kit.button("Back to the dashboard", href="/dashboard") }}
+      </p>
+      <p class="muted">The report link is also in your email.</p>
+    </div>
+  {% elif audit.status == "failed" %}
+    {% set why = audit.error or "Something went wrong while processing this audit." %}
+    {{ kit.error_state(
+         "This audit failed",
+         why ~ ("" if why.endswith(".") else ".")
+           ~ " Fix the rows below if any were rejected, or upload the file again — "
+           ~ "uploads are free to retry. Stuck? support@tokenops.cloud replies "
+           ~ "within 1 business day.",
+         retry_href="/upload") }}
+  {% endif %}
+
+  {# carve-out ii: the validator's verdict, stated either way. #}
+  {% if audit.row_count is not none %}
+    <p class="theater-rejects">
+      {% if rejected > 0 %}
+        <a href="/audits/{{ audit.id }}/row-errors">{{ "{:,}".format(rejected) }} row{{ "" if rejected == 1 else "s" }}
+          rejected — see why (CSV)</a>
+      {% else %}
+        0 rows rejected — every row parsed.
+      {% endif %}
+    </p>
+  {% endif %}
+
+  <div class="provenance">Audit {{ audit.id[:4] }}…{{ audit.id[-3:] }} ·
+    status: {{ audit.status }}</div>
+</div>
