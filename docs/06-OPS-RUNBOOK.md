@@ -62,6 +62,19 @@ PAYMENTS (FR-18/R-Q11 link+webhook design, already implemented):
   billing is switched on" to live Pay links automatically. Until then,
   admin mark-paid (Q8) remains the manual fulfillment path.
 
+PRICING (R-PRICING-FINAL-2, 2026-07-22): all prices live in config —
+PLAN_* env vars override Settings defaults; nothing is inline. Launch-
+cohort mechanics: the pricing display flips from LAUNCH to LIST in code
+when a market's first-200 cohort fills (counted from subscription rows).
+The HOSTED payment pages are founder-side: create them at LAUNCH prices
+(Pro $19 / ₹499, Scale $59 / ₹14,999) at activation; when the ops daily
+digest prints "Launch cohort <CCY>: FULL", update that market's hosted
+page to LIST prices (Pro $29 / ₹999, Scale $99 / ₹14,999). Existing
+subscriptions keep charging what they started at (provider-side) — the
+grandfather promise needs no action. Until the hosted page is updated a
+new subscriber can pay launch against a list display: an undercharge,
+never the reverse.
+
 FEDERATED SIGN-IN (Google / Microsoft / GitHub — each independent, 2026-07-27):
 Every provider is config-gated by its own credential pair; its "Continue
 with …" button renders on /login + /signup only once configured (dead

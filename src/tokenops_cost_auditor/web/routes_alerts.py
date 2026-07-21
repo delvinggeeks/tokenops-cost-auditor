@@ -98,6 +98,12 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
             .scalars()
             .all()
         )
+        currency = plans.viewer_currency(
+            session,
+            user.id,
+            request.query_params.get("ccy"),
+            request.headers.get("accept-language", ""),
+        )
         ctx = _shell_ctx(session, request, user, "alerts")
         return _render(
             request,
@@ -105,9 +111,11 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
             rules=rules,
             history=history,
             labels=RULE_LABELS,
-            # §5b honest upsell: what unlocks it and what that costs, both
-            # currencies (R-Q11), no dark patterns.
+            # §5b honest upsell: what unlocks it and what that costs, in the
+            # viewer's ONE currency (R-PRICING-FINAL-2), no dark patterns.
             unlock_plan=None if watches else plans.get(settings, plans.PRO),
+            currency=currency,
+            launch_open=plans.launch_open(session, settings, currency),
             show_tour=False,
             **ctx,
         )

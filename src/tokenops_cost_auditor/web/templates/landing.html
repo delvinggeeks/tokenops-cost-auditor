@@ -306,16 +306,32 @@
   </section>
 
   {# ============ 8 · PLANS — from the price config, never inlined ========== #}
+  {# R-PRICING-FINAL-2: ONE currency per viewer, launch-cohort pricing while
+     open (flip computed in code), honest qualifying line, no fake discounts. #}
   <section class="land-plans" data-reveal id="plans">
     <div class="wrap">
       <p class="sched">Plans</p>
       <h2>Plans</h2>
+      <p class="plans-qualify">Spending more than {{ qualify_spend }} a month on
+        AI? Pro pays for itself. Less? Start free — we'll be here when your
+        bill grows.</p>
+      <p class="plans-ccy" aria-label="Currency">
+        {% if currency == "INR" %}
+        <strong>INR</strong> · <a href="/?ccy=USD#plans">USD</a>
+        {% else %}
+        <strong>USD</strong> · <a href="/?ccy=INR#plans">INR</a>
+        {% endif %}
+      </p>
       <div class="plan-cards">
         {% for p in catalogue %}
         <div class="plancard{{ ' plancard-hi' if p.key == 'pro' else '' }}">
           <h3>{{ p.name }}</h3>
-          <div class="plancard-price money">{{ p.display_both() if p.usd else "No card, ever" }}</div>
+          <div class="plancard-price money">{{ p.display(currency, launch=launch_open and p.has_launch(currency)) if p.usd else "No card, ever" }}</div>
+          {% if p.usd and launch_open and p.has_launch(currency) %}
+          <p class="plancard-launch">{{ p.launch_note(currency, cohort_size) }}</p>
+          {% endif %}
           <p>{{ p.blurb }}</p>
+          {% if p.gate_line(currency) %}<p class="plancard-gate">{{ p.gate_line(currency) }}</p>{% endif %}
           <a class="btn{{ ' btn-primary' if p.key == 'pro' else '' }}" href="/signup">
             {{ "Start free" if not p.usd else "Start with " ~ p.name }}</a>
         </div>
@@ -324,6 +340,9 @@
       <p class="plans-oneshot"><strong>One-off audit:</strong> {{ one_shot }} —
         a single full audit of a log file, no subscription. For enterprises,
         <a href="/legal/terms">terms here</a>.</p>
+      <p class="plans-anchor muted">Less than a tenth of what observability
+        platforms charge — and it pays for itself in found waste.
+        {% if currency == "INR" %}Prices include GST.{% endif %}</p>
     </div>
   </section>
 

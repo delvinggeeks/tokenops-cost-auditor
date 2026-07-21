@@ -56,6 +56,14 @@ def _hero_variant(request: Request) -> str:
 def landing(request: Request) -> HTMLResponse:
     variant = _hero_variant(request)
     settings = request.app.state.settings
+    # R-PRICING-FINAL-2: ONE currency per viewer (toggle available); launch
+    # pricing shows while the market's first-N cohort has room — the flip to
+    # list is computed here, in code, from subscription rows.
+    currency = plans.pick_currency(
+        request.query_params.get("ccy"), request.headers.get("accept-language", "")
+    )
+    with request.app.state.session_factory() as db:
+        launch = plans.launch_open(db, settings, currency)
     response = _render(
         request,
         "landing.html",
@@ -63,7 +71,11 @@ def landing(request: Request) -> HTMLResponse:
         # R-LANDING-2 §8: prices come from THE price config, never inlined —
         # and §7's rail line is the report model's own constant, single-sourced.
         catalogue=[plans.catalogue(settings)[k] for k in plans.ALL_PLANS],
-        one_shot=plans.one_shot_display(settings),
+        one_shot=plans.one_shot_display(settings, currency),
+        currency=currency,
+        launch_open=launch,
+        cohort_size=settings.launch_cohort_size,
+        qualify_spend=f"${settings.qualify_spend_usd:,.0f}",
         equiv_spend_line=EQUIV_SPEND_LINE,
         user_email=session_email(request),
     )
@@ -196,7 +208,9 @@ def terms(request: Request) -> HTMLResponse:
     # the card (R-ONE-PRICE-CONFIG). It was hardcoded here and had already
     # drifted to a rate we do not charge.
     return _render(
-        request, "legal/terms.html", one_shot=plans.one_shot_display(request.app.state.settings)
+        request,
+        "legal/terms.html",
+        one_shot=plans.one_shot_terms_display(request.app.state.settings),
     )
 
 

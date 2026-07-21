@@ -94,6 +94,14 @@ widgets:
     do: "Nothing — it runs itself. Apply fixes before it runs and the next audit measures them."
     link_text: "Scheduled audits"
     link: "/guide/scheduled-audits"
+  yesterday:
+    title: "Yesterday"
+    tells: "What yesterday cost, per source, and where the month stands."
+    what: "Yesterday's AI spend across your connected sources, and month-to-date."
+    where: "Daily usage pulls, priced on the same verified rate card your audits use."
+    do: "Set a budget on Alerts and this tile tracks it; the daily email carries the same numbers."
+    link_text: "Set a budget line"
+    link: "/alerts"
   alerts:
     title: "Recent alerts"
     tells: "Surprises we caught between audits."

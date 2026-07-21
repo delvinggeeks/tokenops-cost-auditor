@@ -83,9 +83,11 @@ class TestPriceConfig:
         assert cat["pro"].usd == settings.plan_pro_usd
         assert cat["pro"].inr == settings.plan_pro_inr
         assert cat["team"].usd == settings.plan_team_usd
-        # both currencies are shown wherever a paid plan is (R-Q11)
-        both = cat["pro"].display_both()
-        assert "$" in both and "₹" in both
+        # R-PRICING-FINAL-2 superseded R-Q11's both-currency display: each
+        # viewer sees ONE currency, and launch prices come from config too.
+        assert cat["pro"].launch_usd == settings.plan_pro_usd_launch
+        assert cat["pro"].launch_inr == settings.plan_pro_inr_launch
+        assert cat["team"].launch_inr is None, "India Scale is flat — no launch tier"
         # Free is genuinely free — no price, no card. R-FREE-CONNECT
         # (2026-07-27) superseded R-Q5's zero: one connection, one metered audit.
         assert cat["free"].usd is None and cat["free"].sources == 1
@@ -379,8 +381,11 @@ class TestBillingPage:
         assert client.get("/billing").status_code == 401
         page = client.get("/billing", headers={"X-User-Email": EMAIL})
         assert page.status_code == 200
-        # both currencies for paid plans (R-Q11), no card ask for Free
-        assert "$" in page.text and "₹" in page.text
+        # ONE currency per view (R-PRICING-FINAL-2 superseded R-Q11): default
+        # is USD, the INR set is one toggle away, and neither view mixes.
+        assert "$" in page.text and "₹499" not in page.text
+        inr = client.get("/billing?ccy=INR", headers={"X-User-Email": EMAIL}).text
+        assert "₹" in inr
         assert "No card required" in page.text
         assert "One-off audit" in page.text
         assert "never reach our servers" in page.text
@@ -420,25 +425,29 @@ class TestPlanHelpers:
         assert cat["pro"].display("INR").startswith("₹")
         assert cat["pro"].display("USD").startswith("$")
         assert cat["free"].display("USD") == "—"
-        assert cat["free"].display_both() == "—"
         assert cat["pro"].price("INR") == settings.plan_pro_inr
+        assert cat["pro"].price("INR", launch=True) == settings.plan_pro_inr_launch
+        assert cat["team"].price("INR", launch=True) == settings.plan_team_inr, (
+            "no launch tier means launch pricing falls back to list"
+        )
         # an unknown plan key degrades to Free rather than raising
         assert plans.get(settings, "enterprise-platinum").key == "free"
         assert plans.currency_for_country(None) == "USD"
-        assert "$500" in plans.one_shot_display(settings)
+        assert plans.one_shot_display(settings, "USD") == f"${settings.one_shot_usd:,.0f}"
         # Both sides pinned: asserting only the USD half is how the INR half
         # drifted into the Terms page unnoticed (V-D10).
-        assert f"₹{settings.inr_per_usd_display * 500:,.0f}" in plans.one_shot_display(settings)
+        assert plans.one_shot_display(settings, "INR") == f"₹{settings.one_shot_inr:,.0f}"
 
     def test_terms_page_quotes_the_price_we_actually_charge(self, client: TestClient) -> None:
-        """The Terms page hardcoded '$500 / ₹20,000' while billing rendered
-        ₹45,000 from config — a binding document quoting a price 44% under
-        what an Indian customer's card is charged. It now renders from the
-        one price config, so the contract cannot disagree with the checkout."""
+        """A binding document must never disagree with the checkout (V-D10:
+        Terms once hardcoded a price 44% under what the card was charged).
+        R-PRICING-FINAL-2 made ₹20,000 THE config price (one_shot_inr) and
+        Terms names BOTH markets from config — contractual completeness, not
+        pricing-page mixing. The stale FX-derived figure must stay gone."""
         html = client.get("/legal/terms").text
         settings = Settings()
-        assert plans.one_shot_display(settings) in html
-        assert "₹20,000" not in html
+        assert plans.one_shot_terms_display(settings) in html
+        assert "₹45,000" not in html
 
 
 class TestColdReviewRegressionsV8:

@@ -760,6 +760,38 @@ federation (OAuth) implementation, payment-gateway activation audit, and
 market-grounded pricing (deep-research commissioned) — tracked as the
 same-day follow-on workstreams.
 
+**R-PRICING-FINAL-2 (founder-ratified 2026-07-22, after R-PRICING-FINAL +
+five amendment rounds and the §5 worth test).** Dual-market, two-cohort:
+GLOBAL Pro $19 launch → $29 list, Scale $59 → $99; INDIA Pro ₹499 launch →
+₹999 list (incl. GST), Scale ₹14,999 flat (RBI ₹15,000 AFA ceiling; UPI
+Autopay primary rail); one-shots $500/₹20,000 (deliberately not parity —
+founder time). Launch cohort = first 200 paid subscribers PER MARKET,
+grandfathered for life (provider-side subscriptions keep their price); the
+display flip to list is computed IN CODE from subscription rows
+(plans.launch_open); hosted-page update is a founder step on the ops-digest
+"cohort FULL" notice (undercharge-only window). One currency per view by
+billing country, other on labeled toggle, no surface mixes (test-pinned);
+audited-spend gates $25K/$100K stated as copy; qualifying line ("Spending
+more than $500/mo on AI? Pro pays for itself...") and anchor line ship on
+the plans section; NO fake discounting ever. Supersedes R-Q11's
+both-currency display; Terms names both markets from config (contractual
+completeness). Evidence base: launch/PRICING-INDIA-ANALYSIS.md +
+launch/UNIT-ECONOMICS.md (verified India research: ChatGPT Go ₹399 anchor,
+Entry SaaS band ₹800-1,500, e-mandate rules, spend-by-segment).
+
+**R-DAILY-LOOP (founder-ratified 2026-07-22, "core problem pattern that
+lives in their ecosystem everyday").** The retention mechanism penetration
+pricing depends on, riding machinery that already runs daily: (1) daily
+spend digest email per paying customer — yesterday per source, delta vs
+own 7-day average, month-to-date, audit-identical rate math, R-STMT-GATING
+grammar (zero-spend day stamps silently), subject carries the number;
+(2) dashboard "Yesterday" tile (same helper, same numbers, honest zeros);
+(3) budget line: the existing soft_budget rule gains staged 50/80/100%
+month-to-date alerts, once per stage per month, AlertEvent-deduped,
+observe-only (X-02 untouched — advisory, never enforcement). All paid
+plans globally — retention is not a geo feature. Migration 008 (additive:
+users.last_daily_digest_at). WhatsApp digest delivery = BACKLOG trigger.
+
 **R-FED-MAJORS (founder question 2026-07-21: "why only Google").** The
 federation set for this buyer is Google + Microsoft (Entra ID v2 common
 endpoint — the enterprise directory standard, work/school AND personal)

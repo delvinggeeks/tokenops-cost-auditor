@@ -103,6 +103,17 @@ def tick(
             stats["audit_errors"] += 1
             log.warning("connector.audit_failed", source_id=source.id, error=str(exc)[:200])
     if mail is not None:
+        # R-DAILY-LOOP: the daily digest goes out AFTER pulls and audits so it
+        # carries the freshest day. Isolated like every stage — a digest
+        # failure must not block dunning or alerts.
+        try:
+            from tokenops_cost_auditor.services.connectors import daily
+
+            stats.update(daily.run_digests(session, settings, table, mail, now=now))
+        except Exception as exc:
+            session.rollback()
+            stats["digest_errors"] = stats.get("digest_errors", 0) + 1
+            log.warning("digest.stage_failed", error=str(exc)[:200])
         # Walk any failing subscription to the rung it has reached (R-Q12).
         try:
             dunning = subscriptions.advance_dunning(session, settings, mail, now=now)

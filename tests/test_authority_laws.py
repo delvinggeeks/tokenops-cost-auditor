@@ -58,9 +58,11 @@ class TestCapabilitiesAreOmittedNotDisabled:
         assert page.status_code == 200
         assert "_enabled" not in page.text, "rule inputs shipped to a plan nothing watches"
         assert "Save alert settings" not in page.text
-        # honest upsell in its place: what unlocks it, what it costs, both currencies
+        # honest upsell in its place: what unlocks it and what it costs, in
+        # the viewer's ONE currency (R-PRICING-FINAL-2 superseded R-Q11's
+        # both-currency law) — default view prices in dollars
         assert "/billing" in page.text
-        assert "$" in page.text and "₹" in page.text
+        assert "$" in page.text and "₹499" not in page.text
         # their own data is not withheld — history stays
         assert "Recent alerts" in page.text
 

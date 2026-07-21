@@ -256,3 +256,43 @@ def alerts_armed(session: Session, user_id: str, watching: bool = True) -> Widge
         provenance=(f"{len(rows)} rule(s) armed · checked hourly" if rows else "No rules set up"),
         data={"count": len(rows), "rules": [r.rule for r in rows]},
     )
+
+
+def yesterday_spend(
+    session: Session, table: object, user_id: str, now: datetime | None = None
+) -> Widget:
+    """R-DAILY-LOOP: the morning-check tile. Same rate math as the digest and
+    the source audit (daily.spend_between), so no two surfaces ever disagree.
+    Honest zero: a connected account with a quiet day shows $0.00 — only an
+    account with no sources gets the empty state."""
+    from tokenops_cost_auditor.services.alerts.rules import SOFT_BUDGET
+    from tokenops_cost_auditor.services.connectors import daily as daily_svc
+
+    now = now or datetime.now(UTC)
+    today = now.date()
+    yday = today - timedelta(days=1)
+    sources = (
+        session.execute(select(Source).where(Source.user_id == user_id, Source.status == "active"))
+        .scalars()
+        .all()
+    )
+    if not sources:
+        return Widget(empty=True, provenance="No connected sources")
+    day = daily_svc.spend_between(session, table, user_id, yday, yday)  # type: ignore[arg-type]
+    mtd = daily_svc.spend_between(session, table, user_id, today.replace(day=1), yday)  # type: ignore[arg-type]
+    rule = session.execute(
+        select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.rule == SOFT_BUDGET)
+    ).scalar_one_or_none()
+    budget = float(rule.threshold) if rule is not None and rule.enabled and rule.threshold else None
+    return Widget(
+        empty=False,
+        provenance=f"Daily usage pulls · priced on the verified rate card · {yday:%d %b}",
+        data={
+            "total": day.total_usd,
+            "by_source": sorted(day.by_source.items(), key=lambda kv: -kv[1])[:3],
+            "mtd": mtd.total_usd,
+            "budget": budget,
+            "budget_pct": (mtd.total_usd / budget * 100.0) if budget else None,
+            "day_label": f"{yday:%d %b}",
+        },
+    )

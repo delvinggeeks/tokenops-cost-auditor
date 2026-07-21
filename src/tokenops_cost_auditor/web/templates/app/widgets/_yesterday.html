@@ -1,0 +1,24 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-4" id="w-yesterday">
+  {{ widget_head("i-clock", "yesterday", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>The daily loop starts with a connected source: every morning, what
+        yesterday cost and where the month stands.</p>
+      <a class="btn btn-quiet" href="/sources">Connect a source</a>
+    </div>
+  {% else %}
+    <div class="stat-lg money">${{ "%.2f"|format(w.data.total) }}</div>
+    {% for label, usd in w.data.by_source %}
+      <p class="muted" style="margin:0">{{ label }}: <span class="money">${{ "%.2f"|format(usd) }}</span></p>
+    {% endfor %}
+    <p style="margin-top: var(--s1)">Month so far:
+      <span class="money">${{ "%.2f"|format(w.data.mtd) }}</span>
+      {% if w.data.budget_pct is not none %}
+        · {{ "%.0f"|format(w.data.budget_pct) }}% of your
+        <span class="money">${{ "%.0f"|format(w.data.budget) }}</span>/mo budget
+      {% endif %}
+    </p>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

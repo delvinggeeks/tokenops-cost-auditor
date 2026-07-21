@@ -21,14 +21,26 @@
   {{ kit.surface_close() }}
 
   {{ kit.surface_open(title="Plans", icon="statement", span=12) }}
+    {# R-PRICING-FINAL-2: ONE currency per view — the viewer's market only,
+       toggle for the other; launch-cohort note while the cohort is open. #}
+    <p class="muted" aria-label="Currency">
+      {% if currency == "INR" %}
+      <strong>INR</strong> · <a href="/billing?ccy=USD">show USD</a>
+      {% else %}
+      <strong>USD</strong> · <a href="/billing?ccy=INR">show INR</a>
+      {% endif %}
+    </p>
     {{ kit.table_open([
          {"label": "Plan"}, {"label": "Price", "cls": "money"}, {"label": "Sources"},
          {"label": "Audits"}, {"label": ""},
        ]) }}
       {% for p in catalogue %}
+        {% set p_launch = launch_open and p.has_launch(currency) %}
         <tr {% if p.key == current.key %}class="expanded"{% endif %}>
-          <td><strong>{{ p.name }}</strong><br><small class="muted">{{ p.blurb }}</small></td>
-          <td class="money">{{ p.display_both() if p.usd else "Free" }}</td>
+          <td><strong>{{ p.name }}</strong><br><small class="muted">{{ p.blurb }}</small>
+            {% if p.gate_line(currency) %}<br><small class="muted">{{ p.gate_line(currency) }}</small>{% endif %}</td>
+          <td class="money">{{ p.display(currency, launch=p_launch) if p.usd else "Free" }}
+            {% if p.usd and p_launch %}<br><small class="muted">{{ p.launch_note(currency, cohort_size) }}</small>{% endif %}</td>
           <td>{{ p.sources if p.sources else "—" }}</td>
           <td>{{ "Weekly, automatic" if p.scheduled_audits else p.uploads }}</td>
           <td>
@@ -36,9 +48,9 @@
               <span class="badge badge-verified">current</span>
               {% if not p.usd %}<small class="muted">No card required</small>{% endif %}
             {% elif p.usd %}
-              {% if stripe_link %}{{ kit.button("Pay in USD", href=stripe_link, variant="primary") }}{% endif %}
-              {% if razorpay_link %}{{ kit.button("Pay in INR", href=razorpay_link) }}{% endif %}
-              {% if not stripe_link and not razorpay_link %}
+              {% set pay_link = razorpay_link if currency == "INR" else stripe_link %}
+              {% if pay_link %}{{ kit.button("Pay in " ~ currency, href=pay_link, variant="primary") }}
+              {% else %}
                 <small class="muted">Checkout opens once billing is switched on.</small>
               {% endif %}
             {% else %}
@@ -51,7 +63,8 @@
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
       a single full audit of a log file, no subscription.</p>
     <div class="provenance">Prices are billed in your country's currency, chosen at
-      checkout. One subscription per account.</div>
+      checkout. One subscription per account.
+      {% if currency == "INR" %}Prices include GST.{% endif %}</div>
   {{ kit.surface_close() }}
 </div>
 {% endblock %}

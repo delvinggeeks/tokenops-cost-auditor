@@ -63,6 +63,8 @@ class User(Base):
     # v1.5 V-D7 email preference. Transactional mail (magic links,
     # report-ready) is never opt-out; this covers the monthly statement.
     statement_emails: Mapped[bool | None] = mapped_column(Boolean)
+    # R-DAILY-LOOP: when the daily spend digest last went out (dedupe stamp)
+    last_daily_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Audit(Base):

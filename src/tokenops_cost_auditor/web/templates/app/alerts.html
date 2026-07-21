@@ -15,7 +15,7 @@
          "Alerts are part of the " ~ unlock_plan.name ~ " plan",
          "Alerts are evaluated when a scheduled audit finishes, and your current
           plan doesn't include scheduled audits — so there is nothing watching
-          between your uploads. " ~ unlock_plan.name ~ " (" ~ unlock_plan.display_both() ~ ")
+          between your uploads. " ~ unlock_plan.name ~ " (" ~ unlock_plan.display(currency, launch=launch_open and unlock_plan.has_launch(currency)) ~ ")
           audits your connected source weekly and emails you when something
           crosses a line you set.",
          action_label="See plans", action_href="/billing") }}

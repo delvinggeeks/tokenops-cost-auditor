@@ -15,6 +15,27 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-PRICING-FINAL-2 + R-DAILY-LOOP (2026-07-22) — dual-market pricing + the daily surface
+
+Ratified after five founder amendment rounds (analysis in
+launch/PRICING-INDIA-ANALYSIS.md + UNIT-ECONOMICS.md). Prices now: global
+$19→$29 / $59→$99, India ₹499→₹999 / ₹14,999 flat, one-shots $500/₹20,000;
+first-200 launch cohort PER MARKET, grandfathered, flip computed in code
+(plans.launch_open counts Subscription rows; cancelled counts, failed-only
+doesn't); one currency per view (viewer_currency: subscription wins, then
+?ccy, then Accept-Language), no-mixing test-pinned; R-Q11 display_both
+RETIRED. Daily loop: services/connectors/daily.py (digest + 50/80/100
+budget stages on the existing soft_budget rule, AlertEvent-deduped),
+tick() runs digests after audits, dashboard "yesterday" widget
+(metrics.yesterday_spend, same rate math as source_audit — one formula,
+three surfaces), migration 008 users.last_daily_digest_at (head
+a9d24c8e7f31). Ops digest prints per-market cohort fill; runbook §3a
+documents the hosted-page flip step (undercharge-only window). File map
+delta: +services/connectors/daily.py, +tests/test_pricing_final.py,
++tests/test_daily_loop.py, +widgets/_yesterday.html, +migration 008;
+plans.py rewritten (launch/cohort/currency machinery). Open question: none
+— founder actions unchanged (payment links now created at LAUNCH prices).
+
 ## WIRING GATE CLOSED (2026-07-21) — ux PASS-WITH-NOTES · vv PASS-WITH-NOTES · cold PASS-WITH-NOTES
 
 All gates ran on the settled diff 1d501bd..d4914fe (kit §3+§4 → §5 → §6 →

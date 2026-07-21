@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, AuditLogEntry, Payment
 from tokenops_cost_auditor.persistence.repo import make_engine, make_session_factory
+from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 BACKUP_MAX_AGE_H = 26  # runbook §3 alert condition
@@ -112,6 +113,17 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
             f"{len(needing)} NEED provider-side subscription cancellation: "
             + ", ".join(e.actor for e in needing)
         )
+
+    # R-PRICING-FINAL-2: launch-cohort fill per market. The display flips to
+    # list price in code at the cap; the HOSTED payment page is founder-side,
+    # so a full cohort is a founder action item (runbook §3a).
+    for currency in plans.CURRENCIES:
+        used = plans.cohort_used(session, currency)
+        cap = settings.launch_cohort_size
+        line = f"Launch cohort {currency}: {used}/{cap}"
+        if used >= cap:
+            line += " — FULL: update the hosted payment page to LIST prices now"
+        lines.append(line)
 
     # R-GTM-CONTROL: weekly early-access signups = Phase-2 trigger evidence
     week_ago = now - timedelta(days=7)

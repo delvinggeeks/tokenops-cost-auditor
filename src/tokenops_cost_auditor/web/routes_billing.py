@@ -46,6 +46,15 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
         catalogue = plans.catalogue(settings)
         current = ent["plan"]
         status = str(ent["status"])
+        # R-PRICING-FINAL-2: a subscribed account sees its own billing
+        # currency; everyone else gets the viewer pick (toggle honoured).
+        currency = plans.viewer_currency(
+            session,
+            user.id,
+            request.query_params.get("ccy"),
+            request.headers.get("accept-language", ""),
+        )
+        launch = plans.launch_open(session, settings, currency)
         ctx = _shell_ctx(session, request, user, "billing")
         return _render(
             request,
@@ -55,7 +64,10 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             status=status,
             status_words=STATUS_WORDS.get(status, ""),
             read_only=bool(ent["read_only"]),
-            one_shot=plans.one_shot_display(settings),
+            currency=currency,
+            launch_open=launch,
+            cohort_size=settings.launch_cohort_size,
+            one_shot=plans.one_shot_display(settings, currency),
             razorpay_link=request.app.state.razorpay.payment_link(),
             stripe_link=request.app.state.stripe.payment_link(),
             now=datetime.now(UTC),

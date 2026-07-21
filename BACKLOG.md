@@ -26,6 +26,15 @@ platform-v1.0.0.
 Recorded triggers, not build items. When a trigger fires, notify the founder;
 promotion still requires a PRD amendment.
 
+- **WhatsApp daily-digest delivery** — trigger: India Pro cohort >50
+  subscribed AND email-open evidence weak. [R-DAILY-LOOP 2026-07-22: the
+  true India-ecosystem channel, but a new vendor surface (WhatsApp
+  Business API) — email digest ships first; this is the escalation.]
+- **Success-fee enterprise experiment** — trigger: first quarter with
+  verified-savings history on an enterprise one-shot customer.
+  [R-PRICING-FINAL §1 registered the Vantage-Autopilot grammar ("$500
+  minimum or 10-15% of VERIFIED first-quarter savings") as a post-launch
+  experiment on the enterprise line only; needs Terms addition.]
 - **Sign in with Apple** — trigger: a real iOS/App Store surface, or the
   first customer request. [R-FED-MAJORS 2026-07-21: consumer/iOS-mandated;
   Apple's private-relay addresses defeat the work-email identity everything

@@ -121,11 +121,30 @@ class Settings(BaseSettings):
     inr_per_usd_display: float = 90.0
 
     # ---- v1.5 MONITOR (PLAN-V15 §0 rulings) ----
-    # Plans (R-Q11: INR list FIXED IN CONFIG; display both currencies)
-    plan_pro_usd: float = 99.0
-    plan_team_usd: float = 299.0
-    plan_pro_inr: float = 8999.0
-    plan_team_inr: float = 26999.0
+    # Plans (R-PRICING-FINAL-2, founder-ratified 2026-07-22): dual-market
+    # structure — global USD via Stripe, India INR via Razorpay, prices ONLY
+    # here, never inline. LIST prices below; LAUNCH prices apply per market
+    # while its first-N cohort is open, and are kept for life provider-side
+    # (a subscription charges what it started at). Launch 0 = no launch tier
+    # for that plan (India Scale is flat). Supersedes R-Q11's both-currency
+    # display: each viewer sees ONE currency, by billing country.
+    plan_pro_usd: float = 29.0
+    plan_team_usd: float = 99.0
+    plan_pro_inr: float = 999.0
+    plan_team_inr: float = 14999.0
+    plan_pro_usd_launch: float = 19.0
+    plan_team_usd_launch: float = 59.0
+    plan_pro_inr_launch: float = 499.0
+    plan_team_inr_launch: float = 0.0
+    launch_cohort_size: int = 200  # per market; USD and INR count separately
+    one_shot_usd: float = 500.0
+    one_shot_inr: float = 20000.0
+    # Audited-spend gates (R-PRICING-FINAL §1): stated tier bounds and the
+    # enterprise handoff line — copy, not metering.
+    plan_pro_spend_gate_usd: float = 25000.0
+    plan_team_spend_gate_usd: float = 100000.0
+    # Honest qualifying threshold on pricing surfaces (§5 worth test)
+    qualify_spend_usd: float = 500.0
     # R-Q5/Q6: a "source" = one active provider org connection
     # R-FREE-CONNECT (founder-ratified 2026-07-27): Free connects ONE source;
     # its single audit is metered by the signup comp credit, and the

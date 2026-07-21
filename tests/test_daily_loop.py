@@ -1,0 +1,316 @@
+"""R-DAILY-LOOP (founder-ratified 2026-07-22) — the daily surface.
+
+The retention mechanism the penetration pricing depends on: one email per
+paying customer per day carrying yesterday's spend per source (same rate
+math as audits), month-to-date, and staged 50/80/100% budget progress; the
+dashboard "Yesterday" tile shows the same numbers. R-STMT-GATING grammar:
+a zero-spend day stamps and stays silent.
+
+The fixture model claude-fable-5 is priced $10/M input in the verified
+rate card, so 1M uncached prompt tokens = an exact $10.00 — golden-number
+discipline without a spreadsheet.
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from tokenops_cost_auditor.persistence.models import (
+    AlertEvent,
+    AlertRule,
+    Source,
+    SourceUsage,
+    Subscription,
+    User,
+)
+from tokenops_cost_auditor.services.connectors import daily, schedule
+
+EMAIL = "daily@example.com"
+NOW = datetime.now(UTC)
+YESTERDAY = (NOW - timedelta(days=1)).date()
+
+
+class CapturingMail:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, str]] = []
+
+    def alert(self, to_email: str, subject: str, body: str) -> None:
+        self.sent.append((to_email, subject, body))
+
+    def magic_link(self, to_email: str, link_url: str) -> None:
+        pass
+
+    def report_ready(self, to_email: str, report_url: str) -> None:
+        pass
+
+
+def _paid_user(app: FastAPI, email: str = EMAIL, currency: str = "USD") -> str:
+    provider = "razorpay" if currency == "INR" else "stripe"
+    with app.state.session_factory() as session:
+        user = User(email=email)
+        session.add(user)
+        session.flush()
+        session.add(
+            Subscription(
+                user_id=user.id, provider=provider, plan="pro", status="active", currency=currency
+            )
+        )
+        session.commit()
+        return user.id
+
+
+def _source(app: FastAPI, user_id: str, label: str = "Claude Code") -> str:
+    with app.state.session_factory() as session:
+        source = Source(
+            user_id=user_id, provider="anthropic", label=label, credentials_encrypted="x"
+        )
+        session.add(source)
+        session.commit()
+        return source.id
+
+
+def _usage(
+    app: FastAPI,
+    source_id: str,
+    day=YESTERDAY,
+    prompt: int = 1_000_000,
+    model: str = "claude-fable-5",
+) -> None:
+    with app.state.session_factory() as session:
+        session.add(
+            SourceUsage(
+                source_id=source_id,
+                day=day,
+                model=model,
+                calls=10,
+                prompt_tokens=prompt,
+                completion_tokens=0,
+                cached_tokens=0,
+            )
+        )
+        session.commit()
+
+
+def _run(app: FastAPI, mail: CapturingMail) -> dict[str, int]:
+    with app.state.session_factory() as session:
+        return daily.run_digests(
+            session, app.state.settings, app.state.pricing_table, mail, now=NOW
+        )
+
+
+class TestTheDigest:
+    def test_carries_yesterdays_number_per_source(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        mail = CapturingMail()
+        stats = _run(app, mail)
+        assert stats["digests_sent"] == 1
+        to, subject, body = mail.sent[0]
+        assert to == EMAIL
+        assert subject.startswith("$10.00 yesterday")  # the subject carries the number
+        assert "Claude Code: $10.00" in body
+        assert "Month so far:" in body
+
+    def test_goes_out_at_most_once_per_day(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        mail = CapturingMail()
+        assert _run(app, mail)["digests_sent"] == 1
+        assert _run(app, mail)["digests_sent"] == 0, "same day, same customer — one email"
+
+    def test_a_zero_spend_day_stamps_and_stays_silent(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _source(app, uid)  # connected, but nothing happened yesterday
+        mail = CapturingMail()
+        stats = _run(app, mail)
+        assert stats["digests_sent"] == 0 and stats["digests_skipped"] == 1
+        assert mail.sent == []
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            assert user.last_daily_digest_at is not None, "silence still stamps — no retry storm"
+
+    def test_free_plans_get_no_digest(self, app: FastAPI) -> None:
+        with app.state.session_factory() as session:
+            user = User(email="free@example.com")
+            session.add(user)
+            session.commit()
+            uid = user.id
+        _usage(app, _source(app, uid))
+        mail = CapturingMail()
+        stats = _run(app, mail)
+        assert stats["digests_sent"] == 0 and mail.sent == []
+
+    def test_inr_billed_customer_sees_the_rupee_equivalent(self, app: FastAPI) -> None:
+        uid = _paid_user(app, currency="INR")
+        _usage(app, _source(app, uid))
+        mail = CapturingMail()
+        _run(app, mail)
+        assert "≈₹" in mail.sent[0][2], "INR-billed digests carry the display conversion"
+
+
+class TestCachedTokenGolden:
+    def test_cache_reads_bill_at_the_cache_rate_not_input(self, app: FastAPI) -> None:
+        """vv-gate f.2: claude-fable-5 is $10/M input, $1/M cache read, $50/M
+        output. 1M prompt of which 500K cached, plus 100K completion:
+        (500K*$10 + 500K*$1 + 100K*$50)/1M = $10.50 exactly. A formula
+        drift that bills cache reads at input rate would print $15.00."""
+        uid = _paid_user(app)
+        source = _source(app, uid)
+        with app.state.session_factory() as session:
+            session.add(
+                SourceUsage(
+                    source_id=source,
+                    day=YESTERDAY,
+                    model="claude-fable-5",
+                    calls=10,
+                    prompt_tokens=1_000_000,
+                    completion_tokens=100_000,
+                    cached_tokens=500_000,
+                )
+            )
+            session.commit()
+        mail = CapturingMail()
+        _run(app, mail)
+        assert mail.sent[0][1].startswith("$10.50 yesterday")
+
+
+class TestBudgetStages:
+    def _with_budget(self, app: FastAPI, threshold: float) -> str:
+        uid = _paid_user(app)
+        with app.state.session_factory() as session:
+            session.add(
+                AlertRule(user_id=uid, rule="soft_budget", threshold=threshold, enabled=True)
+            )
+            session.commit()
+        return uid
+
+    def test_a_stage_fires_once_and_escalates(self, app: FastAPI) -> None:
+        uid = self._with_budget(app, threshold=12.0)  # $10 mtd = 83% -> stage 80
+        source = _source(app, uid)
+        _usage(app, source)
+        mail = CapturingMail()
+        stats = _run(app, mail)
+        assert stats["budget_stages"] == 1
+        assert "80% of budget used" in mail.sent[0][1]
+        with app.state.session_factory() as session:
+            events = session.execute(select(AlertEvent)).scalars().all()
+            assert [e.detail["stage"] for e in events] == [80]
+        # next day, no new spend: nothing re-fires, nothing re-sends
+        with app.state.session_factory() as session:
+            later = daily.run_digests(
+                session,
+                app.state.settings,
+                app.state.pricing_table,
+                mail,
+                now=NOW + timedelta(days=1),
+            )
+        assert later["budget_stages"] == 0 and later["digests_sent"] == 0
+        # crossing 100% escalates exactly one stage further
+        _usage(app, source, day=(NOW + timedelta(days=1)).date(), prompt=300_000)  # +$3
+        with app.state.session_factory() as session:
+            final = daily.run_digests(
+                session,
+                app.state.settings,
+                app.state.pricing_table,
+                mail,
+                now=NOW + timedelta(days=2),
+            )
+        assert final["budget_stages"] == 1
+        assert mail.sent[-1][1].startswith("Over budget:")
+
+
+class TestTheTileAndTheTick:
+    def test_dashboard_tile_shows_the_same_number(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text
+        assert "Yesterday" in page and "$10.00" in page
+
+    def test_tile_empty_state_points_at_sources(self, app: FastAPI) -> None:
+        _paid_user(app)
+        page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text
+        assert "The daily loop starts with a connected source" in page
+
+    def test_widget_partial_route_serves_the_tile(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        resp = TestClient(app).get("/dashboard/w/yesterday", headers={"X-User-Email": EMAIL})
+        assert resp.status_code == 200 and "$10.00" in resp.text
+
+    def test_the_scheduler_tick_runs_digests(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            stats = schedule.tick(
+                session, app.state.settings, app.state.pricing_table, now=NOW, mail=mail
+            )
+        assert stats["digests_sent"] == 1
+        assert any(s.startswith("$10.00 yesterday") for _, s, _ in mail.sent)
+
+
+class TestTickStageIsolation:
+    """Every tick stage is isolated: one stage blowing up must not lose the
+    others (the V-D5 law, extended to the digest stage)."""
+
+    def test_a_digest_stage_failure_does_not_block_dunning_or_alerts(
+        self, app: FastAPI, monkeypatch
+    ) -> None:
+        from tokenops_cost_auditor.services.connectors import daily as daily_mod
+
+        def boom(*a, **k):
+            raise RuntimeError("digest down")
+
+        monkeypatch.setattr(daily_mod, "run_digests", boom)
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            stats = schedule.tick(
+                session, app.state.settings, app.state.pricing_table, now=NOW, mail=mail
+            )
+        assert stats["digest_errors"] == 1
+        assert "dunning_moved" in stats and "alerts_fired" in stats, "later stages still ran"
+
+    def test_dunning_and_alert_stage_failures_are_isolated_too(
+        self, app: FastAPI, monkeypatch
+    ) -> None:
+        from tokenops_cost_auditor.services.alerts import dispatch as alerts_mod
+        from tokenops_cost_auditor.services.payments import subscriptions as subs_mod
+
+        def boom(*a, **k):
+            raise RuntimeError("stage down")
+
+        monkeypatch.setattr(subs_mod, "advance_dunning", boom)
+        monkeypatch.setattr(alerts_mod, "run_all", boom)
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            stats = schedule.tick(
+                session, app.state.settings, app.state.pricing_table, now=NOW, mail=mail
+            )
+        assert stats["dunning_errors"] == 1
+        assert stats["alert_errors"] == 1
+
+    def test_an_audit_failure_counts_and_does_not_stop_the_tick(
+        self, app: FastAPI, monkeypatch
+    ) -> None:
+        uid = _paid_user(app)
+        source_id = _source(app, uid)
+        with app.state.session_factory() as session:
+            source = session.get(Source, source_id)
+            source.last_pull_at = NOW  # pull fresh; audit due (never audited)
+            session.commit()
+
+        def boom(*a, **k):
+            raise RuntimeError("audit down")
+
+        monkeypatch.setattr(schedule, "run_source_audit", boom)
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            stats = schedule.tick(
+                session, app.state.settings, app.state.pricing_table, now=NOW, mail=mail
+            )
+        assert stats["audit_errors"] == 1
+        assert "digests_sent" in stats, "the tick carried on past the failed audit"
