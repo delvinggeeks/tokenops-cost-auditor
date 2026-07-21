@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.services.payments import plans
+from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE, verify_session
 
 log = structlog.get_logger("tokenops_cost_auditor.web")
@@ -53,7 +55,18 @@ def _hero_variant(request: Request) -> str:
 @router.get("/", response_class=HTMLResponse)
 def landing(request: Request) -> HTMLResponse:
     variant = _hero_variant(request)
-    response = _render(request, "landing.html", hero_variant=variant)
+    settings = request.app.state.settings
+    response = _render(
+        request,
+        "landing.html",
+        hero_variant=variant,
+        # R-LANDING-2 §8: prices come from THE price config, never inlined —
+        # and §7's rail line is the report model's own constant, single-sourced.
+        catalogue=[plans.catalogue(settings)[k] for k in plans.ALL_PLANS],
+        one_shot=plans.one_shot_display(settings),
+        equiv_spend_line=EQUIV_SPEND_LINE,
+        user_email=session_email(request),
+    )
     if request.cookies.get(HERO_COOKIE) != variant:
         response.set_cookie(
             HERO_COOKIE, variant, max_age=30 * 86400, httponly=False, samesite="lax"
@@ -170,8 +183,6 @@ def terms(request: Request) -> HTMLResponse:
     # The price in the binding document comes from the SAME config that charges
     # the card (R-ONE-PRICE-CONFIG). It was hardcoded here and had already
     # drifted to a rate we do not charge.
-    from tokenops_cost_auditor.services.payments import plans
-
     return _render(
         request, "legal/terms.html", one_shot=plans.one_shot_display(request.app.state.settings)
     )

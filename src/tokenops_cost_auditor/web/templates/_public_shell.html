@@ -34,11 +34,16 @@
   </div>
 </header>
 
+{# Most public pages live in the measured column; the landing overrides this
+   block for full-bleed sections while keeping ONE shell (header + FR-23
+   footer stay shared — the seam stays closed). #}
+{% block main %}
 <main class="pub-main">
   <div class="wrap">
     {% block content %}{% endblock %}
   </div>
 </main>
+{% endblock %}
 
 <footer class="pub-foot">
   <div class="wrap">

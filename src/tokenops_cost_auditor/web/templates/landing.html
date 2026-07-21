@@ -1,68 +1,244 @@
-{% extends "base.html" %}
-{# Landing (FR-23; PRD §4 copy; R-GTM-CONTROL 2026-07-18 control narrative;
-   R-ICP agent-fleet; stats per docs/09 §6 policy). Invariants (T-WEB-01):
-   FR-23 string verbatim; exactly ONE primary class="cta"; attributed stats only. #}
-{% block content %}
-{# Hero A/B (R-PAINMOMENT). Sticky per visitor so the page never changes
-   under someone mid-read; the variant is logged for counting. #}
-{% if hero_variant == "billshock" %}
-<h1>Just got an AI bill you can't explain?</h1>
-{% else %}
-<h1>Take control of your AI spend.</h1>
-{% endif %}
-<p class="muted" style="font-size:1.1rem">
-  Claude Code, Codex, and your production LLM features leave a paper trail — their logs.
-  Step one of controlling that spend is knowing exactly where it leaks: upload your
-  logs and get back a dollar-ranked audit of the waste and how to prevent it.
-  No SDK, no proxy, no integration.
-</p>
+{% extends "_public_shell.html" %}
+{# R-LANDING-2 (founder GO 2026-07-25): the marketing landing, dressed in the
+   sanchaya values on the shared public shell. Nine sections in narrative
+   order; motion per design/MOTION-SPECS.md C1–C5 (the gate artifact).
+   Invariants (T-WEB-01 + R-GTM-CONTROL): FR-23 verbatim (shell footer);
+   exactly ONE class="cta"; attributed stats only (79/31/98 + our own 32.5%);
+   early-access block verbatim; no dates, no shipping promises.
+   NO-INVENTED-NUMBERS: every figure here is attributed or measured. #}
+{% block title %}TokenOps Cost Auditor — see what your AI spend is costing you{% endblock %}
 
-<p><a class="cta" href="/upload">Upload logs — get your audit</a></p>
+{% block main %}
+<main class="pub-main land">
 
-<div class="policy">
-  Your data: “analyzed then deleted; nothing retained beyond 7 days; never used for training.”
-</div>
+  {# ============ 1 · HERO — pain + platform + the 3D moment (C1) ============ #}
+  <section class="land-hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        {% if hero_variant == "billshock" %}
+        <h1>Just got an AI bill you can&rsquo;t explain?</h1>
+        {% else %}
+        <h1>Take control of your AI spend.</h1>
+        {% endif %}
+        <p class="hero-sub">The governance layer for your AI spend. Claude Code,
+          Codex, and your production LLM features leave a paper trail — their
+          logs. The audit is step one: a dollar-ranked report of exactly where
+          the money leaks and how to prevent it. No SDK, no proxy, no
+          integration.</p>
+        <p class="hero-ctas">
+          <a class="cta" href="/signup">Start free — 1 audit, no card</a>
+          <a class="btn" href="/upload">Upload logs — get your audit</a>
+          <a class="hero-sample" href="/sample">See a sample report →</a>
+        </p>
+        <p class="hero-note">Token counts only — no prompt or completion text
+          ever reaches us.</p>
+      </div>
+      {# THE 3D MOMENT (spec C1): a real dashboard capture from the seeded
+         demonstration account, tilting on pointer. Reduced-motion/no-JS:
+         static, flat, full lift — the fallback carries the same information. #}
+      <div class="hero-shot" data-tilt>
+        <img src="/static/land/hero-dashboard-sample.webp" width="1080" height="645"
+             alt="The TokenOps dashboard: a verified-savings headline over the audit pipeline — sample data from a seeded demonstration account">
+      </div>
+    </div>
+  </section>
 
-<div class="panel">
-  <strong>What you get</strong>
-  <ul class="checks">
-    <li>A dollar-ranked list of waste findings — missing prompt caching, retry storms
-        (the same request paid for again and again), oversized models, prompt bloat,
-        unbounded output caps, and chatty agent loops (agents re-sending the same
-        context in bursts of small calls).</li>
-    <li>Every finding backed by evidence rows (token counts, never your prompt text)
-        and a concrete fix — the audit is step one of a prevention path, not a
-        one-off dashboard.</li>
-    <li>A client-ready PDF and a private web report, delivered from a deterministic
-        rules engine — no AI guesses anywhere in the math.</li>
-  </ul>
-</div>
+  {# ============ 2 · PROBLEM STRIP — three attributed cards ============ #}
+  <section class="land-strip" data-reveal>
+    <div class="wrap">
+      <p class="strip-line">Waste hides in shapes invoices can&rsquo;t show.</p>
+      <div class="stat-cards">
+        <div class="statcard">
+          <div class="statcard-n">79%</div>
+          <p>of enterprises overran their AI budgets last year</p>
+          <div class="statcard-src">DoiT/Sapio Research, 2026</div>
+        </div>
+        <div class="statcard">
+          <div class="statcard-n">31%</div>
+          <p>average overspend — even on mature FinOps teams</p>
+          <div class="statcard-src">Same survey</div>
+        </div>
+        <div class="statcard">
+          <div class="statcard-n">98%</div>
+          <p>of FinOps teams now manage AI spend</p>
+          <div class="statcard-src">State of FinOps, 2026</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<div class="panel">
-  <strong>Why now</strong>
-  <p>79% of enterprises overran their AI budgets last year (DoiT/Sapio Research, 2026),
-     and 98% of FinOps teams now manage AI spend, up from 31% two years ago
-     (State of FinOps, 2026). Dashboards need integration and an operator.
-     Routers pick a model; we find the other five kinds of waste — and prove it
-     in dollars.</p>
-</div>
+  {# ============ 3 · HOW IT WORKS — the pipeline, lit in sequence (C3) ====== #}
+  <section class="land-pipe" id="how-it-works">
+    <div class="wrap">
+      <h2 data-reveal>The whole product is one loop</h2>
+      <ol class="pipe">
+        <li class="pipe-stage lit" data-stage>
+          <span class="pipe-k">Input</span>
+          <p>Connect a read-only usage key, or upload the logs you already have.</p>
+        </li>
+        <li class="pipe-stage lit" data-stage>
+          <span class="pipe-k">Analyze</span>
+          <p>Six deterministic detectors price every call — rules, not AI guesses.</p>
+        </li>
+        <li class="pipe-stage lit" data-stage>
+          <span class="pipe-k">Report</span>
+          <p>Findings ranked by dollars: why, the evidence, the fix, and how
+            you&rsquo;ll know it worked.</p>
+        </li>
+        <li class="pipe-stage lit" data-stage>
+          <span class="pipe-k">Act</span>
+          <p>Mark a fix applied; the next audit re-measures the route and only
+            the verified difference joins your headline.</p>
+        </li>
+        <li class="pipe-stage lit" data-stage>
+          <span class="pipe-k">Prevent</span>
+          <p>Alerts watch between audits. They notify you — they never pause,
+            cap or touch your traffic.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-<div class="panel">
-  <strong>What we never do</strong>
-  <ul class="checks">
-    <li>No SDK to install, no proxy in your request path, no gateway migration.</li>
-    <li>No prompt or completion text is ever stored — the engine keeps token counts only.</li>
-    <li>No AI reads your logs: the analysis is deterministic rules, so it cannot hallucinate.</li>
-  </ul>
-</div>
+  {# ============ 4 · PRODUCT TOUR — tabs (C5) + count-ups (C4) ============ #}
+  <section class="land-tour" data-reveal>
+    <div class="wrap">
+      <h2>What you actually see</h2>
+      <p class="tour-cap">Real screens from a seeded demonstration account —
+        labeled sample data, because unlabeled numbers would be a lie.</p>
+      <div class="tour" data-tour-tabs>
+        <div class="tour-tablist" role="tablist" aria-label="Product tour">
+          <button class="tour-tab" role="tab" aria-selected="true" data-tab="findings">Findings</button>
+          <button class="tour-tab" role="tab" aria-selected="false" data-tab="applied">The money moment</button>
+          <button class="tour-tab" role="tab" aria-selected="false" data-tab="alerts">Alerts</button>
+        </div>
+        <div class="tour-panel" role="tabpanel" data-panel="findings">
+          <p><span class="tour-n money" data-count="1365.20" data-prefix="$">$1,365.20</span>/mo
+            identified across <span class="tour-n" data-count="4">4</span> findings —
+            ranked by dollars, not severity labels.</p>
+          <img src="/static/land/tour-findings.webp" width="1080" height="562" loading="lazy"
+               alt="The findings table: plain-language findings with severity, confidence and monthly impact — sample data">
+        </div>
+        <div class="tour-panel" role="tabpanel" data-panel="applied" hidden>
+          <p><span class="tour-n money" data-count="940.10" data-prefix="$">$940.10</span>/mo
+            verified — applied fixes are re-measured by the next audit, and only
+            the proven difference counts.</p>
+          <img src="/static/land/tour-applied.webp" width="1080" height="562" loading="lazy"
+               alt="A finding drawer with the fix applied and the verified savings joining the headline — sample data">
+        </div>
+        <div class="tour-panel" role="tabpanel" data-panel="alerts" hidden>
+          <p><span class="tour-n" data-count="4">4</span> things worth an email —
+            spend spikes, waste above target, new high-impact findings, a soft
+            budget. Nothing is ever paused.</p>
+          <img src="/static/land/tour-alerts.webp" width="1080" height="562" loading="lazy"
+               alt="Alert settings: four watchable conditions with thresholds — sample data">
+        </div>
+      </div>
+    </div>
+  </section>
 
-<div class="panel">
-  {# R-GTM-CONTROL b: email capture only — no product promises, no dates. #}
-  <strong>AI spend control — APIs, agents, and AI seats.</strong>
-  <p class="muted">The audit is step one. Leave your email for early access.</p>
-  <form method="post" action="/early-access" class="early-access">
-    <input type="email" name="email" required placeholder="you@company.com" aria-label="Work email">
-    <button type="submit" class="cta-secondary">Request early access</button>
-  </form>
-</div>
+  {# ============ 5 · GOVERNANCE — the architecture, with proofs ============ #}
+  <section class="land-gov" data-reveal>
+    <div class="wrap">
+      <h2>We run the architecture we audit you toward</h2>
+      <div class="gov-grid">
+        <div class="gov-item">
+          <h3>Zero prompt text</h3>
+          <p>The engine stores token counts, timestamps and hashes — never your
+            prompts. There is no prompt text in the usage APIs we read, so there
+            is none in our database either.</p>
+          <a href="/legal/privacy">Read the privacy terms →</a>
+        </div>
+        <div class="gov-item">
+          <h3>Zero trust required</h3>
+          <p>Connections use read-only usage keys, encrypted on arrival.
+            Revoking deletes the stored key — it is not just disabled.</p>
+          <a href="/docs-site/">How connections work →</a>
+        </div>
+        <div class="gov-item">
+          <h3>Deterministic math</h3>
+          <p>No AI reads your logs. The analysis is a rules engine with golden-file
+            tests, so the same logs always produce the same dollars.</p>
+          <a href="/sample">See it on the sample report →</a>
+        </div>
+        <div class="gov-item">
+          <h3>Honest zeros</h3>
+          <p>The headline only counts savings a later audit verified. Missing
+            data degrades to zero — we never invent a number to look better.</p>
+          <a href="/docs-site/">The verification method →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ============ 6 · COMPARISON STRIP — categories, never vendors ========== #}
+  <section class="land-compare" data-reveal>
+    <div class="wrap">
+      <h2>Where this fits</h2>
+      <table class="compare">
+        <thead><tr><th scope="col"></th><th scope="col">How it works</th><th scope="col">What it costs you</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Cost dashboards</th><td>Integrate an SDK, tag your calls</td><td>Engineering time before the first number</td></tr>
+          <tr><th scope="row">Model routers</th><td>Pick a cheaper model per request</td><td>Solves one of the six kinds of waste</td></tr>
+          <tr><th scope="row">Gateways &amp; proxies</th><td>Sit inside your request path</td><td>A new dependency in production</td></tr>
+          <tr class="compare-us"><th scope="row">TokenOps</th><td>Audits the logs you already have</td><td>Nothing in your path — read-only, deletable</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {# ============ 7 · SELF-AUDIT PROOF ============ #}
+  <section class="land-proof" data-reveal>
+    <div class="wrap">
+      <h2>We pointed it at the AI agents that built it</h2>
+      <p class="proof-line"><span class="money proof-n">67,095</span> calls ·
+        <span class="money proof-n">$8,757.75</span>/mo API-equivalent ·
+        <span class="money proof-n">32.5%</span> estimated waste</p>
+      <p class="proof-note">{{ equiv_spend_line }}</p>
+      <p><a href="/sample">The full self-audit is the sample report →</a></p>
+    </div>
+  </section>
+
+  {# ============ 8 · PLANS — from the price config, never inlined ========== #}
+  <section class="land-plans" data-reveal id="plans">
+    <div class="wrap">
+      <h2>Plans</h2>
+      <div class="plan-cards">
+        {% for p in catalogue %}
+        <div class="plancard{{ ' plancard-hi' if p.key == 'pro' else '' }}">
+          <h3>{{ p.name }}</h3>
+          <div class="plancard-price money">{{ p.display_both() if p.usd else "No card, ever" }}</div>
+          <p>{{ p.blurb }}</p>
+          <a class="btn{{ ' btn-primary' if p.key == 'pro' else '' }}" href="/signup">
+            {{ "Start free" if not p.usd else "Start with " ~ p.name }}</a>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="plans-oneshot"><strong>One-off audit:</strong> {{ one_shot }} —
+        a single full audit of a log file, no subscription. For enterprises,
+        <a href="/legal/terms">terms here</a>.</p>
+    </div>
+  </section>
+
+  {# ============ 9 · CLOSING CTA + early access ============ #}
+  <section class="land-close" data-reveal>
+    <div class="wrap">
+      <h2>Know where the money goes.</h2>
+      <p><a class="btn btn-primary" href="/signup">Start free — 1 audit, no card</a></p>
+      <div class="close-early">
+        {# R-GTM-CONTROL b: email capture only — no product promises, no dates. #}
+        <strong>AI spend control — APIs, agents, and AI seats.</strong>
+        <p class="muted">The audit is step one. Leave your email for early access.</p>
+        <form method="post" action="/early-access" class="early-access">
+          <input type="email" name="email" required placeholder="you@company.com" aria-label="Work email">
+          <button type="submit" class="cta-secondary">Request early access</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/land/landing.js" defer></script>
 {% endblock %}

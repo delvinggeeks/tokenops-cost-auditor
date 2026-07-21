@@ -44,20 +44,20 @@ def signed_in(app: FastAPI) -> TestClient:
 
 
 class TestNoSurfaceIsLeftOnTheOldShell:
-    def test_only_the_landing_still_extends_base(self) -> None:
-        """base.html is being retired surface by surface. The landing is the
-        last holdout and it is deliberate — R-LANDING-2 rebuilds it as its own
-        deploy. If anything ELSE appears here, a page regressed onto the old
-        inline-style shell and the seam is back."""
+    def test_the_old_shell_is_gone_entirely(self) -> None:
+        """base.html carried its own inline palette — the seam. It was retired
+        surface by surface; R-LANDING-2 (2026-07-25) moved the last holdout,
+        the landing, onto the public shell and DELETED the file. Nothing may
+        reference it again, and it must not quietly come back."""
+        assert not (TEMPLATES / "base.html").exists(), "base.html rose from the dead"
         stragglers = sorted(
             p.relative_to(TEMPLATES).as_posix()
             for p in TEMPLATES.rglob("*.html")
-            if '{% extends "base.html" %}' in p.read_text(encoding="utf-8")
+            # extends/include only — comments recounting the history may say
+            # the name; templates may not USE it
+            if '"base.html"' in p.read_text(encoding="utf-8")
         )
-        assert stragglers == ["landing.html"], (
-            f"unexpected pages still on the old shell: {stragglers}. Every surface "
-            f"except the landing was unified in v4; the landing waits on R-LANDING-2."
-        )
+        assert stragglers == [], f"pages still referencing the retired shell: {stragglers}"
 
     def test_sources_renders_in_the_designed_shell(self, app: FastAPI) -> None:
         """The whole point of the fix: the sidebar links here, so this page must

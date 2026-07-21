@@ -74,9 +74,12 @@ dot and badge, not on movement.
 
 ---
 
-## C. Planned — landing (R-LANDING-2). SPECIFIED, NOT YET IMPLEMENTED.
+## C. Landing (R-LANDING-2) — SHIPPED 2026-07-25 in `static/land/landing.js`.
 
-These are the specs the wiring must be built against and gated on.
+Implemented exactly as specified below; the ux gate checks the code against
+this table. All five gate on `prefers-reduced-motion` in JS (the global CSS
+block cannot stop a script), default to final-state-visible, and C1 is the
+only pointer listener (hero-scoped, rAF-throttled).
 
 | # | Effect | Trigger | Behavior | Duration + easing | Reduced-motion | Tokens |
 |---|--------|---------|----------|-------------------|----------------|--------|
