@@ -760,6 +760,21 @@ federation (OAuth) implementation, payment-gateway activation audit, and
 market-grounded pricing (deep-research commissioned) — tracked as the
 same-day follow-on workstreams.
 
+**R-DOCS-PUBLIC (founder 2026-07-22, walkthrough: "everything is internal
+docs — only public APIs should be exposed").** The public docs site carries
+product usage, API and legal ONLY (Home, Quickstart, Concepts, API,
+Reports, Limits, Legal). The entire Engineering section (requirements,
+architecture, stack, traceability incl. its live docs/04 transclusion,
+testing, integration, security, performance, standards, self-audit) is
+WITHDRAWN from the public build — repo-retained as internal record,
+excluded via mkdocs exclude_docs + nav. All `<!-- src -->` citation
+comments are stripped from served HTML and the search index by a build
+hook (they name internal docs/gates/rulings). SUPERSEDES the public-
+exposure aspect of R-ARCH-PATTERNS(a) and the self-audit publication
+surface; the published-methodology strategy (R-DEPLOYMENT-CONTRACT #6,
+R-ENTERPRISE-READY questionnaire answers) is now served by PRIVATE packs
+drafted from the same internal sources on request, not by public pages.
+
 **R-PRICING-FINAL-2 (founder-ratified 2026-07-22, after R-PRICING-FINAL +
 five amendment rounds and the §5 worth test).** Dual-market, two-cohort:
 GLOBAL Pro $19 launch → $29 list, Scale $59 → $99; INDIA Pro ₹499 launch →

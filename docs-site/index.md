@@ -62,4 +62,3 @@ In plain terms:
 
 - [Quickstart](quickstart.md) — export, upload, read your report.
 - [How it works](concepts/how-it-works.md) — the pipeline end to end.
-- [Engineering](engineering/index.md) — why we publish our internals.

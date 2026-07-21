@@ -8,6 +8,14 @@ site_description: >-
   behind it.
 site_url: ""
 docs_dir: docs-site
+# R-DOCS-PUBLIC (founder 2026-07-22): the public site carries product usage,
+# API and legal ONLY. The engineering section is internal record — retained
+# in the repo, excluded from every build. Citation comments are stripped at
+# build time by the hook below.
+exclude_docs: |
+  engineering/**
+hooks:
+  - scripts/mkdocs_strip_comments.py
 repo_url: ""
 strict: true
 
@@ -83,18 +91,6 @@ nav:
   - Reports:
       - Reading a report: report/reading-a-report.md
       - Worked example: report/worked-example.md
-  - Engineering:
-      - engineering/index.md
-      - Requirements: engineering/requirements.md
-      - Architecture: engineering/architecture.md
-      - Stack: engineering/stack.md
-      - Traceability: engineering/traceability.md
-      - Testing: engineering/testing.md
-      - Integration: engineering/integration.md
-      - Security: engineering/security.md
-      - Performance: engineering/performance.md
-      - Standards: engineering/standards.md
-      - We audit ourselves: engineering/self-audit.md
   - Limits: limits.md
   - Legal:
       - Terms: legal/terms.md
