@@ -133,6 +133,16 @@ one scene, one ambient motion, and C1's pointer tilt takes over on hover.
 The float cards carry the fold's live figures (labeled sample data) as TYPE,
 not pixels — closing the elevation gate's hero note.
 
+**C10 — the 3D workflow (founder walkthrough round 5, 2026-07-27).**
+
+| # | Effect | Trigger | Behavior | Duration + easing | Reduced-motion | Tokens |
+|---|--------|---------|----------|-------------------|----------------|--------|
+| C10 | Workflow money pulse (`@keyframes pipe-pulse-travel`) | pipeline section 30% in view | the five stage cards sit in shallow 3D perspective; a money pulse (accent dot with glow) travels the flow line stage to stage, cards sit lit in shallow perspective and lift on hover (transition, no keyframe); loops ×2 then rests | 4s total, `--ease` per hop | all cards lit and lifted, line drawn, pulse absent | `--accent`, `--accent-ring`, `--lift-2`, `--ease` |
+
+The pulse IS the product's story — a dollar moving through the loop — so the
+motion carries comprehension, not decoration. Loops twice then rests: a
+figure that never stops moving implies the numbers aren't settled.
+
 **Cut list — considered and rejected.** Parallax on the hero (fights the tilt,
 two competing depth cues), number odometer roll on scroll-back (re-animating a
 figure the reader already read implies it changed), and card entrance stagger

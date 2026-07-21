@@ -175,6 +175,7 @@
         obs.disconnect();
         ink.style.transition = "stroke-dashoffset 900ms var(--ease)";
         ink.style.strokeDashoffset = "0";
+        ink.closest(".pipe-wrap").classList.add("pipe-go"); /* C10 pulse */
       });
     }, { threshold: 0.3 }).observe(ink.closest(".pipe-wrap"));
   }

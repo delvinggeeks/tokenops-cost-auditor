@@ -1,30 +1,37 @@
 {% extends "_public_shell.html" %}
 {% block title %}{{ heading }} — TokenOps Cost Auditor{% endblock %}
-{% block content %}
+{% block main %}
 {#
   Shared magic-link form behind /login, /signup and the signed-out /upload.
   One form, distinct copy (R-LANDING-2 wiring item 3b): a returning user and a
   first-time visitor want different sentences, not different mechanics.
+  Enterprise split (round 5): brand vouches on the left, the form works on
+  the right. NO SSO buttons — SSO sits at the ruled X-03 trigger, and a
+  button that does nothing is a promise (R-GTM-CONTROL forbids those).
 #}
-<div class="signin">
+<main class="pub-main">
+<div class="auth-split">
+  <aside class="auth-brand" data-mood="aura">
+    {% include "_wa_mark.html" %}
+    <h2>TokenOps Cost Auditor</h2>
+    <p>The governance layer for your AI spend. A dollar-ranked audit from the
+      logs you already have — deterministic math, counts-only ingestion,
+      verified-only headlines.</p>
+    <ul class="auth-points">
+      <li>No SDK, no proxy, no integration — read-only by construction.</li>
+      <li>Prompt and completion text never reaches us.</li>
+      <li>Every figure attributed or measured; the headline is verified-only.</li>
+    </ul>
+  </aside>
+  <div class="auth-form-panel">
+  <div class="signin">
   <h1 class="page-h1">{{ heading }}</h1>
   <p class="signin-lede">{{ lede }}</p>
-
-  {% if show_get_logs %}
-  {# Kept on the signed-out page too: a visitor should be able to see how to
-     produce an export, and read the counts-only promise, BEFORE handing over
-     an email address. #}
-  <p class="counts-note">We read <b>counts and metadata only</b> — model, timestamps, token totals. Prompt and completion text is never stored.</p>
-  <section class="signin-logs">
-    <h2 class="page-h1" style="font-size:17px">Don't have an export yet?</h2>
-    {% include "_get_logs_tabs.html" %}
-  </section>
-  {% endif %}
 
   <form method="post" action="/auth/magic-link" class="signin-form">
     <label for="email">Work email</label>
     <input type="email" id="email" name="email" required
-           placeholder="you@company.com" autocomplete="email" autofocus>
+           placeholder="you@company.com" autocomplete="email">
     <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
   </form>
 
@@ -42,6 +49,17 @@
   {% endif %}
 
 
+  {% if show_get_logs %}
+  {# Kept on the signed-out page too: a visitor should be able to see how to
+     produce an export, and read the counts-only promise, BEFORE handing over
+     an email address. #}
+  <p class="counts-note">We read <b>counts and metadata only</b> — model, timestamps, token totals. Prompt and completion text is never stored.</p>
+  <section class="signin-logs">
+    <h2 class="page-h1" style="font-size:17px">Don't have an export yet?</h2>
+    {% include "_get_logs_tabs.html" %}
+  </section>
+  {% endif %}
+
   <p class="signin-alt">
     {% if mode == "signup" %}
       Already have an account? <a href="/login">Log in</a>.
@@ -50,4 +68,7 @@
     {% endif %}
   </p>
 </div>
+  </div>
+</div>
+</main>
 {% endblock %}
