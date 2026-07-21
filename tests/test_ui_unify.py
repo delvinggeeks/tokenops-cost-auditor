@@ -134,3 +134,22 @@ class TestHtmlIsNeverCached:
         resp = TestClient(app).get("/static/wa-design.css")
         assert resp.status_code == 200
         assert "no-store" not in resp.headers.get("cache-control", "")
+
+
+class TestEveryStaticReferenceIsVersioned:
+    def test_rendered_pages_carry_no_unversioned_statics(self, app: FastAPI) -> None:
+        """The stale-cache bug that cost two founder review rounds: an
+        unversioned /static/ URL gets neither cache-busting nor no-store —
+        browsers heuristic-cache it and a deploy renders under old css/js.
+        The gate caught tour.js missed by a hand-sweep; this test makes the
+        class structural. Rendered pages, so partials are covered too."""
+        import re
+
+        client = signed_in(app)
+        pages = [client.get(p).text for p in ("/", "/login", "/dashboard", "/findings")]
+        offenders = []
+        for html in pages:
+            for m in re.finditer(r'(?:src|href|content)="(?:https?://[^"/]+)?(/static/[^"?#]+)(\?[^"]*)?"', html):
+                if not (m.group(2) or "").startswith("?v="):
+                    offenders.append(m.group(1))
+        assert not offenders, f"unversioned static references: {sorted(set(offenders))}"

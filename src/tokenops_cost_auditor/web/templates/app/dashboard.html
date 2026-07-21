@@ -88,5 +88,5 @@
 {% endblock %}
 
 {% block scripts %}
-{% if show_tour %}<script src="/static/tour.js" defer></script>{% endif %}
+{% if show_tour %}<script src="{{ asset('/static/tour.js') }}" defer></script>{% endif %}
 {% endblock %}
