@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.9 (f8b629d) · CONNECT-FIRST LANDING live (walkthrough
+  round 6). Founder challenged upload-led marketing as off-spec; the RECORD
+  showed the platform per spec (X-01/X-02 forbid in-path components;
+  R-CONNECT wizard shipped; upload IS the Free tier + six-detector path) —
+  the landing's EMPHASIS was the real gap. Hero now leads free-audit-then-
+  connect-on-Pro; connector cards sell the shipped wizard with the plan
+  DISCLOSED (first gate attempt FAILED on exactly that omission — fixed,
+  re-gated PASS); architecture section states the enterprise infra answer:
+  managed cloud outside your VPC, read-only in, findings out, nothing in
+  the request path. SMOKE PASS. Walkthrough resumes.
+
 - 2026-07-21 · v1.5.8 (d38f17a) · 3D WORKFLOW + ENTERPRISE NAV + SPLIT AUTH
   live (walkthrough round 5). C10 money pulse travels the workflow's flow
   line through perspective stage cards — loops twice then rests (speced
