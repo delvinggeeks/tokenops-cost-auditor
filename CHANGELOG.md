@@ -5,6 +5,19 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.15 (073b5dd) · COMPLETENESS SWEEP + R-ARCH-PATTERNS(a)
+  live. Founder order "implement everything planned, miss nothing" → three
+  parallel record sweeps (FR/NFR vs traceability; all §0.1 rulings vs the
+  deploy ledger; BACKLOG/flywheel trigger register). Verdict: v1.5 ruled
+  set fully shipped; ONE gap found and closed same-day — the docs-site
+  Architecture-principles cited-claims section (zero-token, zero-trust
+  five axes, five-gate validation ladder; sales line stays
+  registered-not-released). FR-31 traceability row now records its ruled
+  deferral to WP-PIPELINE-UI. launch/FEATURE-INVENTORY.md = the full
+  punch-card incl. override menu + parked-without-trigger list. SMOKE
+  PASS: docs.tokenops.cloud/engineering/architecture/ 200, new section
+  serving (7 marker hits). Static-docs deploy — app containers untouched.
+
 - 2026-07-22 · v1.5.14 (fc3b9eb) · R-PRICING-FINAL-2 + R-DAILY-LOOP live.
   Dual-market pricing after five founder amendment rounds and verified
   India research: global Pro $19 launch → $29 list, Scale $59 → $99;
