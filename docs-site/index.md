@@ -1,11 +1,13 @@
 # TokenOps Cost Auditor
 
-TokenOps Cost Auditor turns your LLM API logs into a dollar-ranked waste audit.
-You upload a log export; a deterministic rules engine prices every call at the
-provider rate in effect at its timestamp and hunts six classes of token waste;
-you get a client-ready PDF and a private web report within 48 hours. No SDK, no
-proxy, no gateway migration — the audit needs nothing but the logs you already
-have. <!-- src: docs/00-PRD.md §1; FR-01..FR-16 -->
+TokenOps Cost Auditor turns your AI spend into a dollar-ranked waste audit —
+and then keeps watching. Connect your OpenAI or Anthropic account with one
+read-only key: the platform pulls your usage daily, audits it weekly with a
+deterministic rules engine (no AI reads your data), emails a daily spend
+digest, alerts you between audits, and mails your verified Savings Statement
+monthly. Prefer not to connect? Upload a log export and get the same audit
+on that file. No SDK, no proxy, nothing in your request path.
+<!-- src: R-CONNECT; R-FREE-CONNECT; R-DAILY-LOOP; FR-01..FR-16 -->
 
 ## The problem, in your terms
 
@@ -26,6 +28,8 @@ prove it in dollars. <!-- src: R-ICP ruling; landing differentiation line verbat
 ## What you get
 
 - A savings waterfall: every finding ranked by estimated monthly dollar impact.
+- A daily spend digest — yesterday per source, month-to-date, and your
+  budget line — plus alerts that watch between audits (paid plans).
 - Six waste classes checked: [oversized models](concepts/waste-classes/oversized-model.md),
   [missing prompt caching](concepts/waste-classes/missing-cache.md),
   [prompt bloat](concepts/waste-classes/prompt-bloat.md),

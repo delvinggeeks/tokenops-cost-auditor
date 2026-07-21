@@ -94,6 +94,35 @@ Deliberate absences: Apple (consumer/iOS-mandated; its private-relay
 addresses defeat the work-email identity — BACKLOG trigger) and SAML/Okta
 enterprise SSO (X-03 multi-org territory, ruled trigger).
 
+## 2b. Domain cutover — tokenops.cloud → tokenops-cost-auditor.com (R-DOMAIN-MIGRATE)
+
+Everything outward-facing is config; the cutover is DNS + one .env flip.
+
+FOUNDER (registrar for tokenops-cost-auditor.com), do first:
+  A  @     -> 169.58.44.80
+  A  www   -> 169.58.44.80
+  A  docs  -> 169.58.44.80
+  (status CNAME comes later with UptimeRobot, §3b. MX/mailbox for
+  support@tokenops-cost-auditor.com whenever you set up mail — until then
+  SUPPORT_EMAIL stays on tokenops.cloud, which keeps working.)
+
+THEN, on the box (one flip; old domain keeps redirecting forever):
+  1 .env: DOMAIN=tokenops-cost-auditor.com
+          OLD_DOMAIN=tokenops.cloud
+          APP_BASE_URL=https://tokenops-cost-auditor.com
+          DOCS_URL=https://docs.tokenops-cost-auditor.com
+  2 repo one-time sweep (already staged in the migration commit checklist):
+    mkdocs.yml site_url + "Back to the app" URL; docs-site quickstart
+    signup link; config.py docs_url/support_email/status_url defaults;
+    then `uv run mkdocs build` and ship site/ (overwrite in place — §4
+    ship rule).
+  3 docker compose up -d --build && docker compose restart caddy.
+  4 Smoke: new-domain healthz + landing + docs 200; old domain and old
+    docs 301 -> new. Caddy fetches certs on first request (needs DNS live).
+  5 Founder-side follow-ups: Google/Microsoft/GitHub OAuth redirect URIs
+    (§3a) get the new domain when configured; UptimeRobot monitor URL;
+    payment-link return URLs if set.
+
 ## 3b. Status page (R-SAAS-BASICS 3)
 
 status.tokenops.cloud = UptimeRobot public status page. Founder-dashboard

@@ -1,11 +1,26 @@
 # Quickstart
 
-Three steps: export your logs, upload them, read the report.
+Two ways in. Fastest: connect your provider account — about two minutes,
+and the platform does everything else. Prefer a one-off? Upload a log file.
 
-## 1. Export your logs
+## Fastest: connect your account
 
-The auditor accepts three formats. Pick the tab that matches your stack.
-<!-- src: FR-01; services/ingest/base.py format detection -->
+1. [Start free](https://tokenops.cloud/signup) — email or Google/Microsoft/
+   GitHub sign-in; your first audit is on us, no card.
+2. **Sources → Connect** — pick OpenAI or Anthropic and paste a READ-ONLY
+   admin/usage key (we show you exactly where to create one). The key is
+   encrypted at rest; revoking it deletes the ciphertext.
+3. That's it. The platform pulls your usage daily, runs your first audit
+   right away, audits weekly on paid plans, emails a daily spend digest,
+   and watches between audits with the alerts you arm. We only ever read
+   token counts and metadata — the usage APIs don't even contain your
+   prompts. <!-- src: R-CONNECT; R-FREE-CONNECT; R-DAILY-LOOP -->
+
+## Option: upload a log file
+
+No connection required — export your logs and upload them for a one-off
+audit of that file. The auditor accepts three formats; pick the tab that
+matches your stack. <!-- src: FR-01; services/ingest/base.py format detection -->
 
 === "Claude Code sessions"
 

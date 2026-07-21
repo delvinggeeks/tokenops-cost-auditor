@@ -47,7 +47,7 @@
       <div class="label">Help</div>
       {{ nav_item("guide", "i-guide", "Guide", "/guide") }}
       {# R-SAAS-BASICS 2: a human is reachable, and we say how fast. #}
-      <a href="mailto:support@tokenops.cloud" title="Replies within 1 business day">
+      <a href="mailto:{{ support_email }}" title="Replies within 1 business day">
         {{ icon("i-alert") }}Contact support</a>
       <form method="post" action="/tour/replay" style="display:contents">
         <button class="btn btn-quiet" style="width:100%;text-align:left;padding:6px 24px;">

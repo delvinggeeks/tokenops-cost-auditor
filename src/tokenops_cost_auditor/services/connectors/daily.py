@@ -204,7 +204,8 @@ def run_digests(
                     "Some models had no verified rate and are excluded: "
                     + ", ".join(sorted(day.unpriced))
                 )
-            lines.append("\nDashboard: https://tokenops.cloud/dashboard")
+            base = settings.app_base_url or "https://tokenops.cloud"
+            lines.append(f"\nDashboard: {base}/dashboard")
 
             if stage is not None:
                 # record BEFORE sending (at-most-once, the alerts law)

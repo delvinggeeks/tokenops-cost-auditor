@@ -6,7 +6,7 @@ site_description: >-
   Upload your LLM API logs, get a deterministic dollar-ranked waste audit.
   Documentation for the product, the audit methodology, and the engineering
   behind it.
-site_url: ""
+site_url: "https://docs.tokenops.cloud"  # R-DOMAIN-MIGRATE: swap at cutover
 docs_dir: docs-site
 # R-DOCS-PUBLIC (founder 2026-07-22): the public site carries product usage,
 # API and legal ONLY. The engineering section is internal record — retained
@@ -96,3 +96,5 @@ nav:
       - Terms: legal/terms.md
       - Privacy: legal/privacy.md
       - DPA: legal/dpa.md
+  # R-DOMAIN-MIGRATE checklist: this absolute URL swaps at cutover
+  - "↩ Back to the app": https://tokenops.cloud

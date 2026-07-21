@@ -1,8 +1,14 @@
 # Pricing data
 
+This page is about the MODEL RATE CARD — the provider prices we use to
+price *your* usage. (Our own subscription prices live on the
+[pricing page](https://tokenops.cloud/#plans) and vary by region.)
+
 Money math is only as good as the rate card behind it. Ours is versioned,
-effective-dated, and verified by a human — and the report tells you exactly
-which version priced your audit. <!-- src: R-PRICING-OPS ruling; FR-28 -->
+effective-dated, and verified by a human — deliberately, as a trust
+feature: no scraped or "live" price can silently change your audit's
+dollars — and the report tells you exactly which version priced your
+audit. <!-- src: R-PRICING-OPS ruling; FR-28 -->
 
 ## Four rates per model
 

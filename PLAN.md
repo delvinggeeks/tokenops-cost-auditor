@@ -760,6 +760,24 @@ federation (OAuth) implementation, payment-gateway activation audit, and
 market-grounded pricing (deep-research commissioned) — tracked as the
 same-day follow-on workstreams.
 
+**R-DOMAIN-MIGRATE (founder 2026-07-22): tokenops.cloud →
+tokenops-cost-auditor.com.** Prepared same-day, cutover BLOCKED ON DNS
+(the new domain resolves to nothing; Caddy cannot obtain certs until the
+founder adds A records — exact records in runbook §2b). Every
+outward-facing address parameterized to config (support_email,
+status_url, docs_url, base_url as Jinja globals; digest dashboard link;
+OG tags; browser-frame chrome); Caddyfile gained inert OLD_DOMAIN 301
+blocks (apex/www/docs → new counterparts, activated by one .env var);
+compose passes OLD_DOMAIN. Cutover = DNS + .env flip + the small
+staged sweep (mkdocs site_url/back-link, quickstart signup URL, config
+defaults) per runbook §2b. Same order's docs refresh: public docs
+updated from the upload-era story ("export, upload, 48 hours") to the
+connect-first platform truth (connect → daily pulls → weekly audits →
+daily digest → alerts → statements; upload as the option); pricing-data
+page now distinguishes the deliberately human-verified MODEL rate card
+from regional plan pricing; docs got a "Back to the app" nav item
+(walkthrough: no path back to the landing page).
+
 **R-DOCS-PUBLIC (founder 2026-07-22, walkthrough: "everything is internal
 docs — only public APIs should be exposed").** The public docs site carries
 product usage, API and legal ONLY (Home, Quickstart, Concepts, API,

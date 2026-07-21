@@ -66,6 +66,8 @@ services:
       - "443:443"
     environment:
       DOMAIN: ${DOMAIN:-localhost}
+      # R-DOMAIN-MIGRATE: set to the retired domain at cutover; unset = inert
+      OLD_DOMAIN: ${OLD_DOMAIN:-old.invalid}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./site:/srv/docs:ro # docs-site build output (provision.sh 4c); empty = 404

@@ -31,7 +31,7 @@
          "This audit failed",
          why ~ ("" if why.endswith(".") else ".")
            ~ " Fix the rows below if any were rejected, or upload the file again — "
-           ~ "uploads are free to retry. Stuck? support@tokenops.cloud replies "
+           ~ "uploads are free to retry. Stuck? " ~ support_email ~ " replies "
            ~ "within 1 business day.",
          retry_href="/upload") }}
   {% endif %}

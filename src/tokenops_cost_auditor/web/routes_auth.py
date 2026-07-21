@@ -284,7 +284,7 @@ def federation_callback(
         status_code=400,
         content=f"<h1>Sign-in failed</h1><p>{fed.label} sign-in didn't complete — "
         "go back and try again, or use the email link instead. "
-        "Stuck? support@tokenops.cloud replies within 1 business day.</p>",
+        f"Stuck? {settings.support_email} replies within 1 business day.</p>",
     )
     if error or not code:
         return fail

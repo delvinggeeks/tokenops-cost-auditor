@@ -1,13 +1,14 @@
 # How it works
 
-One pipeline, five stages, zero AI. Your upload goes in; a priced, evidence-
-backed findings report comes out. Every stage is deterministic: the same file
+One pipeline, five stages, zero AI. Usage comes in — pulled daily from your
+connected account, or from a file you upload — and a priced, evidence-backed
+findings report comes out. Every stage is deterministic: the same data
 produces the same report, byte for byte.
-<!-- src: docs/02-HLD.md §3 pipeline; NFR-01; T-REP-03 determinism -->
+<!-- src: docs/02-HLD.md §3 pipeline; R-CONNECT; NFR-01; T-REP-03 -->
 
 ```mermaid
 flowchart LR
-    A[Upload<br/>JSONL / CSV] --> B[Ingest & normalize<br/>token counts only]
+    A[Connect: daily pulls<br/>or upload JSONL / CSV] --> B[Ingest & normalize<br/>token counts only]
     B --> C[Price<br/>four-rate table,<br/>effective-dated]
     C --> D[Detect<br/>six waste classes]
     D --> E[Report<br/>JSON + web + PDF]

@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     # docs build, so a relative path 404s (walkthrough punch 2026-07-22 —
     # every Docs link on the product pointed at /docs-site/ and died).
     docs_url: str = "https://docs.tokenops.cloud"
+    # R-DOMAIN-MIGRATE (founder 2026-07-22): every outward-facing address is
+    # config, so the tokenops.cloud → tokenops-cost-auditor.com cutover is an
+    # .env flip, not a code change. Defaults stay on the CURRENT live domain;
+    # the cutover flips them (runbook §2b) once DNS resolves.
+    support_email: str = "support@tokenops.cloud"
+    status_url: str = "https://status.tokenops.cloud"
     google_client_id: str = ""
     google_client_secret: str = ""
     microsoft_client_id: str = ""

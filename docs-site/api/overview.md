@@ -40,9 +40,9 @@ queue position. <!-- src: NFR-03/12/13; routes_upload/@limiter -->
 
 ## Machine-readable spec
 
-The live OpenAPI document is served at
-[`https://tokenops.cloud/openapi.json`](https://tokenops.cloud/openapi.json) —
-generated from the running API, so it cannot drift from the deployment.
+The live OpenAPI document is served at `/openapi.json` on the application
+domain — generated from the running API, so it cannot drift from the
+deployment.
 Interactive API explorers and issued API keys arrive together (that surface
 is trigger-registered: the first customer request for programmatic access).
 <!-- src: FR-25; BACKLOG R-APIKEYS -->
@@ -50,7 +50,7 @@ is trigger-registered: the first customer request for programmatic access).
 ## Upload constraints
 
 Files up to 200 MB; accepted formats are OpenAI JSONL, Anthropic JSONL, and
-the [generic CSV contract](../quickstart.md#1-export-your-logs). Format
+the [generic CSV contract](../quickstart.md#option-upload-a-log-file). Format
 detection is per file; a file that parses as none of the three is rejected
 with a message telling you exactly what was expected. <!-- src: FR-01 -->
 

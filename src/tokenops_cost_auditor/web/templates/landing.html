@@ -11,8 +11,8 @@
   <meta name="description" content="The governance layer for your AI spend. Upload logs or connect a read-only key and get a dollar-ranked audit of the waste — deterministic math, counts-only, verified savings.">
   <meta property="og:title" content="TokenOps Cost Auditor — by WitAura">
   <meta property="og:description" content="See what your AI spend is costing you, and what you already saved. No SDK, no proxy — a dollar-ranked audit from the logs you already have.">
-  <meta property="og:image" content="https://tokenops.cloud{{ asset('/static/land/hero-dashboard-sample.webp') }}">
-  <meta property="og:url" content="https://tokenops.cloud/">
+  <meta property="og:image" content="{{ base_url }}{{ asset('/static/land/hero-dashboard-sample.webp') }}">
+  <meta property="og:url" content="{{ base_url }}/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
@@ -47,7 +47,7 @@
         <div class="scene-inner">
           <div class="browser-frame">
             <div class="bf-bar" aria-hidden="true"><i></i><i></i><i></i>
-              <span class="bf-url">tokenops.cloud/dashboard</span></div>
+              <span class="bf-url">{{ base_url | replace("https://", "") }}/dashboard</span></div>
             <img src="{{ asset('/static/land/hero-dashboard-sample.webp') }}" width="1080" height="645"
                  alt="The TokenOps dashboard: a verified-savings headline over the audit pipeline — sample data from a seeded demonstration account">
           </div>

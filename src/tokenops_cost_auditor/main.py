@@ -118,9 +118,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # §6 i18n: components reference keys, the locale supplies values — a
     # global, so no route has to remember to pass it.
     app.state.jinja.globals["t"] = i18n.t
-    # ONE docs origin for every template (a hardcoded /docs-site/ path 404'd
-    # in production — the docs lived, no link reached them)
+    # ONE origin for every outward-facing address (R-DOMAIN-MIGRATE: the
+    # domain cutover must be an .env flip, never a template hunt — a
+    # hardcoded /docs-site/ path already 404'd once)
     app.state.jinja.globals["docs_url"] = settings.docs_url
+    app.state.jinja.globals["support_email"] = settings.support_email
+    app.state.jinja.globals["status_url"] = settings.status_url
+    app.state.jinja.globals["base_url"] = settings.app_base_url or "https://tokenops.cloud"
 
     # Asset versioning (walkthrough round 3): static assets carried NO
     # Cache-Control, so browsers heuristically cached them and two design
