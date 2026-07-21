@@ -66,8 +66,9 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             uploads="one audit of an uploaded log file",
             # R-STMT-GATING: say the email behaviour out loud — archived
             # always, mailed when there is something to show.
-            blurb="One full six-detector audit of a log file you upload. No card. "
-            "Statements archived in-app; emailed when there's something to show.",
+            blurb="One full audit of a usage file you drop in — we show you "
+            "exactly where to get it. No card. Statements archived in-app; "
+            "emailed when there's something to show.",
         ),
         PRO: Plan(
             key=PRO,
