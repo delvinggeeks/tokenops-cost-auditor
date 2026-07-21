@@ -32,6 +32,7 @@ from tokenops_cost_auditor.services.payments.razorpay_link import RazorpayLinkAd
 from tokenops_cost_auditor.services.payments.stripe_link import StripeLinkAdapter
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.runner import AuditRunner
+from tokenops_cost_auditor.web import i18n
 from tokenops_cost_auditor.web.routes_admin import router as admin_router
 from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
@@ -114,6 +115,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         loader=FileSystemLoader(Path(__file__).parent / "web" / "templates"),
         autoescape=select_autoescape(["html"]),
     )
+    # §6 i18n: components reference keys, the locale supplies values — a
+    # global, so no route has to remember to pass it.
+    app.state.jinja.globals["t"] = i18n.t
     app.state.runner = AuditRunner(
         settings=settings,
         table=app.state.pricing_table,

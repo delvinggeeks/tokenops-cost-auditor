@@ -1,0 +1,18 @@
+{
+  "kit.computing.default": "Computing",
+  "kit.drawer.details": "Details",
+  "kit.error.try_again": "Try again",
+  "kit.finding.evidence": "Evidence",
+  "kit.finding.fix": "The fix",
+  "kit.finding.verify": "How you'll know it worked",
+  "kit.finding.why": "Why we flagged this",
+  "kit.help.what_is": "What is {title}?",
+  "kit.hero.cap": "Verified savings",
+  "kit.hero.recomputing": "Recomputing your verified total",
+  "kit.learn_more": "Learn more →",
+  "kit.ribbon.aria": "Audit pipeline",
+  "kit.tour.count": "Step {step} of {total}",
+  "kit.tour.next": "Next",
+  "kit.tour.skip": "Skip",
+  "kit.wizard.aria": "Progress"
+}

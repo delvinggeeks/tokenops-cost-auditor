@@ -26,6 +26,20 @@ adjusted: dunning pauses scheduled audits only (Terms §6), so past-due Pro
 keeps its rules armed. Tests: tests/test_authority_laws.py; test_alerts.py
 run_all/page tests now model paying customers explicitly.
 
+## §6 I18N KEY LAYER (R-DESIGN-TOKENS-2, 2026-07-21) — implemented
+
+web/i18n.py + web/locales/en.json; t() is a Jinja env GLOBAL (imports drop
+context, globals reach imported macros — proven by a render-through test).
+The catalogue is a value sheet exactly like a mood: components reference
+keys, a locale supplies values; en ships alone and a second locale must
+arrive as a full reviewed sheet (Indic locales stay BACKLOG). The KIT's 18
+chrome strings migrated now (hero cap, WHY/EVIDENCE/FIX/VERIFY headings,
+tour, drawer default, Try again, Computing…); screen strings migrate AT
+WIRING per the ruling's own wording. Missing key renders as its raw key
+name — visible and greppable, never a 500 — and tests forbid it shipping:
+every used key must resolve, no orphan keys, interpolations must format,
+kit chrome literals are pinned OUT (tests/test_i18n_keys.py).
+
 OPEN FOUNDER QUESTION (pre-existing, surfaced by this audit): the Pro blurb
 sells "alerts and your monthly Savings Statement", but scripts/
 monthly_statements.py builds AND EMAILS statements to every user including

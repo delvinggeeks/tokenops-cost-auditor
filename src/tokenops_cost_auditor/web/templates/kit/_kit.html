@@ -65,9 +65,9 @@
   {# SIGNATURE 2 of 3: the accountant's double rule under a verified total.
      It is brand, not theme — it survives every re-skin. #}
   <div class="savings-hero">
-    <p class="cap">Verified savings</p>
+    <p class="cap">{{ t("kit.hero.cap") }}</p>
     {%- if computing %}
-      {{ computing_label("Recomputing your verified total") }}
+      {{ computing_label(t("kit.hero.recomputing")) }}
     {%- else %}
       <div class="money money-hero">{{ amount }}</div>
       <div class="total-rule" aria-hidden="true"></div>
@@ -81,7 +81,7 @@
 {% macro pipeline_ribbon(stages, current=None) %}
   {# SIGNATURE 1 of 3: where the platform's end-to-end state lives. One
      glance away on every app screen. #}
-  <nav class="ribbon" aria-label="Audit pipeline">
+  <nav class="ribbon" aria-label="{{ t('kit.ribbon.aria') }}">
     {%- for s in stages %}
       {%- set state = "done" if loop.index0 < (current or 0) else ("now" if loop.index0 == current else "next") %}
       <span class="stage stage-{{ state }}"{% if state == 'now' %} aria-current="step"{% endif %}>
@@ -111,9 +111,9 @@
     <td colspan="{{ colspan }}">{{ caller() }}</td>
   </tr>
 {% endmacro %}
-{% macro drawer_toggle(id, label="Details") %}
+{% macro drawer_toggle(id, label=None) %}
   <button class="btn btn-quiet" type="button" aria-expanded="false"
-          aria-controls="{{ id }}" data-drawer="{{ id }}">{{ label }}</button>
+          aria-controls="{{ id }}" data-drawer="{{ id }}">{{ label or t("kit.drawer.details") }}</button>
 {% endmacro %}
 
 {# ----------------------------------------------------------- FindingCard #}
@@ -131,14 +131,14 @@
 {% macro finding_detail(f) %}
   {# R-CLARITY §1: WHY · EVIDENCE · THE FIX · VERIFY, in that order. #}
   <div class="finding-detail">
-    <h4>Why we flagged this</h4>
+    <h4>{{ t("kit.finding.why") }}</h4>
     <p>{{ f.why }}</p>
-    <h4>Evidence</h4>
+    <h4>{{ t("kit.finding.evidence") }}</h4>
     {{ caller() if caller else "" }}
-    <h4>The fix</h4>
+    <h4>{{ t("kit.finding.fix") }}</h4>
     {%- if f.fix_snippet %}<pre class="snippet">{{ f.fix_snippet }}</pre>{% endif %}
     <p>{{ f.fix }}</p>
-    <h4>How you'll know it worked</h4>
+    <h4>{{ t("kit.finding.verify") }}</h4>
     <p>{{ f.verify }}</p>
   </div>
 {% endmacro %}
@@ -175,7 +175,7 @@
 
 {# ------------------------------------------------------------ WizardSteps #}
 {% macro wizard_steps(steps, current) %}
-  <ol class="steps-bar" aria-label="Progress">
+  <ol class="steps-bar" aria-label="{{ t('kit.wizard.aria') }}">
     {%- for s in steps %}
       {%- set state = "done" if loop.index0 < current else ("cur" if loop.index0 == current else "") %}
       <li class="{{ state }}">
@@ -189,11 +189,11 @@
 {# ------------------------------------------------------------ HelpPopover #}
 {% macro help_popover(id, title, body, learn_more=None) %}
   <details class="help" id="{{ id }}">
-    <summary aria-label="What is {{ title }}?">?</summary>
+    <summary aria-label="{{ t('kit.help.what_is', title=title) }}">?</summary>
     <div class="help-body">
       <strong>{{ title }}</strong>
       <p>{{ body }}</p>
-      {%- if learn_more %}<a href="{{ learn_more }}">Learn more →</a>{% endif %}
+      {%- if learn_more %}<a href="{{ learn_more }}">{{ t("kit.learn_more") }}</a>{% endif %}
     </div>
   </details>
 {% endmacro %}
@@ -201,12 +201,12 @@
 {# --------------------------------------------------------------- TourSpot #}
 {% macro tour_spot(step, title, body, total) %}
   <div class="tour-pop" data-tour-step="{{ step }}" hidden>
-    <p class="tour-count">Step {{ step }} of {{ total }}</p>
+    <p class="tour-count">{{ t("kit.tour.count", step=step, total=total) }}</p>
     <strong>{{ title }}</strong>
     <p>{{ body }}</p>
     <div class="tour-actions">
-      <button class="btn btn-quiet" data-tour="skip">Skip</button>
-      <button class="btn btn-primary" data-tour="next">Next</button>
+      <button class="btn btn-quiet" data-tour="skip">{{ t("kit.tour.skip") }}</button>
+      <button class="btn btn-primary" data-tour="next">{{ t("kit.tour.next") }}</button>
     </div>
   </div>
 {% endmacro %}
@@ -257,15 +257,15 @@
   <div class="errorstate" role="alert">
     <h3>{{ what_happened }}</h3>
     <p>{{ what_to_do }}</p>
-    {%- if retry_href %}{{ button("Try again", href=retry_href) }}{% endif %}
+    {%- if retry_href %}{{ button(t("kit.error.try_again"), href=retry_href) }}{% endif %}
   </div>
 {% endmacro %}
 
-{% macro computing_label(what="Computing") %}
+{% macro computing_label(what=None) %}
   {# The ONLY loading treatment permitted where a figure will appear.
      Explicit words, not a shimmer: a placeholder that pulses where money
      goes reads as a number still settling. #}
-  <p class="computing" role="status" aria-live="polite">{{ what }}…</p>
+  <p class="computing" role="status" aria-live="polite">{{ what or t("kit.computing.default") }}…</p>
 {% endmacro %}
 
 {% macro skeleton(lines=3) %}
