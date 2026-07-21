@@ -1309,7 +1309,15 @@ PASS-WITH-NOTES on the settled diff. Notes actioned:
   an estimator change, so CLAUDE.md rule 4 does not apply.
 
 
-## R-LANDING-2 received 2026-07-24 — BLOCKED, not started (R-PREMISE-CHECK)
+## R-LANDING-2 — UNBLOCKED AND GO (founder, 2026-07-25; block record kept below)
+
+All four questions answered: order self-contained + satisfied by wiring; 98%
+figure replaces the dropped unsourced card; the §5 header line RELEASED;
+dress-in-place confirmed. Budgets are the gate evidence (Lighthouse only if
+installable). R-STMT-GATING recorded in PLAN §0.1 and implemented. Carried
+debt accepted.
+
+## R-LANDING-2 received 2026-07-24 — original block record (R-PREMISE-CHECK)
 
 The ruling's stated prerequisite does not exist in the record: there is no
 incident/funnel order, and therefore no Part B skeleton for this to dress.

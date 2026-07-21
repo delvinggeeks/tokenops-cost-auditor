@@ -64,7 +64,10 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             sources=limits.get(FREE, 0),
             scheduled_audits=False,
             uploads="one audit of an uploaded log file",
-            blurb="One full six-detector audit of a log file you upload. No card.",
+            # R-STMT-GATING: say the email behaviour out loud — archived
+            # always, mailed when there is something to show.
+            blurb="One full six-detector audit of a log file you upload. No card. "
+            "Statements archived in-app; emailed when there's something to show.",
         ),
         PRO: Plan(
             key=PRO,
@@ -75,7 +78,7 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             scheduled_audits=True,
             uploads="unlimited manual uploads",
             blurb="One connected source, audited weekly, plus alerts and your "
-            "monthly Savings Statement.",
+            "Savings Statement emailed every month.",
         ),
         TEAM: Plan(
             key=TEAM,

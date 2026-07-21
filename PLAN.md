@@ -708,6 +708,33 @@ substituted until tooling exists — measured budgets as evidence (transfer
 <300KB, JS <15KB, CSS <25KB, hero <120KB), verified by curl/du in the gate
 report; real Lighthouse >=90 mobile preferred if installable.
 
+UNBLOCKED (founder, 2026-07-25): the incident/funnel order is confirmed
+SELF-CONTAINED and SATISFIED — its surviving requirements shipped with the
+wiring milestone (login/signup CTAs, post-login → /dashboard, legacy-route
+behaviour fix, no-store HTML, Terms FR-23 canonical + test, seeded hero at
+95KB). Problem-strip third card = the attributed 98% FinOps figure ("#1
+unmet ask" permanently dropped); "We run the architecture we audit you
+toward" RELEASED for §5; the wired v4 landing is the skeleton and R-LANDING-2
+dresses it IN PLACE (three new sections added: animated pipeline, product-tour
+tabs, comparison strip); measured budgets ARE the gate evidence (JS<15KB,
+CSS<25KB, transfer<300KB, hero<120KB via curl/du) with real Lighthouse only
+if installable in-env. GO issued; chain: landing → stranger-path smoke →
+unified deploy (backup first) → founder production walkthrough → thread on
+founder ACCEPT.
+
+**R-STMT-GATING (founder, 2026-07-25).** Savings Statements are ARCHIVED for
+every plan, always (R-ARCHIVE-ALWAYS untouched; Free reads them in-app).
+EMAIL DELIVERY is gated: Pro/Team receive the monthly statement email always;
+Free receives it ONLY for months with activity (an audit ran or a finding
+changed state that month) — a monthly email of zeros to a dormant Free
+account is spam, but an activity statement showing identified-but-unverified
+savings is the best upsell artifact. Pro blurb sells "monthly Savings
+Statement, every month" honestly; the Free plan line states statements are
+archived in-app and emailed when there is something to show. Tests pin
+delivery gating per plan + activity and unconditional archiving. Resolves the
+open question recorded at the §5 authority audit. Carried debt
+(schedule.py 84.8%) ACCEPTED per the V-D10 slack rule.
+
 ORIGINAL BLOCK (resolved, kept for the record): the ruling states it "runs AFTER the incident/funnel order completes
 (that order's Part B is the skeleton this dresses)". No incident/funnel order
 exists in PLAN, PLAN-V15, STATUS, BACKLOG or docs; the only recorded Part B is

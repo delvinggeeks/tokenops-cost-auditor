@@ -38,7 +38,7 @@ def main() -> int:
         else LogMailAdapter()
     )
     year, month = previous_month(datetime.now(UTC))
-    issued = already_sent = opted_out = failed = 0
+    issued = already_sent = opted_out = gated = failed = 0
     engine = create_engine(settings.database_url)
     with Session(engine) as session:
         for user in session.execute(select(User)).scalars().all():
@@ -46,13 +46,17 @@ def main() -> int:
             # later user their statement (V-D6 cold-review f.4).
             try:
                 # ALWAYS build and archive: the statement is readable in-app
-                # regardless of email preference (V-D7 cold-review f.1 — the
-                # opt-out was silently destroying the artifact too).
+                # regardless of email preference OR plan (V-D7 cold-review f.1;
+                # R-STMT-GATING keeps archiving unconditional).
                 doc = statements.build(session, user, year, month)
                 row = statements.archive(session, user, doc)
                 session.flush()
                 if user.statement_emails is False:  # NULL = opted in
                     opted_out += 1
+                elif not statements.should_email(session, settings, user, year, month):
+                    # R-STMT-GATING: Free + no activity this month — archived,
+                    # readable in-app, not mailed.
+                    gated += 1
                 elif statements.send(session, mail, user, row):
                     issued += 1
                 else:
@@ -62,10 +66,12 @@ def main() -> int:
                 session.rollback()
                 failed += 1
                 print(f"  statement failed for {user.id}: {str(exc)[:120]}", file=sys.stderr)
-    # Separate counters: "opted out" is not "already sent" (V-D7 cold-review f.3)
+    # Separate counters: "opted out" is not "already sent" is not "plan-gated"
+    # (V-D7 cold-review f.3 discipline).
     print(
         f"statements {year:04d}-{month:02d}: issued={issued} "
-        f"already_sent={already_sent} archived_not_emailed={opted_out} failed={failed}"
+        f"already_sent={already_sent} archived_not_emailed={opted_out} "
+        f"gated_no_activity={gated} failed={failed}"
     )
     return 0
 

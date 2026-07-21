@@ -414,3 +414,93 @@ class TestColdReviewRegressionsV6:
         spec.loader.exec_module(job)
         assert job.previous_month(datetime(2026, 1, 15, tzinfo=UTC)) == (2025, 12)
         assert job.previous_month(datetime(2026, 7, 1, tzinfo=UTC)) == (2026, 6)
+
+
+class TestStmtGatingEmail:
+    """R-STMT-GATING (founder, 2026-07-25): archiving is unconditional for
+    every plan; the monthly EMAIL goes to Pro/Team always and to Free only
+    for a month with activity — zeros mailed monthly to a dormant account is
+    spam, an activity statement is the upsell artifact."""
+
+    def _settings(self, tmp_path: Path) -> object:
+        from tokenops_cost_auditor.config import Settings
+
+        return Settings(
+            secret_key="k" * 64, database_url=f"sqlite:///{tmp_path}/g.db", _env_file=None
+        )
+
+    def _subscribe(self, session: Session, user: User, plan: str) -> None:
+        from tokenops_cost_auditor.persistence.models import Subscription
+
+        session.add(Subscription(user_id=user.id, provider="stripe", plan=plan))
+        session.flush()
+
+    def test_paid_plans_are_emailed_even_when_dormant(
+        self, session: Session, tmp_path: Path
+    ) -> None:
+        settings = self._settings(tmp_path)
+        user = User(email="dormant-pro@example.com")
+        session.add(user)
+        session.flush()
+        self._subscribe(session, user, "pro")
+        session.commit()
+        # No audit, no feedback, nothing in June — Pro still gets the email.
+        assert statements.should_email(session, settings, user, 2026, 6) is True
+
+    def test_dormant_free_is_archived_but_not_emailed(
+        self, session: Session, tmp_path: Path
+    ) -> None:
+        settings = self._settings(tmp_path)
+        user = User(email="dormant-free@example.com")
+        session.add(user)
+        session.commit()
+        assert statements.should_email(session, settings, user, 2026, 6) is False
+        # Archive stays unconditional: the artifact exists and is readable.
+        doc = statements.build(session, user, 2026, 6)
+        row = statements.archive(session, user, doc)
+        session.commit()
+        assert row.period == "2026-06" and row.body_text
+
+    def test_free_with_an_audit_that_month_is_emailed(
+        self, session: Session, tmp_path: Path
+    ) -> None:
+        settings = self._settings(tmp_path)
+        user = seed_month(session)  # audits + feedback all in June, no subscription
+        session.commit()
+        assert statements.should_email(session, settings, user, 2026, 6) is True
+        # ...and the activity is month-scoped: May had nothing.
+        assert statements.should_email(session, settings, user, 2026, 5) is False
+
+    def test_free_with_only_a_verdict_change_is_emailed(
+        self, session: Session, tmp_path: Path
+    ) -> None:
+        """A finding changing state IS activity even if the audit ran earlier:
+        the customer acted that month, and the statement shows what that did."""
+        settings = self._settings(tmp_path)
+        user = seed_month(session)  # audits in June
+        # move the feedback into July; July has no audits
+        for fb in session.execute(select(FindingFeedback)).scalars().all():
+            fb.ts = datetime(2026, 7, 3, tzinfo=UTC)
+        session.commit()
+        assert statements.should_email(session, settings, user, 2026, 7) is True
+
+    def test_cancelled_subscription_gates_like_free(self, session: Session, tmp_path: Path) -> None:
+        from tokenops_cost_auditor.persistence.models import Subscription
+
+        settings = self._settings(tmp_path)
+        user = User(email="was-pro@example.com")
+        session.add(user)
+        session.flush()
+        session.add(
+            Subscription(user_id=user.id, provider="stripe", plan="pro", status="cancelled")
+        )
+        session.commit()
+        assert statements.should_email(session, settings, user, 2026, 6) is False
+
+    def test_the_blurbs_say_the_email_behaviour_out_loud(self, tmp_path: Path) -> None:
+        from tokenops_cost_auditor.services.payments import plans as plan_catalogue
+
+        settings = self._settings(tmp_path)
+        catalogue = plan_catalogue.catalogue(settings)  # type: ignore[arg-type]
+        assert "emailed every month" in catalogue["pro"].blurb
+        assert "emailed when there's something to show" in catalogue["free"].blurb

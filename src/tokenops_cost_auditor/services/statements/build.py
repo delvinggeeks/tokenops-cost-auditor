@@ -22,8 +22,10 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tokenops_cost_auditor.persistence.models import Audit, Statement, User, utcnow
+from tokenops_cost_auditor.config import Settings
+from tokenops_cost_auditor.persistence.models import Audit, FindingFeedback, Statement, User, utcnow
 from tokenops_cost_auditor.services.dashboard.savings import compute
+from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 
 MONTH_DAYS = 30.0
@@ -54,6 +56,47 @@ def _month_bounds(year: int, month: int) -> tuple[datetime, datetime]:
         else datetime(year, month + 1, 1, tzinfo=UTC)
     )
     return start, nxt
+
+
+def should_email(session: Session, settings: Settings, user: User, year: int, month: int) -> bool:
+    """R-STMT-GATING (founder, 2026-07-25): who gets the monthly EMAIL.
+
+    Archiving is unconditional for every plan — that is the caller's job and
+    this function has no say in it. Pro/Team get the email every month; Free
+    only for a month with activity (an audit ran, or a finding changed state),
+    because a monthly email of zeros to a dormant Free account is spam, while
+    an activity statement showing identified-but-unverified savings is the
+    upsell artifact.
+    """
+    ents = subscriptions.entitlements(session, settings, user.id)
+    if str(ents["plan_key"]) in plans.PAID_PLANS:
+        return True
+    start, end = _month_bounds(year, month)
+    audit_ran = (
+        session.execute(
+            select(Audit.id).where(
+                Audit.user_id == user.id,
+                Audit.created_at >= start,
+                Audit.created_at < end,
+            )
+        ).first()
+        is not None
+    )
+    if audit_ran:
+        return True
+    finding_changed = (
+        session.execute(
+            select(FindingFeedback.finding_id)
+            .join(Audit, FindingFeedback.audit_id == Audit.id)
+            .where(
+                Audit.user_id == user.id,
+                FindingFeedback.ts >= start,
+                FindingFeedback.ts < end,
+            )
+        ).first()
+        is not None
+    )
+    return finding_changed
 
 
 def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
