@@ -109,6 +109,19 @@ only pointer listener (hero-scoped, rAF-throttled).
   reveal order is the document order, so nothing above a revealed section may
   stay hidden.
 
+**C6–C8 — the enterprise elevation round (founder walkthrough, 2026-07-27).**
+
+| # | Effect | Trigger | Behavior | Duration + easing | Reduced-motion | Tokens |
+|---|--------|---------|----------|-------------------|----------------|--------|
+| C6 | The dollar's journey (workflow flow-line) | IntersectionObserver, pipeline section 30% in view, once | an SVG ledger line draws left→right through the five stages (stroke-dashoffset), carrying the money story raw spend → verified | 900ms `--ease` | line renders fully drawn | `--accent`, `--rule` |
+| C7 | Double rule draw (self-audit figure) | section 40% in view, once | the accountant's double rule draws under 32.5% (two strokes, dashoffset) | 400ms `--ease` | rule renders complete | `--rule-strong` |
+| C8 | Hero entrance | page load, once | eyebrow → h1 → subhead → CTAs → proof chips rise 8px + fade, 60ms stagger | 200ms each `--ease` | all render in final position | `--ease` |
+
+C6/C7 are comprehension motion (the money's path; the verified total's rule —
+the §4 signature earning its place on the landing). C8 is the one orchestrated
+page-load moment. All three gate on prefers-reduced-motion in JS and default
+to the finished state.
+
 **Cut list — considered and rejected.** Parallax on the hero (fights the tilt,
 two competing depth cues), number odometer roll on scroll-back (re-animating a
 figure the reader already read implies it changed), and card entrance stagger

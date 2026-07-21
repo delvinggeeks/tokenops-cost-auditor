@@ -140,3 +140,57 @@
     });
   }
 })();
+
+/* C6-C8 (MOTION-SPECS): the dollar's journey, the drawn double rule, and the
+   one orchestrated hero entrance. All default to the finished state. */
+(function () {
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || !("IntersectionObserver" in window)) return;
+
+  /* C8 — hero entrance: rise 8px + fade, 60ms stagger, once on load. */
+  var hero = document.querySelector("[data-entrance]");
+  if (hero) {
+    var kids = Array.prototype.slice.call(hero.children);
+    kids.forEach(function (el, i) {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(8px)";
+      el.style.transition = "opacity 200ms var(--ease), transform 200ms var(--ease)";
+      setTimeout(function () {
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }, 40 + i * 60);
+    });
+  }
+
+  /* C6 — the flow line draws through the five stages, once, on view. */
+  var ink = document.querySelector(".pipe-line-ink");
+  if (ink) {
+    ink.style.strokeDashoffset = "1000";
+    new IntersectionObserver(function (es, obs) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        obs.disconnect();
+        ink.style.transition = "stroke-dashoffset 900ms var(--ease)";
+        ink.style.strokeDashoffset = "0";
+      });
+    }, { threshold: 0.3 }).observe(ink.closest(".pipe-wrap"));
+  }
+
+  /* C7 — the accountant's double rule draws under the self-audit figure. */
+  var rule = document.querySelector(".proof-rule");
+  if (rule) {
+    var strokes = rule.querySelectorAll("path");
+    strokes.forEach(function (s) { s.style.strokeDashoffset = "100"; });
+    new IntersectionObserver(function (es, obs) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        obs.disconnect();
+        strokes.forEach(function (s, i) {
+          s.style.transition = "stroke-dashoffset 400ms var(--ease) " + i * 120 + "ms";
+          s.style.strokeDashoffset = "0";
+        });
+      });
+    }, { threshold: 0.4 }).observe(rule.closest(".land-proof"));
+  }
+})();

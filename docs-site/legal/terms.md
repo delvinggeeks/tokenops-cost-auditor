@@ -1,6 +1,6 @@
 # Terms of Service
 
-Effective 2026-07-17 · TokenOps Cost Auditor (Delving Geeks / WitAura)
+Effective 2026-07-17 · TokenOps Cost Auditor, a WitAura product
 
 <!-- MP-9 single-sourcing: this page mirrors the binding web page at /legal/terms
      (src/tokenops_cost_auditor/web/templates/legal/terms.html). A sync test

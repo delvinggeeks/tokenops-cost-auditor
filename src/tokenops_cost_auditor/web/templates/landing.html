@@ -23,7 +23,7 @@
   {# ============ 1 · HERO — pain + platform + the 3D moment (C1) ============ #}
   <section class="land-hero">
     <div class="wrap hero-grid">
-      <div class="hero-copy">
+      <div class="hero-copy" data-entrance>
         <p class="hero-eyebrow">AI spend governance · by WitAura</p>
         {% if hero_variant == "billshock" %}
         <h1>Just got an AI bill you can&rsquo;t explain?</h1>
@@ -54,6 +54,9 @@
       <div class="hero-shot" data-tilt>
         <img src="/static/land/hero-dashboard-sample.webp" width="1080" height="645"
              alt="The TokenOps dashboard: a verified-savings headline over the audit pipeline — sample data from a seeded demonstration account">
+        {# every screenshot on this page is an EXHIBIT — the audit's own
+           evidence language, and the honesty label in one device #}
+        <p class="exhibit">Exhibit A — the dashboard · seeded demonstration account</p>
       </div>
     </div>
   </section>
@@ -61,6 +64,7 @@
   {# ============ 2 · PROBLEM STRIP — three attributed cards ============ #}
   <section class="land-strip" data-reveal>
     <div class="wrap">
+      <p class="sched">Schedule 01 · The problem</p>
       <p class="strip-line">Waste hides in shapes invoices can&rsquo;t show.</p>
       <div class="stat-cards">
         <div class="statcard">
@@ -85,7 +89,14 @@
   {# ============ 3 · HOW IT WORKS — the pipeline, lit in sequence (C3) ====== #}
   <section class="land-pipe" id="how-it-works">
     <div class="wrap">
-      <h2 data-reveal>The whole product is one loop</h2>
+      <p class="sched" data-reveal>Schedule 02 · How it works</p>
+      <h2 data-reveal>Follow a dollar through the loop</h2>
+      <div class="pipe-wrap">
+        <svg class="pipe-line" viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 4 H1000" fill="none" stroke="var(--rule)" stroke-width="2"/>
+          <path class="pipe-line-ink" d="M0 4 H1000" fill="none" stroke="var(--accent)"
+                stroke-width="2.5"/>
+        </svg>
       <ol class="pipe">
         <li class="pipe-stage lit" data-stage>
           <span class="pipe-k">Input</span>
@@ -111,12 +122,28 @@
             cap or touch your traffic.</p>
         </li>
       </ol>
+      </div>
+
+      {# what it finds: the six detectors, named plainly — the product's
+         substance, not adjectives #}
+      <div class="finds" data-reveal>
+        <h3 class="finds-h">Six kinds of waste it prices, every audit</h3>
+        <ul class="finds-grid">
+          <li><strong>Missing prompt caching</strong><span>The same prefix paid for again and again.</span></li>
+          <li><strong>Retry storms</strong><span>Near-identical calls in bursts — one answer, billed repeatedly.</span></li>
+          <li><strong>Oversized models</strong><span>Frontier models doing work a cheaper one handles.</span></li>
+          <li><strong>Prompt bloat</strong><span>Routes sending far more context than their answers use.</span></li>
+          <li><strong>Unbounded output caps</strong><span>max_tokens set to the moon; latency and reservations pay for it.</span></li>
+          <li><strong>Chatty agent loops</strong><span>Many tiny calls re-sending shared context where one would do.</span></li>
+        </ul>
+      </div>
     </div>
   </section>
 
   {# ============ 4 · PRODUCT TOUR — tabs (C5) + count-ups (C4) ============ #}
   <section class="land-tour" data-reveal>
     <div class="wrap">
+      <p class="sched">Schedule 03 · The exhibits</p>
       <h2>What you actually see</h2>
       <p class="tour-cap">Real screens from a seeded demonstration account —
         labeled sample data, because unlabeled numbers would be a lie.</p>
@@ -132,6 +159,7 @@
             ranked by dollars, not severity labels.</p>
           <img src="/static/land/tour-findings.webp" width="1080" height="562" loading="lazy"
                alt="The findings table: plain-language findings with severity, confidence and monthly impact — sample data">
+          <p class="exhibit">Exhibit B — the findings ledger · seeded demonstration account</p>
         </div>
         <div class="tour-panel" role="tabpanel" data-panel="applied" hidden>
           <p><span class="tour-n money" data-count="940.10" data-prefix="$">$940.10</span>/mo
@@ -139,6 +167,7 @@
             the proven difference counts.</p>
           <img src="/static/land/tour-applied.webp" width="1080" height="562" loading="lazy"
                alt="A finding drawer with the fix applied and the verified savings joining the headline — sample data">
+          <p class="exhibit">Exhibit C — the money moment · seeded demonstration account</p>
         </div>
         <div class="tour-panel" role="tabpanel" data-panel="alerts" hidden>
           <p><span class="tour-n" data-count="4">4</span> things worth an email —
@@ -146,6 +175,7 @@
             budget. Nothing is ever paused.</p>
           <img src="/static/land/tour-alerts.webp" width="1080" height="562" loading="lazy"
                alt="Alert settings: four watchable conditions with thresholds — sample data">
+          <p class="exhibit">Exhibit D — alerts · seeded demonstration account</p>
         </div>
       </div>
     </div>
@@ -154,6 +184,7 @@
   {# ============ 5 · GOVERNANCE — the architecture, with proofs ============ #}
   <section class="land-gov" data-reveal data-mood="aura">
     <div class="wrap">
+      <p class="sched sched-dark">Schedule 04 · The architecture</p>
       <h2>We run the architecture we audit you toward</h2>
       <div class="gov-grid">
         <div class="gov-item">
@@ -188,6 +219,7 @@
   {# ============ 6 · COMPARISON STRIP — categories, never vendors ========== #}
   <section class="land-compare" data-reveal>
     <div class="wrap">
+      <p class="sched">Schedule 05 · The alternatives</p>
       <h2>Where this fits</h2>
       <table class="compare">
         <thead><tr><th scope="col"></th><th scope="col">How it works</th><th scope="col">What it costs you</th></tr></thead>
@@ -204,10 +236,15 @@
   {# ============ 7 · SELF-AUDIT PROOF ============ #}
   <section class="land-proof" data-reveal>
     <div class="wrap">
+      <p class="sched">Schedule 06 · Our own audit</p>
       <h2>We pointed it at the AI agents that built it</h2>
       <p class="proof-line"><span class="money proof-n">67,095</span> calls ·
         <span class="money proof-n">$8,757.75</span>/mo API-equivalent ·
-        <span class="money proof-n">32.5%</span> estimated waste</p>
+        <span class="proof-rule-wrap"><span class="money proof-n">32.5%</span>
+          <svg class="proof-rule" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+            <path class="pr-a" d="M0 2 H100" stroke="var(--rule-strong)" stroke-width="1.5" fill="none"/>
+            <path class="pr-b" d="M0 6 H100" stroke="var(--rule-strong)" stroke-width="3" fill="none"/>
+          </svg></span> estimated waste</p>
       <p class="proof-note">{{ equiv_spend_line }}</p>
       <p><a href="/sample">The full self-audit is the sample report →</a></p>
     </div>
@@ -216,6 +253,7 @@
   {# ============ 8 · PLANS — from the price config, never inlined ========== #}
   <section class="land-plans" data-reveal id="plans">
     <div class="wrap">
+      <p class="sched">Schedule 07 · What it costs</p>
       <h2>Plans</h2>
       <div class="plan-cards">
         {% for p in catalogue %}

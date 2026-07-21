@@ -301,3 +301,47 @@
 .col-h { display: block; font: 700 11px var(--sans); letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
 .foot-copy { font-size: 12.5px; margin-top: var(--s3); }
+
+/* ============================================================
+   ELEVATION ROUND (founder walkthrough, 2026-07-27): the page
+   composed as an audit document. Schedules, exhibits, the
+   dollar's journey, the drawn double rule. Tokens only.
+   ============================================================ */
+.sched { font: 700 11px var(--mono); letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 var(--s2); }
+.sched::before { content: ""; display: inline-block; width: 22px; height: 2px;
+  background: var(--accent); vertical-align: middle; margin-right: 10px; }
+.sched-dark { color: var(--ink-soft); }
+.land h2 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.025em; }
+
+.exhibit { font: 600 11.5px var(--mono); letter-spacing: 0.05em; color: var(--ink-soft);
+  border-left: 2px solid var(--rule-strong); padding: 3px 0 3px 10px;
+  margin: 10px 0 0; }
+
+.pipe-wrap { position: relative; padding-top: 18px; }
+.pipe-line { position: absolute; top: 0; left: 0; width: 100%; height: 8px; }
+.pipe-line-ink { stroke-dasharray: 1000; stroke-dashoffset: 0; }
+.pipe-stage p { color: var(--ink-soft); }
+
+.finds { margin-top: var(--s5); border-top: 1px solid var(--rule); padding-top: var(--s4); }
+.finds-h { font: 640 17px var(--sans); margin: 0 0 var(--s3); letter-spacing: -0.01em; }
+.finds-grid { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--s3); padding: 0; margin: 0; }
+.finds-grid li { border-left: 2px solid var(--accent); padding-left: var(--s2); }
+.finds-grid strong { display: block; font-size: 14.5px; letter-spacing: -0.01em; }
+.finds-grid span { display: block; color: var(--ink-soft); font-size: 13.5px;
+  line-height: 1.55; margin-top: 3px; }
+
+.proof-rule-wrap { position: relative; display: inline-block; }
+.proof-rule { position: absolute; left: 0; right: 0; bottom: -8px; width: 100%;
+  height: 8px; }
+.pr-a, .pr-b { stroke-dasharray: 100; stroke-dashoffset: 0; }
+
+.compare { border: 1px solid var(--rule); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--lift-1); background: var(--surface); }
+.compare th, .compare td { padding: 14px var(--s3); }
+.compare-us th, .compare-us td { border-bottom: 3px double var(--rule-strong); }
+
+@media (max-width: 860px) {
+  .finds-grid { grid-template-columns: 1fr; }
+}
