@@ -50,6 +50,9 @@
   --control-depth-pressed:
     inset 0 2px 4px rgba(21,23,26,.12),
     inset 0 -1px 0 rgba(255,255,255,.5);
+  --control-depth-primary:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    0 1px 3px rgba(21,23,26,.25);
 
   /* data surfaces: flat-crisp */
   --lift-1: 0 1px 2px rgba(21,23,26,.05);
@@ -86,6 +89,9 @@
   --control-depth-pressed:
     inset 0 2px 5px rgba(0,0,0,.55),
     inset 0 -1px 0 rgba(255,255,255,.05);
+  --control-depth-primary:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 1px 3px rgba(0,0,0,.6);
 
   /* in the dark a drop shadow is invisible; depth is a light edge */
   --lift-1: inset 0 1px 0 rgba(255,255,255,.04);
@@ -168,7 +174,8 @@ a { color: var(--accent); }
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
 .btn:active { transform: scale(0.98); box-shadow: var(--control-depth-pressed); }             /* micro-confirmation */
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: var(--on-accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent-ink); color: var(--on-accent);
+  box-shadow: var(--control-depth-primary); }  /* the white neumorphic inset washed text on saturated fills */
 .btn-primary:hover { background: var(--accent-ink); }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--ink-soft); }
 

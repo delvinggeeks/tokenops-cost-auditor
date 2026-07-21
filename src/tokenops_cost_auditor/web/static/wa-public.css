@@ -374,3 +374,49 @@
 @media (max-width: 860px) {
   .float-a { right: 4px; } .float-b { left: 4px; }
 }
+
+/* ============================================================
+   MODERN-SAAS HERO (founder walkthrough round 4): full-bleed
+   aura hero, centered display type, framed glowing product shot.
+   Aura's own value sheet — zero new colours.
+   ============================================================ */
+.land-hero[data-mood="aura"] { background: var(--ground); color: var(--ink);
+  padding: calc(var(--s6) + 8px) 0 var(--s6); }
+.hero-center { text-align: center; max-width: 900px; }
+.hero-center .hero-eyebrow { color: var(--accent); }
+.hero-center h1 { font-size: clamp(40px, 5.4vw, 72px); line-height: 1.04;
+  letter-spacing: -0.035em; margin: 0 0 var(--s3); }
+.hero-center .hero-sub { color: var(--ink-soft); font-size: 17.5px;
+  max-width: 640px; margin: 0 auto var(--s4); }
+.hero-center .hero-ctas { justify-content: center; }
+.hero-center .hero-note { border-left: 0; padding-left: 0; margin-top: var(--s2); }
+.hero-alt { background: var(--surface-raised); color: var(--ink);
+  border-color: var(--rule); }
+.hero-sample { color: var(--accent); }
+
+.land-hero .hero-scene { max-width: 980px; margin: var(--s5) auto 0; }
+.browser-frame { border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--rule);
+  box-shadow: 0 0 90px var(--accent-ring), var(--lift-3); background: var(--surface); }
+.bf-bar { display: flex; align-items: center; gap: 6px;
+  background: var(--surface-raised); border-bottom: 1px solid var(--rule);
+  padding: 9px 14px; }
+.bf-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--rule); }
+.bf-url { font: 600 11px var(--mono); color: var(--ink-soft); margin-left: 10px; }
+.browser-frame img { display: block; width: 100%; height: auto; border: 0;
+  border-radius: 0; box-shadow: none; }
+.exhibit-center { border-left: 0; text-align: center; margin-top: var(--s2); }
+.hero-proof-center { justify-content: center; margin-top: var(--s4); }
+.land-hero[data-mood="aura"] .hero-proof li { background: var(--surface);
+  border-color: var(--rule); color: var(--ink-soft); }
+.land-hero .float-a { right: 3%; bottom: 18%; }
+.land-hero .float-b { left: 3%; top: 12%; }
+
+@media (max-width: 860px) {
+  .land-hero .float-a, .land-hero .float-b { display: none; }
+  .hero-center h1 { font-size: 38px; }
+}
+
+/* the nav's link colour rule (.pub-nav a) out-specified .btn-primary and
+   washed the CTA text to ink-soft on accent — found by computed style. */
+.pub-nav a.btn-primary { color: var(--on-accent); }
