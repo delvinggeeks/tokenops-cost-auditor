@@ -198,3 +198,26 @@ class TestCloseAccount:
             body = digest.build_digest(session, app.state.settings)
         assert "NEED provider-side subscription cancellation" in body
         assert EMAIL in body
+
+
+class TestTheBrandMark:
+    def test_the_mark_has_one_definition(self) -> None:
+        """Branding-gate note: hand-copied SVGs drift the moment one is
+        edited. Templates include _wa_mark.html; only the favicon (which
+        cannot read the DOM) carries its own mirrored copy."""
+        from pathlib import Path
+
+        templates = Path(__file__).parents[1] / "src/tokenops_cost_auditor/web/templates"
+        inline = [
+            p.relative_to(templates).as_posix()
+            for p in templates.rglob("*.html")
+            if p.name != "_wa_mark.html" and 'class="wa-mark"' in p.read_text(encoding="utf-8")
+        ]
+        assert inline == [], f"hand-copied brand marks: {inline}"
+
+    def test_the_branding_is_on_the_page(self, app: FastAPI) -> None:
+        page = TestClient(app).get("/").text
+        assert page.count('_wa_mark') == 0  # include resolved, not leaked
+        assert page.count('class="wa-mark"') >= 2  # header + footer
+        assert "by WitAura" in page and "© 2026 WitAura" in page
+        assert 'rel="icon"' in page and "og:image" in page
