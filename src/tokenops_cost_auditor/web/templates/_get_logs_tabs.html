@@ -17,23 +17,23 @@
       session files and writes a JSONL you upload here.",
      "The exporter reads token counts and timestamps only. It never copies a prompt or a
       completion into the export — you can read the file before you send it.",
-     "/docs-site/quickstart/", "See the exporter command"),
+     docs_url ~ "/quickstart/", "See the exporter command"),
     ("openai", "OpenAI request logs", "Export + upload",
      "Export your completions usage from the OpenAI dashboard, or ship your own request
       log in JSONL.",
      "We keep the counts and drop everything else at the door, including any text your
       export happens to contain.",
-     "/docs-site/quickstart/", "Export instructions"),
+     docs_url ~ "/quickstart/", "Export instructions"),
     ("anthropic", "Anthropic request logs", "Export + upload",
      "Export usage from the Anthropic console, or upload your own request log.",
      "Same at the door: counts in, content dropped, nothing about your prompts stored.",
-     "/docs-site/quickstart/", "Export instructions"),
+     docs_url ~ "/quickstart/", "Export instructions"),
     ("csv", "Anything else (CSV)", "Bring your own",
      "Any per-call CSV with a timestamp, model, and token counts works. Column names are
       flexible; we tell you what we matched.",
      "You choose the columns you send. If your file has a text column we ignore it and
       never store it.",
-     "/docs-site/quickstart/", "CSV column guide"),
+     docs_url ~ "/quickstart/", "CSV column guide"),
   ] %}
 
   {% for key, title, speed, what, counts_only, href, cta in tabs %}

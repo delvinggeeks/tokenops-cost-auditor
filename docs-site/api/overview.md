@@ -33,8 +33,19 @@ retry on network failure without double-charging your credit.
 
 Upload and auth endpoints are rate-limited per authenticated user where a
 session exists, per IP otherwise; `429` responses carry `Retry-After`.
-Processing has a concurrency cap: audits beyond it hold in `queued` status and
-the status endpoint reports your queue position. <!-- src: NFR-03/12/13 -->
+Current limits: `POST /api/v1/audits` 10/minute; magic-link and
+early-access endpoints 5/minute. Processing has a concurrency cap: audits
+beyond it hold in `queued` status and the status endpoint reports your
+queue position. <!-- src: NFR-03/12/13; routes_upload/@limiter -->
+
+## Machine-readable spec
+
+The live OpenAPI document is served at
+[`https://tokenops.cloud/openapi.json`](https://tokenops.cloud/openapi.json) —
+generated from the running API, so it cannot drift from the deployment.
+Interactive API explorers and issued API keys arrive together (that surface
+is trigger-registered: the first customer request for programmatic access).
+<!-- src: FR-25; BACKLOG R-APIKEYS -->
 
 ## Upload constraints
 

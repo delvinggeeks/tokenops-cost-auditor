@@ -116,3 +116,23 @@ class TestDocsSiteStatsPolicy:
                 assert not re.search(r"\$\d|\d+ ?minutes", block), (
                     f"{page}: MEASUREMENT-PENDING block contains a number"
                 )
+
+
+class TestDocsLinksReachTheDocs:
+    """Walkthrough punch 2026-07-22 ("there is no docs"): the docs site was
+    live and healthy, but every product link pointed at /docs-site/ — a path
+    the app never serves — so no visitor could reach it. Links now come from
+    ONE config origin."""
+
+    def test_no_page_links_the_dead_relative_path(self, app, client) -> None:
+        docs_url = app.state.settings.docs_url
+        for path in ("/", "/login", "/upload", "/dashboard"):
+            page = client.get(
+                path, headers={"X-User-Email": "docs@example.com"}, follow_redirects=True
+            ).text
+            assert "/docs-site/" not in page, f"{path} still links the dead path"
+        # the nav actually reaches the docs origin on public and app shells
+        assert docs_url in client.get("/").text
+        assert (
+            docs_url in client.get("/dashboard", headers={"X-User-Email": "docs@example.com"}).text
+        )

@@ -118,6 +118,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # §6 i18n: components reference keys, the locale supplies values — a
     # global, so no route has to remember to pass it.
     app.state.jinja.globals["t"] = i18n.t
+    # ONE docs origin for every template (a hardcoded /docs-site/ path 404'd
+    # in production — the docs lived, no link reached them)
+    app.state.jinja.globals["docs_url"] = settings.docs_url
 
     # Asset versioning (walkthrough round 3): static assets carried NO
     # Cache-Control, so browsers heuristically cached them and two design

@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     # Signup federation (founder order 2026-07-27): Google OAuth sign-in.
     # Config-gated end to end — with no client id the button never renders,
     # because a dead button is a promise (R-GTM-CONTROL).
+    # Public docs site. Absolute by default: the app itself never serves the
+    # docs build, so a relative path 404s (walkthrough punch 2026-07-22 —
+    # every Docs link on the product pointed at /docs-site/ and died).
+    docs_url: str = "https://docs.tokenops.cloud"
     google_client_id: str = ""
     google_client_secret: str = ""
     microsoft_client_id: str = ""
