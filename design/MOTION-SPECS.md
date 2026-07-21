@@ -56,7 +56,9 @@ effect below.
 | A6 | Pipeline stage pulse (`@keyframes stage-pulse`) | audit in progress | ring `box-shadow` pulse on the active stage | 1.6s loop `--ease` | static ring on the active stage | `--accent` at 25% alpha |
 | A7 | Ledger row tint | pointer hover | `background`→`--surface-tint` | `--t-fast` `--ease` | instant tint | `--surface-tint` |
 
-**A6 note.** A 1.6s infinite loop sits outside the 150–250ms budget by design:
+**A6 note.** Reused by the pipeline theater's `.seg.live .stage-name`
+(R-PIPELINE-UI-SEQ): the same keyframe animates box-shadow there too — the
+ring wraps the stage NAME rather than the stage card. A 1.6s infinite loop sits outside the 150–250ms budget by design:
 it is a *status* indicator, not a transition, and it stops when the audit
 finishes. Called out here rather than left as an unexplained exception.
 

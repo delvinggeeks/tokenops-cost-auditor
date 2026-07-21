@@ -105,6 +105,7 @@
   --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px;
   --content-max: 1100px;
   --radius: 10px;
+  --radius-sm: 6px;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --t-fast: 150ms; --t-med: 250ms;
 
@@ -647,7 +648,7 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 
 /* F9 — inline field: the one form control on the money surface must not
    read browser-default. */
-input.field-inline { width: 8em; border: 1px solid var(--rule); border-radius: 6px;
+input.field-inline { width: 8em; border: 1px solid var(--rule); border-radius: var(--radius-sm);
   padding: 6px 8px; font: 600 13px var(--sans); text-align: right;
   font-variant-numeric: tabular-nums; background: var(--surface-raised);
   color: var(--ink); box-shadow: var(--control-depth); }
@@ -664,6 +665,6 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
    the A6 status pulse — a status indicator, not a transition. */
 .ribbon .seg.live { background: var(--surface-tint); border-radius: var(--radius); }
 .ribbon .seg.live .stage-name { color: var(--accent-ink);
-  animation: stage-pulse 1.6s var(--ease) infinite; border-radius: 4px; }
+  animation: stage-pulse 1.6s var(--ease) infinite; border-radius: var(--radius-sm); }
 .theater-done { margin-top: var(--s3); }
 .theater-rejects { margin-top: var(--s2); font-size: 13.5px; }
