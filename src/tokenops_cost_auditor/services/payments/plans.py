@@ -41,7 +41,7 @@ class Plan:
     key: str
     name: str
     usd: float | None  # LIST price; None = not sold as a subscription
-    inr: float | None
+    inr: float | None  # the INR CHARGE amount (what Razorpay bills)
     launch_usd: float | None  # launch-cohort price; None = no launch tier
     launch_inr: float | None
     spend_gate_usd: float | None  # stated audited-spend bound (copy, not metering)
@@ -49,6 +49,11 @@ class Plan:
     scheduled_audits: bool
     uploads: str
     blurb: str
+    # Founder clarification 2026-07-22: display is DOLLARS everywhere; the
+    # region changes the value. These are India's dollar display points,
+    # paired with the INR charge amounts above.
+    usd_india: float | None = None
+    launch_usd_india: float | None = None
 
     def price(self, currency: str, *, launch: bool = False) -> float | None:
         if launch and self.has_launch(currency):
@@ -56,14 +61,32 @@ class Plan:
         return self.inr if currency.upper() == "INR" else self.usd
 
     def has_launch(self, currency: str) -> bool:
-        launch = self.launch_inr if currency.upper() == "INR" else self.launch_usd
-        return bool(launch)
+        if currency.upper() == "INR":
+            return bool(self.launch_inr and self.launch_usd_india)
+        return bool(self.launch_usd)
 
     def display(self, currency: str = "USD", *, launch: bool = False) -> str:
-        amount = self.price(currency, launch=launch)
+        """SINGLE display currency (founder 2026-07-22): dollars everywhere.
+        The region ('INR' = India) picks WHICH dollar value; the INR charge
+        amount is disclosed by billed_note, and Razorpay bills it."""
+        if currency.upper() == "INR":
+            amount = self.launch_usd_india if launch and self.launch_usd_india else self.usd_india
+        else:
+            amount = self.price(currency, launch=launch)
         if amount is None:
             return "—"
-        return f"{_symbol(currency)}{amount:,.0f}/mo"
+        if amount != int(amount):
+            return f"${amount:,.2f}/mo"
+        return f"${amount:,.0f}/mo"
+
+    def billed_note(self, currency: str, *, launch: bool = False) -> str:
+        """The charge-truth line for India: the card is charged in rupees;
+        the dollar figure is the display convention. Honesty rail: the
+        billed amount is stated wherever the price is."""
+        if currency.upper() != "INR" or self.inr is None:
+            return ""
+        amount = self.price("INR", launch=launch)
+        return f"Billed in India as ₹{amount:,.0f}/mo incl. GST."
 
     def launch_note(self, currency: str, cohort_size: int) -> str:
         """The plain, checkable launch-cohort sentence (honesty rail: this is
@@ -112,6 +135,8 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             inr=settings.plan_pro_inr,
             launch_usd=settings.plan_pro_usd_launch or None,
             launch_inr=settings.plan_pro_inr_launch or None,
+            usd_india=settings.plan_pro_usd_india or None,
+            launch_usd_india=settings.plan_pro_usd_india_launch or None,
             spend_gate_usd=settings.plan_pro_spend_gate_usd,
             sources=limits.get(PRO, 1),
             scheduled_audits=True,
@@ -130,6 +155,8 @@ def catalogue(settings: Settings) -> dict[str, Plan]:
             inr=settings.plan_team_inr,
             launch_usd=settings.plan_team_usd_launch or None,
             launch_inr=settings.plan_team_inr_launch or None,
+            usd_india=settings.plan_team_usd_india or None,
+            launch_usd_india=None,
             spend_gate_usd=settings.plan_team_spend_gate_usd,
             sources=limits.get(TEAM, 5),
             scheduled_audits=True,
@@ -221,10 +248,16 @@ def launch_open(session: Session, settings: Settings, currency: str) -> bool:
 
 
 def one_shot_display(settings: Settings, currency: str = "USD") -> str:
-    """The enterprise one-shot audit (R-Q5/Q6; deliberately not at parity —
-    it carries founder time, not just compute)."""
-    amount = settings.one_shot_inr if currency.upper() == "INR" else settings.one_shot_usd
-    return f"{_symbol(currency)}{amount:,.0f}"
+    """The enterprise one-shot audit (R-Q5/Q6). Displayed in dollars in
+    every region (founder 2026-07-22); India's charge is ₹ via Razorpay."""
+    amount = settings.one_shot_usd_india if currency.upper() == "INR" else settings.one_shot_usd
+    return f"${amount:,.0f}"
+
+
+def one_shot_billed_note(settings: Settings, currency: str) -> str:
+    if currency.upper() != "INR":
+        return ""
+    return f"Billed in India as ₹{settings.one_shot_inr:,.0f}."
 
 
 def one_shot_terms_display(settings: Settings) -> str:

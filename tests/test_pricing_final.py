@@ -66,15 +66,22 @@ class TestOneCurrencyPerView:
             assert rupee_price not in page, "the USD view must not mix in INR prices"
         assert "Prices include GST." not in page
 
-    def test_inr_view_shows_rupees_and_no_dollar_prices(self, client: TestClient) -> None:
+    def test_india_view_shows_india_dollar_values_with_billed_truth(
+        self, client: TestClient
+    ) -> None:
+        """Founder clarification: SINGLE display currency (dollars) — the
+        region changes the VALUE. India sees $4.99/$9.99/$149, and the
+        rupee amount actually charged is disclosed beside every price."""
         page = client.get("/?ccy=INR").text
-        assert "₹499/mo" in page  # Pro launch
-        assert "₹999/mo" in page  # named in the launch note
-        assert "₹14,999/mo" in page  # Scale, flat — no cohort
-        assert "₹20,000" in page  # one-shot
-        for dollar_price in ("$19/mo", "$29/mo", "$59/mo", "$99/mo"):
-            assert dollar_price not in page, "the INR view must not mix in USD prices"
-        assert "Prices include GST." in page
+        assert "$4.99/mo" in page  # Pro launch, India value
+        assert "$9.99/mo" in page  # named in the launch note
+        assert "$149/mo" in page  # Scale, India value
+        assert "$199" in page  # one-shot, India value
+        assert "Billed in India as ₹499/mo incl. GST." in page
+        assert "Billed in India as ₹14,999/mo incl. GST." in page
+        assert "Billed in India as ₹20,000." in page
+        for global_price in ("$19/mo", "$29/mo", "$59/mo", "$99/mo"):
+            assert global_price not in page, "the India view must not show global values"
 
     def test_india_scale_has_no_launch_note(self, client: TestClient) -> None:
         """India Scale is flat ₹14,999 — a launch note on it would be a
@@ -84,7 +91,7 @@ class TestOneCurrencyPerView:
 
     def test_indian_locale_defaults_to_the_inr_view(self, client: TestClient) -> None:
         page = client.get("/", headers={"Accept-Language": "en-IN,en;q=0.9"}).text
-        assert "₹499/mo" in page and "$19/mo" not in page
+        assert "$4.99/mo" in page and "$19/mo" not in page
 
     def test_timezone_detection_drives_the_currency_cookie(self, client: TestClient) -> None:
         """Walkthrough fix: Accept-Language lies (Indian browsers ship en-US)
@@ -95,14 +102,14 @@ class TestOneCurrencyPerView:
         assert "Asia/Kolkata" in page  # the early detection script
         client.cookies.set("ccy", "INR")
         inr = client.get("/", headers={"Accept-Language": "en-US,en;q=0.9"}).text
-        assert "₹499/mo" in inr and "$19/mo" not in inr
+        assert "$4.99/mo" in inr and "$19/mo" not in inr
 
     def test_explicit_toggle_beats_the_detection_cookie_and_persists(
         self, client: TestClient
     ) -> None:
         client.cookies.set("ccy", "INR")
         page = client.get("/?ccy=USD")
-        assert "$19/mo" in page.text and "₹499/mo" not in page.text
+        assert "$19/mo" in page.text and "$4.99/mo" not in page.text
         # the choice sticks: the server rewrites the detection cookie
         assert "ccy=USD" in page.headers.get("set-cookie", "")
 
@@ -124,7 +131,7 @@ class TestTheCodeEnforcedFlip:
         assert "$99/mo" in usd and "$59/mo" not in usd
         assert "Launch price" not in usd, "a filled cohort shows plain list prices — no 'was' talk"
         inr = client.get("/?ccy=INR").text
-        assert "₹499/mo" in inr, "the INR cohort is independent and still open"
+        assert "$4.99/mo" in inr, "the India cohort is independent and still open"
 
     def test_cancelled_subscribers_still_consume_cohort_slots(self, app: FastAPI) -> None:
         """'First 200 subscribers', not 'current 200' — churn does not
@@ -179,16 +186,16 @@ class TestBillingCurrency:
             session.commit()
         # the toggle cannot talk an INR-billed account into a USD page
         page = TestClient(app).get("/billing?ccy=USD", headers={"X-User-Email": EMAIL}).text
-        assert "₹499/mo" in page and "$19/mo" not in page
-        assert "₹20,000" in page  # one-shot follows the account currency
-        assert "Prices include GST." in page
+        assert "$4.99/mo" in page and "$19/mo" not in page
+        assert "Billed in India as ₹499/mo incl. GST." in page
+        assert "Billed in India as ₹20,000." in page  # one-shot follows the account
 
     def test_signed_in_free_account_gets_the_toggle(self, app: FastAPI) -> None:
         client = TestClient(app)
         usd = client.get("/billing", headers={"X-User-Email": EMAIL}).text
-        assert "$19/mo" in usd and "₹499/mo" not in usd
+        assert "$19/mo" in usd and "$4.99/mo" not in usd
         inr = client.get("/billing?ccy=INR", headers={"X-User-Email": EMAIL}).text
-        assert "₹499/mo" in inr and "$19/mo" not in inr
+        assert "$4.99/mo" in inr and "$19/mo" not in inr
 
 
 class TestConfigOnlyLaw:
@@ -197,5 +204,18 @@ class TestConfigOnlyLaw:
         template drifts the day the founder changes config."""
         for path in Path("src/tokenops_cost_auditor/web/templates").rglob("*.html"):
             text = path.read_text(encoding="utf-8")
-            for literal in ("$19", "$29", "$59", "₹499", "₹999", "₹14,999", "₹20,000", "₹4,999"):
+            for literal in (
+                "$19",
+                "$29",
+                "$59",
+                "$4.99",
+                "$9.99",
+                "$149",
+                "$199",
+                "₹499",
+                "₹999",
+                "₹14,999",
+                "₹20,000",
+                "₹4,999",
+            ):
                 assert literal not in text, f"inline price {literal} in {path}"

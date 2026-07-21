@@ -794,6 +794,20 @@ completeness). Evidence base: launch/PRICING-INDIA-ANALYSIS.md +
 launch/UNIT-ECONOMICS.md (verified India research: ChatGPT Go ₹399 anchor,
 Entry SaaS band ₹800-1,500, e-mandate rules, spend-by-segment).
 
+**R-PRICING-FINAL-2 AMENDMENT (founder 2026-07-22, walkthrough: "single
+currency dollar pricing but based on the region value has to change").**
+Display is DOLLARS everywhere; the REGION picks the value: global $19→$29 /
+$59→$99; India $4.99→$9.99 / $149 flat, one-shot $199 (config:
+plan_*_usd_india fields, paired to the unchanged INR charge amounts —
+₹499/₹999/₹14,999/₹20,000 billed by Razorpay). Honesty rail: every India
+price carries the charge-truth line "Billed in India as ₹X/mo incl. GST."
+— the number on the card statement is stated wherever the dollar figure
+is. Toggle relabeled "Global pricing / India pricing". The ruled
+no-mixing test becomes: India view shows India dollar VALUES (never
+global values); ₹ appears only in billed-truth lines. Timezone/cookie
+region detection (v1.5.18) drives which value set renders; checkout
+currency law unchanged.
+
 **R-DAILY-LOOP (founder-ratified 2026-07-22, "core problem pattern that
 lives in their ecosystem everyday").** The retention mechanism penetration
 pricing depends on, riding machinery that already runs daily: (1) daily

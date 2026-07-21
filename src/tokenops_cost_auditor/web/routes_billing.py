@@ -69,6 +69,7 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             launch_open=launch,
             cohort_size=settings.launch_cohort_size,
             one_shot=plans.one_shot_display(settings, currency),
+            one_shot_billed=plans.one_shot_billed_note(settings, currency),
             razorpay_link=request.app.state.razorpay.payment_link(),
             stripe_link=request.app.state.stripe.payment_link(),
             now=datetime.now(UTC),

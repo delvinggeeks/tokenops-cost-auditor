@@ -23,11 +23,11 @@
   {{ kit.surface_open(title="Plans", icon="statement", span=12) }}
     {# R-PRICING-FINAL-2: ONE currency per view — the viewer's market only,
        toggle for the other; launch-cohort note while the cohort is open. #}
-    <p class="muted" aria-label="Currency">
+    <p class="muted" aria-label="Regional pricing">
       {% if currency == "INR" %}
-      <strong>INR</strong> · <a href="/billing?ccy=USD">show USD</a>
+      <strong>India pricing</strong> · <a href="/billing?ccy=USD">show global</a>
       {% else %}
-      <strong>USD</strong> · <a href="/billing?ccy=INR">show INR</a>
+      <strong>Global pricing</strong> · <a href="/billing?ccy=INR">show India</a>
       {% endif %}
     </p>
     {{ kit.table_open([
@@ -40,7 +40,8 @@
           <td><strong>{{ p.name }}</strong><br><small class="muted">{{ p.blurb }}</small>
             {% if p.gate_line(currency) %}<br><small class="muted">{{ p.gate_line(currency) }}</small>{% endif %}</td>
           <td class="money">{{ p.display(currency, launch=p_launch) if p.usd else "Free" }}
-            {% if p.usd and p_launch %}<br><small class="muted">{{ p.launch_note(currency, cohort_size) }}</small>{% endif %}</td>
+            {% if p.usd and p_launch %}<br><small class="muted">{{ p.launch_note(currency, cohort_size) }}</small>{% endif %}
+            {% if p.billed_note(currency, launch=p_launch) %}<br><small class="muted">{{ p.billed_note(currency, launch=p_launch) }}</small>{% endif %}</td>
           <td>{{ p.sources if p.sources else "—" }}</td>
           <td>{{ "Weekly, automatic" if p.scheduled_audits else p.uploads }}</td>
           <td>
@@ -61,10 +62,11 @@
       {% endfor %}
     {{ kit.table_close() }}
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
-      a single full audit of a log file, no subscription.</p>
-    <div class="provenance">Prices are billed in your country's currency, chosen at
-      checkout. One subscription per account.
-      {% if currency == "INR" %}Prices include GST.{% endif %}</div>
+      a single full audit of a log file, no subscription.
+      {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}</p>
+    <div class="provenance">Prices are shown in dollars everywhere; your card is
+      billed in your country's currency, chosen at checkout. One subscription
+      per account.</div>
   {{ kit.surface_close() }}
 </div>
 {% endblock %}

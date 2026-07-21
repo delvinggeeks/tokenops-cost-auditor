@@ -141,8 +141,17 @@ class Settings(BaseSettings):
     plan_pro_inr_launch: float = 499.0
     plan_team_inr_launch: float = 0.0
     launch_cohort_size: int = 200  # per market; USD and INR count separately
+    # Founder clarification 2026-07-22: SINGLE display currency (dollars)
+    # everywhere; the REGION changes the value. India's dollar display points
+    # below pair with the INR charge amounts above (₹499/₹999/₹14,999 billed
+    # by Razorpay; the pairing is a price-point decision, not an FX formula —
+    # R-PRICING-FINAL §2's "PPP set independently of FX").
+    plan_pro_usd_india: float = 9.99
+    plan_pro_usd_india_launch: float = 4.99
+    plan_team_usd_india: float = 149.0
     one_shot_usd: float = 500.0
     one_shot_inr: float = 20000.0
+    one_shot_usd_india: float = 199.0
     # Audited-spend gates (R-PRICING-FINAL §1): stated tier bounds and the
     # enterprise handoff line — copy, not metering.
     plan_pro_spend_gate_usd: float = 25000.0

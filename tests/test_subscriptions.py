@@ -383,9 +383,9 @@ class TestBillingPage:
         assert page.status_code == 200
         # ONE currency per view (R-PRICING-FINAL-2 superseded R-Q11): default
         # is USD, the INR set is one toggle away, and neither view mixes.
-        assert "$" in page.text and "₹499" not in page.text
+        assert "$" in page.text and "$4.99" not in page.text
         inr = client.get("/billing?ccy=INR", headers={"X-User-Email": EMAIL}).text
-        assert "₹" in inr
+        assert "$4.99" in inr and "Billed in India" in inr
         assert "No card required" in page.text
         assert "One-off audit" in page.text
         assert "never reach our servers" in page.text
@@ -422,8 +422,11 @@ class TestPlanHelpers:
         self, settings: Settings
     ) -> None:
         cat = plans.catalogue(settings)
-        assert cat["pro"].display("INR").startswith("₹")
+        # single display currency (founder 2026-07-22): dollars everywhere,
+        # the region changes the value; INR remains the CHARGE amount
+        assert cat["pro"].display("INR") == f"${settings.plan_pro_usd_india:,.2f}/mo"
         assert cat["pro"].display("USD").startswith("$")
+        assert "₹" in cat["pro"].billed_note("INR")
         assert cat["free"].display("USD") == "—"
         assert cat["pro"].price("INR") == settings.plan_pro_inr
         assert cat["pro"].price("INR", launch=True) == settings.plan_pro_inr_launch
@@ -436,7 +439,8 @@ class TestPlanHelpers:
         assert plans.one_shot_display(settings, "USD") == f"${settings.one_shot_usd:,.0f}"
         # Both sides pinned: asserting only the USD half is how the INR half
         # drifted into the Terms page unnoticed (V-D10).
-        assert plans.one_shot_display(settings, "INR") == f"₹{settings.one_shot_inr:,.0f}"
+        assert plans.one_shot_display(settings, "INR") == f"${settings.one_shot_usd_india:,.0f}"
+        assert f"₹{settings.one_shot_inr:,.0f}" in plans.one_shot_billed_note(settings, "INR")
 
     def test_terms_page_quotes_the_price_we_actually_charge(self, client: TestClient) -> None:
         """A binding document must never disagree with the checkout (V-D10:

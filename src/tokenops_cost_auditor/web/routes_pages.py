@@ -75,6 +75,7 @@ def landing(request: Request) -> HTMLResponse:
         # and §7's rail line is the report model's own constant, single-sourced.
         catalogue=[plans.catalogue(settings)[k] for k in plans.ALL_PLANS],
         one_shot=plans.one_shot_display(settings, currency),
+        one_shot_billed=plans.one_shot_billed_note(settings, currency),
         currency=currency,
         launch_open=launch,
         cohort_size=settings.launch_cohort_size,

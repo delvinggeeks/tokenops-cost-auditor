@@ -315,20 +315,24 @@
       <p class="plans-qualify">Spending more than {{ qualify_spend }} a month on
         AI? Pro pays for itself. Less? Start free — we'll be here when your
         bill grows.</p>
-      <p class="plans-ccy" aria-label="Currency">
+      <p class="plans-ccy" aria-label="Regional pricing">
         {% if currency == "INR" %}
-        <strong>INR</strong> · <a href="/?ccy=USD#plans">USD</a>
+        <strong>India pricing</strong> · <a href="/?ccy=USD#plans">Global pricing</a>
         {% else %}
-        <strong>USD</strong> · <a href="/?ccy=INR#plans">INR</a>
+        <strong>Global pricing</strong> · <a href="/?ccy=INR#plans">India pricing</a>
         {% endif %}
       </p>
       <div class="plan-cards">
         {% for p in catalogue %}
+        {% set p_launch = launch_open and p.has_launch(currency) %}
         <div class="plancard{{ ' plancard-hi' if p.key == 'pro' else '' }}">
           <h3>{{ p.name }}</h3>
-          <div class="plancard-price money">{{ p.display(currency, launch=launch_open and p.has_launch(currency)) if p.usd else "No card, ever" }}</div>
-          {% if p.usd and launch_open and p.has_launch(currency) %}
+          <div class="plancard-price money">{{ p.display(currency, launch=p_launch) if p.usd else "No card, ever" }}</div>
+          {% if p.usd and p_launch %}
           <p class="plancard-launch">{{ p.launch_note(currency, cohort_size) }}</p>
+          {% endif %}
+          {% if p.billed_note(currency, launch=p_launch) %}
+          <p class="plancard-gate">{{ p.billed_note(currency, launch=p_launch) }}</p>
           {% endif %}
           <p>{{ p.blurb }}</p>
           {% if p.gate_line(currency) %}<p class="plancard-gate">{{ p.gate_line(currency) }}</p>{% endif %}
@@ -338,11 +342,11 @@
         {% endfor %}
       </div>
       <p class="plans-oneshot"><strong>One-off audit:</strong> {{ one_shot }} —
-        a single full audit of a log file, no subscription. For enterprises,
-        <a href="/legal/terms">terms here</a>.</p>
+        a single full audit of a log file, no subscription.
+        {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}
+        For enterprises, <a href="/legal/terms">terms here</a>.</p>
       <p class="plans-anchor muted">Less than a tenth of what observability
-        platforms charge — and it pays for itself in found waste.
-        {% if currency == "INR" %}Prices include GST.{% endif %}</p>
+        platforms charge — and it pays for itself in found waste.</p>
     </div>
   </section>
 
