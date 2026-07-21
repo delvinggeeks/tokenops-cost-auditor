@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.7 (4fb1a28) · MODERN-SAAS HERO live — walkthrough round
+  4, self-judged against the live page and agreed with the founder. Full-
+  bleed dark hero on aura's value sheet, centered 72px display headline,
+  product shot large in a browser frame under the accent glow, float cards
+  riding it, honest labels retained; schedule numbering removed. Two
+  computed-style bugs fixed at cause: .pub-nav a out-specified .btn-primary
+  (CTA text washed — now asserted white in capture) and the neumorphic white
+  inset washed ALL saturated primary fills (--control-depth-primary token,
+  both moods). Gate PASS-WITH-NOTES (note pre-closed by computed assertion).
+  SMOKE PASS. Walkthrough resumes.
+
 - 2026-07-21 · v1.5.6 (f6b045a) · versioning gate FAIL closed and re-gated
   PASS. The completeness gap (tour.js + og:image unversioned — the exact
   heuristic-cache hole) fixed and made STRUCTURAL: a rendered-page test now
