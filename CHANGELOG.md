@@ -5,6 +5,19 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.8 (d38f17a) · 3D WORKFLOW + ENTERPRISE NAV + SPLIT AUTH
+  live (walkthrough round 5). C10 money pulse travels the workflow's flow
+  line through perspective stage cards — loops twice then rests (speced
+  before code); header gains real destinations (How it works / Pricing /
+  Docs / Sample report); /login + /signup rebuilt as enterprise split-screen
+  with the aura brand panel — NO SSO buttons (ruled X-03 absence; dead
+  buttons are promises). T-POL-01 ordering preserved on the /upload teaching
+  variant; /signup sheds the tabs (jobs split). Gate PASS-WITH-NOTES; its
+  stale-evidence note closed with asserted re-captures. One process slip
+  owned: a commit briefly landed on a red suite because the shell chain
+  gated on ruff, not pytest — caught same-turn, closed green before ship.
+  SMOKE PASS. Walkthrough resumes.
+
 - 2026-07-21 · v1.5.7 (4fb1a28) · MODERN-SAAS HERO live — walkthrough round
   4, self-judged against the live page and agreed with the founder. Full-
   bleed dark hero on aura's value sheet, centered 72px display headline,
