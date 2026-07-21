@@ -5,6 +5,32 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.1 (c12c06c) · UNIFIED UI + LANDING LIVE on
+  https://tokenops.cloud. Ships the R-LOOK-FINAL execution block end to end:
+  component kit + three signatures, §5 server-authority laws (alerts
+  plan-gated with honest upsell; explicit-confirm with consequence-in-words
+  on Applied/revoke/purge), §6 i18n key layer (en), all 7 screens composed
+  onto the kit, aura mood behind the topbar toggle, magic link lands on
+  /dashboard, R-STMT-GATING (archive always; email Pro/Team always, Free on
+  activity months), and the R-LANDING-2 landing (nine sections, sanchaya,
+  base.html deleted). Gates: wiring ux/vv/cold all PASS-WITH-NOTES (notes
+  closed same-day); landing ux PASS-WITH-NOTES (sheet notes closed).
+  Browser-verified before ship: confirm asks fire/decline/accept on the real
+  findings page (which previously recorded verdicts NOWHERE — hx-target bug
+  found by driving the page), double rule no longer strikes the verified
+  figure, End-jump leaves no landing voids, phone clean, stranger path
+  landing→signup→link→dashboard→tour green. DEPLOY: backup first
+  (tokenops_2026-07-21.dump 4.1M + reports snapshot), git archive → rebuild
+  → alembic no-op (head d3f8a1c7e604 unchanged, audible), app healthy.
+  SMOKE ALL PASS over real DNS/TLS: healthz 200 db:true; landing 200 with
+  FR-23 verbatim, ONE cta, released §5 header, attributed stats; funnel
+  routes 200; auth-gated 401; budgets measured on prod: css 12,697B js
+  2,358B hero 95,004B total 203,207B (all under 25.6K/15.36K/122.88K/307.2K).
+  REAL Postmark magic link sent to the founder address (mail.sent logged;
+  inbox receipt closes at the founder walkthrough). Next gate: FOUNDER
+  PRODUCTION WALKTHROUGH — the program's final gate; launch thread posts
+  only on founder ACCEPT.
+
 - 2026-07-24 · v1.5.0 (35ad41d) · v1.5 MONITOR LIVE on https://tokenops.cloud.
   PRE-FLIGHT CAUGHT A FALSE PREMISE: the deploy order specified an incremental
   migration "001->007 (rehearsed)", but production stood at 002 (9 tables) with
