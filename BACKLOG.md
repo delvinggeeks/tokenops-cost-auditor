@@ -306,3 +306,6 @@ throughout (runs = table_open, timeline = ribbon rich form, live =
 computing_label). Sequenced against WP-REPORT-VISUAL at day-45 by signal.
 Pre-launch carve-out (live theater + row-errors download) shipped ahead of
 it under R-PIPELINE-UI-SEQ.
+- F16 (connect-first gate, 2026-07-27): wa-public.css carries raw px font
+  sizes throughout; tokenize a public type scale next time the sheet is
+  touched broadly.
