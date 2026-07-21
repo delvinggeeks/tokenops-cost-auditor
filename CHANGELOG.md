@@ -5,6 +5,22 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.4 (01d9c77) · ENTERPRISE ELEVATION ROUND live — closes
+  founder walkthrough punch round 2. Delving Geeks removed from every public
+  surface (WitAura is the company; Terms entity line + docs mirror updated).
+  The landing composes as an audit document: numbered Schedules (mono ledger
+  eyebrows), every screenshot a labeled Exhibit, the dollar's-journey flow
+  line through the five stages (C6), six detectors named plainly in a
+  what-it-finds grid, designed comparison matrix with the double-rule
+  verified row, the accountant's rule DRAWN under the measured 32.5% (C7),
+  one orchestrated hero entrance (C8) — all three speced on the motion
+  sheet before code. Gate: ux PASS-WITH-NOTES (scroll-fallback note closed;
+  hero-fold money-figure note recorded for founder judgement). Budgets hold
+  (JS 8,215B raw, pub css ~4.5KB gz). DEPLOY: backup, archive, rebuild,
+  healthy in 8s. SMOKE PASS: healthz db:true; all schedule/exhibit/flow
+  markers live; zero Delving Geeks matches on landing+terms; ONE cta; FR-23
+  verbatim. Walkthrough resumes.
+
 - 2026-07-21 · v1.5.3 (942135e) · WITAURA BRANDING ROUND live — closes the
   founder walkthrough HOLD ("no WitAura branding, not enterprise grade").
   Product-led lockup per founder choice: WA monogram (ONE include; favicon
