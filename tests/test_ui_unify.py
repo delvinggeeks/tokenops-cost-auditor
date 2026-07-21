@@ -107,6 +107,18 @@ class TestSignInSurfaces:
             assert resp.status_code == 303, path
             assert resp.headers["location"] == "/dashboard", path
 
+    def test_the_magic_link_itself_lands_on_the_dashboard(self, app: FastAPI) -> None:
+        """Funnel ruling 3c: every fresh session lands on /dashboard. v1
+        landed on /upload — the product led with a form instead of what it
+        found. This pins the actual link-click, not just the /login guard."""
+        recorder = _Recorder()
+        app.state.mail = recorder
+        client = TestClient(app, base_url="https://testserver")
+        client.post("/auth/magic-link", data={"email": "fresh@example.com"})
+        resp = client.get(recorder.magic_links[-1][1], follow_redirects=False)
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/dashboard"
+
 
 class TestHtmlIsNeverCached:
     def test_html_responses_carry_no_store(self, app: FastAPI) -> None:

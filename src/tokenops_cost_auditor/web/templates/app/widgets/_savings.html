@@ -1,15 +1,19 @@
 {% from "app/_widget_head.html" import widget_head %}
+{% import "kit/_kit.html" as kit %}
 <section class="widget w-12" id="w-savings">
   {{ widget_head("i-savings", "verified_savings", help) }}
   {% if w.empty %}
-    <div class="empty">
-      <p>Your first audit fills this in. Connect a provider for daily pulls, or
-        upload a log export for the full six-detector audit.</p>
-      <a class="btn btn-primary" href="/sources">Connect a source</a>
-      <a class="btn" href="/upload">Upload a log file</a>
-    </div>
+    {{ kit.empty_state(
+         "Your first audit fills this in",
+         "Connect a provider for daily pulls, or upload a log export for the
+          full six-detector audit.",
+         action_label="Connect a source", action_href="/sources",
+         alt_label="Upload a log file", alt_href="/upload") }}
   {% else %}
-    <div class="money-hero total-rule">${{ "{:,.2f}".format(w.data.verified) }}</div>
+    {# SIGNATURE 2: the double rule sits UNDER the figure as its own element —
+       stacking both classes on one div squashed the number into the rule's
+       3px box and struck through the digits (found by looking, not testing). #}
+    {{ kit.savings_hero("$" ~ "{:,.2f}".format(w.data.verified), cap=False) }}
     <div style="margin-top: var(--s2);">
       {% if w.data.verified_count %}
         <span class="badge badge-verified">VERIFIED — {{ w.data.verified_count }} fix(es)

@@ -39,8 +39,8 @@
 {% endmacro %}
 
 {# --------------------------------------------------------------- Surface #}
-{% macro surface_open(title=None, icon=None, meta=None, raised=False) %}
-  <section class="widget{{ ' widget-raised' if raised else '' }}">
+{% macro surface_open(title=None, icon=None, meta=None, raised=False, span=None, id=None, live=False) %}
+  <section class="widget{{ ' widget-raised' if raised else '' }}{{ ' w-' ~ span if span else '' }}"{% if id %} id="{{ id }}"{% endif %}{% if live %} aria-live="polite"{% endif %}>
     {%- if title %}
     <div class="widget-head">
       {%- if icon %}<svg class="i i-lg" aria-hidden="true"><use href="#i-{{ icon }}"/></svg>{% endif %}
@@ -61,11 +61,12 @@
 {% endmacro %}
 
 {# ----------------------------------------------------- SavingsHero (§4) #}
-{% macro savings_hero(amount, since=None, note=None, computing=False) %}
+{% macro savings_hero(amount, since=None, note=None, computing=False, cap=True) %}
   {# SIGNATURE 2 of 3: the accountant's double rule under a verified total.
-     It is brand, not theme — it survives every re-skin. #}
+     It is brand, not theme — it survives every re-skin. cap=False when the
+     surrounding surface already titles the figure (e.g. a widget head). #}
   <div class="savings-hero">
-    <p class="cap">{{ t("kit.hero.cap") }}</p>
+    {%- if cap %}<p class="cap">{{ t("kit.hero.cap") }}</p>{% endif %}
     {%- if computing %}
       {{ computing_label(t("kit.hero.recomputing")) }}
     {%- else %}
@@ -92,15 +93,23 @@
 {% endmacro %}
 
 {# ------------------------------------------------------------- DataTable #}
-{% macro table_open(columns, caption=None) %}
-  <table class="ledger">
+{% macro table_open(columns, caption=None, cls=None) %}
+  {# A column is {label, href?, sort?, numeric?, cls?}. href makes the header a
+     REAL link that reorders server-side — a header that looks sortable IS
+     sortable (familiarity principle), and SSR links survive without JS. #}
+  <table class="ledger{{ ' ' ~ cls if cls else '' }}">
     {%- if caption %}<caption class="sr-only">{{ caption }}</caption>{% endif %}
+    {%- if columns | selectattr("label") | list %}
     <thead><tr>
       {%- for c in columns %}
-        <th{% if c.numeric %} class="r"{% endif %}
-            {% if c.sortable %} aria-sort="{{ c.sort or 'none' }}"{% endif %}>{{ c.label }}</th>
+        {%- set thcls = (("sortable " if c.href else "") ~ ("r " if c.numeric else "") ~ (c.cls or ""))|trim %}
+        <th{% if thcls %} class="{{ thcls }}"{% endif %}{% if c.sort %} aria-sort="{{ c.sort }}"{% endif %}>
+          {%- if c.href %}<a href="{{ c.href }}">{{ c.label }}
+            <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></a>
+          {%- else %}{{ c.label }}{% endif %}</th>
       {%- endfor %}
     </tr></thead>
+    {%- endif %}
     <tbody>
 {% endmacro %}
 {% macro table_close() %}</tbody></table>{% endmacro %}
@@ -131,14 +140,14 @@
 {% macro finding_detail(f) %}
   {# R-CLARITY §1: WHY · EVIDENCE · THE FIX · VERIFY, in that order. #}
   <div class="finding-detail">
-    <h4>{{ t("kit.finding.why") }}</h4>
+    <h3>{{ t("kit.finding.why") }}</h3>
     <p>{{ f.why }}</p>
-    <h4>{{ t("kit.finding.evidence") }}</h4>
+    <h3>{{ t("kit.finding.evidence") }}</h3>
     {{ caller() if caller else "" }}
-    <h4>{{ t("kit.finding.fix") }}</h4>
-    {%- if f.fix_snippet %}<pre class="snippet">{{ f.fix_snippet }}</pre>{% endif %}
+    <h3>{{ t("kit.finding.fix") }}</h3>
     <p>{{ f.fix }}</p>
-    <h4>{{ t("kit.finding.verify") }}</h4>
+    {%- if f.fix_snippet %}<pre class="snippet">{{ f.fix_snippet }}</pre>{% endif %}
+    <h3>{{ t("kit.finding.verify") }}</h3>
     <p>{{ f.verify }}</p>
   </div>
 {% endmacro %}
@@ -242,13 +251,15 @@
 {% endmacro %}
 
 {# ------------------------------------------------------- HONEST STATES #}
-{% macro empty_state(headline, body, action_label=None, action_href=None) %}
+{% macro empty_state(headline, body, action_label=None, action_href=None,
+                     alt_label=None, alt_href=None) %}
   {# Teaches the next action. An empty screen that only says "no data" has
      wasted the one moment the user was willing to be told what to do. #}
   <div class="empty">
     <h3>{{ headline }}</h3>
     <p>{{ body }}</p>
     {%- if action_label %}{{ button(action_label, href=action_href, variant="primary") }}{% endif %}
+    {%- if alt_label %}{{ button(alt_label, href=alt_href) }}{% endif %}
   </div>
 {% endmacro %}
 

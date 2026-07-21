@@ -1,33 +1,27 @@
 {% extends "app/_shell.html" %}
 {% block title %}Findings — TokenOps Cost Auditor{% endblock %}
 {% block content %}
+{% import "kit/_kit.html" as kit %}
 <div class="grid">
-  <section class="widget w-12">
-    <div class="widget-head">
-      <svg class="i i-lg" aria-hidden="true"><use href="#i-findings"/></svg>
-      <h2>{{ items|length }} findings</h2>
-    </div>
+  {{ kit.surface_open(title=(items|length ~ " findings"), icon="findings", span=12) }}
     {% if not items %}
-      <div class="empty">
-        <p>No findings yet — run an audit and they appear here, ranked by dollars.</p>
-        <a class="btn btn-primary" href="/sources">Connect a source</a>
-        <a class="btn" href="/upload">Upload a log file</a>
-      </div>
+      {{ kit.empty_state(
+           "No findings yet",
+           "Run an audit and they appear here, ranked by dollars.",
+           action_label="Connect a source", action_href="/sources",
+           alt_label="Upload a log file", alt_href="/upload") }}
     {% else %}
-      <table class="ledger">
-        <thead><tr>
-          {% for key, label, cls in [("title", "Finding", ""), ("severity", "Severity", ""),
-                                     ("confidence", "Confidence", ""),
-                                     ("impact", "Monthly impact", "money")] %}
-            <th class="sortable {{ cls }}"
-                {% if sort == key %}aria-sort="{{ 'descending' if key == 'impact' else 'ascending' }}"{% endif %}>
-              <a href="/findings?sort={{ key }}">{{ label }}
-                <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></a>
-            </th>
-          {% endfor %}
-          <th></th>
-        </tr></thead>
-        <tbody>
+      {{ kit.table_open([
+           {"label": "Finding", "href": "/findings?sort=title",
+            "sort": "ascending" if sort == "title" else None},
+           {"label": "Severity", "href": "/findings?sort=severity",
+            "sort": "ascending" if sort == "severity" else None},
+           {"label": "Confidence", "href": "/findings?sort=confidence",
+            "sort": "ascending" if sort == "confidence" else None},
+           {"label": "Monthly impact", "href": "/findings?sort=impact", "cls": "money",
+            "sort": "descending" if sort == "impact" else None},
+           {"label": ""},
+         ]) }}
         {% for it in items %}
           {# Headline depth: plain phrasing only — the detector id lives in the
              drawer at depth (c) (R-PERSONA jargon law). #}
@@ -45,20 +39,19 @@
             </td>
           </tr>
         {% endfor %}
-        </tbody>
-      </table>
+      {{ kit.table_close() }}
     {% endif %}
     <div class="provenance">
       {% if audit %}Audit {{ audit.id[:4] }}…{{ audit.id[-3:] }} ·
         {{ audit.row_count or 0 }} calls · {{ audit.observed_days or 0 }} days{% else %}
         No audits yet{% endif %}</div>
-  </section>
+  {{ kit.surface_close() }}
 
   {# Row → drawer expansion, the pattern a Datadog/Stripe user already knows
      (R-CLARITY §2 familiarity principle). #}
-  <section class="widget w-12" id="drawer" aria-live="polite">
+  {{ kit.surface_open(span=12, id="drawer", live=True) }}
     <p class="muted">Select a finding to see why it was flagged, its evidence, the fix,
       and what your next audit will show.</p>
-  </section>
+  {{ kit.surface_close() }}
 </div>
 {% endblock %}

@@ -193,6 +193,39 @@ def findings_page(
         )
 
 
+def _drawer_context(
+    session: Session, request: Request, user: User, audit_id: str, finding_id: str
+) -> dict[str, object]:
+    audit = session.get(Audit, audit_id)
+    if audit is None or audit.user_id != user.id:
+        raise HTTPException(status_code=404, detail="audit not found")
+    row = session.execute(
+        select(FindingRow).where(
+            FindingRow.audit_id == audit_id, FindingRow.finding_id == finding_id
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="finding not found")
+    fb = session.execute(
+        select(FindingFeedback).where(
+            FindingFeedback.audit_id == audit_id,
+            FindingFeedback.finding_id == finding_id,
+        )
+    ).scalar_one_or_none()
+    if fb is None:
+        # The same route re-appears in later audits until it is fixed. Show
+        # the verdict already recorded for that route so the customer is not
+        # invited to "apply" the same fix again (V-D4 cold-review f.3).
+        fb = _verdict_for_route(session, user.id, row)
+    detector_help = help_registry.detector(row.detector, request.app.state.settings)
+    return {
+        "row": row,
+        "audit": audit,
+        "h": detector_help,
+        "verdict": fb.verdict if fb else None,
+    }
+
+
 @router.get("/findings/{audit_id}/{finding_id}", response_class=HTMLResponse)
 def finding_drawer(
     request: Request, audit_id: str, finding_id: str, user_email: str = Depends(current_user)
@@ -202,36 +235,8 @@ def finding_drawer(
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
-        audit = session.get(Audit, audit_id)
-        if audit is None or audit.user_id != user.id:
-            raise HTTPException(status_code=404, detail="audit not found")
-        row = session.execute(
-            select(FindingRow).where(
-                FindingRow.audit_id == audit_id, FindingRow.finding_id == finding_id
-            )
-        ).scalar_one_or_none()
-        if row is None:
-            raise HTTPException(status_code=404, detail="finding not found")
-        fb = session.execute(
-            select(FindingFeedback).where(
-                FindingFeedback.audit_id == audit_id,
-                FindingFeedback.finding_id == finding_id,
-            )
-        ).scalar_one_or_none()
-        if fb is None:
-            # The same route re-appears in later audits until it is fixed. Show
-            # the verdict already recorded for that route so the customer is not
-            # invited to "apply" the same fix again (V-D4 cold-review f.3).
-            fb = _verdict_for_route(session, user.id, row)
-        detector_help = help_registry.detector(row.detector, request.app.state.settings)
-        return _render(
-            request,
-            "app/_finding_drawer.html",
-            row=row,
-            audit=audit,
-            h=detector_help,
-            verdict=fb.verdict if fb else None,
-        )
+        ctx = _drawer_context(session, request, user, audit_id, finding_id)
+        return _render(request, "app/_finding_drawer.html", **ctx)
 
 
 def _verdict_for_route(session: Session, user_id: str, row: FindingRow) -> FindingFeedback | None:
@@ -303,9 +308,16 @@ def capture_feedback(
             existing.ts = utcnow()
         auditlog.append(session, user.email, "finding.feedback", finding_id, {"verdict": verdict})
         session.commit()
+        # Two callers, two honest answers. The findings drawer targets itself
+        # (#w-savings does not exist on that page — targeting it made htmx
+        # abort before the request, so verdicts silently never recorded); it
+        # gets the refreshed drawer showing the verdict it just cast. The
+        # dashboard's widget form keeps the signature moment: the applied fix
+        # visibly flows into the headline (R-DESIGN-ADDENDUM 2a).
+        if request.headers.get("HX-Target") == "drawer":
+            ctx = _drawer_context(session, request, user, audit_id, finding_id)
+            return _render(request, "app/_finding_drawer.html", **ctx)
         widget, _ = metrics.savings(session, user.id)
-        # htmx swaps the savings widget back in — the applied fix visibly
-        # flows into the headline (R-DESIGN-ADDENDUM 2a).
         return _render(request, "app/widgets/_savings.html", w=widget, standalone=True)
 
 

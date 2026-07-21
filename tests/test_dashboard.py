@@ -166,13 +166,21 @@ class TestFindingsAndFeedback:
         audit_id = seed_audit(app, findings=[("D2-001", "d2_missing_cache", 1120.10)])
         r = TestClient(app).get(f"/findings/{audit_id}/D2-001", headers=HDR)
         assert r.status_code == 200
+        # Headings come from the i18n catalogue (§6): the kit's finding_detail
+        # is the ONE renderer, so the copy source and this test cannot drift.
+        # escape() because catalogue strings render as autoescaped VARIABLES —
+        # "you'll" arrives as you&#39;ll, which is correct, not a bug.
+        from markupsafe import escape
+
+        from tokenops_cost_auditor.web.i18n import t
+
         order = [
             r.text.index(s)
             for s in (
-                "Why this was flagged",
-                "Evidence",
-                "The fix",
-                "How you'll know it worked",
+                str(escape(t("kit.finding.why"))),
+                str(escape(t("kit.finding.evidence"))),
+                str(escape(t("kit.finding.fix"))),
+                str(escape(t("kit.finding.verify"))),
                 "Methodology",
             )
         ]
@@ -202,6 +210,22 @@ class TestFindingsAndFeedback:
         with app.state.session_factory() as session:
             rows = session.execute(select(FindingFeedback)).scalars().all()
             assert len(rows) == 1 and rows[0].verdict == "dismissed"
+
+    def test_03b_feedback_from_the_findings_drawer_returns_the_drawer(self, app: FastAPI) -> None:
+        """The drawer targets ITSELF. It used to target #w-savings, which does
+        not exist on /findings — htmx aborts on a missing target BEFORE issuing
+        the request, so every verdict cast from that page silently recorded
+        nothing. Found by driving the real page; the route answers by HX-Target."""
+        audit_id = seed_audit(app, findings=[("D2-001", "d2_missing_cache", 1120.10)])
+        r = TestClient(app).post(
+            f"/findings/{audit_id}/D2-001/feedback",
+            headers={**HDR, "HX-Target": "drawer"},
+            data={"verdict": "applied"},
+        )
+        assert r.status_code == 200
+        assert 'id="w-savings"' not in r.text  # not the dashboard widget
+        # the refreshed drawer shows the verdict it just cast
+        assert 'value="applied"' in r.text and "disabled" in r.text
 
     def test_04_bad_verdict_rejected(self, app: FastAPI) -> None:
         audit_id = seed_audit(app, findings=[("D2-001", "d2_missing_cache", 1.0)])

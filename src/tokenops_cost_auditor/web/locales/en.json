@@ -1,4 +1,6 @@
 {
+  "app.confirm.applied": "Mark this fix as applied? Your next audit re-measures the route, and the verified difference joins your headline savings — never more than this estimate.",
+  "app.confirm.revoke": "Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.",
   "kit.computing.default": "Computing",
   "kit.drawer.details": "Details",
   "kit.error.try_again": "Try again",

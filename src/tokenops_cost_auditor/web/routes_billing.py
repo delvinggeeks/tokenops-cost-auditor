@@ -60,5 +60,8 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             stripe_link=request.app.state.stripe.payment_link(),
             now=datetime.now(UTC),
             show_tour=False,
-            **{k: v for k, v in ctx.items() if k != "plan"},
+            # ctx's plan feeds the topbar badge; billing.html itself reads
+            # `current`, so there is no collision — excluding plan rendered
+            # an empty badge (seen on the page, not in review).
+            **ctx,
         )

@@ -75,7 +75,10 @@ def verify(request: Request, token: str) -> HTMLResponse | RedirectResponse:
         auditlog.append(session, email, "auth.login", email)
         session.commit()
 
-    response = RedirectResponse(url="/upload", status_code=303)
+    # Funnel ruling 3c: every fresh session lands on /dashboard — the product
+    # leads with what it found, not with another form. (/upload stays one
+    # sidebar click away; v1's land-on-upload behaviour is retired.)
+    response = RedirectResponse(url="/dashboard", status_code=303)
     response.set_cookie(
         SESSION_COOKIE,
         issue_session(settings.secret_key, email),

@@ -6,6 +6,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ page|title }} — TokenOps Cost Auditor{% endblock %}</title>
+  <script>
+    /* Mood before first paint: an aura user must not get a flash of day.
+       No attribute = sanchaya (the :root default), so this only ever ADDS. */
+    try { var m = localStorage.getItem("mood"); if (m === "aura") document.documentElement.setAttribute("data-mood", m); } catch (e) {}
+  </script>
   <link rel="stylesheet" href="/static/wa-design.css">
   <script src="/static/htmx.min.js" defer></script>
 </head>
@@ -56,6 +61,10 @@
       <span class="plan-badge">{{ plan|title }}</span>
       <span class="spacer"></span>
       <span class="freshness">{{ freshness }}</span>
+      {# R-LOOK-FINAL §2: aura ships at launch behind a VISIBLE toggle. The
+         button names the mood it takes you to, like every dark-mode switch. #}
+      <button class="btn btn-quiet mood-toggle" type="button" data-mood-toggle
+              aria-label="Switch between the day and night looks">Aura</button>
       <span class="muted">{{ user_email }}</span>
     </header>
     <main class="main">
@@ -87,6 +96,25 @@
       e.stopImmediatePropagation();
     }
   }, true);
+
+  /* Mood toggle (R-LOOK-FINAL §2): same token names, different values —
+     swapping the attribute IS the whole theme change. */
+  (function () {
+    var toggle = document.querySelector("[data-mood-toggle]");
+    if (!toggle) return;
+    var label = function () {
+      var aura = document.documentElement.getAttribute("data-mood") === "aura";
+      toggle.textContent = aura ? "Sanchaya" : "Aura";
+    };
+    toggle.addEventListener("click", function () {
+      var next = document.documentElement.getAttribute("data-mood") === "aura" ? "sanchaya" : "aura";
+      if (next === "aura") document.documentElement.setAttribute("data-mood", "aura");
+      else document.documentElement.removeAttribute("data-mood");
+      try { localStorage.setItem("mood", next); } catch (e) {}
+      label();
+    });
+    label();
+  })();
 </script>
 </body>
 </html>

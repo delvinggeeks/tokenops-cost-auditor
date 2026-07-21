@@ -3,6 +3,43 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## WIRING MILESTONE (R-LOOK-FINAL §4, 2026-07-21) — v15-ui-unify surfaces on the kit
+
+All 7 pre-kit screens migrated onto the kit (findings, _finding_drawer,
+_top_findings, alerts, sources, settings, billing); the allowlist emptied and
+its ratchet retired — the no-hand-rolled-tables rule now binds EVERY app
+screen. Kit grew what the screens proved they need: linkable sortable table
+headers (SSR reorder links with the sort icon), surface span/id/aria-live,
+empty_state secondary action, table cls passthrough, thead omitted when no
+column is labelled, savings_hero cap=False for surfaces that already title
+the figure. Funnel: the magic link itself now 303s to /dashboard (v1 landed
+on /upload; test pins the actual link-click). No v1 URL ever moved — the
+"legacy 301s" item resolves to that behaviour fix; nothing else to redirect.
+Mood toggle in the topbar (aura at launch): pre-paint localStorage read, one
+attribute swap, verified in Chromium that values swap and survive reload.
+
+FOUND BY RENDERING, NOT REVIEW (playwright against the seeded preview):
+1. The findings drawer's feedback form targeted #w-savings, which does not
+   exist on /findings — htmx aborts on a missing target BEFORE the request,
+   so EVERY verdict cast from that page silently recorded nothing (and §5c's
+   ask never fired: htmx resolves the target before htmx:confirm). Fixed:
+   the drawer targets itself; the route answers by HX-Target — refreshed
+   drawer for the findings page, savings widget for the dashboard's form
+   (signature moment intact). Route-level tests never saw it; they POST
+   directly. Test now pins the HX-Target branch.
+2. _savings.html and statements.html stacked money-hero + total-rule on ONE
+   div — .total-rule is a standalone 3px element, so the 84px figure was
+   squashed into the border: the double rule STRUCK THROUGH the verified
+   total on the shipped dashboard. Both now compose kit.savings_hero; the
+   stale duplicate .money-hero (84px) removed; tests pin one-declaration-
+   per-money-class and forbid the class stack anywhere.
+3. Billing's topbar plan badge rendered as an empty pill (route stripped
+   plan from shell ctx); sources repeated the purpose line twice.
+Confirm handler verified end-to-end on the real page: ask fires, decline
+holds, accept records. Hero asset captured from the seeded account, sample-
+data label baked into the pixels, 95KB (<120KB budget):
+design/assets/hero-dashboard-sample.webp.
+
 ## §5 SERVER-AUTHORITY LAWS (R-DESIGN-TOKENS-2, 2026-07-21) — implemented
 
 Audit result: sources/wizard/feedback/widgets/statements already re-checked

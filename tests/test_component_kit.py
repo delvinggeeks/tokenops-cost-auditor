@@ -110,6 +110,28 @@ class TestMoneyNeverShimmers:
         block = css[starts[0] : css.index("}", starts[0])]
         assert "box-shadow: none" in block, ".money must explicitly refuse depth"
 
+    def test_the_money_family_is_declared_once_each(self) -> None:
+        """The duplicate-declaration disease, generalized: .money shipped a
+        stale serif, then .money-hero shipped a stale 84px that (with
+        .total-rule stacked on the same div) struck the rule through the
+        verified figure. One declaration per money class, forever."""
+        css = CSS.read_text(encoding="utf-8")
+        for cls in (".money", ".money-hero", ".money-lg", ".money-sm", ".total-rule"):
+            starts = re.findall(rf"^{re.escape(cls)} \{{", css, re.M)
+            assert len(starts) == 1, f"{cls} declared {len(starts)} times — stale duplicate"
+
+    def test_no_screen_stacks_the_rule_onto_the_figure(self) -> None:
+        """.total-rule is a standalone 3px element UNDER the total (the kit's
+        savings_hero pairs them). On the same element as the figure, its
+        height squashes the number into the border — a strikethrough."""
+        for path in (KIT.parent.parent).rglob("*.html"):
+            for cls in re.findall(r'class="([^"]*)"', path.read_text(encoding="utf-8")):
+                stripped = cls.replace("savings-hero", "")
+                if "total-rule" in cls and ("money" in cls or "hero" in stripped):
+                    raise AssertionError(
+                        f"{path.name}: {cls!r} stacks the double rule onto the figure"
+                    )
+
 
 class TestTheThreeSignatures:
     """§4 — pipeline ribbon, accountant's double rule, Applied→headline
@@ -141,57 +163,18 @@ class TestTheThreeSignatures:
 class TestScreensComposeTheKit:
     def test_app_screens_do_not_hand_roll_tables(self) -> None:
         """A bespoke <table> on a screen is the exact divergence §3 forbids.
-        Kit-composed screens import the macros instead."""
-        # §3 binds NEW screens. These predate the kit and are queued to migrate;
-        # the list may only ever shrink, which the test below enforces.
-        pre_kit = {
-            "app/billing.html",
-            "app/settings.html",
-            "app/sources.html",
-            "app/_finding_drawer.html",
-            "app/findings.html",
-            "app/alerts.html",
-            "app/widgets/_top_findings.html",
-        }
+        Kit-composed screens import the macros instead.
+
+        The 7-screen pre-kit allowlist and its ratchet lived here until the
+        wiring milestone emptied it (2026-07-21); the rule now binds EVERY
+        app screen with no exceptions."""
         offenders = []
         for path in (TEMPLATES / "app").rglob("*.html"):
-            rel = path.relative_to(TEMPLATES).as_posix()
-            if rel in pre_kit:
-                continue
             text = path.read_text(encoding="utf-8")
             if "<table" in text and "kit/_kit.html" not in text:
-                offenders.append(rel)
+                offenders.append(path.relative_to(TEMPLATES).as_posix())
         assert not offenders, (
             f"screens hand-rolling tables instead of composing the kit: {offenders}. "
             f"Import kit/_kit.html and use table_open/table_close, or the next "
             f"mood swap stops being free for these screens."
         )
-
-    def test_the_migration_allowlist_only_shrinks(self) -> None:
-        """The ratchet. Without it the allowlist is just permission, and every
-        pre-kit screen stays pre-kit forever — which is exactly how a component
-        kit ends up as documentation nobody follows.
-
-        An entry that no longer hand-rolls a table has migrated: delete it from
-        the list. An entry naming a file that no longer exists is stale. Either
-        way the list must not carry names it no longer earns.
-        """
-        pre_kit = {
-            "app/billing.html",
-            "app/settings.html",
-            "app/sources.html",
-            "app/_finding_drawer.html",
-            "app/findings.html",
-            "app/alerts.html",
-            "app/widgets/_top_findings.html",
-        }
-        stale = []
-        for rel in sorted(pre_kit):
-            path = TEMPLATES / rel
-            if not path.exists():
-                stale.append(f"{rel} (file gone)")
-                continue
-            text = path.read_text(encoding="utf-8")
-            if "<table" not in text or "kit/_kit.html" in text:
-                stale.append(f"{rel} (migrated — remove it from the allowlist)")
-        assert not stale, "pre-kit allowlist entries that no longer apply: " + ", ".join(stale)

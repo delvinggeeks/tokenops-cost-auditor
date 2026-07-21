@@ -1,6 +1,7 @@
 {% extends "app/_shell.html" %}
 {% block title %}Connected sources — TokenOps Cost Auditor{% endblock %}
 {% block content %}
+{% import "kit/_kit.html" as kit %}
 {#
   Rebuilt onto the app shell (v4 mockup, R-LANDING-2 sequencing item 3).
   Previously this page extended base.html — the old inline-style shell — while
@@ -10,16 +11,15 @@
   context, engineer drawer.
 #}
 <h1 class="page-h1">Connected sources</h1>
+{# The shell already prints the purpose line — repeating it here read as an
+   echo (seen on the rendered page, not in review). Keep only the count. #}
 <p class="purpose-line">
-  {{ purpose }}
   <b>{{ active_count }} of {{ limit }}</b> connection{{ "s" if limit != 1 else "" }} used on your plan.
 </p>
 
 <div class="addbar">
   {% if active_count < limit %}
-    <a class="btn btn-primary" href="/sources/connect/openai">
-      <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Connect a provider
-    </a>
+    {{ kit.button("Connect a provider", href="/sources/connect/openai", variant="primary", icon="plus") }}
     <span class="muted addbar-note">Guided — we show you exactly which key to make.</span>
   {% else %}
     <span class="muted addbar-note">
@@ -30,79 +30,66 @@
   {% endif %}
 </div>
 
-<section class="widget">
-  <div class="widget-head">
-    <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
-    <h2>Your connections</h2>
-  </div>
-
+{{ kit.surface_open(title="Your connections", icon="source") }}
   {% if sources %}
-  <table class="ledger sources-table">
-    <thead>
-      <tr>
-        <th>Provider</th>
-        <th>Status</th>
-        <th>Last pull</th>
-        <th>Last audit</th>
-        <th class="row-actions"><span class="sr-only">Actions</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in sources %}
-      <tr>
-        <td>
-          <div class="src-name">
-            <span class="dot {{ 'dot-ok' if s.status == 'active' else 'dot-warn' }}" aria-hidden="true"></span>
-            <span><b>{{ s.provider|title }}</b><span class="sub">{{ s.label }}</span></span>
-          </div>
-        </td>
-        <td>
-          {% if s.status == 'active' %}
-            <span class="badge badge-verified">Reading usage</span>
-          {% else %}
-            <span class="badge badge-estimate">{{ s.status|title }}</span>
-          {% endif %}
-        </td>
-        <td>{{ s.last_pull_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_pull_at else "—" }}</td>
-        <td>{{ s.last_audit_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_audit_at else "—" }}</td>
-        <td class="row-actions">
-          <button class="btn btn-quiet" type="button"
-                  aria-expanded="false" aria-controls="src-{{ s.id }}"
-                  data-drawer="src-{{ s.id }}">Details</button>
-          <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
-                data-confirm="Revoke this connection? We delete the stored key immediately and stop pulling. Your past audits stay.">
-            <button class="btn btn-quiet" type="submit">Revoke</button>
-          </form>
-        </td>
-      </tr>
-      {# DEPTH (c): the engineer's answer, hidden until asked for. #}
-      <tr class="drawer" id="src-{{ s.id }}" hidden>
-        <td colspan="5">
-          <dl class="dl">
-            <dt>Provider</dt><dd>{{ s.provider }}</dd>
-            <dt>Scope</dt><dd>usage read-only</dd>
-            <dt>Connected</dt><dd>{{ s.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</dd>
-            <dt>Last pull</dt><dd>{{ s.last_pull_at.isoformat() if s.last_pull_at else "never" }}</dd>
-            <dt>Last audit</dt><dd>{{ s.last_audit_at.isoformat() if s.last_audit_at else "never" }}</dd>
-          </dl>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {{ kit.table_open([
+       {"label": "Provider"}, {"label": "Status"}, {"label": "Last pull"},
+       {"label": "Last audit"},
+       {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+     ], cls="sources-table") }}
+    {% for s in sources %}
+    <tr>
+      <td>
+        <div class="src-name">
+          <span class="dot {{ 'dot-ok' if s.status == 'active' else 'dot-warn' }}" aria-hidden="true"></span>
+          <span><b>{{ s.provider|title }}</b><span class="sub">{{ s.label }}</span></span>
+        </div>
+      </td>
+      <td>
+        {% if s.status == 'active' %}
+          <span class="badge badge-verified">Reading usage</span>
+        {% else %}
+          <span class="badge badge-estimate">{{ s.status|title }}</span>
+        {% endif %}
+      </td>
+      <td>{{ s.last_pull_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_pull_at else "—" }}</td>
+      <td>{{ s.last_audit_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_audit_at else "—" }}</td>
+      <td class="row-actions">
+        {{ kit.drawer_toggle("src-" ~ s.id) }}
+        <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
+              data-confirm="{{ t('app.confirm.revoke') }}">
+          {{ kit.button("Revoke") }}
+        </form>
+      </td>
+    </tr>
+    {# DEPTH (c): the engineer's answer, hidden until asked for. #}
+    {% call kit.drawer("src-" ~ s.id, colspan=5) %}
+      <dl class="dl">
+        <dt>Provider</dt><dd>{{ s.provider }}</dd>
+        <dt>Scope</dt><dd>usage read-only</dd>
+        <dt>Connected</dt><dd>{{ s.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</dd>
+        <dt>Last pull</dt><dd>{{ s.last_pull_at.isoformat() if s.last_pull_at else "never" }}</dd>
+        <dt>Last audit</dt><dd>{{ s.last_audit_at.isoformat() if s.last_audit_at else "never" }}</dd>
+      </dl>
+    {% endcall %}
+    {% endfor %}
+  {{ kit.table_close() }}
   {% else %}
-  {# Empty state is designed, not a blank page (R-DESIGN §4). #}
-  <div class="empty-cta">
-    <h3>Nothing connected yet</h3>
-    <p>Connect a provider and TokenOps keeps auditing on its own — no more
-       uploading files by hand.</p>
-    {% if limit > 0 %}
-      <a class="btn btn-primary" href="/sources/connect/openai">Connect a provider</a>
-    {% else %}
-      <p class="muted">Connections are part of the Pro plan.
-        <a href="/billing">See plans →</a></p>
-    {% endif %}
-  </div>
+  {# Empty state teaches the next action; at limit 0 it upsells honestly. #}
+  {% if limit > 0 %}
+    {{ kit.empty_state(
+         "Nothing connected yet",
+         "Connect a provider and TokenOps keeps auditing on its own — no more
+          uploading files by hand.",
+         action_label="Connect a provider", action_href="/sources/connect/openai") }}
+  {% else %}
+    {{ kit.empty_state(
+         "Nothing connected yet",
+         "Connect a provider and TokenOps keeps auditing on its own — no more
+          uploading files by hand.") }}
+    <p class="muted" style="text-align:center">Connections are part of the Pro plan.
+      <a href="/billing">See plans →</a></p>
+  {% endif %}
   {% endif %}
 
   <p class="counts-note">
@@ -111,7 +98,7 @@
     completion text in that API, so there is none in our database either.
     Revoking deletes the stored key immediately.
   </p>
-</section>
+{{ kit.surface_close() }}
 {% endblock %}
 
 {% block scripts %}

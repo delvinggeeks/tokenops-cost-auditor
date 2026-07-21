@@ -1,18 +1,18 @@
 {% from "app/_widget_head.html" import widget_head %}
+{% import "kit/_kit.html" as kit %}
 <section class="widget w-8" id="w-top_findings">
   {{ widget_head("i-findings", "top_findings", help) }}
   {% if w.empty %}
-    <div class="empty">
-      <p>Nothing yet. The sample report shows what a finding looks like — plain-English
-        title, dollar impact, the evidence behind it, and a fix you can paste.</p>
-      <a class="btn" href="/sample">Open the sample report</a>
-    </div>
+    {{ kit.empty_state(
+         "Nothing yet",
+         "The sample report shows what a finding looks like — plain-English
+          title, dollar impact, the evidence behind it, and a fix you can paste.",
+         action_label="Open the sample report", action_href="/sample") }}
   {% else %}
-    <table class="ledger">
-      <thead><tr>
-        <th>Finding</th><th>Severity</th><th class="money">Monthly</th><th></th>
-      </tr></thead>
-      <tbody>
+    {{ kit.table_open([
+         {"label": "Finding"}, {"label": "Severity"},
+         {"label": "Monthly", "cls": "money"}, {"label": ""},
+       ]) }}
       {% for it in w.data['items'] %}
         <tr>
           <td>{{ help.detector_plain(it.detector) }}</td>
@@ -22,17 +22,19 @@
             {% if it.verdict == "applied" %}
               <span class="badge badge-verified">applied</span>
             {% else %}
+              {# §5c: the SAME ask as the drawer's Applied — one action, one
+                 consequence, one wording, wherever the button appears. #}
               <form hx-post="/findings/{{ it.audit_id }}/{{ it.finding_id }}/feedback"
                     hx-target="#w-savings" hx-swap="outerHTML" style="display:inline">
                 <input type="hidden" name="verdict" value="applied">
-                <button class="btn btn-primary" type="submit">Applied</button>
+                <button class="btn btn-primary" type="submit"
+                  data-confirm="{{ t('app.confirm.applied') }}">Applied</button>
               </form>
             {% endif %}
           </td>
         </tr>
       {% endfor %}
-      </tbody>
-    </table>
+    {{ kit.table_close() }}
     <p style="margin-top:var(--s2)"><a href="/findings">See all {{ w.data.total }} findings →</a></p>
   {% endif %}
   <div class="provenance">{{ w.provenance }}</div>

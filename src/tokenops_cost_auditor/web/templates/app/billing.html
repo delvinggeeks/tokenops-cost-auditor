@@ -1,12 +1,9 @@
 {% extends "app/_shell.html" %}
 {% block title %}Billing — TokenOps Cost Auditor{% endblock %}
 {% block content %}
+{% import "kit/_kit.html" as kit %}
 <div class="grid">
-  <section class="widget w-12">
-    <div class="widget-head">
-      <svg class="i i-lg" aria-hidden="true"><use href="#i-billing"/></svg>
-      <h2>Your plan: {{ current.name }}</h2>
-    </div>
+  {{ kit.surface_open(title="Your plan: " ~ current.name, icon="billing", span=12) }}
     <p class="tells">What this tells you: what you are on, what it costs, and
       whether anything needs your attention.</p>
     {% if status_words %}
@@ -19,16 +16,13 @@
     {% endif %}
     <div class="provenance">Card details are handled by our payment provider —
       they never reach our servers.</div>
-  </section>
+  {{ kit.surface_close() }}
 
-  <section class="widget w-12">
-    <div class="widget-head">
-      <svg class="i i-lg" aria-hidden="true"><use href="#i-statement"/></svg>
-      <h2>Plans</h2>
-    </div>
-    <table class="ledger">
-      <thead><tr><th>Plan</th><th>Price</th><th>Sources</th><th>Audits</th><th></th></tr></thead>
-      <tbody>
+  {{ kit.surface_open(title="Plans", icon="statement", span=12) }}
+    {{ kit.table_open([
+         {"label": "Plan"}, {"label": "Price", "cls": "money"}, {"label": "Sources"},
+         {"label": "Audits"}, {"label": ""},
+       ]) }}
       {% for p in catalogue %}
         <tr {% if p.key == current.key %}class="expanded"{% endif %}>
           <td><strong>{{ p.name }}</strong><br><small class="muted">{{ p.blurb }}</small></td>
@@ -40,8 +34,8 @@
               <span class="badge badge-verified">current</span>
               {% if not p.usd %}<small class="muted">No card required</small>{% endif %}
             {% elif p.usd %}
-              {% if stripe_link %}<a class="btn btn-primary" href="{{ stripe_link }}">Pay in USD</a>{% endif %}
-              {% if razorpay_link %}<a class="btn" href="{{ razorpay_link }}">Pay in INR</a>{% endif %}
+              {% if stripe_link %}{{ kit.button("Pay in USD", href=stripe_link, variant="primary") }}{% endif %}
+              {% if razorpay_link %}{{ kit.button("Pay in INR", href=razorpay_link) }}{% endif %}
               {% if not stripe_link and not razorpay_link %}
                 <small class="muted">Checkout opens once billing is switched on.</small>
               {% endif %}
@@ -51,12 +45,11 @@
           </td>
         </tr>
       {% endfor %}
-      </tbody>
-    </table>
+    {{ kit.table_close() }}
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
       a single full audit of a log file, no subscription.</p>
     <div class="provenance">Prices are billed in your country's currency, chosen at
       checkout. One subscription per account.</div>
-  </section>
+  {{ kit.surface_close() }}
 </div>
 {% endblock %}

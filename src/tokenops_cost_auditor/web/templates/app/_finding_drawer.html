@@ -1,6 +1,7 @@
 {# Depth (c), fixed order (R-CLARITY §1): why → evidence → fix → verify →
    methodology. This is the engineer's complete answer; the owner's complete
    answer is the row above it. #}
+{% import "kit/_kit.html" as kit %}
 <div class="swap-in">
   <div style="display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);">
     <div>
@@ -18,39 +19,37 @@
     </div>
   </div>
 
-  <h3>Why this was flagged</h3>
-  <p>{{ h.why }}</p>
-
-  <h3>Evidence</h3>
-  {% if row.evidence_sample %}
-    <table class="ledger">
-      <thead><tr><th>UTC time</th><th>Model</th><th class="money">Tokens</th><th>Note</th></tr></thead>
-      <tbody>
-      {% for e in row.evidence_sample[:20] %}
-        <tr><td>{{ e.ts }}</td><td>{{ e.model }}</td>
-          <td class="money">{{ "{:,}".format(e.tokens) }}</td><td>{{ e.note }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <small class="muted">No prompt text is ever stored — token counts, timestamps and
-      hashes only.</small>
-  {% else %}
-    <p class="muted">This finding is derived from daily aggregates, so there are no
-      per-call rows to show. Upload a request log export to get call-level evidence.</p>
-  {% endif %}
-
-  <h3>The fix</h3>
-  <p>{{ h.fix }}</p>
-  <pre class="snippet">{{ row.fix_text }}</pre>
-
-  <h3>How you'll know it worked</h3>
-  <p>{{ h.verify }}</p>
+  {% call kit.finding_detail({"why": h.why, "fix": h.fix,
+                              "fix_snippet": row.fix_text, "verify": h.verify}) %}
+    {% if row.evidence_sample %}
+      {{ kit.table_open([
+           {"label": "UTC time"}, {"label": "Model"},
+           {"label": "Tokens", "cls": "money"}, {"label": "Note"},
+         ]) }}
+        {% for e in row.evidence_sample[:20] %}
+          <tr><td>{{ e.ts }}</td><td>{{ e.model }}</td>
+            <td class="money">{{ "{:,}".format(e.tokens) }}</td><td>{{ e.note }}</td></tr>
+        {% endfor %}
+      {{ kit.table_close() }}
+      <small class="muted">No prompt text is ever stored — token counts, timestamps and
+        hashes only.</small>
+    {% else %}
+      <p class="muted">This finding is derived from daily aggregates, so there are no
+        per-call rows to show. Upload a request log export to get call-level evidence.</p>
+    {% endif %}
+  {% endcall %}
 
   {# L0 capture. The optional figure rides WHICHEVER verdict the customer
      chooses — recording a number can never imply "applied" (V-D5
      cold-review f.1), because that would feed the verified headline. #}
+  {# Target the drawer ITSELF: this partial only ever renders inside #drawer
+     on /findings, where #w-savings does not exist — an absent hx-target makes
+     htmx abort BEFORE the request (htmx:targetError), so every verdict click
+     silently did nothing. Found by driving the real page, not the route. The
+     route answers with the refreshed drawer when HX-Target says drawer, and
+     with the savings widget for the dashboard's own form. #}
   <form hx-post="/findings/{{ audit.id }}/{{ row.finding_id }}/feedback"
-        hx-target="#w-savings" hx-swap="outerHTML" style="margin-top: var(--s2);">
+        hx-target="#drawer" hx-swap="innerHTML" style="margin-top: var(--s2);">
     <label class="muted" style="font-size:13px; display:block; margin-bottom:var(--s1);">
       Saw a figure on your own bill? (optional)
       <input name="savings_realized_usd" type="number" step="0.01" min="0"
@@ -62,7 +61,7 @@
       {# §5c: the one verdict that feeds the verified headline asks first,
          consequence in words. Dismissed/not-relevant move no money. #}
       <button class="btn btn-primary" type="submit" name="verdict" value="applied"
-        data-confirm="Mark this fix as applied? Your next audit re-measures the route, and the verified difference joins your headline savings — never more than this estimate."
+        data-confirm="{{ t('app.confirm.applied') }}"
         {% if verdict == "applied" %}disabled{% endif %}>Applied</button>
       <button class="btn" type="submit" name="verdict" value="dismissed">Dismissed</button>
       <button class="btn btn-quiet" type="submit" name="verdict" value="not_relevant">

@@ -1,6 +1,7 @@
 {% extends "app/_shell.html" %}
 {% block title %}Savings statements — TokenOps Cost Auditor{% endblock %}
 {% block content %}
+{% import "kit/_kit.html" as kit %}
 <div class="grid">
   <section class="widget w-8">
     <div class="widget-head">
@@ -9,7 +10,7 @@
     </div>
     <p class="tells">What this tells you: exactly what your next statement will
       say if the month ended today.</p>
-    <div class="money-hero total-rule">${{ "{:,.2f}".format(preview.verified_usd) }}</div>
+    {{ kit.savings_hero("$" ~ "{:,.2f}".format(preview.verified_usd), cap=False) }}
     <p class="muted" style="margin-top: var(--s2);">verified savings ·
       {{ preview.fixes_applied }} fix(es) confirmed</p>
     <pre class="snippet" style="white-space: pre-wrap">{{ preview.body }}</pre>

@@ -21,8 +21,19 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from tokenops_cost_auditor.persistence.models import AlertRule, Subscription, User
+from tokenops_cost_auditor.web import i18n
 
 TEMPLATES = Path(__file__).parents[1] / "src/tokenops_cost_auditor/web/templates"
+
+# An ask may reference the catalogue (one consequence, one source) — resolve it
+# to the words a customer actually reads before judging those words.
+T_REF = re.compile(r"^\{\{\s*t\(\s*['\"]([a-z0-9_.]+)['\"]\s*\)\s*\}\}$")
+
+
+def resolve_ask(raw: str) -> str:
+    m = T_REF.match(raw.strip())
+    return i18n.t(m.group(1)) if m else raw
+
 
 EMAIL = "law@example.com"
 HDR = {"X-User-Email": EMAIL}
@@ -117,14 +128,23 @@ class TestExplicitConfirmWithTheConsequenceInWords:
         assert "data-confirm" in shell
 
     def test_the_applied_verdict_asks_and_names_the_headline(self) -> None:
-        """The one verdict that feeds the verified headline (savings.py R1)."""
-        drawer = (TEMPLATES / "app/_finding_drawer.html").read_text(encoding="utf-8")
-        applied = drawer[drawer.index('value="applied"') :]
-        confirm = re.search(r'data-confirm="([^"]+)"', applied)
-        assert confirm, "the Applied button lost its explicit-confirm"
-        assert "headline" in confirm.group(1), "the consequence must name where the money goes"
+        """The one verdict that feeds the verified headline (savings.py R1).
+        It appears on TWO surfaces — the drawer and the top-findings widget —
+        and both must carry the SAME ask from the SAME catalogue key."""
+        for name in ("app/_finding_drawer.html", "app/widgets/_top_findings.html"):
+            text = (TEMPLATES / name).read_text(encoding="utf-8")
+            confirm = re.search(r'data-confirm="([^"]+)"', text)
+            assert confirm, f"{name}: the Applied button lost its explicit-confirm"
+            assert "app.confirm.applied" in confirm.group(1), (
+                f"{name}: the ask must come from the shared catalogue key — "
+                f"a second wording of the same consequence is drift"
+            )
+        assert "headline" in i18n.t("app.confirm.applied"), (
+            "the consequence must name where the money goes"
+        )
         # verdicts that move no money must NOT ask — confirm fatigue teaches
         # people to click through the one ask that matters
+        drawer = (TEMPLATES / "app/_finding_drawer.html").read_text(encoding="utf-8")
         dismissed = drawer[drawer.index('value="dismissed"') : drawer.index('value="not_relevant"')]
         assert "data-confirm" not in dismissed
 
@@ -136,7 +156,8 @@ class TestExplicitConfirmWithTheConsequenceInWords:
             for form in forms:
                 assert "data-confirm" in form, f"{name}: revoke without an ask"
             asks = re.findall(r'revoke"[^>]*data-confirm="([^"]+)"', text)
-            for ask in asks:
+            for raw in asks:
+                ask = resolve_ask(raw)
                 assert "delete" in ask.lower() and "key" in ask.lower(), (
                     f"{name}: the ask must state the consequence — the key is deleted"
                 )
@@ -155,8 +176,10 @@ class TestExplicitConfirmWithTheConsequenceInWords:
         """'Are you sure?' transfers no information. Each ask must be long
         enough to be stating a consequence."""
         for path in TEMPLATES.rglob("*.html"):
-            for ask in re.findall(r'data-confirm="([^"]+)"', path.read_text(encoding="utf-8")):
-                if "{{" in ask:
+            for raw in re.findall(r'data-confirm="([^"]+)"', path.read_text(encoding="utf-8")):
+                if raw == "{{ confirm }}":
                     continue  # the kit macro's passthrough, not an ask
+                ask = resolve_ask(raw)
+                assert "{{" not in ask, f"{path.name}: unresolvable ask {raw!r}"
                 words = ask.split()
                 assert len(words) >= 8, f"{path.name}: {ask!r} asks without stating the consequence"
