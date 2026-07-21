@@ -5,6 +5,24 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.14 (fc3b9eb) · R-PRICING-FINAL-2 + R-DAILY-LOOP live.
+  Dual-market pricing after five founder amendment rounds and verified
+  India research: global Pro $19 launch → $29 list, Scale $59 → $99;
+  India Pro ₹499 → ₹999 incl GST, Scale ₹14,999 flat; one-shots
+  $500/₹20,000. First-200 launch cohort PER MARKET, grandfathered; flip
+  computed in code from the append-only activation ledger (cold-review
+  caught the mutable-row market-switch hole). One currency per view, no
+  mixing (test-pinned); spend gates + qualifying line + anchor line.
+  Daily loop: per-customer daily digest (audit-identical rate math,
+  $10.50 cached-token golden), staged 50/80/100% budget alerts,
+  dashboard Yesterday tile; migration 008 applied in prod (runbook step
+  5 — first schema change since d3f8a1c7e604). Gates: cold
+  PASS-WITH-NOTES + vv PASS-WITH-NOTES, all five findings fixed
+  in-round and test-pinned. SMOKE PASS: healthz ok, USD view
+  $19/$29/$59/$99 + launch notes with zero ₹ prices, INR view
+  ₹499/₹999/₹14,999/₹20,000 + GST line with zero $ prices,
+  alembic_version=a9d24c8e7f31.
+
 - 2026-07-21 · v1.5.13 (3e45159) · FEDERATION MAJORS live (R-FED-MAJORS —
   founder: "why only Google"). The Google route pair generalized to a
   FEDERATIONS registry; Microsoft (Entra v2 common — work/school +
