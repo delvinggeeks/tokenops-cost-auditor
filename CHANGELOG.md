@@ -5,6 +5,20 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-21 · v1.5.3 (942135e) · WITAURA BRANDING ROUND live — closes the
+  founder walkthrough HOLD ("no WitAura branding, not enterprise grade").
+  Product-led lockup per founder choice: WA monogram (ONE include; favicon
+  mirrors with documented literals), hero eyebrow "AI spend governance · by
+  WitAura", display-scale headline, trust proof chips, dark anchor band on
+  aura's own value sheet (zero new colours; a rendering pass caught h3s
+  inheriting body's computed ink and vanishing — the band now sets color
+  from vars, computed rgb asserted), enterprise footer with WitAura company
+  block + © line, favicon + OG/twitter meta. Gate: ux PASS-WITH-NOTES (mark
+  single-sourcing note closed with a test). DEPLOY: backup, archive,
+  rebuild, healthy in 9s. SMOKE PASS: healthz db:true; all brand markers
+  live; ONE cta; FR-23 verbatim; favicon 200; budgets hold (html 4,595B gz,
+  pub css 4,165B gz). Walkthrough resumes.
+
 - 2026-07-21 · v1.5.2 (72951b3) · DESIGN ROUND + SAAS BASICS + PIPELINE
   THEATER LIVE on https://tokenops.cloud. Ships: the founder deep-audit
   remediation (F1-F10 all confirmed fixed by founder verdict, evidence pairs
