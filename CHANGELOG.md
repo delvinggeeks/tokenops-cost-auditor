@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.20 (75f3410) · DOMAIN-MIGRATE PREP + DOCS REFRESH
+  live. Docs retired the upload-era story for connect-first truth
+  (connect → daily pulls → weekly audits → daily digest → alerts →
+  statements; upload = the option); pricing-data separates the
+  human-verified MODEL rate card from regional plan pricing; docs nav
+  gained "Back to the app". Migration to tokenops-cost-auditor.com
+  fully prepared (all outward addresses config-parameterized; inert
+  OLD_DOMAIN 301 blocks in Caddy) — CUTOVER BLOCKED ON DNS: founder
+  adds A records @/www/docs → 169.58.44.80, then runbook §2b one-flip.
+  SMOKE PASS: refreshed docs serving, back-link present, app healthy.
+
 - 2026-07-22 · v1.5.19 (0faa4ed) · SINGLE-CURRENCY DOLLAR PRICING live
   (founder clarification). One display currency everywhere; the region
   changes the value: global $19→$29 / $59→$99; India $4.99→$9.99 /
