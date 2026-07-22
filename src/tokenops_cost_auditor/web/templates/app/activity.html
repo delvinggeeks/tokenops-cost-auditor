@@ -1,0 +1,32 @@
+{% extends "app/_shell.html" %}
+{% block title %}Activity — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<div class="grid">
+  {{ kit.surface_open(title="Activity", icon="alert", span=12) }}
+    <p class="tells">What this tells you: everything that has happened on your
+      account, newest first — audits, alerts, verified savings and payments.</p>
+    {% if events %}
+    <ol class="feed">
+      {% for e in events %}
+      <li class="feed-item feed-{{ e.kind }}">
+        <span class="feed-icon" aria-hidden="true">
+          <svg class="i" aria-hidden="true"><use href="#{{ e.icon }}"/></svg></span>
+        <div class="feed-body">
+          <a class="feed-title" href="{{ e.href }}">{{ e.title }}</a>
+          <p class="feed-detail">{{ e.detail }}</p>
+        </div>
+        <time class="feed-time" datetime="{{ e.ts.isoformat() }}">{{ e.ts.strftime('%d %b, %H:%M') }} UTC</time>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    {{ kit.empty_state(
+         "Nothing here yet",
+         "Once you connect a source or upload a log file, your audits, alerts
+          and verified savings will appear here as they happen.",
+         action_label="Connect a source", action_href="/sources") }}
+    {% endif %}
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}

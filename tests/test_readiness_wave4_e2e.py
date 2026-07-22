@@ -169,7 +169,7 @@ class TestAlertsEndToEnd:
         history page shows the fired event."""
         settings = app.state.settings
         email = "alertse2e@example.com"
-        user_id, source_id = _paid_source(app, email)
+        _, source_id = _paid_source(app, email)
         HDR = {"X-User-Email": email}
         client = TestClient(app)
 

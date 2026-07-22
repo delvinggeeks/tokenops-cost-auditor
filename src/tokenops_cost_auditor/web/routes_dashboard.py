@@ -12,6 +12,7 @@ methodology, in that fixed order (R-CLARITY §1).
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -68,7 +69,9 @@ def _render(request: Request, template: str, **ctx: object) -> HTMLResponse:
     return HTMLResponse(tpl.render(help=help_registry, **ctx))
 
 
-def _shell_ctx(session: Session, request: Request, user: User, page: str) -> dict[str, object]:
+def _shell_ctx(
+    session: Session, request: Request, user: User, page: str, count_activity: bool = True
+) -> dict[str, object]:
     latest = metrics.latest_audit(session, user.id)
     freshness = (
         f"Data as of {(latest.report_ready_at or latest.created_at):%Y-%m-%d %H:%M} UTC"
@@ -76,6 +79,8 @@ def _shell_ctx(session: Session, request: Request, user: User, page: str) -> dic
         else "No data yet — connect a source or upload a log file"
     )
     plan_key = user_plan(session, user.id)
+    from tokenops_cost_auditor.services.dashboard import activity
+
     return {
         "page": page,
         "plan": plan_key,
@@ -85,6 +90,9 @@ def _shell_ctx(session: Session, request: Request, user: User, page: str) -> dic
         "freshness": freshness,
         "user_email": user.email,
         "purpose": help_registry.purpose(page),
+        # Wave B: the topbar bell's "what's new since you last looked" count.
+        # Skipped on /activity, which resets and renders 0 itself (no double work).
+        "unseen_activity": activity.unseen_count(session, user) if count_activity else 0,
     }
 
 
@@ -132,6 +140,22 @@ def hide_onboarding(
     resp = RedirectResponse("/dashboard", status_code=303)
     resp.set_cookie("onboarding_hidden", "1", max_age=365 * 86400, httponly=True, samesite="lax")
     return resp
+
+
+@router.get("/activity", response_class=HTMLResponse)
+def activity_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+    """Wave B — the activity feed. Opening it marks everything seen, so the
+    topbar bell resets: the customer's 'what's new' is always accurate."""
+    from tokenops_cost_auditor.services.dashboard import activity
+
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        events = activity.recent(session, user.id)
+        ctx = _shell_ctx(session, request, user, "activity", count_activity=False)
+        user.activity_seen_at = datetime.now(UTC)
+        session.commit()
+        return _render(request, "app/activity.html", events=events, show_tour=False, **ctx)
 
 
 @router.get("/dashboard/w/{key}", response_class=HTMLResponse)

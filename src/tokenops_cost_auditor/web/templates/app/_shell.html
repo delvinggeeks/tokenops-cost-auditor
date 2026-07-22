@@ -65,6 +65,11 @@
       {%- if badge %}<span class="plan-badge">{{ badge }}</span>{% endif %}
       <span class="spacer"></span>
       <span class="freshness">{{ freshness }}</span>
+      {# Wave B — activity bell: what changed since you last looked. #}
+      <a class="bell" href="/activity" aria-label="Activity{% if unseen_activity %} — {{ unseen_activity }} new{% endif %}">
+        <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+        {% if unseen_activity %}<span class="bell-badge">{{ unseen_activity if unseen_activity < 10 else '9+' }}</span>{% endif %}
+      </a>
       {# R-LOOK-FINAL §2: aura ships at launch behind a VISIBLE toggle. The
          button names the mood it takes you to, like every dark-mode switch. #}
       <button class="btn btn-quiet mood-toggle" type="button" data-mood-toggle

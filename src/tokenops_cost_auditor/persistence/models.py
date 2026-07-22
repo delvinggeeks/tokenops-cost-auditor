@@ -67,6 +67,9 @@ class User(Base):
     statement_emails: Mapped[bool | None] = mapped_column(Boolean)
     # R-DAILY-LOOP: when the daily spend digest last went out (dedupe stamp)
     last_daily_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Wave B activity center: when the customer last opened their activity
+    # feed. Events after this are "new" (the topbar bell badge).
+    activity_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Session epoch (readiness audit 2026-07-22): sessions are stateless signed
     # cookies, so "log out"/"close account" could only clear the ACTING
     # browser — a cookie captured elsewhere stayed valid to TTL. Any session

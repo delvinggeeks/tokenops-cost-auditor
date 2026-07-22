@@ -3,6 +3,19 @@
 {% block content %}
 <div class="grid">
 
+  {# Wave B — "since you were here": a returning customer sees what changed
+     the moment they land, then clicks through to the full feed. #}
+  {% if unseen_activity %}
+  <section class="w-12" data-reveal>
+    <div class="since-here">
+      <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+      <span><strong>{{ unseen_activity }} new</strong> since you were last here —
+        audits, alerts and verified savings.</span>
+      <a class="btn btn-sm btn-primary" href="/activity">See what's new</a>
+    </div>
+  </section>
+  {% endif %}
+
   {# Wave A — getting-started checklist. Self-completes from real data and
      vanishes when every step is done; a customer can also hide it. Drives the
      activation sequence to the first VERIFIED saving. #}
@@ -25,6 +38,7 @@
       {% for s in onboarding.steps %}
       <li class="{{ 'done' if s.done else '' }}{{ ' next' if onboarding.next and s.key == onboarding.next.key else '' }}">
         <span class="onboard-check" aria-hidden="true">{{ '✓' if s.done else '' }}</span>
+        <span class="sr-only">{{ 'Done:' if s.done else 'To do:' }}</span>
         <span class="onboard-label">{{ s.label }}</span>
         {% if not s.done and onboarding.next and s.key == onboarding.next.key %}
           <a class="btn btn-primary btn-sm" href="{{ s.href }}">{{ s.cta }}</a>

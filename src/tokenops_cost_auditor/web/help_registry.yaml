@@ -28,6 +28,8 @@ destinations:
     purpose: "Open the monthly one-page summary written for whoever signs off on the bill."
   guide:
     purpose: "Short walkthroughs of how the audit works and what to do with it."
+  activity:
+    purpose: "Everything that has happened on your account — audits, alerts, verified savings — newest first."
   settings:
     purpose: "Manage your profile, data controls and email preferences."
   billing:
