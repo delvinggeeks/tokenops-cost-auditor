@@ -8,7 +8,7 @@
    NO-INVENTED-NUMBERS: every figure here is attributed or measured. #}
 {% block title %}TokenOps Cost Auditor — see what your AI spend is costing you{% endblock %}
 {% block head %}
-  <meta name="description" content="The governance layer for your AI spend. Upload logs or connect a read-only key and get a dollar-ranked audit of the waste — deterministic math, counts-only, verified savings.">
+  <meta name="description" content="The governance layer for your AI spend. Upload logs or connect your provider account with one key — used read-only on our side — and get a dollar-ranked audit of the waste. Deterministic math, counts-only, verified savings.">
   <meta property="og:title" content="TokenOps Cost Auditor — by WitAura">
   <meta property="og:description" content="See what your AI spend is costing you, and what you already saved. No SDK, no proxy — a dollar-ranked audit from the logs you already have.">
   <meta property="og:image" content="{{ base_url }}{{ asset('/static/land/hero-dashboard-sample.webp') }}">
@@ -120,7 +120,7 @@
       <ol class="pipe">
         <li class="pipe-stage lit" data-stage>
           <span class="pipe-k">Input</span>
-          <p>Connect your provider account — one read-only key, and we show
+          <p>Connect your provider account — one key, used read-only on our side, and we show
             you exactly where to click.</p>
         </li>
         <li class="pipe-stage lit" data-stage>
@@ -155,7 +155,7 @@
         <div class="connect-cards">
           <div class="connect-card">
             <span class="cc-name">OpenAI</span>
-            <p>One read-only usage key, made in the guided 3-step wizard. We pull
+            <p>One org key, made in the guided 3-step wizard — we use it read-only. We pull
               usage daily and audit weekly — you never upload anything.</p>
             <span class="cc-meta">first audit free · weekly audits on Pro · revoking deletes the key</span>
           </div>
@@ -251,7 +251,7 @@
         </div>
         <div class="gov-item">
           <h3>Zero trust required</h3>
-          <p>Connections use read-only usage keys, encrypted on arrival.
+          <p>Connections use one provider key, read-only on our side, encrypted on arrival.
             Revoking deletes the stored key — it is not just disabled.</p>
           <a href="{{ docs_url }}">How connections work →</a>
         </div>

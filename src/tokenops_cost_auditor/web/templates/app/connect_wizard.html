@@ -9,7 +9,7 @@
     {# Breadcrumbs: the step's purpose stated in a sentence (R-DESIGN-V3 §2d) #}
     <div class="steps-bar" aria-label="Connect {{ copy.provider_name }}, step 1 of 3">
       <span class="cur"><span class="step-n">1</span></span>
-      <span class="cur lbl">Get a read-only key from {{ copy.provider_name }}</span>
+      <span class="cur lbl">Create an Admin key in {{ copy.provider_name }}</span>
       <span class="step-n">2</span><span class="lbl">Paste it here</span>
       <span class="step-n">3</span><span class="lbl">We take it from there</span>
     </div>
@@ -27,52 +27,50 @@
     {% else %}
       <h2>{{ copy.step1_title }}</h2>
       <p>{{ copy.step1_body }}</p>
-      <p>
+
+      {# Honest key-authority disclosure (walkthrough 2026-07-22): the usage
+         API needs an ORG ADMIN key — there is no usage-only key. We say so
+         plainly, next to what we actually do, so an enterprise security
+         review finds candour, not a mismatch. #}
+      <div class="key-truth">
+        <p class="key-kind"><svg class="i" aria-hidden="true"><use href="#i-source"/></svg>
+          This is an <strong>{{ copy.key_kind }}</strong>. {{ copy.who_can }}</p>
+        <div class="cando">
+          <div>
+            <span class="cando-h">The key <em>can</em></span>
+            <p>{{ copy.key_can }}.</p>
+          </div>
+          <div>
+            <span class="cando-h cando-ok">We only ever</span>
+            <p>{{ copy.we_do }}.</p>
+          </div>
+        </div>
+        <p class="muted" style="font-size:13px; margin:0">Give it an expiry when you
+          create it, and revoke it here whenever you like — revoking deletes our
+          copy immediately.</p>
+      </div>
+
+      <p style="margin-top: var(--s3)">
         <a class="btn btn-primary" href="{{ copy.console_url }}" target="_blank"
            rel="noopener noreferrer">
-          Open {{ copy.provider_name }}'s key page</a>
-        <small class="muted">Opens in a new tab — come back here when you have the key.</small>
+          Open {{ copy.provider_name }}'s Admin keys page</a>
+        <small class="muted">Opens in a new tab — {{ copy.create_hint }}, then come
+          back here with the key.</small>
       </p>
-
-      {# Annotated illustration of the exact control to use. Drawn, not a
-         screenshot binary, so it stays in version control and cannot rot
-         silently against a stale image. #}
-      <figure style="margin: var(--s3) 0;">
-        <svg viewBox="0 0 520 150" width="100%" role="img"
-             aria-label="The permission checkbox to tick when creating the key">
-          <rect x="1" y="1" width="518" height="148" rx="6" fill="var(--surface)"
-                stroke="var(--rule)"/>
-          <text x="20" y="30" class="axis-label" font-size="12">Create new key</text>
-          <line x1="20" y1="42" x2="500" y2="42" stroke="var(--rule)"/>
-          <text x="20" y="66" font-size="12" fill="var(--ink-soft)">Name</text>
-          <rect x="120" y="52" width="200" height="20" rx="3" fill="var(--surface-tint)"
-                stroke="var(--rule)"/>
-          <text x="20" y="100" font-size="12" fill="var(--ink-soft)">Permissions</text>
-          <rect x="120" y="88" width="14" height="14" rx="3" fill="var(--verified-bg)"
-                stroke="var(--verified)" stroke-width="2"/>
-          <path d="M123 95l3 3 6-6" stroke="var(--verified)" stroke-width="2" fill="none"/>
-          <text x="144" y="100" font-size="12" font-weight="600">{{ copy.permission_hint }}</text>
-          <rect x="112" y="80" width="300" height="30" rx="4" fill="none"
-                stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>
-          <text x="424" y="100" font-size="11" fill="var(--accent)">this one</text>
-        </svg>
-        <figcaption class="muted" style="font-size:13px">
-          That single permission is all we need — and all we can use.</figcaption>
-      </figure>
 
       <h2>{{ copy.step2_title }}</h2>
       <p>{{ copy.step2_body }}</p>
       <form hx-post="/sources/connect/{{ provider }}/validate"
             hx-target="#verdict" hx-swap="innerHTML" hx-indicator="#checking">
-        <label>Your read-only key
-          <input name="api_key" type="password" autocomplete="off" required
-                 style="width:100%; max-width:34em" aria-label="Your read-only usage key">
-        </label>
+        <label for="api_key">Paste the {{ copy.key_kind }}</label>
+        <input id="api_key" name="api_key" type="password" autocomplete="off" required
+               placeholder="{{ 'sk-admin-…' if provider == 'openai' else 'sk-ant-admin…' }}"
+               style="width:100%; max-width:34em" aria-label="Your organization Admin key">
         {# The promise restated where the hand is (ux gate f.3): a reassurance
            one visual hop away is a reassurance half-read. #}
         <p class="muted" style="font-size:13px; margin:6px 0 0">
-          This key lets us read usage counts and nothing else. We can never see your
-          prompts, and we can't make calls on your account.</p>
+          We verify it, encrypt it, and use it only to read your usage and cost
+          reports. We never see your prompts and never call your models.</p>
         <p style="margin-top: var(--s2);">
           <button class="btn btn-primary" type="submit">Check and connect</button>
           <span id="checking" class="htmx-indicator muted">Checking with
@@ -88,14 +86,28 @@
   <section class="widget w-4">
     <div class="widget-head">
       <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
-      <h2>What we can and can't see</h2>
+      <h2>What we read</h2>
     </div>
-    <p><strong>We can see:</strong> how many calls you made, which models, and how many
+    <p><strong>We read:</strong> how many calls you made, which models, and how many
       tokens — the same counts on your bill.</p>
-    <p><strong>We can never see:</strong> your prompts, your completions, or your
-      customers' data. We can't make calls on your account either.</p>
-    <p class="muted">Prefer not to connect anything? You can upload a log file instead
-      and get all six detectors.</p>
+    <p><strong>We never read:</strong> your prompts, your completions, or your
+      customers' data. We never call your models.</p>
+    <p><strong>How we hold the key:</strong> encrypted at rest, never written to a
+      log, and deleted the moment you revoke it.</p>
+    <div class="provenance">Full detail in our
+      <a href="{{ docs_url }}/concepts/data-handling/">data handling docs</a>.</div>
+  </section>
+
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-upload"/></svg>
+      <h2>Not ready to issue an Admin key?</h2>
+    </div>
+    <p>Some security teams would rather not create an org Admin key for a new
+      vendor. That's reasonable — so you don't have to.</p>
+    <p><strong>Upload a usage export instead:</strong> the same six-detector audit,
+      no key, nothing to provision. Connect later when you're ready for the daily
+      pulls.</p>
     <a class="btn btn-quiet" href="/upload">Upload a file instead</a>
   </section>
 </div>

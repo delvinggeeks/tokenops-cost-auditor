@@ -390,6 +390,20 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .help-body dt:first-child { margin-top: 0; }
 .help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
 
+/* ---- CONNECT WIZARD: honest key-authority panel (walkthrough 2026-07-22) ---- */
+.key-truth { border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--wash); padding: var(--s2); margin: var(--s3) 0;
+  display: grid; gap: var(--s2); }
+.key-kind { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; }
+.cando { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); }
+.cando > div { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: var(--s2); }
+.cando p { margin: 4px 0 0; font-size: 13.5px; }
+.cando-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 700; color: var(--ink-soft); }
+.cando-ok { color: var(--verified); }
+@media (max-width: 620px) { .cando { grid-template-columns: 1fr; } }
+
 /* ---- ACCOUNT MENU (topbar; walkthrough 2026-07-22) ---- */
 .account-menu { position: relative; }
 .account-menu > summary { list-style: none; cursor: pointer; color: var(--ink-soft);

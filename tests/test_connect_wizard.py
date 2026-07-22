@@ -21,7 +21,9 @@ from tokenops_cost_auditor.web import help as help_registry
 
 EMAIL = "owner@example.com"
 HDR = {"X-User-Email": EMAIL}
-JARGON = re.compile(r"org admin key|admin key|api\.openai|usage\.read|scope[s]?\b", re.I)
+# Honest necessary term "Admin key" is NOT jargon (it's the truth, verified
+# against provider docs); the ban is for raw scope strings and endpoint URLs.
+JARGON = re.compile(r"api\.openai|usage\.read|/v1/organization|sk-ant-admin01|bearer token", re.I)
 TAGS = re.compile(r"<[^>]+>")
 
 
@@ -137,7 +139,7 @@ class TestInstantFirstPull:
         )
         assert resp.status_code == 200
         assert "Go to my dashboard" in resp.text
-        assert "nothing else to do" in resp.text.lower()  # the ONE-line promise
+        assert "nothing else for you to do" in resp.text.lower()  # the ONE-line promise
         assert len(started) == 1, "the first pull must start immediately"
 
     def test_a_failing_first_pull_never_breaks_the_connect(
@@ -170,7 +172,11 @@ class TestWizardCopy:
                 "step1_title",
                 "step1_body",
                 "console_url",
-                "permission_hint",
+                "key_kind",
+                "who_can",
+                "key_can",
+                "we_do",
+                "create_hint",
                 "step2_title",
                 "step2_body",
                 "step3_title",
@@ -180,24 +186,39 @@ class TestWizardCopy:
             page = TestClient(app).get(f"/sources/connect/{provider}", headers=HDR)
             assert page.status_code == 200
             assert copy["step1_title"] in page.text
-            assert copy["permission_hint"] in page.text
+            assert copy["key_kind"] in page.text
+            assert copy["who_can"] in page.text
         with pytest.raises(KeyError):
             help_registry.wizard("does-not-exist")
 
-    def test_04_no_jargon_reaches_the_customer(self, app: FastAPI) -> None:
-        """T-WIZ-04: 'a read-only key to your usage reports', never
-        'org admin key' or a raw scope name."""
+    def test_04_names_the_key_honestly_without_raw_jargon(self, app: FastAPI) -> None:
+        """T-WIZ-04 (revised, walkthrough 2026-07-22): the OLD copy hid that
+        the usage API needs an org ADMIN key — verified against OpenAI +
+        Anthropic docs, there is no usage-only key. Honesty now REQUIRES the
+        term 'Admin key' (understating it fails enterprise review); the ban
+        keeps out raw scope strings and endpoint URLs, not the honest word."""
         give_plan(app)
         for provider in ("openai", "anthropic"):
             text = visible(TestClient(app).get(f"/sources/connect/{provider}", headers=HDR).text)
-            assert not JARGON.search(text), f"jargon leaked in the {provider} wizard"
-            assert "read-only" in text.lower()
+            assert not JARGON.search(text), f"raw jargon leaked in the {provider} wizard"
+            assert "Admin key" in text, "the key's real authority must be named"
+            # the honesty pairing: what the key CAN do next to what we DO
+            assert "organization" in text.lower() and "read" in text.lower()
 
-    def test_wizard_states_what_we_cannot_see(self, app: FastAPI) -> None:
+    def test_wizard_states_what_we_cannot_see_and_the_key_authority(self, app: FastAPI) -> None:
         give_plan(app)
         page = TestClient(app).get("/sources/connect/openai", headers=HDR).text
-        assert "never see" in page and "prompts" in page
-        assert "Upload a file instead" in page  # the no-connection escape hatch
+        assert "never" in page and "prompts" in page
+        assert "manage your organization" in page  # honest: the key IS powerful
+        assert "Only an OpenAI organization Owner can create" in page  # who can
+        assert "Upload a file instead" in page  # the enterprise escape hatch
+
+    def test_anthropic_console_url_is_the_current_one(self, app: FastAPI) -> None:
+        """The console.anthropic.com URL 301s to platform.claude.com now
+        (verified live 2026-07-22); a wizard that sends users to a redirect
+        reads as stale."""
+        copy = help_registry.wizard("anthropic")
+        assert copy["console_url"] == "https://platform.claude.com/settings/admin-keys"
 
     def test_unknown_provider_is_404(self, app: FastAPI) -> None:
         assert TestClient(app).get("/sources/connect/acme", headers=HDR).status_code == 404

@@ -778,6 +778,24 @@ page now distinguishes the deliberately human-verified MODEL rate card
 from regional plan pricing; docs got a "Back to the app" nav item
 (walkthrough: no path back to the landing page).
 
+**R-CONNECT-HONESTY (founder walkthrough 2026-07-22: "connectors are
+taking to llm's admin key page … very clear in taking user's input …
+enterprise ready").** Research-verified against OpenAI + Anthropic docs:
+usage/cost data is available ONLY to a full-power organization ADMIN key —
+no usage-only scope, only an org owner/admin can create one, and the key
+can also manage members/projects/other keys. The old wizard called it "a
+read-only key … tick the box for read usage, nothing else" — a checkbox
+that doesn't exist and an understatement of the key's authority (an
+enterprise-security-review failure). FIX: the wizard names it an org Admin
+key, states who can create it, shows a can/do pairing (the key CAN manage
+your org · we ONLY read usage & cost), nudges an expiry, and gives a
+first-class "upload instead" path for security teams that won't issue an
+admin key; Anthropic console URL corrected to platform.claude.com (old one
+301s). "read-only" moved off the KEY onto OUR USE everywhere (landing
+hero/meta, signin panel, get-logs, connect-cards); positioning unchanged.
+JARGON test inverted: "Admin key" is now the REQUIRED honest term. ux/trust
+gate PASS-WITH-NOTES; the cross-surface fix closed its one finding.
+
 **R-DOCS-PUBLIC (founder 2026-07-22, walkthrough: "everything is internal
 docs — only public APIs should be exposed").** The public docs site carries
 product usage, API and legal ONLY (Home, Quickstart, Concepts, API,

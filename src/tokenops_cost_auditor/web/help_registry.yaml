@@ -166,26 +166,40 @@ detectors:
     methodology_url: "/methodology/#d6-chatty-loop"
 
 wizard:
+  # Honest key framing (founder walkthrough 2026-07-22, verified against
+  # OpenAI + Anthropic docs): usage & cost data is only available to an
+  # organization ADMIN key — there is no usage-only scope, and only an org
+  # owner/admin can create one. We say so plainly and pair it with what WE
+  # actually do (read-only use, encrypted, revocable). Understating the key's
+  # power would fail the first enterprise security review.
   openai:
     provider_name: "OpenAI"
-    step1_title: "Open your OpenAI usage keys page"
-    step1_body: "You need a read-only key to your usage reports. On the page that opens, create a key and tick the box that lets it read usage — nothing else."
+    key_kind: "OpenAI organization Admin key"
+    step1_title: "Create an OpenAI Admin key"
+    step1_body: "OpenAI exposes usage and cost data only to an organization Admin key — there is no usage-only key (a provider limit, not ours). You'll need to be an org Owner to create one, or ask whoever is. Name it so your team knows what it's for, and we recommend giving it an expiry."
     console_url: "https://platform.openai.com/settings/organization/admin-keys"
-    permission_hint: "Tick: read usage reports"
+    who_can: "Only an OpenAI organization Owner can create this key."
+    key_can: "manage your organization — members, projects, and other keys"
+    we_do: "call only the read-only usage and cost reports — never your models, never your prompts"
+    create_hint: "Name it, set an expiry, create"
     step2_title: "Paste the key here"
-    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
-    step3_title: "That's it — nothing else to do, ever."
-    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+    step2_body: "We check it against OpenAI right away and show you exactly what it can read. It's encrypted the moment it arrives, never written to a log, and deleted the instant you revoke it here."
+    step3_title: "Connected — the platform takes it from here."
+    step3_body: "We pull the last 30 days now, so your dashboard fills within minutes, then refresh your usage once a day. Nothing else for you to do."
   anthropic:
     provider_name: "Anthropic"
-    step1_title: "Open your Anthropic key settings"
-    step1_body: "You need a read-only key to your usage reports. Create one on the page that opens and give it permission to read usage — nothing else."
-    console_url: "https://console.anthropic.com/settings/admin-keys"
-    permission_hint: "Choose: read-only usage access"
+    key_kind: "Anthropic organization Admin key"
+    step1_title: "Create an Anthropic Admin key"
+    step1_body: "Anthropic exposes usage and cost data only to an organization Admin key — there is no usage-only key (a provider limit, not ours). You'll need the Admin role in your Claude org to create one, or ask whoever has it. Name it so your team knows what it's for, and we recommend giving it an expiry."
+    console_url: "https://platform.claude.com/settings/admin-keys"
+    who_can: "Only a member with the Admin role in your Claude organization can create this key."
+    key_can: "manage your organization — members, workspaces, and existing keys"
+    we_do: "call only the read-only usage and cost reports — never your models, never your prompts"
+    create_hint: "Name it, set an expiry, create"
     step2_title: "Paste the key here"
-    step2_body: "We check it straight away and tell you what we can see. The key is encrypted the moment it arrives, and you can revoke it here any time."
-    step3_title: "That's it — nothing else to do, ever."
-    step3_body: "Your first audit runs tonight and your dashboard fills by morning. We pull your usage counts once a day from now on."
+    step2_body: "We check it against Anthropic right away and show you exactly what it can read. It's encrypted the moment it arrives, never written to a log, and deleted the instant you revoke it here."
+    step3_title: "Connected — the platform takes it from here."
+    step3_body: "We pull the last 30 days now, so your dashboard fills within minutes, then refresh your usage once a day. Nothing else for you to do."
 
 guide_pages:
   how-it-works:
