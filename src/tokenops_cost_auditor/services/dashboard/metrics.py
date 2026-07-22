@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -306,9 +307,7 @@ def yesterday_spend(
     )
 
 
-def forecast(
-    session: Session, table: object, user_id: str, now: datetime | None = None
-) -> Widget:
+def forecast(session: Session, table: object, user_id: str, now: datetime | None = None) -> Widget:
     """R-FLYWHEEL L3 (deterministic-now): before-the-invoice month-end projection
     + overspend anomaly. Alert-only (X-02 intact). Same coster as every other
     spend surface, so the forecast, the digest and the audit never disagree.
@@ -342,7 +341,7 @@ def forecast(
     )
 
 
-def onboarding(session: Session, user_id: str) -> dict:
+def onboarding(session: Session, user_id: str) -> dict[str, Any]:
     """The 5-step activation path (Wave A). Each step derives from data that
     already exists, so it self-completes as the customer progresses — the aha
     sequence: get data in → audit → review → apply → SEE a verified saving."""
@@ -431,7 +430,7 @@ def onboarding(session: Session, user_id: str) -> dict:
     }
 
 
-def audit_clarity(session: Session, table: object, user_id: str) -> dict:
+def audit_clarity(session: Session, table: object, user_id: str) -> dict[str, Any]:
     """Why a page looks the way it does — so "no findings" is never confused
     with "no audit." Distinguishes: no audit yet · audit ran but the models
     aren't on our verified rate card (the gpt-4o-mini gap) · audit ran, priced,
@@ -454,8 +453,11 @@ def audit_clarity(session: Session, table: object, user_id: str) -> dict:
     if nfindings > 0:
         return {"state": "has_findings", "count": nfindings}
     if float(audit.total_spend_usd or 0) > 0:
-        return {"state": "clean", "row_count": audit.row_count or 0,
-                "spend": float(audit.total_spend_usd or 0)}
+        return {
+            "state": "clean",
+            "row_count": audit.row_count or 0,
+            "spend": float(audit.total_spend_usd or 0),
+        }
     # priced $0 with rows analyzed → the models are unpriced. Name them.
     pairs = session.execute(
         select(Source.provider, SourceUsage.model)

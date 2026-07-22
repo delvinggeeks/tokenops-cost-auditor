@@ -75,9 +75,7 @@ def _fetch(
     while True:
         resp = http.get(BASE_URL, params=params, headers={"Authorization": f"Bearer {api_key}"})
         if resp.status_code in (401, 403):
-            raise ConnectorAuthError(
-                "provider rejected the stored key", status=resp.status_code
-            )
+            raise ConnectorAuthError("provider rejected the stored key", status=resp.status_code)
         resp.raise_for_status()
         payload = resp.json()
         buckets.extend(parse_page(payload))

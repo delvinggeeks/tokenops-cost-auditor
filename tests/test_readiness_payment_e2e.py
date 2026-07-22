@@ -81,9 +81,7 @@ def _sub_activated(email: str = BUYER, plan: str = "pro", sid: str = "sub_1") ->
             "id": sid,
             "created_at": int(time.time()),
             "payload": {
-                "subscription": {
-                    "entity": {"id": sid, "notes": {"email": email, "plan": plan}}
-                }
+                "subscription": {"entity": {"id": sid, "notes": {"email": email, "plan": plan}}}
             },
         }
     ).encode()
@@ -200,9 +198,7 @@ class TestStripePaymentEndToEnd:
         )
         assert resp.status_code == 200 and resp.json()["status"] == "processed"
         with payapp.state.session_factory() as s:
-            user = s.execute(
-                select(User).where(User.email == "global@company.com")
-            ).scalar_one()
+            user = s.execute(select(User).where(User.email == "global@company.com")).scalar_one()
             pay = s.execute(select(Payment).where(Payment.user_id == user.id)).scalars().all()
             assert len(pay) == 1 and pay[0].provider == "stripe" and pay[0].currency == "USD"
         after = client.post(

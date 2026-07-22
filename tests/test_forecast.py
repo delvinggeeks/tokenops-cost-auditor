@@ -24,8 +24,13 @@ TABLE = PricingTable(
     last_verified=None,
     _entries={
         ("openai", "testmodel"): (
-            Rate(input=1.0, output=1.0, cache_read=1.0, cache_write=1.0,
-                 effective_from=date(2026, 1, 1)),
+            Rate(
+                input=1.0,
+                output=1.0,
+                cache_read=1.0,
+                cache_write=1.0,
+                effective_from=date(2026, 1, 1),
+            ),
         )
     },
 )
@@ -117,11 +122,19 @@ class TestForecastGolden:
         # a model priced only from June: April/May baseline usage is unpriced,
         # so the baseline is understated -> we must NOT fire a false overspend.
         table = PricingTable(
-            version="t", last_verified=None,
-            _entries={("openai", "testmodel"): (
-                Rate(input=1.0, output=1.0, cache_read=1.0, cache_write=1.0,
-                     effective_from=date(2026, 6, 1)),
-            )},
+            version="t",
+            last_verified=None,
+            _entries={
+                ("openai", "testmodel"): (
+                    Rate(
+                        input=1.0,
+                        output=1.0,
+                        cache_read=1.0,
+                        cache_write=1.0,
+                        effective_from=date(2026, 6, 1),
+                    ),
+                )
+            },
         )
         _add(session, date(2026, 4, 15), 20.0)  # unpriced (before 2026-06-01)
         _add(session, date(2026, 5, 15), 20.0)  # unpriced

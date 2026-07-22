@@ -18,13 +18,13 @@ TEMPLATES = Path(__file__).parents[1] / "src/tokenops_cost_auditor/web/templates
 DESIGNED = "/static/wa-design.css"
 
 
-
 def _consume_link(client, link, follow_redirects=False):
     """GET now only shows a confirm page; POST signs in (readiness audit)."""
     from urllib.parse import parse_qs, urlparse
 
     token = parse_qs(urlparse(link).query)["token"][0]
     return client.post("/auth/verify", data={"token": token}, follow_redirects=follow_redirects)
+
 
 class _Recorder:
     def __init__(self) -> None:

@@ -22,6 +22,7 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from typing import cast
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -54,11 +55,14 @@ class Forecast:
 
 
 def _earliest_usage_day(session: Session, user_id: str) -> date | None:
-    return session.execute(
-        select(func.min(SourceUsage.day))
-        .join(Source, SourceUsage.source_id == Source.id)
-        .where(Source.user_id == user_id)
-    ).scalar_one_or_none()
+    return cast(
+        "date | None",
+        session.execute(
+            select(func.min(SourceUsage.day))
+            .join(Source, SourceUsage.source_id == Source.id)
+            .where(Source.user_id == user_id)
+        ).scalar_one_or_none(),
+    )
 
 
 def project_cycle(
@@ -133,8 +137,7 @@ def project_cycle(
             basis += " — baseline still filling in, so we hold the overspend alert"
         if mtd_partial:
             basis += (
-                " — some of this month's usage isn't priced yet, so the projection "
-                "is understated"
+                " — some of this month's usage isn't priced yet, so the projection is understated"
             )
     else:
         if history_days < MIN_HISTORY_DAYS:

@@ -112,8 +112,13 @@ _FC_TABLE = _PT(
     last_verified=None,
     _entries={
         ("anthropic", "claude-fable-5"): (
-            _Rate(input=10.0, output=50.0, cache_read=1.0, cache_write=12.5,
-                  effective_from=date(2026, 1, 1)),
+            _Rate(
+                input=10.0,
+                output=50.0,
+                cache_read=1.0,
+                cache_write=12.5,
+                effective_from=date(2026, 1, 1),
+            ),
         )
     },
 )

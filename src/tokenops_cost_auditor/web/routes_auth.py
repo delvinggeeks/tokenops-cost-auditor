@@ -6,6 +6,7 @@ import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Form, Request
@@ -174,7 +175,7 @@ def verify(request: Request, token: str = Form(...)) -> HTMLResponse | RedirectR
 # ---------------------------------------------------------------------------
 
 
-def _jwt_claims(jwt: str) -> dict:
+def _jwt_claims(jwt: str) -> dict[str, Any]:
     """Decode a JWT payload WITHOUT signature verification. Safe here and ONLY
     here: this token came directly from the provider's token endpoint over a
     server-to-server TLS call (confidential-client code flow), never through
@@ -186,19 +187,19 @@ def _jwt_claims(jwt: str) -> dict:
     try:
         payload = jwt.split(".")[1]
         payload += "=" * (-len(payload) % 4)
-        return json.loads(base64.urlsafe_b64decode(payload))
+        return cast("dict[str, Any]", json.loads(base64.urlsafe_b64decode(payload)))
     except Exception:
         return {}
 
 
-def _google_email(info: object, token: dict) -> str:
+def _google_email(info: object, token: dict[str, Any]) -> str:
     """Trust the address only when Google says it's verified."""
     if isinstance(info, dict) and info.get("email_verified"):
         return str(info.get("email", "")).strip().lower()
     return ""
 
 
-def _microsoft_email(info: object, token: dict) -> str:
+def _microsoft_email(info: object, token: dict[str, Any]) -> str:
     """SECURITY (nOAuth mitigation, readiness audit 2026-07-22): the /common
     endpoint accepts tokens from ANY Entra tenant, and the userinfo `email`
     claim is admin-settable and unverified — trusting its mere presence let an
@@ -215,7 +216,7 @@ def _microsoft_email(info: object, token: dict) -> str:
     return str(claims.get("email", "")).strip().lower()
 
 
-def _github_email(info: object, token: dict) -> str:
+def _github_email(info: object, token: dict[str, Any]) -> str:
     """/user/emails returns a list; take the primary verified address, else
     any verified one. An unverified-only list is refused the same way an
     email_verified=False claim is."""
@@ -235,7 +236,7 @@ class Federation:
     token_url: str
     userinfo_url: str
     scope: str
-    extract_email: Callable[[object, dict], str]
+    extract_email: Callable[[object, dict[str, Any]], str]
     authorize_extra: dict[str, str] = dataclasses.field(default_factory=dict)
     token_headers: dict[str, str] = dataclasses.field(default_factory=dict)
 

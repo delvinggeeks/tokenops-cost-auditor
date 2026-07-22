@@ -34,8 +34,7 @@ import yaml
 from tokenops_cost_auditor.services.pricing.table import AUTO_DATA, DEFAULT_DATA, PricingTable
 
 LITELLM_URL = (
-    "https://raw.githubusercontent.com/BerriAI/litellm/main/"
-    "model_prices_and_context_window.json"
+    "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
 )
 PROVIDERS = {"openai", "anthropic"}  # the providers we price
 MAX_RATE = 1000.0  # $/1M ceiling — a plausible upper band (gate 2)
@@ -63,7 +62,7 @@ def fetch_litellm(url: str = LITELLM_URL) -> dict:
 def to_per_million(cost_per_token: object) -> float | None:
     try:
         return round(float(cost_per_token) * 1_000_000, 6)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 

@@ -72,9 +72,7 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             one_shot_billed=plans.one_shot_billed_note(settings, currency),
             # per-plan checkout: each paid plan carries ITS OWN link, so the
             # tier the customer picks is the tier they pay for (readiness audit)
-            checkout_links={
-                k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS
-            },
+            checkout_links={k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS},
             now=datetime.now(UTC),
             show_tour=False,
             # ctx's plan feeds the topbar badge; billing.html itself reads

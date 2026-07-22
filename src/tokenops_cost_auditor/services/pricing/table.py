@@ -9,6 +9,7 @@ import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -63,9 +64,7 @@ class PricingTable:
     _entries: dict[tuple[str, str], tuple[Rate, ...]]
 
     @classmethod
-    def load(
-        cls, path: Path = DEFAULT_DATA, overlay: Path | None = AUTO_DATA
-    ) -> PricingTable:
+    def load(cls, path: Path = DEFAULT_DATA, overlay: Path | None = AUTO_DATA) -> PricingTable:
         raw = yaml.safe_load(path.read_text())
         # (provider, model) -> mutable list of Rate, base first then overlay.
         acc: dict[tuple[str, str], list[Rate]] = {}
@@ -80,9 +79,7 @@ class PricingTable:
             # ADD later-dated rates, never override a rate a human set for that
             # exact date (money-math safety — cold-review f.1). Auto rows still
             # supersede via a strictly-later effective_from (the freshness intent).
-            protected = {
-                (key, r.effective_from) for key, rates in acc.items() for r in rates
-            }
+            protected = {(key, r.effective_from) for key, rates in acc.items() for r in rates}
             cls._ingest(over_raw, acc, protect=protected)
             over_verified = over_raw.get("last_verified")
             # Freshest verification date wins (daily auto-sync keeps this current).
@@ -91,8 +88,7 @@ class PricingTable:
             ):
                 last_verified = over_verified
         entries = {
-            key: tuple(sorted(rates, key=lambda r: r.effective_from))
-            for key, rates in acc.items()
+            key: tuple(sorted(rates, key=lambda r: r.effective_from)) for key, rates in acc.items()
         }
         return cls(
             version=str(raw["version"]),
@@ -102,7 +98,7 @@ class PricingTable:
 
     @staticmethod
     def _ingest(
-        raw: dict,
+        raw: dict[str, Any],
         acc: dict[tuple[str, str], list[Rate]],
         protect: set[tuple[tuple[str, str], date]] | None = None,
     ) -> None:

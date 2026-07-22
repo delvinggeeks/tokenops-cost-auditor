@@ -119,9 +119,11 @@ class TestConnectEndToEnd:
             pull_stats = run_pull(session, settings, src, _FakeHTTP(page))
             session.commit()
             assert pull_stats.upserted > 0
-            usage = session.execute(
-                select(SourceUsage).where(SourceUsage.source_id == source_id)
-            ).scalars().all()
+            usage = (
+                session.execute(select(SourceUsage).where(SourceUsage.source_id == source_id))
+                .scalars()
+                .all()
+            )
             assert usage, "the pull must persist usage buckets"
 
             src = session.get(Source, source_id)
@@ -130,9 +132,11 @@ class TestConnectEndToEnd:
 
             audit = session.execute(select(Audit)).scalars().one()
             assert audit.status == "done" and audit.report_ready_at is not None
-            findings = session.execute(
-                select(FindingRow).where(FindingRow.audit_id == audit.id)
-            ).scalars().all()
+            findings = (
+                session.execute(select(FindingRow).where(FindingRow.audit_id == audit.id))
+                .scalars()
+                .all()
+            )
             assert findings, "the planted waste must surface at least one finding"
             assert (settings.report_dir / audit.id / "report.json").exists()
             user_id = src.user_id
@@ -150,15 +154,19 @@ class TestConnectEndToEnd:
             src = session.get(Source, source_id)
             run_pull(session, settings, src, _FakeHTTP(page))
             session.commit()
-            first = session.execute(
-                select(SourceUsage).where(SourceUsage.source_id == source_id)
-            ).scalars().all()
+            first = (
+                session.execute(select(SourceUsage).where(SourceUsage.source_id == source_id))
+                .scalars()
+                .all()
+            )
             src = session.get(Source, source_id)
             run_pull(session, settings, src, _FakeHTTP(page))
             session.commit()
-            second = session.execute(
-                select(SourceUsage).where(SourceUsage.source_id == source_id)
-            ).scalars().all()
+            second = (
+                session.execute(select(SourceUsage).where(SourceUsage.source_id == source_id))
+                .scalars()
+                .all()
+            )
         assert len(first) == len(second), "a repeated pull upserts, never duplicates"
 
 

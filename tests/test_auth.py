@@ -350,9 +350,7 @@ class TestSessionCookieFlags:
         from tokenops_cost_auditor.web.auth import issue_magic_token
 
         token = issue_magic_token(app.state.settings.secret_key, "flags@example.com")
-        return TestClient(app).post(
-            "/auth/verify", data={"token": token}, follow_redirects=False
-        )
+        return TestClient(app).post("/auth/verify", data={"token": token}, follow_redirects=False)
 
     def test_dev_cookie_is_sendable_over_http(self, app: FastAPI) -> None:
         resp = self._login(app)

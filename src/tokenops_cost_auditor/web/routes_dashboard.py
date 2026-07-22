@@ -113,9 +113,7 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 "yesterday": metrics.yesterday_spend(
                     session, request.app.state.pricing_table, user.id
                 ),
-                "forecast": metrics.forecast(
-                    session, request.app.state.pricing_table, user.id
-                ),
+                "forecast": metrics.forecast(session, request.app.state.pricing_table, user.id),
                 "spend_trend": metrics.spend_trend(session, user.id),
                 "waste_trend": metrics.waste_trend(session, user.id),
                 "top_findings": metrics.top_findings(session, user.id),
@@ -140,9 +138,7 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
 
 
 @router.post("/dashboard/onboarding/hide")
-def hide_onboarding(
-    request: Request, user_email: str = Depends(current_user)
-) -> RedirectResponse:
+def hide_onboarding(request: Request, user_email: str = Depends(current_user)) -> RedirectResponse:
     """Let a customer dismiss the getting-started checklist. Cookie-scoped: it
     auto-hides on completion anyway, so this is only for 'I'd rather not see it'."""
     resp = RedirectResponse("/dashboard", status_code=303)

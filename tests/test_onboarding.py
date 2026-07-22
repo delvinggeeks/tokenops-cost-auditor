@@ -86,9 +86,7 @@ class TestOnboardingOnDashboard:
         assert resp.status_code == 303
         assert "onboarding_hidden=" in resp.headers.get("set-cookie", "")
         # the cookie now suppresses it
-        assert (
-            "Get to your first verified saving" not in client.get("/dashboard", headers=HDR).text
-        )
+        assert "Get to your first verified saving" not in client.get("/dashboard", headers=HDR).text
 
     def test_it_vanishes_when_every_step_is_done(self, app: FastAPI, monkeypatch) -> None:
         # a completed account (all steps done) → all_done → not rendered
@@ -262,9 +260,11 @@ class TestAuditClarity:
     def test_metric_reports_unpriced_not_no_audit(self, app: FastAPI) -> None:
         self._connected_unpriced_audit(app)
         with app.state.session_factory() as s:
-            c = metrics.audit_clarity(s, app.state.pricing_table, s.execute(
-                metrics.select(User.id).where(User.email == EMAIL)
-            ).scalar_one())
+            c = metrics.audit_clarity(
+                s,
+                app.state.pricing_table,
+                s.execute(metrics.select(User.id).where(User.email == EMAIL)).scalar_one(),
+            )
         assert c["state"] == "unpriced"
         assert "gpt-4o-mini-2024-07-18" in c["models"]
         assert c["row_count"] == 35

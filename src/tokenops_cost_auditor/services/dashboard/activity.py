@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import (
@@ -40,12 +40,18 @@ def _aware(dt: datetime) -> datetime:
 def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
     events: list[Event] = []
 
-    audits = session.execute(
-        select(Audit)
-        .where(Audit.user_id == user_id, Audit.status == "done", Audit.report_ready_at.is_not(None))
-        .order_by(Audit.report_ready_at.desc())
-        .limit(limit)
-    ).scalars().all()
+    audits = (
+        session.execute(
+            select(Audit)
+            .where(
+                Audit.user_id == user_id, Audit.status == "done", Audit.report_ready_at.is_not(None)
+            )
+            .order_by(Audit.report_ready_at.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
     for a in audits:
         savings = f" · ${a.total_spend_usd:,.0f}/mo run-rate" if a.total_spend_usd else ""
         events.append(
@@ -59,12 +65,16 @@ def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
             )
         )
 
-    alerts = session.execute(
-        select(AlertEvent)
-        .where(AlertEvent.user_id == user_id)
-        .order_by(AlertEvent.ts.desc())
-        .limit(limit)
-    ).scalars().all()
+    alerts = (
+        session.execute(
+            select(AlertEvent)
+            .where(AlertEvent.user_id == user_id)
+            .order_by(AlertEvent.ts.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
     for e in alerts:
         events.append(
             Event(
@@ -83,13 +93,17 @@ def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
     # customer_reported, "never in the headline"); labeling it "verified" was
     # the exact false-claim the honesty laws forbid. The genuinely-verified
     # total lives on the savings widget (savings.compute().verified_usd).
-    applied = session.execute(
-        select(FindingFeedback)
-        .join(Audit, FindingFeedback.audit_id == Audit.id)
-        .where(Audit.user_id == user_id, FindingFeedback.verdict == "applied")
-        .order_by(FindingFeedback.ts.desc())
-        .limit(limit)
-    ).scalars().all()
+    applied = (
+        session.execute(
+            select(FindingFeedback)
+            .join(Audit, FindingFeedback.audit_id == Audit.id)
+            .where(Audit.user_id == user_id, FindingFeedback.verdict == "applied")
+            .order_by(FindingFeedback.ts.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
     for fb in applied:
         events.append(
             Event(
@@ -103,12 +117,16 @@ def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
             )
         )
 
-    payments = session.execute(
-        select(Payment)
-        .where(Payment.user_id == user_id, Payment.provider != "comp")
-        .order_by(Payment.ts.desc())
-        .limit(limit)
-    ).scalars().all()
+    payments = (
+        session.execute(
+            select(Payment)
+            .where(Payment.user_id == user_id, Payment.provider != "comp")
+            .order_by(Payment.ts.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
     for p in payments:
         events.append(
             Event(
@@ -133,7 +151,7 @@ def unseen_count(session: Session, user: User, limit: int = 25) -> int:
 
     cut = _aware(user.activity_seen_at) if user.activity_seen_at is not None else None
 
-    def c(stmt) -> int:
+    def c(stmt: Select[tuple[int]]) -> int:
         return int(session.execute(stmt).scalar_one())
 
     aq = select(func.count(Audit.id)).where(

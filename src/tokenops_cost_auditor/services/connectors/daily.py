@@ -111,7 +111,7 @@ def _budget_stage_crossed(
     ).scalars()
     best = max(
         (
-            int(e.detail.get("stage", 0))
+            int(cast(int, e.detail.get("stage", 0)))
             for e in fired
             if isinstance(e.detail, dict) and e.detail.get("month") == month
         ),
@@ -216,8 +216,8 @@ def run_digests(
                     else ""
                 )
                 lines.append(
-                    f"⚠ On track for {_fmt(fc.projected_usd)} this month{floor} — "
-                    f"{fc.over_pct:+.0f}% vs your usual {_fmt(fc.baseline_usd)}/mo. "
+                    f"⚠ On track for {_fmt(fc.projected_usd or 0.0)} this month{floor} — "
+                    f"{fc.over_pct:+.0f}% vs your usual {_fmt(fc.baseline_usd or 0.0)}/mo. "
                     "A look now beats a surprise on the invoice."
                 )
             if budget_rule is not None and budget_rule.enabled and budget_rule.threshold:
@@ -265,7 +265,9 @@ def run_digests(
                             "stage": stage,
                             "month": f"{now:%Y-%m}",
                             "mtd_usd": round(mtd.total_usd, 2),
-                            "budget_usd": float(budget_rule.threshold),
+                            "budget_usd": float(budget_rule.threshold)
+                            if budget_rule is not None and budget_rule.threshold is not None
+                            else 0.0,
                         },
                         ts=now,
                     )
