@@ -3,6 +3,38 @@
 {% block content %}
 <div class="grid">
 
+  {# Wave A — getting-started checklist. Self-completes from real data and
+     vanishes when every step is done; a customer can also hide it. Drives the
+     activation sequence to the first VERIFIED saving. #}
+  {% if onboarding and not onboarding.all_done %}
+  <section class="w-12 onboard" data-reveal>
+    <div class="onboard-head">
+      <div>
+        <h2>Get to your first verified saving</h2>
+        <p class="muted">{{ onboarding.done }} of {{ onboarding.total }} done — the
+          fastest path to seeing real money back.</p>
+      </div>
+      <form method="post" action="/dashboard/onboarding/hide">
+        <button class="btn btn-quiet" type="submit" aria-label="Hide this checklist">Hide</button>
+      </form>
+    </div>
+    <div class="onboard-bar" aria-hidden="true">
+      <span style="width: {{ (onboarding.done / onboarding.total * 100) | round }}%"></span>
+    </div>
+    <ol class="onboard-steps">
+      {% for s in onboarding.steps %}
+      <li class="{{ 'done' if s.done else '' }}{{ ' next' if onboarding.next and s.key == onboarding.next.key else '' }}">
+        <span class="onboard-check" aria-hidden="true">{{ '✓' if s.done else '' }}</span>
+        <span class="onboard-label">{{ s.label }}</span>
+        {% if not s.done and onboarding.next and s.key == onboarding.next.key %}
+          <a class="btn btn-primary btn-sm" href="{{ s.href }}">{{ s.cta }}</a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
   {# W0 — the holistic spine. Deliberately NOT a .widget: it is a full-bleed
      strip with its own 1px chrome (R-DESIGN-SHELL §3). #}
   <section class="w-12">

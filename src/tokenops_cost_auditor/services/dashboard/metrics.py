@@ -304,3 +304,92 @@ def yesterday_spend(
             "unpriced": unpriced,
         },
     )
+
+
+def onboarding(session: Session, user_id: str) -> dict:
+    """The 5-step activation path (Wave A). Each step derives from data that
+    already exists, so it self-completes as the customer progresses — the aha
+    sequence: get data in → audit → review → apply → SEE a verified saving."""
+    from sqlalchemy import func
+
+    from tokenops_cost_auditor.services.dashboard.savings import compute
+
+    has_source = (
+        session.execute(
+            select(func.count(Source.id)).where(
+                Source.user_id == user_id, Source.status == "active"
+            )
+        ).scalar_one()
+        > 0
+    )
+    audit_ids = list(
+        session.execute(
+            select(Audit.id).where(Audit.user_id == user_id, Audit.status == "done")
+        ).scalars()
+    )
+    has_audit = len(audit_ids) > 0
+    has_findings = has_audit and (
+        session.execute(
+            select(func.count(FindingRow.id)).where(FindingRow.audit_id.in_(audit_ids or [""]))
+        ).scalar_one()
+        > 0
+    )
+    applied = (
+        session.execute(
+            select(func.count(FindingFeedback.id)).where(
+                FindingFeedback.audit_id.in_(audit_ids or [""]),
+                FindingFeedback.verdict == "applied",
+            )
+        ).scalar_one()
+        if has_audit
+        else 0
+    )
+    verified = compute(session, user_id).verified_usd if has_audit else 0.0
+
+    steps = [
+        {
+            "key": "connect",
+            "label": "Connect a source (or upload a log file)",
+            "done": has_source or has_audit,
+            "href": "/sources",
+            "cta": "Connect",
+        },
+        {
+            "key": "audit",
+            "label": "Run your first audit",
+            "done": has_audit,
+            "href": "/upload",
+            "cta": "Start an audit",
+        },
+        {
+            "key": "review",
+            "label": "Review what it found, ranked by dollars",
+            "done": has_findings,
+            "href": "/findings",
+            "cta": "See findings",
+        },
+        {
+            "key": "apply",
+            "label": "Apply a fix and mark it done",
+            "done": applied > 0,
+            "href": "/findings",
+            "cta": "Apply a fix",
+        },
+        {
+            "key": "verified",
+            "label": "See a verified saving — proven on your next audit",
+            "done": verified > 0,
+            "href": "/dashboard",
+            "cta": "Track savings",
+        },
+    ]
+    done_n = sum(1 for s in steps if s["done"])
+    # the first not-yet-done step is the single next-best-action
+    nxt = next((s for s in steps if not s["done"]), None)
+    return {
+        "steps": steps,
+        "done": done_n,
+        "total": len(steps),
+        "all_done": done_n == len(steps),
+        "next": nxt,
+    }

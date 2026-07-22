@@ -111,9 +111,27 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 "next_audit": metrics.next_audit(session, user.id),
                 "alerts": metrics.alerts_armed(session, user.id, watching=watching),
             },
+            # Wave A activation checklist: shown until every step is done or the
+            # customer hides it (a cookie — a non-critical preference, no schema).
+            onboarding=(
+                None
+                if request.cookies.get("onboarding_hidden")
+                else metrics.onboarding(session, user.id)
+            ),
             show_tour=user.tour_dismissed_at is None,
             **ctx,
         )
+
+
+@router.post("/dashboard/onboarding/hide")
+def hide_onboarding(
+    request: Request, user_email: str = Depends(current_user)
+) -> RedirectResponse:
+    """Let a customer dismiss the getting-started checklist. Cookie-scoped: it
+    auto-hides on completion anyway, so this is only for 'I'd rather not see it'."""
+    resp = RedirectResponse("/dashboard", status_code=303)
+    resp.set_cookie("onboarding_hidden", "1", max_age=365 * 86400, httponly=True, samesite="lax")
+    return resp
 
 
 @router.get("/dashboard/w/{key}", response_class=HTMLResponse)
