@@ -7,6 +7,9 @@ from pathlib import Path
 
 SRC = Path(__file__).parents[1] / "src" / "tokenops_cost_auditor" / "services"
 GUARDED_PACKAGES = ("rules", "pricing")
+# Single deterministic modules held to the same law (vv-gate 01334e8 f.4: the
+# forecast was clean by discipline only — enforcement belongs here).
+GUARDED_MODULES = ("forecast.py",)
 FORBIDDEN = {
     "anthropic",
     "openai",
@@ -44,6 +47,13 @@ class TestTNFR01ImportGuard:
                 bad = iter_imports(path) & FORBIDDEN
                 if bad:
                     offenders.append(f"{path}: {sorted(bad)}")
+        for name in GUARDED_MODULES:
+            path = SRC / name
+            assert path.exists(), f"guarded module vanished: {path}"
+            checked += 1
+            bad = iter_imports(path) & FORBIDDEN
+            if bad:
+                offenders.append(f"{path}: {sorted(bad)}")
         assert checked >= 10, "guard must actually scan the engine modules"
         assert not offenders, "NFR-01 violated:\n" + "\n".join(offenders)
 

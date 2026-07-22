@@ -175,3 +175,24 @@ class TestForecastGolden:
         assert f.baseline_usd is None
         assert "more day" in f.reason
         assert f.basis.startswith("building your forecast")
+
+    def test_too_early_in_the_month_says_so(self, session: Session, user_id: str) -> None:
+        # long history, but only 2 elapsed days this month (< MIN_ELAPSED_DAYS)
+        _add(session, date(2026, 4, 15), 20.0)
+        _add(session, date(2026, 5, 15), 20.0)
+        _add(session, date(2026, 6, 15), 20.0)
+        session.commit()
+        f = project_cycle(session, TABLE, user_id, now=datetime(2026, 7, 3, tzinfo=UTC))
+        assert f.ready is False
+        assert "into the month" in f.reason
+
+    def test_history_without_prior_spend_says_so(self, session: Session, user_id: str) -> None:
+        # >30 days of history and enough elapsed days, but the whole baseline
+        # window is $0 -> "no prior spend to compare against yet"
+        _add(session, date(2026, 3, 1), 5.0)  # anchors history_days >= 30
+        _add(session, date(2026, 7, 5), 5.0)
+        session.commit()
+        # baseline window Apr2..Jun30 has zero spend (Mar 1 falls outside it)
+        f = project_cycle(session, TABLE, user_id, now=NOW)
+        assert f.ready is False
+        assert f.reason == "no prior spend to compare against yet"
