@@ -47,6 +47,22 @@ e5b8c2f74a19 unchanged). No rate VALUES changed in base card. OPEN: two-reading
 persistence for held swings is a BACKLOG enhancement (currently held one cycle,
 surfaced in digest); legacy claude-3.x coverage is demand-driven via usage.
 
+FOLLOW-UP (same day, empty-dashboard incident): founder reported the Overview
+still all-$0 after the pricing fix. Root cause was NOT pricing — TWO bugs: (a)
+connect_backfill_days was 30, but a read-only wide-window probe found the org's
+real usage (2,264 calls: gpt-4o-mini/gpt-4o/gpt-4.1) sat in Mar-Apr 2026, so the
+30-day window pulled a 35-call sliver → widened to 180 (config, env-overridable;
+commit 41374c6); (b) the overlay lived in the container's ephemeral fs, so every
+`up --build` wiped auto-pricing until the next cover run → moved to
+PRICING_OVERLAY_PATH=/data/reports/.ops/prices.auto.yaml on the persistent
+reports volume, proven to survive force-recreate (commit c98af0b). Prod remediation:
+forced full re-pull (2,264 calls, Mar 24-Jun 30) + cover-from-usage priced all
+three models + re-audit → latest audit spend $0.1732 over 26 days, 1 finding
+(d2_missing_cache). The org's OpenAI spend is genuinely small (~$0.17); the
+customer's real spend is likely Anthropic — connect-Anthropic nudge is a
+follow-up. No gate needed (config + infra, no money-math logic change; full
+suite green).
+
 ## R-PRICING-FINAL-2 + R-DAILY-LOOP (2026-07-22) — dual-market pricing + the daily surface
 
 Ratified after five founder amendment rounds (analysis in
