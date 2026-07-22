@@ -5,6 +5,18 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.29 (1cb8442) · READINESS WAVE 1 live — ship-blockers
+  + integrity. Microsoft nOAuth account-takeover CLOSED (id_token
+  xms_edov required; the vuln-enshrining test rewritten to prove the
+  attack is refused). Per-plan checkout links (no shared link → no
+  wrong-tier charge). Idempotent free credit (migration 009 partial
+  unique index + SAVEPOINT; prod deduped to ≤1/user). SMTP failures →
+  clean 502 / redirect, never 500; public_base_url fallback. Secret-key
+  startup guard (prod refuses weak key — app started, so it passed).
+  Flaky-suite root cause fixed (rate-limiter reset per test).
+  cold-review PASS-WITH-NOTES, both notes closed. Migration 009 applied
+  in prod (head b1e5f2c93a70). SMOKE PASS.
+
 - 2026-07-22 · v1.5.28 · CONNECT-WIZARD HONESTY live (walkthrough +
   research). Verified vs OpenAI/Anthropic docs: usage/cost needs a
   full-power org ADMIN key (no usage-only scope, owner/admin-only). The
