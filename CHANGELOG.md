@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.34 (cefbafc) · INDIA CHEAPER EVERYWHERE + PAYMENT
+  E2E. India Scale lowered to $49 / ₹4,999 (was $149 / ₹14,999) so India
+  is uniformly below global at every tier (Pro $9.99<$29, Scale $49<$99,
+  one-shot $199<$500); still under the RBI ₹15,000 auto-debit ceiling.
+  Payment link+webhook design proven end-to-end (5 tests): signed
+  payment_link.paid → credit → live audit; forged sig refused; replay
+  deduped; stale ignored; subscription.activated upgrades plan.
+  Razorpay test key_id wired (real test payment needs a dashboard test
+  link + webhook secret). SMOKE PASS: India view $4.99/$9.99/$49 live.
+
 - 2026-07-22 · v1.5.31-33 · READINESS WAVES 3-4 live. Wave 3 (UX
   completeness): real session invalidation on close-account (migration
   010 session epoch — a stolen cookie dies on every device);
