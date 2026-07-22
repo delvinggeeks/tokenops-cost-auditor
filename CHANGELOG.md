@@ -5,6 +5,21 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.31-33 · READINESS WAVES 3-4 live. Wave 3 (UX
+  completeness): real session invalidation on close-account (migration
+  010 session epoch — a stolen cookie dies on every device);
+  magic-link CONFIRM interstitial so corporate mail scanners can't burn
+  the one-time link (GET shows, POST signs in); upload form errors
+  render HTML for browsers (was raw JSON) + double-submit guard
+  (data-once, the ruled delegated way); daily digest sends-before-stamp
+  (a mail hiccup retries next tick instead of dropping the day) and the
+  two budget signals reconciled (audit alert = projection, digest =
+  actual MTD). Wave 4 (test debt): true end-to-end tests for connect
+  (pull→audit→report→dashboard) and alerts (config→tick→email→history).
+  Gates: session-epoch cold-review PASS-WITH-NOTES (closed). Suite: 562
+  tests green. SMOKE PASS. Full remediation of the 11-workflow readiness
+  audit complete — see launch/WORKFLOW-READINESS.md.
+
 - 2026-07-22 · v1.5.30 · READINESS WAVE 2 live — domain-truth. Statement
   no longer claims "every finding actioned" when zero findings existed.
   Connect distinguishes a bad/revoked key (401 → "mistyped, revoked, or
