@@ -20,23 +20,6 @@ www.{$DOMAIN:localhost} {
 	redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
-# R-DOMAIN-MIGRATE (2026-07-22): after cutover the RETIRED domain 301s every
-# path to its new home, docs subdomain included — old links, old emails and
-# old search results keep working. OLD_DOMAIN is unset until cutover; the
-# .invalid default makes these blocks inert (no cert is ever requested for
-# it because .invalid is unresolvable by definition).
-{$OLD_DOMAIN:old.invalid} {
-	redir https://{$DOMAIN:localhost}{uri} permanent
-}
-
-www.{$OLD_DOMAIN:old.invalid} {
-	redir https://{$DOMAIN:localhost}{uri} permanent
-}
-
-docs.{$OLD_DOMAIN:old.invalid} {
-	redir https://docs.{$DOMAIN:localhost}{uri} permanent
-}
-
 # Public docs-site (mkdocs build output; shipped to ./site by provision.sh
 # step 4c and bind-mounted read-only — empty dir just 404s until shipped).
 docs.{$DOMAIN:localhost} {
