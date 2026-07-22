@@ -91,7 +91,7 @@
         <span class="col-h">Company</span>
         {# R-SAAS-BASICS 2+3: support with a stated response time; live status. #}
         <a href="mailto:{{ support_email }}" title="Replies within 1 business day">Contact support</a>
-        <a href="{{ status_url }}">Status</a>
+        {% if status_url %}<a href="{{ status_url }}">Status</a>{% endif %}
       </div>
       <div>
         <span class="col-h">Legal</span>

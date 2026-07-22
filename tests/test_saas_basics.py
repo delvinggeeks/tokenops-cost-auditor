@@ -79,9 +79,33 @@ class TestSupportAndStatus:
         # the response-time promise travels with the affordance
         assert "1 business day" in client.get("/billing", headers=HDR).text
 
-    def test_status_page_is_linked_publicly(self, app: FastAPI) -> None:
-        page = TestClient(app).get("/")
-        assert 'href="https://status.tokenops-cost-auditor.com"' in page.text
+    def test_status_link_renders_only_when_the_page_exists(self, app: FastAPI, tmp_path) -> None:
+        """Dead-button law (walkthrough 2026-07-22): the footer linked a status
+        page whose CNAME didn't resolve yet — a dead link on every page. The
+        link is config-gated now: absent by default, rendered once STATUS_URL
+        is set (which happens when UptimeRobot + CNAME are live, §3b)."""
+        assert ">Status<" not in TestClient(app).get("/").text
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.main import create_app
+        from tokenops_cost_auditor.persistence.models import Base
+
+        settings = Settings(
+            app_env="test",
+            secret_key="s",
+            database_url=f"sqlite:///{tmp_path / 'st.db'}",
+            upload_dir=tmp_path / "u2",
+            report_dir=tmp_path / "r2",
+            backup_dir=tmp_path / "b2",
+            status_url="https://status.tokenops-cost-auditor.com",
+            _env_file=None,
+        )
+        application = create_app(settings)
+        Base.metadata.create_all(application.state.engine)
+        try:
+            page = TestClient(application).get("/").text
+            assert 'href="https://status.tokenops-cost-auditor.com">Status</a>' in page
+        finally:
+            application.state.engine.dispose()
 
 
 class TestCloseAccount:

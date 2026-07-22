@@ -43,7 +43,10 @@ class Settings(BaseSettings):
     # .env flip, not a code change. Defaults stay on the CURRENT live domain;
     # the cutover flips them (runbook §2b) once DNS resolves.
     support_email: str = "support@tokenops-cost-auditor.com"
-    status_url: str = "https://status.tokenops-cost-auditor.com"
+    # Dead-button law: the footer Status link renders ONLY once this is set —
+    # which happens when the UptimeRobot page + CNAME actually resolve
+    # (runbook §3b step 5). An empty default keeps a dead link off every page.
+    status_url: str = ""
     google_client_id: str = ""
     google_client_secret: str = ""
     microsoft_client_id: str = ""
