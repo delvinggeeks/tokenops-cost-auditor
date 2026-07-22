@@ -66,7 +66,14 @@ class PricingTable:
         # effective_from below, so overlay + base interleave correctly by date.
         if overlay is not None and overlay.exists():
             over_raw = yaml.safe_load(overlay.read_text()) or {}
-            cls._ingest(over_raw, acc)
+            # A human base row ALWAYS wins a same-date tie: the overlay may only
+            # ADD later-dated rates, never override a rate a human set for that
+            # exact date (money-math safety — cold-review f.1). Auto rows still
+            # supersede via a strictly-later effective_from (the freshness intent).
+            protected = {
+                (key, r.effective_from) for key, rates in acc.items() for r in rates
+            }
+            cls._ingest(over_raw, acc, protect=protected)
             over_verified = over_raw.get("last_verified")
             # Freshest verification date wins (daily auto-sync keeps this current).
             if over_verified is not None and (
@@ -84,14 +91,22 @@ class PricingTable:
         )
 
     @staticmethod
-    def _ingest(raw: dict, acc: dict[tuple[str, str], list[Rate]]) -> None:
+    def _ingest(
+        raw: dict,
+        acc: dict[tuple[str, str], list[Rate]],
+        protect: set[tuple[tuple[str, str], date]] | None = None,
+    ) -> None:
         """Fold one rate-card document's rows into the accumulator. Shared by the
-        base file and the overlay so both honour identical schema + defaults."""
+        base file and the overlay so both honour identical schema + defaults.
+        A row whose (key, effective_from) is in `protect` is dropped — used to
+        stop an overlay row from overriding a same-date base row."""
         for provider, pdata in (raw.get("providers") or {}).items():
             for model, rate_list in (pdata.get("models") or {}).items():
                 key = (provider.lower(), model.lower())
                 bucket = acc.setdefault(key, [])
                 for item in rate_list:
+                    if protect is not None and (key, item["effective_from"]) in protect:
+                        continue
                     input_rate = float(item["input"])
                     bucket.append(
                         Rate(

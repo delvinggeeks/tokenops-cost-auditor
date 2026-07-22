@@ -79,6 +79,21 @@ class TestNormalize:
         norm = ps.normalize(FEED)
         assert ("anthropic", "claude-3-5-sonnet-20241022") in norm
 
+    def test_feed_zero_cache_falls_back_to_input_never_zero(self) -> None:
+        # cold-review f.3: a $0 cache cost from the feed must not be written as $0
+        feed = {
+            "m": {
+                "input_cost_per_token": 2e-6,
+                "output_cost_per_token": 8e-6,
+                "cache_read_input_token_cost": 0,  # feed says free -> treat as absent
+                "cache_creation_input_token_cost": 0,
+                "litellm_provider": "openai",
+            }
+        }
+        cand = ps.normalize(feed)[("openai", "m")]
+        assert cand["cache_read"] == cand["input"] == 2.0  # fell back, not 0
+        assert cand["cache_write"] == 2.0
+
 
 class TestGates:
     def test_band_rejects_absurd_rate(self) -> None:
@@ -166,6 +181,40 @@ class TestEndToEndOverlay:
         assert r.input == 0.15 and r.output == 0.60
         # the overlay's fresher last_verified wins (never-stale invariant)
         assert merged.last_verified == RUN
+
+    def test_overlay_never_overrides_same_date_base(self, tmp_path) -> None:
+        # cold-review f.1: an auto overlay row must NOT supersede a human base
+        # rate on the SAME effective_from; it may only add strictly-later dates.
+        base = tmp_path / "prices.yaml"
+        base.write_text(
+            yaml.safe_dump(
+                {
+                    "version": "v",
+                    "last_verified": date(2026, 7, 17),
+                    "providers": {"openai": {"models": {"gpt-5.4": [
+                        {"effective_from": date(2026, 6, 1), "input": 1.0, "output": 4.0}
+                    ]}}},
+                }
+            )
+        )
+        overlay = tmp_path / "prices.auto.yaml"
+        overlay.write_text(
+            yaml.safe_dump(
+                {
+                    "version": "auto",
+                    "last_verified": date(2026, 7, 22),
+                    "providers": {"openai": {"models": {"gpt-5.4": [
+                        # SAME date as base — must be ignored (base wins the tie)
+                        {"effective_from": date(2026, 6, 1), "input": 9.99, "output": 9.99},
+                        # strictly later — legitimately supersedes (freshness intent)
+                        {"effective_from": date(2026, 7, 22), "input": 1.2, "output": 4.8},
+                    ]}}},
+                }
+            )
+        )
+        t = PricingTable.load(path=base, overlay=overlay)
+        assert t.rate("openai", "gpt-5.4", date(2026, 6, 1)).input == 1.0  # base wins tie
+        assert t.rate("openai", "gpt-5.4", date(2026, 7, 22)).input == 1.2  # later supersedes
 
     def test_run_writes_status_and_is_idempotent(self, tmp_path, monkeypatch) -> None:
         base = tmp_path / "prices.yaml"

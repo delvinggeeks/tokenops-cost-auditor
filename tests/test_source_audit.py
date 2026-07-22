@@ -107,6 +107,36 @@ class TestLiveAuditLifecycle:
         session.commit()
         assert session.get(Audit, audit_id).status == "done"
 
+    def test_orphaned_queued_row_marked_failed_when_source_vanishes(
+        self, settings: Settings
+    ) -> None:
+        # cold-review f.2: if the source is gone before the worker runs, the
+        # pre-created queued row must reach a terminal state, not poll forever.
+        from sqlalchemy.orm import sessionmaker
+
+        from tokenops_cost_auditor.web.routes_sources import _process_first_pull
+
+        engine = create_engine(settings.database_url)
+        Base.metadata.create_all(engine)
+        factory = sessionmaker(engine)
+        with factory() as s:
+            user = User(email="orphan@example.com")
+            s.add(user)
+            s.flush()
+            row = Audit(user_id=user.id, status="queued", paid_via="subscription")
+            s.add(row)
+            s.commit()
+            audit_id = row.id
+
+        _process_first_pull(
+            factory, settings, PricingTable.load(), "no-such-source", audit_id, None
+        )
+
+        with factory() as s:
+            reloaded = s.get(Audit, audit_id)
+            assert reloaded.status == "failed"
+            assert reloaded.error
+
 
 class TestSourceAudit:
     def test_01_tier_and_coverage_labeling(

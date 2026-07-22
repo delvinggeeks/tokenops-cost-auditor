@@ -267,45 +267,66 @@ def _kickoff_first_pull(
         session.commit()
         audit_id = audit.id
 
-    def run() -> None:
-        from tokenops_cost_auditor.services.connectors.pull import run_pull
-        from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
-        from tokenops_cost_auditor.services.payments.base import claim_credit
+    threading.Thread(
+        target=_process_first_pull,
+        args=(factory, settings, table, source_id, audit_id, claim_for_user),
+        daemon=True,
+    ).start()
+    return audit_id
 
+
+def _mark_failed(session: Session, audit_id: str, why: str) -> None:
+    """Give the live theater a terminal state so it stops polling a stuck row."""
+    row = session.get(Audit, audit_id)
+    if row is not None and row.status in ("queued", "processing"):
+        row.status = "failed"
+        row.error = why
+        session.commit()
+
+
+def _process_first_pull(
+    factory, settings, table, source_id: str, audit_id: str, claim_for_user: str | None
+) -> None:
+    """The connect first-pull worker (runs in a daemon thread; extracted to a
+    module-level function so the lifecycle is unit-testable). Drives the
+    pre-created 'queued' Audit row through processing → done, or to 'failed' on
+    any error / vanished source, so the theater always reaches a terminal state
+    (R-LIVE-AUDIT, cold-review f.2)."""
+    from tokenops_cost_auditor.services.connectors.pull import run_pull
+    from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
+    from tokenops_cost_auditor.services.payments.base import claim_credit
+
+    try:
+        with factory() as session:
+            source = session.get(Source, source_id)
+            row = session.get(Audit, audit_id)
+            if source is None or row is None:
+                if row is not None:
+                    _mark_failed(
+                        session, audit_id,
+                        "The connection was removed before its first audit ran.",
+                    )
+                return
+            row.status = "processing"  # the theater lights up while we pull
+            session.commit()
+            run_pull(session, settings, source)
+            session.commit()
+            run_source_audit(session, settings, table, source, audit=row)
+            if claim_for_user is not None:
+                claimed = claim_credit(session, claim_for_user, audit_id)
+                if claimed is None:
+                    log.info("connect.free_credit_race", audit_id=audit_id)
+            session.commit()
+    except Exception as exc:
+        log.info("connect.first_pull_deferred", error=str(exc)[:160])
         try:
             with factory() as session:
-                source = session.get(Source, source_id)
-                row = session.get(Audit, audit_id)
-                if source is None or row is None:
-                    return
-                row.status = "processing"  # the theater lights up while we pull
-                session.commit()
-                run_pull(session, settings, source)
-                session.commit()
-                run_source_audit(session, settings, table, source, audit=row)
-                if claim_for_user is not None:
-                    claimed = claim_credit(session, claim_for_user, audit_id)
-                    if claimed is None:
-                        log.info("connect.free_credit_race", audit_id=audit_id)
-                session.commit()
-        except Exception as exc:
-            log.info("connect.first_pull_deferred", error=str(exc)[:160])
-            # Surface a terminal state so the theater stops polling and explains
-            # itself, rather than spinning on "processing" forever.
-            try:
-                with factory() as session:
-                    row = session.get(Audit, audit_id)
-                    if row is not None and row.status in ("queued", "processing"):
-                        row.status = "failed"
-                        row.error = (
-                            "We couldn't finish this first audit. We'll retry automatically."
-                        )
-                        session.commit()
-            except Exception:
-                pass
-
-    threading.Thread(target=run, daemon=True).start()
-    return audit_id
+                _mark_failed(
+                    session, audit_id,
+                    "We couldn't finish this first audit. We'll retry automatically.",
+                )
+        except Exception:  # failure-marking is best-effort; never re-raise
+            pass
 
 
 @router.post("", response_model=None)

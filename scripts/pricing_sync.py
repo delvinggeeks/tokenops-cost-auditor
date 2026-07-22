@@ -87,9 +87,12 @@ def normalize(data: dict) -> dict[tuple[str, str], dict[str, float]]:
         out[(provider, model_id.lower())] = {
             "input": inp,
             "output": outp,
-            # sane fallbacks (Rate defaults these to input when absent/implausible)
-            "cache_read": cache_read if cache_read is not None and 0 <= cache_read <= inp else inp,
-            "cache_write": cache_write if cache_write is not None and cache_write >= 0 else inp,
+            # A feed cache cost of 0 (or absent/implausible) is treated as "not
+            # provided" and falls back to the input rate — same convention as the
+            # base card's Rate defaults. This guarantees no $0 rate is ever
+            # written, cache fields included (cold-review f.3).
+            "cache_read": cache_read if cache_read is not None and 0 < cache_read <= inp else inp,
+            "cache_write": cache_write if cache_write is not None and cache_write > 0 else inp,
         }
     return out
 
@@ -101,7 +104,7 @@ def gate_band(cand: dict[str, float]) -> str | None:
         if v is None:
             return f"missing {field}"
         if v < 0 or v > MAX_RATE:
-            return f"{field}={v} outside (0, {MAX_RATE}]"
+            return f"{field}={v} outside [0, {MAX_RATE}]"
     if cand["input"] <= 0 or cand["output"] <= 0:
         return "input/output must be > 0"
     return None
