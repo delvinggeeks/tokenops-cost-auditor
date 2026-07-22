@@ -167,7 +167,12 @@ class Settings(BaseSettings):
     plan_pro_usd: float = 29.0
     plan_team_usd: float = 99.0
     plan_pro_inr: float = 999.0
-    plan_team_inr: float = 14999.0
+    # India Scale charge lowered to honor the decided principle "India cheaper
+    # than global everywhere" (founder 2026-07-22): ₹4,999 (was ₹14,999) is
+    # still well under the RBI ₹15,000 auto-debit ceiling and its $49 display
+    # sits below global Scale ($59 launch / $99 list). Pro + one-shot were
+    # already cheaper; Scale was the one inverted tier.
+    plan_team_inr: float = 4999.0
     plan_pro_usd_launch: float = 19.0
     plan_team_usd_launch: float = 59.0
     plan_pro_inr_launch: float = 499.0
@@ -180,7 +185,7 @@ class Settings(BaseSettings):
     # R-PRICING-FINAL §2's "PPP set independently of FX").
     plan_pro_usd_india: float = 9.99
     plan_pro_usd_india_launch: float = 4.99
-    plan_team_usd_india: float = 149.0
+    plan_team_usd_india: float = 49.0
     one_shot_usd: float = 500.0
     one_shot_inr: float = 20000.0
     one_shot_usd_india: float = 199.0

@@ -1,6 +1,6 @@
 """R-PRICING-FINAL-2 (founder-ratified 2026-07-22) — dual-market pricing.
 
-India ₹499 launch → ₹999 list, Scale ₹14,999 flat; global $19 → $29 and
+India ₹499 launch → ₹999 list, Scale ₹4,999 flat; global $19 → $29 and
 $59 → $99. Per-market first-200 launch cohorts whose flip to list price is
 computed IN CODE from subscription rows; one currency per view with the
 other a labeled toggle away; every amount from config. The ruled test,
@@ -62,7 +62,7 @@ class TestOneCurrencyPerView:
         assert "$29/mo" in page  # named in the launch note
         assert "$59/mo" in page and "$99/mo" in page  # Scale launch → list
         assert "Launch price for the first 200 subscribers" in page
-        for rupee_price in ("₹499", "₹999", "₹14,999"):
+        for rupee_price in ("₹499", "₹999", "₹14,999", "₹4,999"):
             assert rupee_price not in page, "the USD view must not mix in INR prices"
         assert "Prices include GST." not in page
 
@@ -70,21 +70,22 @@ class TestOneCurrencyPerView:
         self, client: TestClient
     ) -> None:
         """Founder clarification: SINGLE display currency (dollars) — the
-        region changes the VALUE. India sees $4.99/$9.99/$149, and the
+        region changes the VALUE. India sees $4.99/$9.99/$49 (cheaper than
+        global at every tier), and the
         rupee amount actually charged is disclosed beside every price."""
         page = client.get("/?ccy=INR").text
         assert "$4.99/mo" in page  # Pro launch, India value
         assert "$9.99/mo" in page  # named in the launch note
-        assert "$149/mo" in page  # Scale, India value
+        assert "$49/mo" in page  # Scale, India value — cheaper than global $99
         assert "$199" in page  # one-shot, India value
         assert "Billed in India as ₹499/mo incl. GST." in page
-        assert "Billed in India as ₹14,999/mo incl. GST." in page
+        assert "Billed in India as ₹4,999/mo incl. GST." in page
         assert "Billed in India as ₹20,000." in page
         for global_price in ("$19/mo", "$29/mo", "$59/mo", "$99/mo"):
             assert global_price not in page, "the India view must not show global values"
 
     def test_india_scale_has_no_launch_note(self, client: TestClient) -> None:
-        """India Scale is flat ₹14,999 — a launch note on it would be a
+        """India Scale is flat ₹4,999 — a launch note on it would be a
         promise of a future raise that isn't ruled."""
         page = client.get("/?ccy=INR").text
         assert page.count("Launch price for the first 200 subscribers") == 1  # Pro only
@@ -211,10 +212,12 @@ class TestConfigOnlyLaw:
                 "$4.99",
                 "$9.99",
                 "$149",
+                "$49",
                 "$199",
                 "₹499",
                 "₹999",
                 "₹14,999",
+                "₹4,999",
                 "₹20,000",
                 "₹4,999",
             ):
