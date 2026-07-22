@@ -200,8 +200,12 @@ class Settings(BaseSettings):
     # its single audit is metered by the signup comp credit, and the
     # scheduler never pulls free sources (entitlement filter).
     plan_source_limits: dict[str, int] = {"free": 1, "pro": 1, "team": 5}
-    # Connect (T2): first-connect backfill window (accepted default Q2)
-    connect_backfill_days: int = 30
+    # Connect (T2): first-connect backfill window. Was 30 (accepted default Q2),
+    # widened to 180 (founder incident 2026-07-22): real usage is often weeks or
+    # months old, so a 30-day window pulled a sliver and the dashboard read
+    # empty. The provider Usage API serves ~a year; 6 months captures a real
+    # spend history without an unbounded first pull. Env-overridable.
+    connect_backfill_days: int = 180
     # Alerts (WP-3, observe-and-alert only; accepted defaults Q10 — see STATUS M1)
     alert_spend_spike_dod_pct: float = 30.0
     alert_waste_target_pct: float = 25.0

@@ -197,7 +197,7 @@ class TestPull:
         run_pull(session, settings, src, fake)
         params = fake.calls[0]["params"]
         window_s = int(params["end_time"]) - int(params["start_time"])
-        # 30-day backfill (accepted default Q2) + the end-exclusive day
+        # backfill window (180d since the 2026-07-22 incident) + the end-exclusive day
         assert window_s == (settings.connect_backfill_days + 1) * 86400
         # key travels in the header and is never persisted anywhere
         assert fake.calls[0]["headers"]["Authorization"] == "Bearer sk-admin-secret-1"
