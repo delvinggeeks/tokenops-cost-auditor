@@ -8,15 +8,27 @@ incident) becomes priced through the overlay.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
 from datetime import date, timedelta
+from pathlib import Path
 
 import yaml
-from scripts import pricing_sync as ps
 
 from tokenops_cost_auditor.services.pricing.table import PricingGapError, PricingTable, Rate
+
+# scripts/ is deliberately not a package (ops tooling, not engine code) —
+# load by file path like test_ops_scripts.py does. A bare `from scripts
+# import ...` only resolves when the repo root happens to sit on sys.path,
+# which `uv run pytest` (Makefile/CI invocation) does not guarantee.
+_spec = importlib.util.spec_from_file_location(
+    "pricing_sync", Path(__file__).parents[1] / "scripts" / "pricing_sync.py"
+)
+assert _spec is not None and _spec.loader is not None
+ps = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ps)
 
 RUN = date(2026, 7, 22)
 
@@ -178,9 +190,17 @@ class TestEndToEndOverlay:
                     "version": "2026-07-17",
                     "last_verified": date(2026, 7, 17),
                     "providers": {
-                        "openai": {"models": {"gpt-5.4": [
-                            {"effective_from": date(2026, 6, 1), "input": 1.0, "output": 4.0}
-                        ]}}
+                        "openai": {
+                            "models": {
+                                "gpt-5.4": [
+                                    {
+                                        "effective_from": date(2026, 6, 1),
+                                        "input": 1.0,
+                                        "output": 4.0,
+                                    }
+                                ]
+                            }
+                        }
                     },
                 }
             )
@@ -211,11 +231,16 @@ class TestEndToEndOverlay:
         # Checked in a fresh interpreter so the module-load resolution is real.
         custom = tmp_path / "persistent" / "prices.auto.yaml"
         proc = subprocess.run(
-            [sys.executable, "-c",
-             "from tokenops_cost_auditor.services.pricing.table import AUTO_DATA;"
-             " print(AUTO_DATA)"],
+            [
+                sys.executable,
+                "-c",
+                "from tokenops_cost_auditor.services.pricing.table import AUTO_DATA;"
+                " print(AUTO_DATA)",
+            ],
             env={**os.environ, "PRICING_OVERLAY_PATH": str(custom)},
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         assert str(custom) in proc.stdout
 
@@ -228,9 +253,19 @@ class TestEndToEndOverlay:
                 {
                     "version": "v",
                     "last_verified": date(2026, 7, 17),
-                    "providers": {"openai": {"models": {"gpt-5.4": [
-                        {"effective_from": date(2026, 6, 1), "input": 1.0, "output": 4.0}
-                    ]}}},
+                    "providers": {
+                        "openai": {
+                            "models": {
+                                "gpt-5.4": [
+                                    {
+                                        "effective_from": date(2026, 6, 1),
+                                        "input": 1.0,
+                                        "output": 4.0,
+                                    }
+                                ]
+                            }
+                        }
+                    },
                 }
             )
         )
@@ -240,12 +275,26 @@ class TestEndToEndOverlay:
                 {
                     "version": "auto",
                     "last_verified": date(2026, 7, 22),
-                    "providers": {"openai": {"models": {"gpt-5.4": [
-                        # SAME date as base — must be ignored (base wins the tie)
-                        {"effective_from": date(2026, 6, 1), "input": 9.99, "output": 9.99},
-                        # strictly later — legitimately supersedes (freshness intent)
-                        {"effective_from": date(2026, 7, 22), "input": 1.2, "output": 4.8},
-                    ]}}},
+                    "providers": {
+                        "openai": {
+                            "models": {
+                                "gpt-5.4": [
+                                    # SAME date as base — must be ignored (base wins the tie)
+                                    {
+                                        "effective_from": date(2026, 6, 1),
+                                        "input": 9.99,
+                                        "output": 9.99,
+                                    },
+                                    # strictly later — legitimately supersedes (freshness intent)
+                                    {
+                                        "effective_from": date(2026, 7, 22),
+                                        "input": 1.2,
+                                        "output": 4.8,
+                                    },
+                                ]
+                            }
+                        }
+                    },
                 }
             )
         )
@@ -260,9 +309,19 @@ class TestEndToEndOverlay:
                 {
                     "version": "v",
                     "last_verified": date(2026, 7, 17),
-                    "providers": {"openai": {"models": {"gpt-5.4": [
-                        {"effective_from": date(2026, 6, 1), "input": 1.0, "output": 4.0}
-                    ]}}},
+                    "providers": {
+                        "openai": {
+                            "models": {
+                                "gpt-5.4": [
+                                    {
+                                        "effective_from": date(2026, 6, 1),
+                                        "input": 1.0,
+                                        "output": 4.0,
+                                    }
+                                ]
+                            }
+                        }
+                    },
                 }
             )
         )
