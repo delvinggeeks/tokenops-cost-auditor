@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 import yaml
 from scripts import pricing_sync as ps
@@ -147,6 +147,26 @@ class TestPlanCover:
         row = w[("openai", "gpt-4o-mini")]
         assert row["input"] == 0.15
         assert row["effective_from"] < RUN.isoformat()  # back-dated to cover the window
+
+
+class TestPlanDeepen:
+    def test_cover_deepens_a_model_priced_today_but_not_historically(self) -> None:
+        # gpt-5.4 priceable at RUN (eff 2026-06-01) but January usage can't price;
+        # cover must write a back-dated row, not no-op-skip it (the 46,868-call
+        # $0.17 incident: covered-today models left their history unpriced).
+        table = _table(**{"openai__gpt-5.4": (_rate(1.1, 4.4, eff=date(2026, 6, 1)),)})
+        out = ps.plan(table, ps.normalize(FEED), RUN, cover={"gpt-5.4"})
+        w = {x["model"]: x for x in out["writes"]}
+        assert "gpt-5.4" in w
+        expected_eff = RUN - timedelta(days=ps.COVERAGE_BACKDATE_DAYS)
+        assert w["gpt-5.4"]["effective_from"] == expected_eff.isoformat()
+
+    def test_cover_of_fully_covered_model_still_noops(self) -> None:
+        # already covered across the window -> nothing to write
+        table = _table(**{"openai__gpt-5.4": (_rate(1.1, 4.4, eff=date(2025, 1, 1)),)})
+        out = ps.plan(table, ps.normalize(FEED), RUN, cover={"gpt-5.4"})
+        assert not any(x["model"] == "gpt-5.4" for x in out["writes"])
+        assert out["skipped"] >= 1
 
 
 class TestEndToEndOverlay:

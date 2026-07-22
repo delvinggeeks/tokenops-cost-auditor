@@ -40,7 +40,13 @@ LITELLM_URL = (
 PROVIDERS = {"openai", "anthropic"}  # the providers we price
 MAX_RATE = 1000.0  # $/1M ceiling — a plausible upper band (gate 2)
 JUMP = 0.60  # a >±60% change to an EXISTING rate is held, not auto-applied (gate 4)
-COVERAGE_BACKDATE_DAYS = 90  # new-model coverage spans typical audit windows
+# New-model coverage must span the full backfill/audit window (365d + margin),
+# or historical usage stays unpriced behind the rate's effective_from — the
+# founder's 46,868-call year read $0.17 because 90d of back-dating left 2025
+# usage unpriceable. Honesty caveat: the CURRENT feed rate is applied across
+# the window (provider price history isn't published); rows carry
+# source=litellm-auto so the provenance is explicit.
+COVERAGE_BACKDATE_DAYS = 400
 FETCH_TIMEOUT_S = 30
 REPORT_DIR = Path("/data/reports")  # prod REPORT_DIR; overridable via --report-dir
 # a trailing dated snapshot, e.g. -2024-07-18 or -20240718 (mirrors table.rate's
@@ -132,6 +138,7 @@ def plan(
     skipped = 0
     cover_bases = {base_id(m.lower()) for m in cover} if cover else set()
 
+    cover_eff = run_date - timedelta(days=COVERAGE_BACKDATE_DAYS)
     for (provider, model), cand in sorted(normalized.items()):
         current = _current_rate(table, provider, model, run_date)
         is_cover = model in cover_bases or base_id(model) in cover_bases
@@ -140,6 +147,28 @@ def plan(
         reason = gate_band(cand)
         if reason is not None:
             held.append({"provider": provider, "model": model, "why": f"band: {reason}"})
+            continue
+        # DEEPEN case: a cover candidate priceable TODAY but not across the
+        # coverage window (its earliest effective_from postdates old usage)
+        # still needs the back-dated row — otherwise historical buckets stay
+        # unpriced forever (the 46,868-call/$0.17 incident).
+        if (
+            is_cover
+            and current is not None
+            and _current_rate(table, provider, model, cover_eff) is None
+        ):
+            writes.append(
+                {
+                    "provider": provider,
+                    "model": model,
+                    "effective_from": cover_eff.isoformat(),
+                    "input": cand["input"],
+                    "output": cand["output"],
+                    "cache_write": cand["cache_write"],
+                    "cache_read": cand["cache_read"],
+                    "source": "litellm-auto",
+                }
+            )
             continue
         if current is not None:
             # Gate 5 — no-op guard: identical effective rate, nothing to write.
@@ -169,7 +198,7 @@ def plan(
             eff = run_date  # a real price change applies going forward
         else:
             # New coverage: back-date so the usage that triggered it actually prices.
-            eff = run_date - timedelta(days=COVERAGE_BACKDATE_DAYS)
+            eff = cover_eff
         writes.append(
             {
                 "provider": provider,
@@ -272,8 +301,11 @@ def cover_from_usage(session, settings, url: str, run_date: date, report_dir: Pa
     from tokenops_cost_auditor.services.pricing.table import PricingGapError
 
     since = run_date - timedelta(days=getattr(settings, "connect_backfill_days", 30))
+    # Priceability is checked at each bucket's USAGE date, not today: a model
+    # covered from April still leaves January buckets unpriced (the audit rates
+    # per usage day), and those are exactly the leftover jobs this exists for.
     rows = session.execute(
-        select(Source.provider, SourceUsage.model, SourceUsage.source_id)
+        select(Source.provider, SourceUsage.model, SourceUsage.day, SourceUsage.source_id)
         .join(Source, Source.id == SourceUsage.source_id)
         .where(SourceUsage.day >= since)
         .distinct()
@@ -281,9 +313,9 @@ def cover_from_usage(session, settings, url: str, run_date: date, report_dir: Pa
     table = PricingTable.load(path=DEFAULT_DATA, overlay=AUTO_DATA)
     gaps: set[str] = set()
     affected: set[str] = set()
-    for provider, model, source_id in rows:
+    for provider, model, day, source_id in rows:
         try:
-            table.rate(provider, model, run_date)
+            table.rate(provider, model, day)
         except PricingGapError:
             gaps.add(model)
             affected.add(source_id)
