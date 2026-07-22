@@ -5,6 +5,19 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.35 · WAVE A+B UX — activation + retention live. Wave
+  A: a getting-started checklist (connect→audit→review→apply→verified),
+  self-completing from real data, progress bar, next-step CTA, hideable,
+  vanishes when done. Wave B: the activity center — topbar bell with an
+  unseen-count badge, /activity feed (audits, alerts, applied fixes,
+  payments; built from existing tables), "since you were last here"
+  banner, migration 011 (users.activity_seen_at, applied in prod). ONE
+  honesty violation caught by the ux-gate and fixed before ship (a
+  self-reported figure was mislabeled "verified saving" → now an honest
+  "Fix applied" event, test-locked); perf (COUNT queries) and a11y notes
+  also closed; re-gate PASS. Additive — no existing flow changed. SMOKE
+  PASS: checklist + bell live, /activity 401 unauth, healthz ok.
+
 - 2026-07-22 · v1.5.34 (cefbafc) · INDIA CHEAPER EVERYWHERE + PAYMENT
   E2E. India Scale lowered to $49 / ₹4,999 (was $149 / ₹14,999) so India
   is uniformly below global at every tier (Pro $9.99<$29, Scale $49<$99,
