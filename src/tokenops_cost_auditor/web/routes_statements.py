@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
@@ -21,6 +22,7 @@ from tokenops_cost_auditor.services.statements import build as statements
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 
 router = APIRouter(prefix="/statements", tags=["statements"])
+log = structlog.get_logger("tokenops_cost_auditor.statements")
 
 PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
@@ -94,14 +96,23 @@ def send_statement(
             doc = statements.build(session, user, year, month)
             row = statements.archive(session, user, doc)
             session.flush()
-        first_send = statements.send(session, request.app.state.mail, user, row)
-        if not first_send:
-            # already issued: deliver the archived artifact again, unchanged
-            deliver = getattr(request.app.state.mail, "alert", None)
-            if callable(deliver):
-                deliver(
-                    user.email, row.subject or f"AI spend statement {row.period}", row.body_text
-                )
+        try:
+            first_send = statements.send(session, request.app.state.mail, user, row)
+            if not first_send:
+                # already issued: deliver the archived artifact again, unchanged
+                deliver = getattr(request.app.state.mail, "alert", None)
+                if callable(deliver):
+                    deliver(
+                        user.email,
+                        row.subject or f"AI spend statement {row.period}",
+                        row.body_text,
+                    )
+        except Exception as exc:
+            # SMTP down must not 500 the owner's click (readiness audit): the
+            # statement is archived and readable; only the email didn't go.
+            log.warning("statement.send_failed", period=row.period, error=str(exc)[:200])
+            session.commit()  # keep the archived statement; report the miss
+            return RedirectResponse(f"/statements/{period}?send=failed", status_code=303)
         auditlog.append(session, user.email, "statement.sent", row.period)
         session.commit()
     return RedirectResponse(f"/statements/{period}", status_code=303)

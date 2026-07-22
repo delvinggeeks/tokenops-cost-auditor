@@ -19,11 +19,13 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -158,6 +160,19 @@ class Payment(Base):
     # one payment = one audit credit (accepted default Q8): set when consumed
     audit_id: Mapped[str | None] = mapped_column(ForeignKey("audits.id", ondelete="SET NULL"))
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    # At most ONE signup comp credit per user (readiness audit 2026-07-22):
+    # partial unique index so a concurrent first-login can't double-grant the
+    # free meter. Real paid rows are unconstrained. Migration 009 mirrors this.
+    __table_args__ = (
+        Index(
+            "uq_payments_one_comp_per_user",
+            "user_id",
+            unique=True,
+            sqlite_where=text("provider = 'comp'"),
+            postgresql_where=text("provider = 'comp'"),
+        ),
+    )
 
 
 class WebhookEvent(Base):

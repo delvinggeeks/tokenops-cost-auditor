@@ -26,6 +26,24 @@ def settings(tmp_path: Path) -> Settings:
     )
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter() -> Iterator[None]:
+    """The slowapi limiter is a module-level global whose per-key counters
+    persist ACROSS tests (readiness audit 2026-07-22 — a flaky suite). One
+    test spending the 5/min /auth/signin-link budget made a LATER test's
+    sign-in helper 429 and IndexError. Clear the limiter's storage before
+    every test so rate-limit state can't leak between them."""
+    from tokenops_cost_auditor.obs.ratelimit import limiter
+
+    try:
+        limiter.reset()
+    except Exception:
+        storage = getattr(limiter, "_storage", None)
+        if storage is not None and hasattr(storage, "reset"):
+            storage.reset()
+    yield
+
+
 @pytest.fixture
 def app(settings: Settings) -> Iterator[FastAPI]:
     application = create_app(settings)

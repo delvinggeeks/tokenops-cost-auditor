@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     # Core
     app_env: str = "dev"  # dev | staging | prod
     secret_key: str = "dev-secret-change-me"  # 64B random in prod (runbook §5)
+
+    @property
+    def public_base_url(self) -> str:
+        """The absolute origin for links in email and OG tags. One fallback,
+        so a blank APP_BASE_URL can't ship a broken report link (readiness
+        audit 2026-07-22 — smtp report-ready had no fallback)."""
+        return self.app_base_url or "https://tokenops-cost-auditor.com"
+
     database_url: str = (
         "postgresql+psycopg://tokenops_cost_auditor:tokenops_cost_auditor@localhost:5432/tokenops"
     )
@@ -55,6 +63,21 @@ class Settings(BaseSettings):
     github_client_secret: str = ""
     razorpay_webhook_secret: str = ""
     razorpay_payment_link_url: str = ""
+    # Per-plan checkout links (readiness audit 2026-07-22): one shared link
+    # meant the plan a customer picked never reached checkout — they could pay
+    # for the wrong tier. Each paid plan has its OWN provider link; a plan
+    # with no link shows "checkout not switched on" rather than a wrong charge.
+    stripe_payment_link_pro: str = ""
+    stripe_payment_link_team: str = ""
+    razorpay_payment_link_pro: str = ""
+    razorpay_payment_link_team: str = ""
+
+    def checkout_link(self, currency: str, plan_key: str) -> str:
+        """The provider checkout URL for exactly this plan and currency.
+        Empty when not configured — never a shared fallback (that was the bug)."""
+        provider = "razorpay" if currency.upper() == "INR" else "stripe"
+        return str(getattr(self, f"{provider}_payment_link_{plan_key}", "") or "")
+
     stripe_webhook_secret: str = ""
     stripe_payment_link_url: str = ""
 

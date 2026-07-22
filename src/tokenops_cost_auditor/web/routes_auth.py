@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 import structlog
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.obs.ratelimit import limiter
@@ -35,17 +36,30 @@ def _session(request: Request) -> Session:
 
 
 def _record_login(session: Session, user: object, email: str, *, first_login: bool) -> None:
-    """Shared by the magic-link and Google paths: stamp the login and, on the
-    FIRST one, grant the single signup comp credit (R-FREE-CONNECT §2 — the
+    """Shared by the signin-link and federation paths: stamp the login and, on
+    the FIRST one, grant the single signup comp credit (R-FREE-CONNECT §2 — the
     one meter for the free audit, either path). Before this the marketed free
-    audit 402'd at the payment gate: the promise was unwired."""
+    audit 402'd at the payment gate: the promise was unwired.
+
+    The comp grant is idempotent (readiness audit 2026-07-22): `first_login`
+    reads last_login_at==None, so two concurrent first-logins (a mail-scanner
+    prefetch racing the human click, or a double-click) both saw None and each
+    granted a credit. A partial unique index (migration 009) now allows at most
+    one comp Payment per user; the SAVEPOINT here swallows the loser of the race
+    so the login still succeeds and the meter is granted exactly once."""
     user.last_login_at = datetime.now(UTC)  # type: ignore[attr-defined]
     auditlog.append(session, email, "auth.login", email)
-    if first_login:
-        session.add(
-            Payment(user_id=user.id, provider="comp", amount=0.0, currency="USD")  # type: ignore[attr-defined]
-        )
+    if not first_login:
+        return
+    try:
+        with session.begin_nested():
+            session.add(
+                Payment(user_id=user.id, provider="comp", amount=0.0, currency="USD")  # type: ignore[attr-defined]
+            )
         auditlog.append(session, email, "credit.signup", email)
+    except IntegrityError:
+        # the index caught a concurrent grant — the meter already exists
+        log.warning("credit.signup_race", email=email)
 
 
 @router.post("/signin-link")
@@ -64,7 +78,19 @@ def request_magic_link(request: Request, email: str = Form(...)) -> HTMLResponse
         auditlog.append(session, email, "auth.magic_link_requested", email)
         session.commit()
     token = issue_magic_token(settings.secret_key, email)
-    request.app.state.mail.magic_link(email, f"/auth/verify?token={token}")
+    try:
+        request.app.state.mail.magic_link(email, f"/auth/verify?token={token}")
+    except Exception as exc:
+        # SMTP down/misconfigured must not become an uncaught 500 with no path
+        # forward (readiness audit 2026-07-22). Tell the user plainly and log it.
+        log.warning("auth.signin_link_send_failed", error=str(exc)[:200])
+        return HTMLResponse(
+            status_code=502,
+            content="<h1>We couldn't send your link just now</h1><p>Something on our "
+            "side got in the way of the email. Please try again in a minute — if it "
+            f"keeps happening, {settings.support_email} replies within 1 business "
+            "day.</p>",
+        )
     # Same response whether or not the account existed (no enumeration signal).
     return HTMLResponse(
         "<h1>Check your email</h1><p>If that address is valid, a sign-in link is on "
@@ -132,23 +158,48 @@ def verify(request: Request, token: str) -> HTMLResponse | RedirectResponse:
 # ---------------------------------------------------------------------------
 
 
-def _google_email(info: object) -> str:
+def _jwt_claims(jwt: str) -> dict:
+    """Decode a JWT payload WITHOUT signature verification. Safe here and ONLY
+    here: this token came directly from the provider's token endpoint over a
+    server-to-server TLS call (confidential-client code flow), never through
+    the browser — so its contents are as trustworthy as the TLS channel. Never
+    use this on a token that arrived via the user agent."""
+    import base64
+    import json
+
+    try:
+        payload = jwt.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        return json.loads(base64.urlsafe_b64decode(payload))
+    except Exception:
+        return {}
+
+
+def _google_email(info: object, token: dict) -> str:
     """Trust the address only when Google says it's verified."""
     if isinstance(info, dict) and info.get("email_verified"):
         return str(info.get("email", "")).strip().lower()
     return ""
 
 
-def _microsoft_email(info: object) -> str:
-    """Entra's userinfo carries no email_verified claim; the email claim is
-    only present for addresses the directory (work/school) or the Microsoft
-    account signup flow (personal) has already verified."""
-    if isinstance(info, dict):
-        return str(info.get("email", "")).strip().lower()
-    return ""
+def _microsoft_email(info: object, token: dict) -> str:
+    """SECURITY (nOAuth mitigation, readiness audit 2026-07-22): the /common
+    endpoint accepts tokens from ANY Entra tenant, and the userinfo `email`
+    claim is admin-settable and unverified — trusting its mere presence let an
+    attacker set their tenant email to a victim's address and sign in AS them.
+    We now require `xms_edov` (email domain owner verified) TRUE in the
+    id_token, which came server-to-server from Microsoft; fail closed without
+    it. The Entra app must emit xms_edov as an optional claim (runbook §3a)."""
+    claims = _jwt_claims(token.get("id_token", "")) if isinstance(token, dict) else {}
+    if not claims.get("xms_edov"):
+        return ""
+    # take the email ONLY from the verified id_token — never fall back to the
+    # mutable userinfo claim (cold-review f.1: that fallback would re-open the
+    # nOAuth gap if a token ever carried xms_edov without an email claim)
+    return str(claims.get("email", "")).strip().lower()
 
 
-def _github_email(info: object) -> str:
+def _github_email(info: object, token: dict) -> str:
     """/user/emails returns a list; take the primary verified address, else
     any verified one. An unverified-only list is refused the same way an
     email_verified=False claim is."""
@@ -168,7 +219,7 @@ class Federation:
     token_url: str
     userinfo_url: str
     scope: str
-    extract_email: Callable[[object], str]
+    extract_email: Callable[[object, dict], str]
     authorize_extra: dict[str, str] = dataclasses.field(default_factory=dict)
     token_headers: dict[str, str] = dataclasses.field(default_factory=dict)
 
@@ -323,7 +374,7 @@ def federation_callback(
         # only in user reports (cold-review f.2)
         log.warning("federation.exchange_failed", provider=provider, error=str(exc)[:200])
         return fail
-    email = fed.extract_email(info)
+    email = fed.extract_email(info, token if isinstance(token, dict) else {})
     if not email:
         # an unverified address must not claim an account
         log.warning("federation.email_refused", provider=provider)

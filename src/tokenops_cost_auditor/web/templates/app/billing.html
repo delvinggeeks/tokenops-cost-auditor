@@ -49,8 +49,9 @@
               <span class="badge badge-verified">current</span>
               {% if not p.usd %}<small class="muted">No card required</small>{% endif %}
             {% elif p.usd %}
-              {% set pay_link = razorpay_link if currency == "INR" else stripe_link %}
-              {% if pay_link %}{{ kit.button("Pay in " ~ currency, href=pay_link, variant="primary") }}
+              {# per-plan link: the button charges for THIS tier, not a shared one #}
+              {% set pay_link = checkout_links.get(p.key) %}
+              {% if pay_link %}{{ kit.button("Pay for " ~ p.name, href=pay_link, variant="primary") }}
               {% else %}
                 <small class="muted">Checkout opens once billing is switched on.</small>
               {% endif %}

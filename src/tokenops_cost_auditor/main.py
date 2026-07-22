@@ -72,8 +72,21 @@ def error_envelope(request: Request, status: int, message: str) -> JSONResponse:
     )
 
 
+WEAK_SECRETS = {"dev-secret-change-me", "", "changeme", "secret"}
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
+    # Fail fast in production on a weak signing key: the itsdangerous signature
+    # is the ONLY access control on shared report URLs, so a default key would
+    # let anyone forge one (readiness audit 2026-07-22).
+    if settings.app_env == "prod" and (
+        settings.secret_key in WEAK_SECRETS or len(settings.secret_key) < 32
+    ):
+        raise RuntimeError(
+            "SECRET_KEY is unset, weak, or too short for app_env=prod — set a "
+            "64-byte random value (runbook §5). Refusing to start."
+        )
     configure_logging(settings.app_env)
     obs_errors.init_errors(settings.sentry_dsn, settings.app_env)
 
@@ -95,7 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             settings.smtp_user,
             settings.smtp_password,
             settings.smtp_from,
-            settings.app_base_url,
+            settings.public_base_url,
         )
         if settings.smtp_host
         else LogMailAdapter()
@@ -124,7 +137,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.jinja.globals["docs_url"] = settings.docs_url
     app.state.jinja.globals["support_email"] = settings.support_email
     app.state.jinja.globals["status_url"] = settings.status_url
-    app.state.jinja.globals["base_url"] = settings.app_base_url or "https://tokenops-cost-auditor.com"
+    app.state.jinja.globals["base_url"] = settings.public_base_url
 
     # Asset versioning (walkthrough round 3): static assets carried NO
     # Cache-Control, so browsers heuristically cached them and two design

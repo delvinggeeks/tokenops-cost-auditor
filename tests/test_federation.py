@@ -66,6 +66,16 @@ def fedapp(tmp_path) -> Iterator[FastAPI]:
     application.state.engine.dispose()
 
 
+def _fake_jwt(claims: dict) -> str:
+    """A JWT the code will decode WITHOUT signature check (it trusts the TLS
+    channel to the token endpoint). Only the payload segment matters."""
+    import base64
+    import json
+
+    seg = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
+    return f"h.{seg}.s"
+
+
 class _R:
     def __init__(self, payload: object) -> None:
         self._p = payload
@@ -254,14 +264,20 @@ class TestProviderEmailTrust:
                 session.execute(select(Payment).where(Payment.user_id == user.id)).scalars().all()
             )
 
-    def test_microsoft_email_claim_signs_in_with_one_credit(
+    def test_microsoft_verified_email_signs_in_with_one_credit(
         self, fedapp: FastAPI, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """nOAuth mitigation (readiness audit 2026-07-22): Microsoft is trusted
+        ONLY when the id_token carries xms_edov=true (email domain owner
+        verified). The email comes from the id_token, not the mutable userinfo
+        claim."""
         import httpx
 
-        monkeypatch.setattr(httpx, "post", lambda *a, **k: _R({"access_token": "at"}))
-        # Entra userinfo: email claim, NO email_verified claim — presence is trust
-        monkeypatch.setattr(httpx, "get", lambda *a, **k: _R({"email": "Entra@Corp.com"}))
+        idt = _fake_jwt({"email": "Entra@Corp.com", "xms_edov": True})
+        monkeypatch.setattr(
+            httpx, "post", lambda *a, **k: _R({"access_token": "at", "id_token": idt})
+        )
+        monkeypatch.setattr(httpx, "get", lambda *a, **k: _R({"sub": "x"}))
         client = TestClient(fedapp, base_url="https://testserver")
         resp = client.get(
             f"/auth/microsoft/callback?code=c&state={_armed_state(fedapp, client)}",
@@ -271,13 +287,33 @@ class TestProviderEmailTrust:
         assert "top_session=" in resp.headers.get("set-cookie", "")
         assert self._credits(fedapp, "entra@corp.com") == 1
 
-    def test_microsoft_missing_email_claim_is_refused(
+    def test_microsoft_unverified_email_is_refused_noauth(
+        self, fedapp: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """THE account-takeover the audit found: an attacker's Entra tenant
+        returns a victim's email with NO xms_edov. Must be refused — trusting
+        the bare email claim let the attacker sign in as the victim."""
+        import httpx
+
+        idt = _fake_jwt({"email": "victim@corp.com"})  # no xms_edov
+        monkeypatch.setattr(
+            httpx, "post", lambda *a, **k: _R({"access_token": "at", "id_token": idt})
+        )
+        monkeypatch.setattr(httpx, "get", lambda *a, **k: _R({"email": "victim@corp.com"}))
+        client = TestClient(fedapp)
+        resp = client.get(
+            f"/auth/microsoft/callback?code=c&state={_armed_state(fedapp, client)}",
+            follow_redirects=False,
+        )
+        assert resp.status_code == 400
+
+    def test_microsoft_missing_id_token_is_refused(
         self, fedapp: FastAPI, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         import httpx
 
         monkeypatch.setattr(httpx, "post", lambda *a, **k: _R({"access_token": "at"}))
-        monkeypatch.setattr(httpx, "get", lambda *a, **k: _R({"sub": "abc123"}))
+        monkeypatch.setattr(httpx, "get", lambda *a, **k: _R({"email": "x@corp.com"}))
         client = TestClient(fedapp)
         resp = client.get(
             f"/auth/microsoft/callback?code=c&state={_armed_state(fedapp, client)}",
