@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.21 (99f2c63) · R-DOMAIN-CLEAN live. Zero traces of
+  the retired domain anywhere in the repo — config defaults, template
+  fallbacks, docs pages, mkdocs, runbook, tests and historical record
+  entries all carry tokenops-cost-auditor.com only; the runbook cutover
+  section names "the retired domain" generically and its live value
+  exists solely in the server's private .env (pinned so production
+  serves correctly until the new domain's DNS exists). SMOKE PASS:
+  healthz ok, prod pages render pinned env values, pricing intact.
+  Cutover still waits on founder DNS (A @/www/docs → 169.58.44.80).
+
 - 2026-07-22 · v1.5.20 (75f3410) · DOMAIN-MIGRATE PREP + DOCS REFRESH
   live. Docs retired the upload-era story for connect-first truth
   (connect → daily pulls → weekly audits → daily digest → alerts →
