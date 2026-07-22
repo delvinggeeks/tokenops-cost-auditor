@@ -1,5 +1,19 @@
 # Workflow Readiness Audit — 2026-07-22
 
+> **REMEDIATION COMPLETE (2026-07-22).** All four waves shipped and
+> test-pinned. Criticals closed: Microsoft nOAuth (Wave 1), per-plan
+> checkout (Wave 1). Integrity: idempotent free credit, SMTP-never-500,
+> secret-key guard, public_base_url fallback (Wave 1). Domain-truth:
+> statement false-zero, connect 401-vs-403, yesterday-tile unpriced,
+> India-Scale asymmetry surfaced for ruling (Wave 2). UX completeness:
+> real session invalidation, magic-link confirm interstitial, upload HTML
+> errors + double-submit guard, daily-digest at-least-once + budget-path
+> reconciliation (Wave 3). Test debt: true end-to-end tests for connect and
+> alerts (Wave 4). Suite: 562 tests green. The scorecard below is the
+> ORIGINAL audit; each finding's fix is in CHANGELOG v1.5.29–v1.5.33 and
+> tests/test_readiness_wave*.py.
+
+
 Founder order: validate every customer-facing workflow front-end → backend, with acceptance criteria and DoD. Method: 11 adversarial auditors, one per workflow, each tracing the full slice and checking implementation completeness, acceptance criteria, domain-truth of every external claim, unhandled states, real end-to-end test coverage, and data safety.
 
 ## Verdict
