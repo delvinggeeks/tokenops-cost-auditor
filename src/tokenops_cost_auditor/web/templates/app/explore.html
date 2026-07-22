@@ -105,9 +105,11 @@
     accounts: three detectors need per-request logs and could not run on those
     audits. {% endif %}
   {% if f.source_id and view.unattributed_connected %}{{ view.unattributed_connected }}
-    earlier connected audit{{ "s" if view.unattributed_connected != 1 }} ran before
-    per-account attribution shipped and can't be assigned to this account —
-    see them under “All connected accounts”. {% endif %}
+    earlier connected audit{{ "s" if view.unattributed_connected != 1 }} ran before we
+    could tell your connected accounts apart, so {{ "they aren't" if
+    view.unattributed_connected != 1 else "it isn't" }} in this account's view —
+    see {{ "them" if view.unattributed_connected != 1 else "it" }} under
+    “All connected accounts”. {% endif %}
   {% if view.overlap_buckets %}Days covered by more than one audit use the most
     recent audit’s numbers. {% endif %}
   {% if view.unpriced_calls %}{{ "{:,}".format(view.unpriced_calls) }} calls in this
@@ -162,7 +164,7 @@
        ]) }}
       {% for it in view.findings %}
         <tr>
-          <td>{{ detector_labels.get(it.detector, it.detector) }}
+          <td>{{ detector_labels[it.detector] }}
             {%- if it.seen_in > 1 %} <span class="muted">· seen in {{ it.seen_in }} audits</span>{% endif %}</td>
           <td><span class="sev sev-{{ it.severity }}">{{ severity_labels.get(it.severity, it.severity) }}</span></td>
           <td>{{ it.route or "—" }}</td>

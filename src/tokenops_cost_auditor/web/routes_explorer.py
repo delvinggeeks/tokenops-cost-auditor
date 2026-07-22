@@ -40,7 +40,13 @@ def explore_page(request: Request, user_email: str = Depends(current_user)) -> H
         filters = explorer.parse_filters(dict(request.query_params))
         view = explorer.compose(session, user.id, filters)
         # Plain phrasing for the finding-type select and rows (jargon law).
-        detector_labels = {key: help_registry.detector_plain(key) for key in view.detector_options}
+        # Cover the option list AND every rendered row, so the template can
+        # index directly — a missing registry key fails loud (T-HELP law)
+        # instead of leaking a raw detector id at headline depth (ux f.1).
+        detector_keys = set(view.detector_options) | {
+            str(item["detector"]) for item in view.findings
+        }
+        detector_labels = {key: help_registry.detector_plain(key) for key in detector_keys}
         ctx = _shell_ctx(session, request, user, "explore")
         return _render(
             request,

@@ -46,6 +46,35 @@ attribution+dedup, sources.html links, help_registry explore key, _shell
 nav. OPEN: PLAN-FLYWHEEL §6 rulings R-F1 (training vs promise — still the
 blocker for Tracks A/B), Q6 (C3 saved views + export), Q4/Q5/Q7/Q8.
 
+### M-EXPLORER gate round (2026-07-23) — four gates, no FAIL
+
+spec-guard PASS (7/7 clean; fingerprint confirmed one-way, migration
+additive, traceability spot-checked). ux-reviewer PASS-WITH-NOTES on the
+wired surfaces — f.1 FIXED: detector-label fallback removed, template
+indexes the label map directly and the map covers options+rows, so a
+missing registry key fails loud (T-HELP law) instead of leaking a raw id;
+f.2 FIXED: unattributed copy now owner-phrased ("before we could tell your
+connected accounts apart"); f.3 (has_any_history naming) + f.4 (i-reports
+icon reuse) ACCEPTED — icon reuse is intentional until WP-PIPELINE-UI
+ships its own runs page. cold-reviewer PASS-WITH-NOTES — f.1 FIXED
+(overlap-law tie-break now (report_ready_at, id): same-timestamp audits
+resolved deterministically, test_18), f.2 FIXED (findings de-dup tiebreak
+(when, fr.id) — same-key rows can no longer vanish by DB return order),
+f.3 FIXED (unattributed-audits warning bounded to the active date window,
+test_19), f.4 FIXED (label suffix counts ALL provider sources incl.
+revoked — revoke+reconnect can't mint duplicate labels,
+test_revoke_then_reconnect_never_reuses_a_label), f.5 RECORD CORRECTED:
+the c4dbefd chore was NOT strictly zero-behavior — three None-guards in
+daily.py digest strings default an impossible-branch None to $0.00 rather
+than crashing; accepted as fail-soft in an alert path, recorded here.
+vv-engineer PASS-WITH-NOTES — both open items closed by main thread with
+evidence: pricing/table.py diff is one annotation + format rewraps (no
+formula/rate content, goldens untouched); full chain ruff+format+mypy+
+pytest exited 0 under pipefail (pinned toolchain). Never-mask-pytest-exit
+lesson re-learned twice this milestone: piping pytest through tail ate a
+collection error AND an exit code — exit-code checks now run with
+pipefail, no bare pipes.
+
 ## PLAN-FLYWHEEL drafted (2026-07-23) — AWAITING FOUNDER APPROVAL, no code
 
 Founder order (train-on-entire-history / front gate / preventive

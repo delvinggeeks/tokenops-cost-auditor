@@ -203,8 +203,10 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
         ).scalars()
     ]
     if f.source_id:
-        view.unattributed_connected = sum(
-            1
+        # Bounded by the active date window (cold-review f.3): a "N audits
+        # excluded" warning must describe THIS slice, not all of history.
+        unattributed_ids = [
+            a.id
             for a in session.execute(
                 select(Audit).where(
                     Audit.user_id == user_id,
@@ -213,13 +215,30 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
                 )
             ).scalars()
             if a.source_id is None
-        )
+        ]
+        if unattributed_ids and (f.date_from or f.date_to):
+            in_window: set[str] = set()
+            for row in session.execute(
+                select(CallAggregate).where(CallAggregate.audit_id.in_(unattributed_ids))
+            ).scalars():
+                d = _day(row)
+                if f.date_from and d < f.date_from:
+                    continue
+                if f.date_to and d > f.date_to:
+                    continue
+                in_window.add(row.audit_id)
+            view.unattributed_connected = len(in_window)
+        else:
+            view.unattributed_connected = len(unattributed_ids)
     audits = _scope_audits(session, user_id, f)
     if not audits:
         return view
     by_id = {a.id: a for a in audits}
     # Recency rank: index 0 = most recent — the winner on overlapping buckets.
-    ranked = sorted(audits, key=_audit_when, reverse=True)
+    # (id tiebreak, cold-review f.1: two audits can share report_ready_at on
+    # batch/backfill runs; without it the money-adjacent overlap law would
+    # resolve by arbitrary DB return order.)
+    ranked = sorted(audits, key=lambda a: (_audit_when(a), a.id), reverse=True)
     rank = {a.id: i for i, a in enumerate(ranked)}
 
     aggs = (
@@ -312,7 +331,10 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
     # Findings de-dup on the R-Q9 key: latest occurrence wins, count the rest.
     latest_rows: dict[tuple[str, str], FindingRow] = {}
     seen_in: dict[tuple[str, str], int] = {}
-    for fr in sorted(frows, key=lambda fr: _audit_when(by_id[fr.audit_id])):
+    # fr.id tiebreak (cold-review f.2): same-timestamp audits — and the
+    # unconstrained possibility of two same-key findings inside ONE audit —
+    # must resolve deterministically, never by DB return order.
+    for fr in sorted(frows, key=lambda fr: (_audit_when(by_id[fr.audit_id]), fr.id)):
         fkey = (fr.detector, fr.route or fr.finding_id)
         latest_rows[fkey] = fr
         seen_in[fkey] = seen_in.get(fkey, 0) + 1

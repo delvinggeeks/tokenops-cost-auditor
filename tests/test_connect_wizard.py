@@ -430,3 +430,37 @@ class TestMultiSource:
         )
         assert again.status_code == 409
         assert "openai usage" in again.json()["detail"]
+
+    def test_revoke_then_reconnect_never_reuses_a_label(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """cold-review f.4: /explore keeps revoked accounts selectable by
+        label, so a reconnect must mint a fresh suffix, not a duplicate."""
+        give_plan(app, "team")
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        monkeypatch.setattr(routes_sources, "_kickoff_first_pull", lambda request, source_id: None)
+        client = TestClient(app)
+        assert (
+            client.post(
+                "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-A"}
+            ).status_code
+            == 200
+        )
+        with app.state.session_factory() as session:
+            first = session.execute(select(Source)).scalars().one()
+            first_label, first_id = first.label, first.id
+        assert client.post(f"/sources/{first_id}/revoke", headers=HDR).status_code in (200, 303)
+        assert (
+            client.post(
+                "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-B"}
+            ).status_code
+            == 200
+        )
+        with app.state.session_factory() as session:
+            labels = {s.label for s in session.execute(select(Source)).scalars().all()}
+        assert first_label == "openai usage"
+        assert labels == {"openai usage", "openai usage #2"}

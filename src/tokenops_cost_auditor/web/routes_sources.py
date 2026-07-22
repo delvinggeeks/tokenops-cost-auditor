@@ -15,7 +15,7 @@ from collections.abc import Callable
 import structlog
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
@@ -205,8 +205,18 @@ def wizard_validate(
                 raise HTTPException(
                     status_code=409, detail=f"{provider} was connected a moment ago"
                 )
-            # Distinct labels per account: "openai usage", then "openai usage #2".
-            nth = sum(1 for s in still_active if s.provider == provider) + 1
+            # Distinct labels per account — counted over ALL of this user's
+            # sources of the provider, revoked included (cold-review f.4:
+            # revoke + reconnect must never mint a duplicate label, because
+            # /explore keeps revoked accounts selectable by their labels).
+            nth = (
+                session.execute(
+                    select(func.count())
+                    .select_from(Source)
+                    .where(Source.user_id == user_id, Source.provider == provider)
+                ).scalar_one()
+                + 1
+            )
             source = Source(
                 user_id=user_id,
                 provider=provider,

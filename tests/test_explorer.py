@@ -395,7 +395,7 @@ class TestPerSource:
         view = compose_for(app, source=sid)
         assert view.unattributed_connected == 1
         page = TestClient(app).get("/explore", headers=HDR, params={"source": sid})
-        assert "per-account attribution" in squash(page.text)
+        assert "tell your connected accounts apart" in squash(page.text)
 
     def test_17_unknown_source_id_matches_nothing_honestly(self, app: FastAPI) -> None:
         seed_audit(
@@ -423,3 +423,37 @@ class TestCopy:
         assert "Slice your entire history" in page.text
         assert not DETECTOR_IDS.search(visible_text(page.text))
         assert ">Explore<" in page.text  # nav destination present
+
+
+class TestColdReviewRegressions:
+    """Gate-round fixes (cold-review f.1/f.3, ux f.1) pinned as tests."""
+
+    def test_18_overlap_tie_resolves_deterministically(self, app: FastAPI) -> None:
+        """f.1: two audits with the SAME report_ready_at over the same bucket —
+        the winner is fixed by (when, id), never by DB return order."""
+        day = date(2026, 3, 5)
+        a1 = seed_audit(app, when=D1, buckets=[(day, "gpt-4o-mini", 100, 1000, 100, 0, 5.00)])
+        a2 = seed_audit(app, when=D1, buckets=[(day, "gpt-4o-mini", 120, 1200, 120, 0, 6.00)])
+        winner_spend = 6.00 if a2 > a1 else 5.00
+        for _ in range(3):
+            assert compose_for(app).spend_usd == pytest.approx(winner_spend)
+
+    def test_19_unattributed_note_respects_date_window(self, app: FastAPI) -> None:
+        """f.3: the "N earlier audits excluded" warning describes the SLICE."""
+        sid = seed_source(app)
+        seed_audit(
+            app,
+            when=D2,
+            paid_via="subscription",
+            source_id=sid,
+            buckets=[(date(2026, 5, 1), "gpt-4o-mini", 10, 100, 10, 0, 1.00)],
+        )
+        seed_audit(  # unattributed, March data only
+            app,
+            when=D1,
+            paid_via="subscription",
+            buckets=[(date(2026, 3, 1), "gpt-4o-mini", 10, 100, 10, 0, 1.00)],
+        )
+        assert compose_for(app, source=sid).unattributed_connected == 1
+        may_only = compose_for(app, source=sid, **{"from": "2026-05-01", "to": "2026-05-31"})
+        assert may_only.unattributed_connected == 0
