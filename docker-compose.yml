@@ -20,6 +20,9 @@ services:
       UPLOAD_DIR: /data/uploads
       REPORT_DIR: /data/reports
       BACKUP_DIR: /backups
+      # R-LIVE-PRICING: keep the auto-priced overlay on the persistent reports
+      # volume so a deploy/recreate never wipes it (founder incident 2026-07-22).
+      PRICING_OVERLAY_PATH: /data/reports/.ops/prices.auto.yaml
     volumes:
       - uploads:/data/uploads
       - reports:/data/reports

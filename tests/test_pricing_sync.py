@@ -8,6 +8,9 @@ incident) becomes priced through the overlay.
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from datetime import date
 
 import yaml
@@ -181,6 +184,20 @@ class TestEndToEndOverlay:
         assert r.input == 0.15 and r.output == 0.60
         # the overlay's fresher last_verified wins (never-stale invariant)
         assert merged.last_verified == RUN
+
+    def test_overlay_path_honors_env_for_persistence(self, tmp_path) -> None:
+        # founder incident 2026-07-22: the overlay must live on a persistent
+        # path (env-configured) so a container recreate never wipes auto-pricing.
+        # Checked in a fresh interpreter so the module-load resolution is real.
+        custom = tmp_path / "persistent" / "prices.auto.yaml"
+        proc = subprocess.run(
+            [sys.executable, "-c",
+             "from tokenops_cost_auditor.services.pricing.table import AUTO_DATA;"
+             " print(AUTO_DATA)"],
+            env={**os.environ, "PRICING_OVERLAY_PATH": str(custom)},
+            capture_output=True, text=True, check=True,
+        )
+        assert str(custom) in proc.stdout
 
     def test_overlay_never_overrides_same_date_base(self, tmp_path) -> None:
         # cold-review f.1: an auto overlay row must NOT supersede a human base

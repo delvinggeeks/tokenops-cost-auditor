@@ -5,6 +5,7 @@ Zero network imports (T-NFR-01). Rates are USD per 1M tokens.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -19,7 +20,16 @@ DEFAULT_DATA = Path(__file__).parent / "data" / "prices.yaml"
 # so an audit still prices deterministically at the rate in effect on its date.
 # Absent overlay => identical behaviour to base-only (backward compatible).
 # Reading a second local YAML keeps services/pricing network-free (T-NFR-01).
-AUTO_DATA = Path(__file__).parent / "data" / "prices.auto.yaml"
+#
+# PRICING_OVERLAY_PATH points this at a PERSISTENT volume in prod
+# (/data/reports/.ops/...): the package dir is inside the container's ephemeral
+# filesystem, so a deploy/recreate would otherwise wipe every auto-priced rate
+# until the next cover run (founder incident 2026-07-22). Unset (dev/tests) =>
+# the package dir, unchanged.
+_OVERLAY_ENV = os.environ.get("PRICING_OVERLAY_PATH")
+AUTO_DATA = (
+    Path(_OVERLAY_ENV) if _OVERLAY_ENV else Path(__file__).parent / "data" / "prices.auto.yaml"
+)
 
 
 class PricingGapError(Exception):

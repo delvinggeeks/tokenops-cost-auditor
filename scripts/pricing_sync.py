@@ -218,6 +218,7 @@ OVERLAY_BANNER = (
 
 
 def write_overlay(doc: dict, path: Path = AUTO_DATA) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)  # persistent-volume dir may not exist yet
     path.write_text(OVERLAY_BANNER + yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
 
 
