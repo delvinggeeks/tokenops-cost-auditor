@@ -182,16 +182,22 @@ def evaluate(
         budget = float(budget_rule.threshold)
         spend = _monthly(latest)
         if spend > budget:
+            # PROJECTION, explicitly (readiness audit): this is the audit's
+            # run-rate looking forward — distinct from the daily digest, which
+            # tracks ACTUAL month-to-date against the same budget and stages it
+            # at 50/80/100%. Framing it as a projection keeps the two budget
+            # signals complementary instead of reading as contradictory.
             fire(
                 SOFT_BUDGET,
-                f"${spend:,.2f}/mo — past your ${budget:,.2f} budget",
+                f"${spend:,.2f}/mo run-rate — on track to exceed your ${budget:,.2f} budget",
                 (
-                    f"Your run-rate is ${spend:,.2f} per month against the ${budget:,.2f} "
-                    "budget you set.\n\n"
+                    f"At your latest audit's run-rate of ${spend:,.2f} per month you're "
+                    f"projected to exceed the ${budget:,.2f} budget you set. Your daily "
+                    "digest tracks the actual month-to-date figure.\n\n"
                     f"Source: {_stamp(latest)}.\n\n"
                     "This is a notification only — nothing has been paused or limited."
                 ),
-                {"spend": round(spend, 2), "budget": budget},
+                {"spend": round(spend, 2), "budget": budget, "kind": "projection"},
             )
 
     return firings

@@ -206,8 +206,28 @@ def run_digests(
                 )
             lines.append(f"\nDashboard: {settings.public_base_url}/dashboard")
 
+            if stage == 100:
+                subject = f"Over budget: {_fmt(mtd.total_usd)} this month — TokenOps daily"
+            elif stage is not None:
+                subject = (
+                    f"{stage}% of budget used — {_fmt(day.total_usd)} yesterday — TokenOps daily"
+                )
+            else:
+                subject = f"{_fmt(day.total_usd)} yesterday — TokenOps daily"
+
+            if not callable(send):
+                # a mail object without .alert must be loud, not a silent "sent"
+                stats["digest_errors"] += 1
+                log.warning("digest.mail_unusable", user_id=user.id)
+                continue  # do NOT stamp — retry on the next hourly tick
+
+            # Send FIRST, stamp/record only on success (readiness audit): a
+            # transient mail failure now retries next tick instead of silently
+            # burning the day and the budget stage. The tick is hourly and the
+            # day-dedup guard keeps it "yesterday", so at-least-once is safe;
+            # the only cost is a rare duplicate if the DB commit fails post-send.
+            send(user.email, subject, "\n".join(lines))
             if stage is not None:
-                # record BEFORE sending (at-most-once, the alerts law)
                 session.add(
                     AlertEvent(
                         user_id=user.id,
@@ -224,24 +244,8 @@ def run_digests(
                 stats["budget_stages"] += 1
             user.last_daily_digest_at = now
             session.commit()
-
-            if stage == 100:
-                subject = f"Over budget: {_fmt(mtd.total_usd)} this month — TokenOps daily"
-            elif stage is not None:
-                subject = (
-                    f"{stage}% of budget used — {_fmt(day.total_usd)} yesterday — TokenOps daily"
-                )
-            else:
-                subject = f"{_fmt(day.total_usd)} yesterday — TokenOps daily"
-            if callable(send):
-                send(user.email, subject, "\n".join(lines))
-                stats["digests_sent"] += 1
-                log.info("digest.sent", user_id=user.id, total=round(day.total_usd, 4))
-            else:
-                # a mail object without .alert must be loud, not a silent
-                # "sent" in the stats (cold-review f.1)
-                stats["digest_errors"] += 1
-                log.warning("digest.mail_unusable", user_id=user.id)
+            stats["digests_sent"] += 1
+            log.info("digest.sent", user_id=user.id, total=round(day.total_usd, 4))
         except Exception as exc:
             session.rollback()
             stats["digest_errors"] += 1

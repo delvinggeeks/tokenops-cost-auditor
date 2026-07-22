@@ -133,6 +133,36 @@ class TestTheDigest:
             user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
             assert user.last_daily_digest_at is not None, "silence still stamps — no retry storm"
 
+    def test_a_mail_failure_retries_next_tick_instead_of_dropping_the_day(
+        self, app: FastAPI
+    ) -> None:
+        """Readiness audit: the digest stamped-then-sent, so a transient mail
+        failure permanently dropped that day. Now it sends first and only
+        stamps on success — a failed send leaves the day un-stamped so the
+        next tick retries."""
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+
+        class FlakyMail(CapturingMail):
+            def __init__(self) -> None:
+                super().__init__()
+                self.calls = 0
+
+            def alert(self, to, subject, body):
+                self.calls += 1
+                if self.calls == 1:
+                    raise RuntimeError("smtp hiccup")
+                super().alert(to, subject, body)
+
+        mail = FlakyMail()
+        stats = _run(app, mail)  # first tick: send raises
+        assert stats["digests_sent"] == 0 and stats["digest_errors"] == 1
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            assert user.last_daily_digest_at is None, "a failed send must NOT stamp the day"
+        stats2 = _run(app, mail)  # next tick: send succeeds
+        assert stats2["digests_sent"] == 1 and len(mail.sent) == 1
+
     def test_free_plans_get_no_digest(self, app: FastAPI) -> None:
         with app.state.session_factory() as session:
             user = User(email="free@example.com")
