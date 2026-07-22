@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.27 · ACCOUNT MENU live (walkthrough: "no logout,
+  account, management in the dashboard"). The topbar email is now the
+  account menu — Account settings, Plan & billing, Log out (the
+  /auth/logout endpoint existed since D6; nothing ever rendered a
+  control for it). details/summary, no JS, token-styled popover; menu
+  presence + session-clear test-pinned; design source synced. SMOKE
+  PASS: template + styles verified in the running container and served
+  CSS (in-prod page render not probe-able: header auth correctly
+  refused in prod — verified via container file + css hash instead).
+
 - 2026-07-22 · v1.5.26 · SIGN-IN EMAIL PROFESSIONALIZED + FEDERATION
   PROVEN. Google sign-in confirmed end-to-end in prod logs (callback
   303, account created 11:48, signup credit granted). "Magic link"
