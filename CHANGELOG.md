@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.24 · LOGIN-PAGE WALKTHROUGH FIXES live. Founder
+  "check the page" → audit of live /login: assets/TLS/structure healthy;
+  two real defects fixed — the auth brand panel still sold the upload
+  era ("audit from the logs you already have"), now the connect-first
+  story; and the footer Status link pointed at an unresolvable status
+  subdomain (dead link on every page) — STATUS_URL now defaults empty
+  and the link renders only when the page exists (§3b), gating
+  test-pinned. Federation buttons remain correctly dark pending founder
+  OAuth credentials (/root/secrets pattern, "FEDERATION GO"). SMOKE
+  PASS: new copy live, upload-era line gone, no dead Status link.
+
 - 2026-07-22 · v1.5.23 (d616eac) · GO DARK complete. The old-domain
   redirect mechanism is deleted end to end — Caddy vhosts, compose env,
   .env.example, runbook mechanics, and the server's env var; runbook
