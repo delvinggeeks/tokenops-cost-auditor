@@ -218,3 +218,72 @@ class TestVerifiedSavingsCelebration:
         )
         page = TestClient(app).get("/dashboard", headers=HDR).text
         assert "Real money back — proven on your own logs" in page
+
+
+class TestAuditClarity:
+    """Founder incident 2026-07-22: a real connected audit whose only model was
+    unpriced showed the 'connect a source' empty state. The page must instead
+    say WHY it's empty — and never confuse 'no audit' with 'audit ran'."""
+
+    def _connected_unpriced_audit(self, app: FastAPI) -> None:
+        from datetime import UTC, date, datetime
+
+        from tokenops_cost_auditor.persistence.models import Audit, Source, SourceUsage
+
+        with app.state.session_factory() as s:
+            u = User(email=EMAIL)
+            s.add(u)
+            s.flush()
+            src = Source(user_id=u.id, provider="openai", label="p", credentials_encrypted="x")
+            s.add(src)
+            s.flush()
+            s.add(
+                SourceUsage(
+                    source_id=src.id,
+                    day=date(2026, 6, 30),
+                    model="gpt-4o-mini-2024-07-18",  # not on the rate card
+                    calls=35,
+                    prompt_tokens=16012,
+                    completion_tokens=944,
+                    cached_tokens=0,
+                )
+            )
+            s.add(
+                Audit(
+                    user_id=u.id,
+                    status="done",
+                    row_count=35,
+                    total_spend_usd=0,
+                    report_ready_at=datetime.now(UTC),
+                )
+            )
+            s.commit()
+
+    def test_metric_reports_unpriced_not_no_audit(self, app: FastAPI) -> None:
+        self._connected_unpriced_audit(app)
+        with app.state.session_factory() as s:
+            c = metrics.audit_clarity(s, app.state.pricing_table, s.execute(
+                metrics.select(User.id).where(User.email == EMAIL)
+            ).scalar_one())
+        assert c["state"] == "unpriced"
+        assert "gpt-4o-mini-2024-07-18" in c["models"]
+        assert c["row_count"] == 35
+
+    def test_findings_explains_unpriced_instead_of_connect(self, app: FastAPI) -> None:
+        self._connected_unpriced_audit(app)
+        page = TestClient(app).get("/findings", headers=HDR).text
+        assert "gpt-4o-mini-2024-07-18" in page
+        assert "verified rate card yet" in page
+        assert "Run an audit and they appear" not in page  # NOT the no-audit state
+
+    def test_dashboard_banner_explains_unpriced(self, app: FastAPI) -> None:
+        self._connected_unpriced_audit(app)
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "gpt-4o-mini-2024-07-18" in page and "verified rate card yet" in page
+
+    def test_no_audit_still_says_connect(self, app: FastAPI) -> None:
+        with app.state.session_factory() as s:
+            s.add(User(email=EMAIL))
+            s.commit()
+        page = TestClient(app).get("/findings", headers=HDR).text
+        assert "Connect a source" in page  # genuinely no audit → connect is right

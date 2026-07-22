@@ -393,3 +393,48 @@ def onboarding(session: Session, user_id: str) -> dict:
         "all_done": done_n == len(steps),
         "next": nxt,
     }
+
+
+def audit_clarity(session: Session, table: object, user_id: str) -> dict:
+    """Why a page looks the way it does — so "no findings" is never confused
+    with "no audit." Distinguishes: no audit yet · audit ran but the models
+    aren't on our verified rate card (the gpt-4o-mini gap) · audit ran, priced,
+    and genuinely found no waste · findings exist. (Founder incident 2026-07-22:
+    a real connected audit showed the 'connect a source' empty state because
+    its only model was unpriced, so it priced $0 and produced 0 findings.)"""
+    from sqlalchemy import func
+
+    from tokenops_cost_auditor.persistence.models import SourceUsage
+    from tokenops_cost_auditor.services.pricing.table import PricingGapError
+
+    audit = latest_audit(session, user_id)
+    if audit is None:
+        return {"state": "none"}
+    nfindings = int(
+        session.execute(
+            select(func.count(FindingRow.id)).where(FindingRow.audit_id == audit.id)
+        ).scalar_one()
+    )
+    if nfindings > 0:
+        return {"state": "has_findings", "count": nfindings}
+    if float(audit.total_spend_usd or 0) > 0:
+        return {"state": "clean", "row_count": audit.row_count or 0,
+                "spend": float(audit.total_spend_usd or 0)}
+    # priced $0 with rows analyzed → the models are unpriced. Name them.
+    pairs = session.execute(
+        select(Source.provider, SourceUsage.model)
+        .join(SourceUsage, SourceUsage.source_id == Source.id)
+        .where(Source.user_id == user_id)
+        .distinct()
+    ).all()
+    today = datetime.now(UTC).date()
+    unpriced: list[str] = []
+    for provider, model in pairs:
+        try:
+            table.rate(provider, model, today)  # type: ignore[attr-defined]
+        except PricingGapError:
+            if model not in unpriced:
+                unpriced.append(model)
+    if unpriced:
+        return {"state": "unpriced", "models": unpriced, "row_count": audit.row_count or 0}
+    return {"state": "clean", "row_count": audit.row_count or 0, "spend": 0.0}

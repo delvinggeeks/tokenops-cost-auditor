@@ -3,6 +3,22 @@
 {% block content %}
 <div class="grid">
 
+  {# Clarity banner (founder incident 2026-07-22): an audit that couldn't
+     price its models must SAY so, not leave the ribbon on a silent "waiting". #}
+  {% if clarity and clarity.state == "unpriced" %}
+  <section class="w-12" data-reveal>
+    <div class="since-here" style="border-color: var(--estimate);">
+      <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+      <span>Your audit read <strong>{{ "{:,}".format(clarity.row_count) }} calls</strong>, but
+        <strong>{{ clarity.models | join(", ") }}</strong>
+        {{ "isn't" if clarity.models | length == 1 else "aren't" }} on our verified rate card yet —
+        so we didn't guess a price. We'll add {{ "it" if clarity.models | length == 1 else "them" }}
+        and re-run your audit.</span>
+      <a class="btn btn-sm btn-primary" href="mailto:{{ support_email }}">Get it priced</a>
+    </div>
+  </section>
+  {% endif %}
+
   {# Wave B — "since you were here": a returning customer sees what changed
      the moment they land, then clicks through to the full feed. #}
   {% if unseen_activity %}

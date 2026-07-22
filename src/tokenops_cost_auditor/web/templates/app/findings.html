@@ -5,11 +5,33 @@
 <div class="grid">
   {{ kit.surface_open(title=(items|length ~ " findings"), icon="findings", span=12) }}
     {% if not items %}
-      {{ kit.empty_state(
-           "No findings yet",
-           "Run an audit and they appear here, ranked by dollars.",
-           action_label="Connect a source", action_href="/sources",
-           alt_label="Upload a log file", alt_href="/upload") }}
+      {# The honest, specific state — never "connect a source" when an audit
+         actually ran (founder incident 2026-07-22). #}
+      {% if clarity.state == "unpriced" %}
+        {{ kit.empty_state(
+             "We analyzed your usage, but couldn't price it yet",
+             "Your audit read " ~ "{:,}".format(clarity.row_count) ~ " calls of "
+               ~ clarity.models | join(", ") ~ " — but " ~
+               ("that model isn't" if clarity.models | length == 1 else "those models aren't")
+               ~ " on our verified rate card yet, so we didn't guess a number. We add "
+               ~ "models on request and re-run your audit automatically. Email "
+               ~ support_email ~ " and we'll price it fast.",
+             action_label="Contact support", action_href="mailto:" ~ support_email,
+             alt_label="Manage sources", alt_href="/sources") }}
+      {% elif clarity.state == "clean" %}
+        {{ kit.empty_state(
+             "No avoidable waste found — nice",
+             "We analyzed " ~ "{:,}".format(clarity.row_count) ~ " calls and none of the "
+               ~ "six detectors found avoidable spend. We'll keep watching on every audit.",
+             action_label="See your spend", action_href="/dashboard") }}
+      {% else %}
+        {{ kit.empty_state(
+             "No findings yet",
+             "Connect a provider or upload a log file to run your first audit — "
+               ~ "findings appear here, ranked by dollars.",
+             action_label="Connect a source", action_href="/sources",
+             alt_label="Upload a log file", alt_href="/upload") }}
+      {% endif %}
     {% else %}
       {{ kit.table_open([
            {"label": "Finding", "href": "/findings?sort=title",

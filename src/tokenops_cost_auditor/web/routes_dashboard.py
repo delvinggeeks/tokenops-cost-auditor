@@ -126,6 +126,10 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 if request.cookies.get("onboarding_hidden")
                 else metrics.onboarding(session, user.id)
             ),
+            # why the loop looks the way it does — surfaces the unpriced-model
+            # case so the ribbon's "waiting" is never a silent dead end.
+            clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
+            support_email=request.app.state.settings.support_email,
             show_tour=user.tour_dismissed_at is None,
             **ctx,
         )
@@ -366,6 +370,10 @@ def findings_page(
             items=items,
             sort=sort_key,
             audit=audit,
+            # why the page looks the way it does — never "connect a source" when
+            # an audit actually ran (founder incident 2026-07-22)
+            clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
+            support_email=request.app.state.settings.support_email,
             show_tour=False,
             **ctx,
         )
