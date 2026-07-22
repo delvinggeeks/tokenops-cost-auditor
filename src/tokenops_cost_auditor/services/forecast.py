@@ -49,6 +49,7 @@ class Forecast:
     history_days: int  # span of usage history behind the baseline
     basis: str  # human-readable Honesty-Law basis line
     baseline_partial: bool = False  # baseline window had unpriced usage (understated)
+    mtd_partial: bool = False  # current month had unpriced usage (projection understated)
     reason: str = ""  # why not ready, when ready is False
 
 
@@ -82,11 +83,17 @@ def project_cycle(
     earliest = _earliest_usage_day(session, user_id)
     history_days = (yesterday - earliest).days + 1 if earliest is not None else 0
 
-    mtd = (
-        daily_svc.spend_between(session, table, user_id, month_start, yesterday).total_usd
+    mtd_spend = (
+        daily_svc.spend_between(session, table, user_id, month_start, yesterday)
         if days_elapsed > 0
-        else 0.0
+        else None
     )
+    mtd = mtd_spend.total_usd if mtd_spend is not None else 0.0
+    # Symmetric honesty to the baseline guard below (cold-review f.1): unpriced
+    # usage THIS month understates mtd/projected. The alert may still fire — an
+    # understated projection crossing the threshold is conservative-safe — but
+    # the number must never present as complete when it isn't.
+    mtd_partial = bool(mtd_spend.unpriced) if mtd_spend is not None else False
     projected = (mtd / days_elapsed * days_in_month) if days_elapsed > 0 else 0.0
 
     # Baseline: the trailing quarter BEFORE this month, averaged to a month.
@@ -124,6 +131,11 @@ def project_cycle(
         )
         if baseline_partial:
             basis += " — baseline still filling in, so we hold the overspend alert"
+        if mtd_partial:
+            basis += (
+                " — some of this month's usage isn't priced yet, so the projection "
+                "is understated"
+            )
     else:
         if history_days < MIN_HISTORY_DAYS:
             reason = f"needs ~{MIN_HISTORY_DAYS - history_days} more day(s) of history"
@@ -145,5 +157,6 @@ def project_cycle(
         history_days=history_days,
         basis=basis,
         baseline_partial=baseline_partial,
+        mtd_partial=mtd_partial,
         reason=reason,
     )

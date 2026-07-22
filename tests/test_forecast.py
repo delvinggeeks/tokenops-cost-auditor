@@ -135,6 +135,36 @@ class TestForecastGolden:
         assert f.anomaly is False  # projection shown, alert held
         assert "hold the overspend alert" in f.basis
 
+    def test_unpriced_current_month_is_flagged_not_silent(
+        self, session: Session, user_id: str
+    ) -> None:
+        # cold-review f.1: unpriced usage THIS month understates the projection.
+        # The number must say so; the alert may still fire (understated crossing
+        # the threshold is conservative-safe, so no false positive is possible).
+        _add(session, date(2026, 4, 15), 20.0)
+        _add(session, date(2026, 5, 15), 20.0)
+        _add(session, date(2026, 6, 15), 20.0)  # baseline fully priced, $20/mo
+        _add(session, date(2026, 7, 2), 20.0)
+        _add(session, date(2026, 7, 8), 20.0)  # $40 priced -> projected $82.67, +313%
+        session.add(  # plus usage of a model the table can't price
+            SourceUsage(
+                source_id=session._src_id,  # type: ignore[attr-defined]
+                day=date(2026, 7, 10),
+                model="mystery-model",
+                calls=1,
+                prompt_tokens=1_000_000,
+                completion_tokens=0,
+                cached_tokens=0,
+                provenance={"t": "test"},
+            )
+        )
+        session.commit()
+        f = project_cycle(session, TABLE, user_id, now=NOW)
+        assert f.mtd_partial is True
+        assert f.mtd_usd == pytest.approx(40.0)  # priced portion only
+        assert "understated" in f.basis
+        assert f.anomaly is True  # still fires — the real figure is even higher
+
     def test_insufficient_history_is_honest(self, session: Session, user_id: str) -> None:
         # only a few days of history -> below the honesty threshold
         _add(session, date(2026, 7, 13), 5.0)

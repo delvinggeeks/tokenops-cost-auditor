@@ -170,6 +170,9 @@ def run_digests(
             # R-FLYWHEEL L3 (deterministic-now): before-the-invoice overspend
             # heads-up. Observe-only (X-02). No per-month dedup needed — the
             # daily digest is already once-per-day and the customer opted in.
+            # Cost: +3 bounded queries/user/day (its own MTD + baseline +
+            # earliest-day) — accepted over widening project_cycle's API to
+            # share this loop's mtd (cold-review 01334e8 f.2, advisory).
             from tokenops_cost_auditor.services import forecast as forecast_svc
 
             fc = forecast_svc.project_cycle(
@@ -207,8 +210,13 @@ def run_digests(
                 f"Month so far: {_fmt(mtd.total_usd)}{_inr_line(settings, currency, mtd.total_usd)}"
             )
             if forecast_alert:
+                floor = (
+                    " (some usage is unpriced, so the real figure is higher)"
+                    if fc.mtd_partial
+                    else ""
+                )
                 lines.append(
-                    f"⚠ On track for {_fmt(fc.projected_usd)} this month — "
+                    f"⚠ On track for {_fmt(fc.projected_usd)} this month{floor} — "
                     f"{fc.over_pct:+.0f}% vs your usual {_fmt(fc.baseline_usd)}/mo. "
                     "A look now beats a surprise on the invoice."
                 )
