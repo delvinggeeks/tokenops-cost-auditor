@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.25 (activation, config-only — no code change) ·
+  GOOGLE SIGN-IN LIVE. Founder parked the OAuth client pair
+  (/root/secrets pattern; secrets never in transcript/repo); wired into
+  the private .env, app recreated. SMOKE PASS: "Continue with Google"
+  renders on /login+/signup; /auth/google 303s to Google's authorize
+  endpoint with the exact new-domain callback, signed state, and the
+  browser-pinned state cookie; Microsoft/GitHub correctly dark (404).
+  Final click-through proof (token exchange validates the secret) is
+  founder-side. Same pattern awaits microsoft.txt / github.txt.
+
 - 2026-07-22 · v1.5.24 · LOGIN-PAGE WALKTHROUGH FIXES live. Founder
   "check the page" → audit of live /login: assets/TLS/structure healthy;
   two real defects fixed — the auth brand panel still sold the upload
