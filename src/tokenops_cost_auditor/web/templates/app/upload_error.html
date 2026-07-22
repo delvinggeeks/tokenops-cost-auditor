@@ -1,0 +1,12 @@
+{% extends "_public_shell.html" %}
+{% block title %}{{ title }} — TokenOps Cost Auditor{% endblock %}
+{% block main %}
+<main class="pub-main">
+  <div class="wrap" style="max-width: 560px; padding: var(--s5) 0;">
+    <h1 class="page-h1">{{ title }}</h1>
+    <p class="signin-lede">{{ body }}</p>
+    <p style="margin-top: var(--s3)">{{ cta | safe }}
+      <a class="btn" href="/dashboard">Back to dashboard</a></p>
+  </div>
+</main>
+{% endblock %}

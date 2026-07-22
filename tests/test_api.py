@@ -194,6 +194,38 @@ class TestTAPI07ErrorEnvelope:
         assert resp.status_code == 400
         self.assert_envelope(resp.json(), "bad_request")
 
+    def test_browser_gets_html_error_not_raw_json(self, client: TestClient, app: FastAPI) -> None:
+        """Readiness audit: a person who hit 402/400/413 from the upload FORM
+        saw a raw JSON envelope. Browsers (Accept: text/html) now get a page;
+        API clients still get JSON."""
+        # 402 no-credit, browser Accept → HTML page with a plans CTA
+        resp = client.post(
+            "/api/v1/audits",
+            headers={**ALICE, "Accept": "text/html"},
+            files={"file": ("logs.jsonl", io.BytesIO(b'{"ts":"2026-07-01T00:00:00Z"}\n'), "x")},
+        )
+        assert resp.status_code == 402
+        assert "text/html" in resp.headers["content-type"]
+        assert "used your free audit" in resp.text and "/billing" in resp.text
+        assert "{" not in resp.text[:1]  # not a JSON body
+        # 400 bad extension, browser Accept → HTML, not the envelope
+        credit(app, "alice@example.com")
+        bad = client.post(
+            "/api/v1/audits",
+            headers={**ALICE, "Accept": "text/html"},
+            files={"file": ("logs.txt", io.BytesIO(b"x"), "text/plain")},
+        )
+        assert bad.status_code == 400 and "text/html" in bad.headers["content-type"]
+        assert "That file" in bad.text  # apostrophe in "didn't" is HTML-escaped
+
+    def test_api_client_still_gets_the_json_envelope(
+        self, client: TestClient, app: FastAPI
+    ) -> None:
+        # no text/html in Accept → the machine contract is unchanged
+        resp = client.post("/api/v1/audits", headers={**ALICE, "Accept": "application/json"})
+        assert resp.status_code == 402
+        assert resp.headers["content-type"].startswith("application/json")
+
 
 class TestTNFR03And12RateLimits:
     def test_burst_hits_429_with_retry_after(self, client: TestClient, app: FastAPI) -> None:

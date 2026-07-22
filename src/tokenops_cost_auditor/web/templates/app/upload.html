@@ -28,13 +28,19 @@
     Files are analyzed then deleted — nothing retained beyond 7 days.
     <a href="/legal/privacy">How we handle your data →</a>
   </p>
-  <form method="post" action="/api/v1/audits" enctype="multipart/form-data">
+  {# data-once: the shell's delegated submit handler disables the button so a
+     double-click can't consume two credits (readiness audit; the atomic claim
+     already blocks concurrent double-spend of a single credit). #}
+  <form method="post" action="/api/v1/audits" enctype="multipart/form-data" data-once>
     <div class="drop">
       <h3>Choose your log export</h3>
       <p>OpenAI JSONL, Anthropic JSONL, or our documented CSV.</p>
       <label for="file" class="sr-only">Log file (.jsonl or .csv)</label>
       <input type="file" id="file" name="file" required accept=".jsonl,.json,.csv">
       <p style="margin-top:var(--s3)">
+        {# double-submit guard (readiness audit): disable on submit so a
+           double-click can't consume two credits. The atomic credit claim
+           already blocks concurrent double-spend of a single credit. #}
         <button class="btn btn-primary" type="submit">Start the audit</button>
       </p>
       <div class="limits">

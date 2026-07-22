@@ -13,7 +13,7 @@ from pathlib import Path
 import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from slowapi.errors import RateLimitExceeded
@@ -203,9 +203,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             request.app.state.limiter._inject_headers(response, request.state.view_rate_limit)
         return response
 
+    # Friendly HTML for the browser upload form's non-success outcomes
+    # (readiness audit 2026-07-22): a person who hit the 402/400/413 path saw a
+    # raw JSON envelope. API clients (no text/html in Accept) keep the JSON.
+    _UPLOAD_ERROR_COPY = {
+        400: ("That file didn't work", "We couldn't read that file. Upload a JSONL or CSV "
+              "export of your usage and try again."),
+        402: ("You've used your free audit", "Your free audit is spent. Choose a plan to run "
+              "another, or connect a provider for weekly audits."),
+        413: ("That file is too large", "The upload is over our size limit. Split it, or "
+              "connect your provider so we pull the data directly."),
+    }
+
+    def _upload_error_page(status: int, detail: str) -> HTMLResponse:
+        title, body = _UPLOAD_ERROR_COPY.get(status, ("Something went wrong", str(detail)))
+        cta = (
+            '<a class="btn btn-primary" href="/billing">See plans</a>'
+            if status == 402
+            else '<a class="btn btn-primary" href="/upload">Try again</a>'
+        )
+        tpl = app.state.jinja.get_template("app/upload_error.html")
+        return HTMLResponse(status_code=status, content=tpl.render(title=title, body=body, cta=cta))
+
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: Exception) -> Response:
         assert isinstance(exc, HTTPException)
+        wants_html = "text/html" in request.headers.get("accept", "")
+        if request.url.path.startswith("/api/v1/audits") and wants_html:
+            return _upload_error_page(exc.status_code, str(exc.detail))
         if request.url.path.startswith("/api/"):
             return error_envelope(request, exc.status_code, str(exc.detail))
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
