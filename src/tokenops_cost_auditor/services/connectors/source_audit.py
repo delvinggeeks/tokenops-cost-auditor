@@ -68,8 +68,13 @@ def run_source_audit(
     table: PricingTable,
     source: Source,
     generated_at: str | None = None,
+    audit: Audit | None = None,
 ) -> str:
-    """Audit the source's accumulated usage window; returns the audit id."""
+    """Audit the source's accumulated usage window; returns the audit id.
+
+    If `audit` is given (a row pre-created as 'queued' so a live progress page
+    can be watched — R-LIVE-AUDIT), it is finalized to 'done' in place; else a
+    fresh 'done' row is created as before (scheduled/re-audit callers)."""
     window_start = (datetime.now(UTC) - timedelta(days=settings.connect_backfill_days)).date()
     rows = (
         session.execute(
@@ -134,8 +139,11 @@ def run_source_audit(
         day_key = cast(date, r.day).isoformat()
         by_day_acc[day_key] = by_day_acc.get(day_key, 0.0) + c
 
-    audit = Audit(user_id=source.user_id, status="done", paid_via="subscription")
-    session.add(audit)
+    if audit is None:
+        audit = Audit(user_id=source.user_id, status="done", paid_via="subscription")
+        session.add(audit)
+    else:
+        audit.status = "done"  # finalize the pre-created queued/processing row
     session.flush()
 
     report = ReportModel(

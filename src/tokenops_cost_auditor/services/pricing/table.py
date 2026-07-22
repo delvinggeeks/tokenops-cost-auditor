@@ -12,6 +12,14 @@ from pathlib import Path
 import yaml
 
 DEFAULT_DATA = Path(__file__).parent / "data" / "prices.yaml"
+# Machine-managed overlay (R-LIVE-PRICING): the autonomous pricing sync writes
+# auto-fetched, gate-validated, effective-dated rows here — NEVER into the
+# hand-commented base file. Merged append-only with the base at load time; each
+# (provider, model) history is base rows + overlay rows sorted by effective_from,
+# so an audit still prices deterministically at the rate in effect on its date.
+# Absent overlay => identical behaviour to base-only (backward compatible).
+# Reading a second local YAML keeps services/pricing network-free (T-NFR-01).
+AUTO_DATA = Path(__file__).parent / "data" / "prices.auto.yaml"
 
 
 class PricingGapError(Exception):
@@ -45,15 +53,47 @@ class PricingTable:
     _entries: dict[tuple[str, str], tuple[Rate, ...]]
 
     @classmethod
-    def load(cls, path: Path = DEFAULT_DATA) -> PricingTable:
+    def load(
+        cls, path: Path = DEFAULT_DATA, overlay: Path | None = AUTO_DATA
+    ) -> PricingTable:
         raw = yaml.safe_load(path.read_text())
-        entries: dict[tuple[str, str], tuple[Rate, ...]] = {}
-        for provider, pdata in raw["providers"].items():
-            for model, rate_list in pdata["models"].items():
-                rates = []
+        # (provider, model) -> mutable list of Rate, base first then overlay.
+        acc: dict[tuple[str, str], list[Rate]] = {}
+        last_verified = raw.get("last_verified")
+        cls._ingest(raw, acc)
+        # Merge the machine-managed overlay if present (R-LIVE-PRICING). Its rows
+        # are appended to each model's history and the whole list re-sorted by
+        # effective_from below, so overlay + base interleave correctly by date.
+        if overlay is not None and overlay.exists():
+            over_raw = yaml.safe_load(overlay.read_text()) or {}
+            cls._ingest(over_raw, acc)
+            over_verified = over_raw.get("last_verified")
+            # Freshest verification date wins (daily auto-sync keeps this current).
+            if over_verified is not None and (
+                last_verified is None or over_verified > last_verified
+            ):
+                last_verified = over_verified
+        entries = {
+            key: tuple(sorted(rates, key=lambda r: r.effective_from))
+            for key, rates in acc.items()
+        }
+        return cls(
+            version=str(raw["version"]),
+            last_verified=last_verified,
+            _entries=entries,
+        )
+
+    @staticmethod
+    def _ingest(raw: dict, acc: dict[tuple[str, str], list[Rate]]) -> None:
+        """Fold one rate-card document's rows into the accumulator. Shared by the
+        base file and the overlay so both honour identical schema + defaults."""
+        for provider, pdata in (raw.get("providers") or {}).items():
+            for model, rate_list in (pdata.get("models") or {}).items():
+                key = (provider.lower(), model.lower())
+                bucket = acc.setdefault(key, [])
                 for item in rate_list:
                     input_rate = float(item["input"])
-                    rates.append(
+                    bucket.append(
                         Rate(
                             input=input_rate,
                             output=float(item["output"]),
@@ -62,13 +102,6 @@ class PricingTable:
                             effective_from=item["effective_from"],
                         )
                     )
-                rates.sort(key=lambda r: r.effective_from)
-                entries[(provider.lower(), model.lower())] = tuple(rates)
-        return cls(
-            version=str(raw["version"]),
-            last_verified=raw.get("last_verified"),
-            _entries=entries,
-        )
 
     def rate(self, provider: str, model: str, on_date: date) -> Rate:
         """Latest entry with effective_from <= on_date. Model matching: exact,

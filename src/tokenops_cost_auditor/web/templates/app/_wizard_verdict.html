@@ -19,6 +19,10 @@
     {% if free_no_credit %}
       <a class="btn btn-primary" href="/billing">See plans</a>
       <a class="btn" href="/dashboard">Go to my dashboard</a>
+    {% elif audit_id %}
+      {# R-LIVE-AUDIT: watch the real pull + audit animate, live. #}
+      <a class="btn btn-primary" href="/audits/{{ audit_id }}/progress">Watch your first audit</a>
+      <a class="btn btn-quiet" href="/dashboard">Skip to my dashboard</a>
     {% else %}
       <a class="btn btn-primary" href="/dashboard">Go to my dashboard</a>
     {% endif %}

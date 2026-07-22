@@ -28,6 +28,7 @@ BACKUP_MAX_AGE_H = 26  # runbook §3 alert condition
 DISK_ALERT_PCT = 80
 PRICING_MAX_AGE_DAYS = 14  # NFR-15
 REFRESH_STATUS_REL = ".ops/pricing_refresh.json"  # written by scripts/pricing_refresh.py
+SYNC_STATUS_REL = ".ops/pricing_sync.json"  # written by scripts/pricing_sync.py (R-LIVE-PRICING)
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -59,6 +60,37 @@ def _refresh_failure_line(report_dir: Path) -> str | None:
         f"pricing_refresh FAILED at {status.get('ran_at', '?')}: "
         f"{status.get('error', 'unknown error')} (FR-29 — run manually, runbook §8)"
     )
+
+
+def _sync_status_lines(report_dir: Path) -> tuple[str | None, str | None]:
+    """R-LIVE-PRICING: an FYI line (what the autonomous sync did) plus an alert
+    line if it failed or is holding a suspicious rate swing for safety."""
+    status_path = report_dir / SYNC_STATUS_REL
+    if not status_path.exists():
+        return None, None
+    import json
+
+    try:
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+    except ValueError:
+        return None, f"pricing_sync status file unreadable: {status_path}"
+    if not status.get("ok", True):
+        return None, (
+            f"pricing_sync FAILED at {status.get('ran_at', '?')}: "
+            f"{status.get('error', 'unknown')} — feed unreachable/changed (R-LIVE-PRICING)"
+        )
+    held = status.get("held") or []
+    fyi = (
+        f"Pricing sync ({status.get('mode', '?')}): wrote {status.get('written', 0)}, "
+        f"held {len(held)}, skipped {status.get('skipped', 0)}"
+    )
+    if "reaudited" in status:
+        fyi += f", re-audited {status['reaudited']} source(s)"
+    alert = None
+    if held:
+        shown = "; ".join(f"{h['model']} ({h['why']})" for h in held[:3])
+        alert = f"pricing_sync held {len(held)} rate(s) pending review: {shown}"
+    return fyi, alert
 
 
 def build_digest(session: Session, settings: Settings, now: datetime | None = None) -> str:
@@ -173,6 +205,12 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
     refresh_line = _refresh_failure_line(Path(settings.report_dir))
     if refresh_line:
         alerts.append(refresh_line)
+
+    sync_fyi, sync_alert = _sync_status_lines(Path(settings.report_dir))
+    if sync_fyi:
+        lines.append(sync_fyi)
+    if sync_alert:
+        alerts.append(sync_alert)
 
     if failures:
         alerts.append(f"{len(failures)} audit(s) in failed status")

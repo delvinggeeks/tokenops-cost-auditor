@@ -40,3 +40,4 @@ uat1/
 # WP-SELF archives (ledger.csv IS committed; raw reports are not)
 self_audit/reports/
 .preview/
+src/tokenops_cost_auditor/services/pricing/data/prices.auto.yaml

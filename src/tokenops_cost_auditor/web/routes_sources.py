@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
-from tokenops_cost_auditor.persistence.models import Source, Subscription, User, utcnow
+from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, User, utcnow
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.connectors import validate
 from tokenops_cost_auditor.services.connectors.crypto import encrypt_credential
@@ -202,17 +202,18 @@ def wizard_validate(
             source_id = source.id
 
     free_no_credit = False
+    audit_id = None
     if saved and verdict.status == validate.OK:
         # INSTANT GRATIFICATION (R-MAGIC-CONNECT §2): pull and audit NOW, in
         # the background. R-FREE-CONNECT §3: on Free, the first-pull audit is
         # metered by the signup credit — no credit, no audit, said plainly.
         if plan in ("pro", "team"):
-            _kickoff_first_pull(request, source_id)
+            audit_id = _kickoff_first_pull(request, source_id)
         else:
             with _session(request) as session:
                 credit = unconsumed_credit(session, user_id)
             if credit is not None:
-                _kickoff_first_pull(request, source_id, claim_for_user=user_id)
+                audit_id = _kickoff_first_pull(request, source_id, claim_for_user=user_id)
             else:
                 free_no_credit = True
 
@@ -224,16 +225,25 @@ def wizard_validate(
             provider=provider,
             saved=saved,
             free_no_credit=free_no_credit,
+            # R-LIVE-AUDIT: when an audit was kicked off, send the customer to the
+            # live theater to watch it, not the static dashboard.
+            audit_id=audit_id,
         )
     )
 
 
 def _kickoff_first_pull(
     request: Request, source_id: str, claim_for_user: str | None = None
-) -> None:
+) -> str | None:
     """Best-effort immediate pull + audit. Failure here NEVER surfaces as a
     connect error — the scheduled tick will do it anyway (paid plans; free
     sources are never scheduled, so a failed free kickoff keeps its credit).
+
+    R-LIVE-AUDIT: a 'queued' Audit row is created SYNCHRONOUSLY and its id is
+    returned, so the connect flow can land on the live pipeline theater and the
+    customer watches the real pull+audit animate (queued → processing → done),
+    instead of a static dashboard that just reads "waiting". Returns None only
+    if the source vanished before the row could be created.
 
     claim_for_user (R-FREE-CONNECT §3): on Free the audit consumes the signup
     credit, claimed atomically once the audit row exists. The window between
@@ -247,6 +257,16 @@ def _kickoff_first_pull(
     factory = request.app.state.session_factory
     table = request.app.state.pricing_table
 
+    # Create the watchable row up front so the browser has an id to poll.
+    with factory() as session:
+        source = session.get(Source, source_id)
+        if source is None:
+            return None
+        audit = Audit(user_id=source.user_id, status="queued", paid_via="subscription")
+        session.add(audit)
+        session.commit()
+        audit_id = audit.id
+
     def run() -> None:
         from tokenops_cost_auditor.services.connectors.pull import run_pull
         from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
@@ -255,11 +275,14 @@ def _kickoff_first_pull(
         try:
             with factory() as session:
                 source = session.get(Source, source_id)
-                if source is None:
+                row = session.get(Audit, audit_id)
+                if source is None or row is None:
                     return
+                row.status = "processing"  # the theater lights up while we pull
+                session.commit()
                 run_pull(session, settings, source)
                 session.commit()
-                audit_id = run_source_audit(session, settings, table, source)
+                run_source_audit(session, settings, table, source, audit=row)
                 if claim_for_user is not None:
                     claimed = claim_credit(session, claim_for_user, audit_id)
                     if claimed is None:
@@ -267,8 +290,22 @@ def _kickoff_first_pull(
                 session.commit()
         except Exception as exc:
             log.info("connect.first_pull_deferred", error=str(exc)[:160])
+            # Surface a terminal state so the theater stops polling and explains
+            # itself, rather than spinning on "processing" forever.
+            try:
+                with factory() as session:
+                    row = session.get(Audit, audit_id)
+                    if row is not None and row.status in ("queued", "processing"):
+                        row.status = "failed"
+                        row.error = (
+                            "We couldn't finish this first audit. We'll retry automatically."
+                        )
+                        session.commit()
+            except Exception:
+                pass
 
     threading.Thread(target=run, daemon=True).start()
+    return audit_id
 
 
 @router.post("", response_model=None)

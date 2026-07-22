@@ -73,6 +73,41 @@ def source(session: Session, settings: Settings) -> Source:
     return src
 
 
+class TestLiveAuditLifecycle:
+    """R-LIVE-AUDIT: a pre-created 'queued' row is finalized in place, so the
+    live theater has a stable id to poll from queued → processing → done."""
+
+    def test_prewatched_row_is_finalized_in_place(
+        self, session: Session, settings: Settings, source: Source
+    ) -> None:
+        # the connect kickoff creates this synchronously, then hands the id to
+        # the browser and processes in a thread
+        pre = Audit(user_id=source.user_id, status="queued", paid_via="subscription")
+        session.add(pre)
+        session.commit()
+        pre_id = pre.id
+
+        returned = run_source_audit(session, settings, PricingTable.load(), source, audit=pre)
+        session.commit()
+
+        # SAME row the browser is polling — not a second audit
+        assert returned == pre_id
+        assert session.query(Audit).count() == 1
+        finalized = session.get(Audit, pre_id)
+        assert finalized.status == "done"
+        assert finalized.row_count == 750  # fully populated as a normal audit
+        report = settings.report_dir / pre_id / "report.json"
+        assert report.exists()
+
+    def test_default_still_creates_its_own_row(
+        self, session: Session, settings: Settings, source: Source
+    ) -> None:
+        # scheduled / re-audit callers pass no row and get a fresh done audit
+        audit_id = run_source_audit(session, settings, PricingTable.load(), source)
+        session.commit()
+        assert session.get(Audit, audit_id).status == "done"
+
+
 class TestSourceAudit:
     def test_01_tier_and_coverage_labeling(
         self, session: Session, settings: Settings, source: Source

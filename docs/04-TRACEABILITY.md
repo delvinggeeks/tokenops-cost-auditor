@@ -48,6 +48,8 @@ publicly ("—" = internal-only, no public page needed).
 | R-PRICING-FINAL-2 | C6,C7 | config (list+launch prices, cohort, gates), payments/plans (cohort_used/launch_open/viewer_currency — the code-enforced flip), landing/billing/alerts templates (one currency per view), scripts/daily_digest (cohort-full founder notice) | tests/test_pricing_final.py | — |
 | R-DAILY-LOOP | C6,C8 | connectors/daily (digest + 50/80/100 budget stages, audit-identical rate math), schedule.tick, dashboard/metrics yesterday_spend + widget, migration 008 (users.last_daily_digest_at) | tests/test_daily_loop.py | — |
 | R-FED-MAJORS | C6 | web/routes_auth FEDERATIONS registry (Google/Microsoft/GitHub, cookie-pinned state, full-pair gating) | tests/test_federation.py | — |
+| R-LIVE-PRICING | C3,Ops | pricing/table (overlay merge, append-only), scripts/pricing_sync (fetch LiteLLM feed → gate-validate → auto-write overlay; --cover-from-usage self-heals + re-audits), ofelia (pricing-sync-refresh daily, pricing-cover 3h), scripts/daily_digest (sync FYI + held-swing alert) | tests/test_pricing_sync.py | concepts/pricing-data |
+| R-LIVE-AUDIT | C6 | web/routes_sources (_kickoff_first_pull creates queued Audit synchronously, drives queued→processing→done/failed), connectors/source_audit (finalize a pre-created row), templates/_wizard_verdict (land on the live theater) | tests/test_source_audit.py::TestLiveAuditLifecycle | — |
 | NFR-01 | C4  | rules/* (import guard test)                | T-NFR-01 | concepts/how-it-works, engineering/testing |
 | NFR-02 | Ops | Caddyfile, config                          | T-OPS-01 (manual) | engineering/security |
 | NFR-03 | C9  | obs/ratelimit                              | T-NFR-03 | api/overview |

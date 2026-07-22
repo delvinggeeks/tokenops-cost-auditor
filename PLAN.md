@@ -1028,6 +1028,58 @@ restarts from that launch date. FIRST TASK then STOP: PLAN-V15.md
 (day-by-day WPs, test IDs, gate schedule, numbered ambiguities); no
 application code until founder approves PLAN-V15.
 
+**R-LIVE-PRICING (founder, 2026-07-22) — SUPERSEDES the human-approval gate in
+R-PRICING-OPS and R-PRICING-AGENT; amends NFR-15 and CLAUDE.md rule 4.**
+Founder ruling, verbatim intent: *"our platform will go stale if the prices or
+models are not updated wrt real time prices, we need algorithm or model to be
+fetched and updated and revalidate wrt to real time prices no human gate here,
+always manual looses the game and left over jobs have to be covered."* The
+human one-click-approve step is REMOVED. Pricing is now kept current by an
+autonomous ops pipeline whose automated validation REPLACES the human — the
+gate is code, not trust:
+  (1) SOURCE. Primary = the structured LiteLLM `model_prices_and_context_window`
+      JSON (the same feed R-PRICING-AGENT already trusted as its cross-check —
+      machine-readable, continuously community-maintained, covers legacy +
+      current models). Provider `# source_url:` pages remain a CORROBORATION
+      cross-check only, never the primary — heuristic HTML scraping is too
+      fragile to write money math from (providers delete models from their
+      pages; that is the gpt-4o-mini incident's root cause).
+  (2) AUTOMATED VALIDATION GATES (replace the human approver). A candidate rate
+      is written ONLY if it passes ALL of: well-formed four-rate shape
+      (input/output/cache_write/cache_read, all ≥ 0); each rate within a
+      plausible per-1M band (0 < r ≤ $1000); no unexplained jump vs the
+      last-known rate beyond ±60% UNLESS corroborated by a second source;
+      provider/model-id maps to a known provider. A candidate that fails any
+      gate is NOT written — the last-known-good rate stands and the failure is
+      logged to the digest. A blank/absent price is NEVER written as $0.
+  (3) AUTO-WRITE. Passing candidates are appended to prices.yaml as new
+      effective-dated rows stamped `source: litellm-auto` (+ fetch date);
+      `last_verified` is bumped to the run date; existing rows are immutable
+      (append-only, effective-dated — each audit still prices deterministically
+      at the rate in effect on its usage date). The engine stays network-free
+      (NFR-01 / T-NFR-01 intact): the fetcher is ops tooling under scripts/,
+      services/pricing never imports network. Golden discipline (rule 4) is
+      preserved for DETECTOR math; auto-written rate rows carry provenance in
+      lieu of a hand spreadsheet-diff, and a golden-drift check runs post-write.
+  (4) LEFTOVER JOBS COVERED. Every audit that meets an unpriced model records
+      the gap; the sync auto-covers it on its next run (daily) and on-demand,
+      re-running the affected audit. A model that NO source publishes (genuinely
+      retired everywhere) auto-surfaces via the clarity state ("couldn't source
+      a price") — an honest automated flag, never a silent $0. This is the only
+      residue of "manual": not a gate, a truthful gap notice.
+  (5) CADENCE. Daily ofelia job (was: weekly read-only diff + week-3 human
+      queue). Drift/failures surface in the daily digest as FYI, not as a gate.
+
+**R-LIVE-AUDIT (founder, 2026-07-22).** *"no real time status update animations
+on what is going on during auditing."* Connect-initiated audits must be
+watchable live, not land on a static dashboard that reads "waiting." The connect
+kickoff creates a `queued` Audit row synchronously, returns its id, and lands the
+browser on the existing live pipeline theater (`/audits/{id}/progress`, htmx-
+polled, reduced-motion-safe); the background worker transitions it
+queued → processing → done so the theater animates the real pull+audit. No new
+motion primitive (R-MOTION-SPEC unchanged) — the theater already exists; it was
+simply never reachable from the connect path.
+
 ### 0.2 Standing decisions
 
 **PY-VERSION: Python 3.14** (kickoff permits 3.14 if pandas/pyarrow/weasyprint/psycopg
