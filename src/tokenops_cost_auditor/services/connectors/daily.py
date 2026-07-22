@@ -151,6 +151,8 @@ def run_digests(
             plan_key = str(ents[user.id]["plan_key"])
             if plan_key not in plans.PAID_PLANS:
                 continue  # the daily loop is a paid-plan surface (R-DAILY-LOOP)
+            if user.daily_digest_emails is False:
+                continue  # the customer turned the daily digest off (Wave B)
             last = user.last_daily_digest_at
             if last is not None:
                 last = last if last.tzinfo else last.replace(tzinfo=UTC)

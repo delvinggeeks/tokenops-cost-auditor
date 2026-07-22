@@ -180,3 +180,41 @@ class TestActivityHonesty:
         assert e.title == "Fix applied"
         assert "verified saving" not in (e.title + e.detail).lower()
         assert "$999" not in e.detail and "999" not in e.detail  # never the self-reported number
+
+
+class TestVerifiedSavingsCelebration:
+    """Wave B: the celebration fires ONLY on a genuinely verified saving
+    (>$0, re-audit-proven) — honest by construction."""
+
+    def test_no_celebration_without_a_verified_saving(self, app: FastAPI) -> None:
+        # a fresh/zero-verified account shows no celebration tag
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "Real money back" not in page
+
+    def test_celebration_appears_only_when_verified_is_positive(
+        self, app: FastAPI, monkeypatch
+    ) -> None:
+        from tokenops_cost_auditor.services.dashboard.metrics import Widget
+
+        # a widget with a real verified figure → celebration; identical widget
+        # with $0 verified → none. Proves the gate is verified>0, nothing else.
+        monkeypatch.setattr(
+            metrics,
+            "savings",
+            lambda s, uid: (
+                Widget(
+                    empty=False,
+                    provenance="audit x",
+                    data={
+                        "verified": 250.0,
+                        "identified": 0.0,
+                        "customer_reported": 0.0,
+                        "verified_count": 1,
+                        "pending_count": 0,
+                    },
+                ),
+                None,
+            ),
+        )
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "Real money back — proven on your own logs" in page

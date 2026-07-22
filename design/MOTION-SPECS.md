@@ -138,6 +138,7 @@ not pixels — closing the elevation gate's hero note.
 | # | Effect | Trigger | Behavior | Duration + easing | Reduced-motion | Tokens |
 |---|--------|---------|----------|-------------------|----------------|--------|
 | C10 | Workflow money pulse (`@keyframes pipe-pulse-travel`) | pipeline section 30% in view | the five stage cards sit in shallow 3D perspective; a money pulse (accent dot with glow) travels the flow line stage to stage, cards sit lit in shallow perspective and lift on hover (transition, no keyframe); loops ×2 then rests | 4s total, `--ease` per hop | all cards lit and lifted, line drawn, pulse absent | `--accent`, `--accent-ring`, `--lift-2`, `--ease` |
+| C11 | Verified-savings celebration (`@keyframes savings-pop`) | dashboard load, WHEN verified savings > $0 (honest: no verified figure, no celebration) | the verified-savings hero number pops in — scale 0.96→1.015→1 with fade — marking a real, re-audit-proven dollar win; fires once on render | 240ms `--t-med` `--ease` | the number in final position, full opacity | `--verified`, `--ease` |
 
 The pulse IS the product's story — a dollar moving through the loop — so the
 motion carries comprehension, not decoration. Loops twice then rests: a

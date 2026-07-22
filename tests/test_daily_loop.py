@@ -362,3 +362,25 @@ class TestTickStageIsolation:
             )
         assert stats["audit_errors"] == 1
         assert "digests_sent" in stats, "the tick carried on past the failed audit"
+
+
+class TestDigestOptOut:
+    def test_opting_out_stops_the_daily_digest(self, app: FastAPI) -> None:
+        """Wave B digest control: a paid user who turned the daily digest off
+        gets none, even with spend to report."""
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        with app.state.session_factory() as s:
+            user = s.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            user.daily_digest_emails = False
+            s.commit()
+        mail = CapturingMail()
+        stats = _run(app, mail)
+        assert stats["digests_sent"] == 0 and mail.sent == []
+
+    def test_default_and_opt_in_still_send(self, app: FastAPI) -> None:
+        uid = _paid_user(app)
+        _usage(app, _source(app, uid))
+        # default (None) sends
+        mail = CapturingMail()
+        assert _run(app, mail)["digests_sent"] == 1

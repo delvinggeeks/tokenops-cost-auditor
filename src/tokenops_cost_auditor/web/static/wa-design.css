@@ -390,6 +390,21 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .help-body dt:first-child { margin-top: 0; }
 .help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
 
+/* ---- VERIFIED-SAVINGS CELEBRATION (Wave B — the emotional core) ---- */
+.savings-win-tag { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 4px;
+  font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--verified); }
+.savings-win .savings-hero, .savings-win .money {
+  animation: savings-pop var(--t-med) var(--ease) both; }
+@keyframes savings-pop {
+  0% { transform: scale(0.96); opacity: 0; }
+  60% { transform: scale(1.015); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .savings-win .savings-hero, .savings-win .money { animation: none; }
+}
+
 /* ---- ACTIVITY BELL + FEED (Wave B — retention, 2026-07-22) ---- */
 .bell { position: relative; display: inline-flex; align-items: center; padding: 6px;
   border-radius: var(--radius); color: var(--ink-soft); }

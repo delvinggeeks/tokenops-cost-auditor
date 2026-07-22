@@ -28,6 +28,9 @@ WEBHOOK_SECRET = "whsec-test-razorpay"
 BUYER = "buyer@company.com"
 
 
+STRIPE_SECRET = "whsec-test-stripe"
+
+
 @pytest.fixture
 def payapp(tmp_path):
     settings = Settings(
@@ -38,6 +41,7 @@ def payapp(tmp_path):
         report_dir=tmp_path / "r",
         backup_dir=tmp_path / "b",
         razorpay_webhook_secret=WEBHOOK_SECRET,
+        stripe_webhook_secret=STRIPE_SECRET,
         _env_file=None,
     )
     app = create_app(settings)
@@ -156,3 +160,64 @@ class TestPaymentWebhookEndToEnd:
                 select(Subscription).where(Subscription.user_id == user.id)
             ).scalar_one()
             assert sub.plan == "team" and sub.status == "active"
+
+
+def _stripe_sign(body: bytes) -> str:
+    t = int(time.time())
+    signed = f"{t}.".encode() + body
+    v1 = hmac.new(STRIPE_SECRET.encode(), signed, hashlib.sha256).hexdigest()
+    return f"t={t},v1={v1}"
+
+
+def _checkout_completed(email: str = "global@company.com", cents: int = 2900) -> bytes:
+    return json.dumps(
+        {
+            "id": "evt_stripe_1",
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "id": "cs_1",
+                    "customer_email": email,
+                    "amount_total": cents,
+                    "currency": "usd",
+                }
+            },
+        }
+    ).encode()
+
+
+class TestStripePaymentEndToEnd:
+    """Global (USD) checkout on the SAME link+webhook design as Razorpay."""
+
+    def test_a_signed_checkout_grants_credit_that_unlocks_an_audit(self, payapp: FastAPI) -> None:
+        client = TestClient(payapp)
+        HDR = {"X-User-Email": "global@company.com"}
+        body = _checkout_completed()
+        resp = client.post(
+            "/api/v1/webhooks/stripe",
+            content=body,
+            headers={"Stripe-Signature": _stripe_sign(body)},
+        )
+        assert resp.status_code == 200 and resp.json()["status"] == "processed"
+        with payapp.state.session_factory() as s:
+            user = s.execute(
+                select(User).where(User.email == "global@company.com")
+            ).scalar_one()
+            pay = s.execute(select(Payment).where(Payment.user_id == user.id)).scalars().all()
+            assert len(pay) == 1 and pay[0].provider == "stripe" and pay[0].currency == "USD"
+        after = client.post(
+            "/api/v1/audits",
+            headers=HDR,
+            files={"file": ("u.jsonl", io.BytesIO(b'{"ts":"2026-07-01T00:00:00Z"}\n'), "x")},
+        )
+        assert after.status_code == 201, after.text
+
+    def test_a_forged_stripe_signature_grants_nothing(self, payapp: FastAPI) -> None:
+        client = TestClient(payapp)
+        body = _checkout_completed()
+        resp = client.post(
+            "/api/v1/webhooks/stripe", content=body, headers={"Stripe-Signature": "t=1,v1=bad"}
+        )
+        assert resp.status_code == 400
+        with payapp.state.session_factory() as s:
+            assert s.execute(select(Payment)).scalars().all() == []

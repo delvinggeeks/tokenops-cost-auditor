@@ -67,6 +67,8 @@ class User(Base):
     statement_emails: Mapped[bool | None] = mapped_column(Boolean)
     # R-DAILY-LOOP: when the daily spend digest last went out (dedupe stamp)
     last_daily_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Wave B digest control: opt out of the daily spend digest. None/True = on.
+    daily_digest_emails: Mapped[bool | None] = mapped_column(Boolean)
     # Wave B activity center: when the customer last opened their activity
     # feed. Events after this are "new" (the topbar bell badge).
     activity_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

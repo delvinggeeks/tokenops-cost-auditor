@@ -72,6 +72,7 @@ def settings_page(
             plan_key=plan,
             source_limit=settings.plan_source_limits.get(plan, 0),
             statement_emails=user.statement_emails is not False,
+            daily_digest_emails=user.daily_digest_emails is not False,
             held_uploads=len(held),
             retention_days=settings.purge_after_days,
             purge_phrase=PURGE_PHRASE,
@@ -96,11 +97,13 @@ def plan_display(plan: str, settings: object) -> str:
 def save_email_prefs(
     request: Request,
     statement_emails: str | None = Form(default=None),
+    daily_digest_emails: str | None = Form(default=None),
     user_email: str = Depends(current_user),
 ) -> RedirectResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         user.statement_emails = statement_emails is not None
+        user.daily_digest_emails = daily_digest_emails is not None
         auditlog.append(session, user.email, "settings.email_prefs", user.email)
         session.commit()
     return RedirectResponse("/settings", status_code=303)

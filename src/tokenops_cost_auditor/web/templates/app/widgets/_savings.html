@@ -15,7 +15,14 @@
        most important element anchors a dense row, not a void (Stripe balance-
        overview grammar). #}
     <div class="savings-grid">
-      <div>
+      <div class="{{ 'savings-win' if w.data.verified > 0 else '' }}">
+        {% if w.data.verified > 0 %}
+        {# Celebration (Wave B) — fires ONLY on a genuinely verified saving
+           (>$0, proven by re-audit). Honest by construction: no verified
+           number, no celebration. Reduced-motion users get the finished state. #}
+        <p class="savings-win-tag"><svg class="i" aria-hidden="true"><use href="#i-savings"/></svg>
+          Real money back — proven on your own logs</p>
+        {% endif %}
         {{ kit.savings_hero("$" ~ "{:,.2f}".format(w.data.verified), cap=False) }}
         <div style="margin-top: var(--s2);">
           {% if w.data.verified_count %}

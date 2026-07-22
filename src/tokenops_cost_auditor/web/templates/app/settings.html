@@ -25,6 +25,13 @@
         <span>Email me the monthly Savings Statement<br>
           <small class="muted">One page, at month end. You can always read it here.</small></span>
       </label>
+      <label style="display:flex; gap:var(--s1); align-items:flex-start; margin-top:var(--s2);">
+        <input type="checkbox" name="daily_digest_emails" value="1"
+               {% if daily_digest_emails %}checked{% endif %}>
+        <span>Email me the daily spend digest<br>
+          <small class="muted">Yesterday's spend per source, only on days there's
+            something to show. Off? The dashboard still tracks it.</small></span>
+      </label>
       <p style="margin-top: var(--s2);">
         {{ kit.button("Save email preferences", variant="primary") }}</p>
     </form>
