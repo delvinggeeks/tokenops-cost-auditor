@@ -29,7 +29,14 @@ PAGE_LIMIT = 31  # days per page at 1d buckets
 
 
 class ConnectorAuthError(Exception):
-    """Invalid/revoked provider key. Message stays user-safe (no key echo)."""
+    """Provider refused the key. `status` carries the HTTP code so callers can
+    tell a bad/revoked key (401) from a real-but-unpermitted key (403) —
+    reporting a typo'd key as a permission problem is a false diagnosis
+    (readiness audit 2026-07-22). Message stays user-safe (no key echo)."""
+
+    def __init__(self, message: str, status: int = 0) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 def parse_page(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -68,7 +75,9 @@ def _fetch(
     while True:
         resp = http.get(BASE_URL, params=params, headers={"Authorization": f"Bearer {api_key}"})
         if resp.status_code in (401, 403):
-            raise ConnectorAuthError("provider rejected the stored key (revoked or scoped?)")
+            raise ConnectorAuthError(
+                "provider rejected the stored key", status=resp.status_code
+            )
         resp.raise_for_status()
         payload = resp.json()
         buckets.extend(parse_page(payload))

@@ -53,6 +53,8 @@ class FakeHTTP:
     def get(self, url: str, params: dict, headers: dict) -> FakeHTTP:
         if self.behaviour == "no_scope":
             self.status_code = 403
+        elif self.behaviour == "bad_key":
+            self.status_code = 401
         elif self.behaviour == "down":
             raise RuntimeError("connection refused")
         return self
@@ -73,14 +75,23 @@ class TestValidationVerdicts:
         assert "read-only" in ok.detail.lower()
         assert "never see your prompts" in ok.detail.lower()
 
+        # 403 = valid key, no admin permission → NO_SCOPE (honest Admin-key copy)
         no_scope = validate.validate_key("openai", "sk-limited", FakeHTTP("no_scope"))
         assert no_scope.status == validate.NO_SCOPE and no_scope.can_save is False
+        assert "Admin key" in no_scope.detail
+        assert "box to tick" not in no_scope.detail  # the stale screenshot copy is gone
+
+        # 401 = bad/revoked key → BAD_KEY, NOT misdiagnosed as a permission gap
+        # (readiness audit: reporting a typo'd key as "no permission" was false)
+        bad = validate.validate_key("openai", "sk-typo", FakeHTTP("bad_key"))
+        assert bad.status == validate.BAD_KEY and bad.can_save is False
+        assert "authenticate" in bad.headline.lower() and "mistyped" in bad.detail.lower()
 
         down = validate.validate_key("openai", "sk-good", FakeHTTP("down"))
         assert down.status == validate.UNREACHABLE
         assert down.can_save is True, "R-WIZ-DEGRADE: an outage must not block"
 
-        for verdict in (ok, no_scope, down):
+        for verdict in (ok, no_scope, bad, down):
             assert "sk-" not in verdict.headline + verdict.detail
 
     def test_05_degrade_path_saves_the_key_and_offers_a_retry(

@@ -216,6 +216,18 @@ class TestStatementLabelling:
         assert "No audit ran this month" in doc.body
         assert "$0.00 verified" not in doc.subject
 
+    def test_zero_findings_does_not_claim_findings_were_actioned(self, session: Session) -> None:
+        """Readiness audit: the statement said 'every finding has been
+        actioned' whenever identified==0 — false when NOTHING was ever
+        found. With no findings it must say nothing was flagged, not that
+        phantom findings were handled."""
+        user = User(email="clean@example.com")
+        session.add(user)
+        session.commit()
+        doc = statements.build(session, user, 2026, 6)
+        assert "every finding has been actioned" not in doc.body
+        assert "No new avoidable spend was flagged this month." in doc.body
+
 
 class TestArchiveAndResend:
     def test_03_archive_is_idempotent_and_sent_artifacts_are_frozen(self, session: Session) -> None:

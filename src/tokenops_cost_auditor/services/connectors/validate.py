@@ -28,6 +28,7 @@ from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuth
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
 
 OK = "ok"
+BAD_KEY = "bad_key"
 NO_SCOPE = "no_scope"
 UNREACHABLE = "unreachable"
 
@@ -53,13 +54,23 @@ VERDICTS = {
         ),
         can_save=True,
     ),
+    BAD_KEY: Verdict(
+        status=BAD_KEY,
+        headline="We couldn't authenticate that key.",
+        detail=(
+            "The provider didn't recognise it — it may be mistyped, revoked, "
+            "or from a different organization. Create a fresh Admin key and "
+            "paste it again."
+        ),
+        can_save=False,
+    ),
     NO_SCOPE: Verdict(
         status=NO_SCOPE,
         headline="This key can't read usage reports.",
         detail=(
-            "The key works, but it isn't allowed to read usage. Create one "
-            "with usage-reading permission — the screenshot above shows the "
-            "exact box to tick — and paste it again."
+            "The key authenticates, but it isn't an organization Admin key, so "
+            "the provider won't let it read usage and cost. Create an Admin key "
+            "(only an org owner/admin can) and paste it again."
         ),
         can_save=False,
     ),
@@ -92,10 +103,11 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
     try:
         fetch(api_key, start, end, http)
         return VERDICTS[OK]
-    except ConnectorAuthError:
-        # The provider actively refused the key's permissions — a real answer,
-        # so we do NOT save it.
-        return VERDICTS[NO_SCOPE]
+    except ConnectorAuthError as exc:
+        # The provider actively refused the key — a real answer, so we do NOT
+        # save it. Tell the truth about WHICH refusal: 401 = the key itself is
+        # bad/revoked; 403 = the key is valid but lacks admin permission.
+        return VERDICTS[BAD_KEY] if exc.status == 401 else VERDICTS[NO_SCOPE]
     except Exception as exc:
         log.info("connect.validate_unreachable", provider=provider, error=str(exc)[:120])
         return VERDICTS[UNREACHABLE]

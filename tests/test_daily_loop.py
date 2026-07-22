@@ -230,6 +230,24 @@ class TestTheTileAndTheTick:
         page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text
         assert "Yesterday" in page and "$10.00" in page
 
+    def test_tile_names_unpriced_models_instead_of_silently_dropping_them(
+        self, app: FastAPI
+    ) -> None:
+        """Readiness audit: the tile priced only rate-carded models and
+        dropped the rest while claiming 'priced on the verified rate card' —
+        understating the total silently. Unpriced models must be named."""
+        from tokenops_cost_auditor.services.dashboard import metrics
+
+        uid = _paid_user(app)
+        source = _source(app, uid)
+        _usage(app, source)  # claude-fable-5, priced
+        _usage(app, source, model="mystery-model-9")  # no rate card
+        with app.state.session_factory() as session:
+            w = metrics.yesterday_spend(session, app.state.pricing_table, uid, now=NOW)
+        assert "mystery-model-9" in w.provenance
+        assert "excludes unpriced" in w.provenance
+        assert w.data["unpriced"] == ["mystery-model-9"]
+
     def test_tile_empty_state_points_at_sources(self, app: FastAPI) -> None:
         _paid_user(app)
         page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text

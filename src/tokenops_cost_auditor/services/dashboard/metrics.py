@@ -284,9 +284,16 @@ def yesterday_spend(
         select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.rule == SOFT_BUDGET)
     ).scalar_one_or_none()
     budget = float(rule.threshold) if rule is not None and rule.enabled and rule.threshold else None
+    # Honesty (readiness audit): the tile priced only models on the verified
+    # rate card and silently dropped the rest while claiming full coverage.
+    # Name the excluded models so the total is never quietly understated.
+    unpriced = sorted(day.unpriced)
+    provenance = f"Daily usage pulls · priced on the verified rate card · {yday:%d %b}"
+    if unpriced:
+        provenance += f" · excludes unpriced: {', '.join(unpriced)}"
     return Widget(
         empty=False,
-        provenance=f"Daily usage pulls · priced on the verified rate card · {yday:%d %b}",
+        provenance=provenance,
         data={
             "total": day.total_usd,
             "by_source": sorted(day.by_source.items(), key=lambda kv: -kv[1])[:3],
@@ -294,5 +301,6 @@ def yesterday_spend(
             "budget": budget,
             "budget_pct": (mtd.total_usd / budget * 100.0) if budget else None,
             "day_label": f"{yday:%d %b}",
+            "unpriced": unpriced,
         },
     )

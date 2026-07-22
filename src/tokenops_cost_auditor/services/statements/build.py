@@ -167,8 +167,13 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
             "  These are estimates from our detectors. They become verified figures",
             "  only after you apply a fix and a later audit confirms it.",
         ]
-    else:
+    elif summary.verified_count or summary.pending_count:
+        # findings existed and were applied — "actioned" is true
         lines += ["  Nothing outstanding — every finding has been actioned."]
+    else:
+        # zero findings this month: nothing was ever there to action (readiness
+        # audit — the old copy claimed "actioned" when nothing was found)
+        lines += ["  No new avoidable spend was flagged this month."]
 
     if summary.pending_count:
         lines += [
