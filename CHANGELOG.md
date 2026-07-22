@@ -5,6 +5,20 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.28 · CONNECT-WIZARD HONESTY live (walkthrough +
+  research). Verified vs OpenAI/Anthropic docs: usage/cost needs a
+  full-power org ADMIN key (no usage-only scope, owner/admin-only). The
+  wizard was calling it "a read-only key, tick the box for read usage,
+  nothing else" — a nonexistent checkbox, an enterprise-review
+  failure. Now: names the org Admin key, states who can create it,
+  shows a can/do pairing (key CAN manage your org · we ONLY read usage
+  & cost), nudges expiry, makes "upload instead" first-class for teams
+  that won't issue an admin key. Anthropic URL fixed to
+  platform.claude.com. "read-only" moved off the KEY onto OUR USE across
+  landing/signin/get-logs. ux/trust gate PASS-WITH-NOTES (cross-surface
+  finding closed). SMOKE PASS: zero "read-only key" on public pages;
+  honest wizard + new URL confirmed in the running container.
+
 - 2026-07-22 · v1.5.27 · ACCOUNT MENU live (walkthrough: "no logout,
   account, management in the dashboard"). The topbar email is now the
   account menu — Account settings, Plan & billing, Log out (the
