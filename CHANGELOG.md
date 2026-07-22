@@ -5,6 +5,18 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.22 (cutover, config-only — no code change) · DOMAIN
+  CUTOVER + MAIL LIVE. tokenops-cost-auditor.com is now the serving
+  domain (apex/www/docs, TLS auto-provisioned); the retired domain
+  301-redirects every path to its new counterpart, docs included.
+  Postmark SMTP activated from the founder-parked token (server .env
+  only; DKIM/Return-Path verified; sender noreply@); first real email
+  sent end-to-end: magic-link to the founder's inbox, "mail.sent"
+  logged. SMOKE PASS: new-domain healthz/landing/docs 200 with
+  new-domain content throughout, www 301, retired apex + docs 301 with
+  path preserved. Founder follow-ups when ready: OAuth redirect URIs,
+  UptimeRobot monitor + status CNAME (§3b), payment links (§3a).
+
 - 2026-07-22 · v1.5.21 (99f2c63) · R-DOMAIN-CLEAN live. Zero traces of
   the retired domain anywhere in the repo — config defaults, template
   fallbacks, docs pages, mkdocs, runbook, tests and historical record
