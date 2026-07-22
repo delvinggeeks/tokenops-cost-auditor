@@ -50,7 +50,7 @@ def mail(app: FastAPI) -> MailRecorder:
 
 
 def request_link(client: TestClient, mail: MailRecorder, email: str) -> str:
-    resp = client.post("/auth/magic-link", data={"email": email})
+    resp = client.post("/auth/signin-link", data={"email": email})
     assert resp.status_code == 200
     assert "Check your email" in resp.text
     to, link = mail.magic_links[-1]
@@ -65,14 +65,14 @@ class TestTAUTH01Issue:
         assert len(token) > 20
 
     def test_invalid_email_rejected(self, client: TestClient, mail: MailRecorder) -> None:
-        resp = client.post("/auth/magic-link", data={"email": "not-an-email"})
+        resp = client.post("/auth/signin-link", data={"email": "not-an-email"})
         assert resp.status_code == 400
         assert mail.magic_links == []
 
     def test_auth_endpoint_rate_limited(self, client: TestClient, mail: MailRecorder) -> None:
         last = None
         for _ in range(6):  # limit is 5/minute (NFR-03)
-            last = client.post("/auth/magic-link", data={"email": "rl@example.com"})
+            last = client.post("/auth/signin-link", data={"email": "rl@example.com"})
         assert last is not None and last.status_code == 429
 
 
@@ -241,7 +241,9 @@ class TestTMAIL01Smtp:
         make_adapter().alert("cfo@example.com", "Spend up 40%", "Route /chat doubled.")
         assert outbox[0]["subject"] == "Spend up 40%"
         assert "Route /chat doubled." in str(outbox[0]["body"])
-        assert outbox[0]["from"] == "audits@example.com"
+        # the display name reads as a company, not machine mail (founder
+        # walkthrough 2026-07-22)
+        assert outbox[0]["from"] == "TokenOps Cost Auditor <audits@example.com>"
 
     def test_digest_subject_flags_alerts_only_when_present(
         self, monkeypatch: pytest.MonkeyPatch

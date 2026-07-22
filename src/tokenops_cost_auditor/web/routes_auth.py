@@ -48,7 +48,7 @@ def _record_login(session: Session, user: object, email: str, *, first_login: bo
         auditlog.append(session, email, "credit.signup", email)
 
 
-@router.post("/magic-link")
+@router.post("/signin-link")
 @limiter.limit("5/minute")  # NFR-03: auth endpoint rate-limited
 def request_magic_link(request: Request, email: str = Form(...)) -> HTMLResponse:
     settings = request.app.state.settings

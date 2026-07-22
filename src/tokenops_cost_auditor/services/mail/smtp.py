@@ -22,7 +22,9 @@ class SmtpMailAdapter:
 
     def _send(self, to_email: str, subject: str, body: str) -> None:
         msg = EmailMessage()
-        msg["From"] = self.from_addr
+        # a bare address reads as machine mail; the display name reads as a
+        # company (founder walkthrough 2026-07-22)
+        msg["From"] = f"TokenOps Cost Auditor <{self.from_addr}>"
         msg["To"] = to_email
         msg["Subject"] = subject
         msg.set_content(body)
@@ -39,9 +41,15 @@ class SmtpMailAdapter:
     def magic_link(self, to_email: str, link_url: str) -> None:
         self._send(
             to_email,
-            "Your TokenOps Cost Auditor sign-in link",
-            "Click to sign in (works once, expires in 15 minutes):\n\n"
-            f"{self.base_url}{link_url}\n\nIf you didn't request this, ignore this email.",
+            "Sign in to TokenOps Cost Auditor",
+            "Use this secure link to sign in to your TokenOps Cost Auditor "
+            "account:\n\n"
+            f"{self.base_url}{link_url}\n\n"
+            "The link works once and expires in 15 minutes. If you didn't "
+            "request it, you can safely ignore this email — no one can sign "
+            "in without access to this inbox.\n\n"
+            "TokenOps Cost Auditor — by WitAura\n"
+            f"{self.base_url}",
         )
 
     def report_ready(self, to_email: str, report_url: str) -> None:

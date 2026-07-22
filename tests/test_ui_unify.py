@@ -38,7 +38,7 @@ def signed_in(app: FastAPI) -> TestClient:
     # https base URL so the Secure session cookie is sent back (app_env=test
     # drops Secure, but the app-shell pages are the same either way).
     client = TestClient(app, base_url="https://testserver")
-    client.post("/auth/magic-link", data={"email": "seam@example.com"})
+    client.post("/auth/signin-link", data={"email": "seam@example.com"})
     client.get(recorder.magic_links[-1][1], follow_redirects=False)
     return client
 
@@ -97,8 +97,8 @@ class TestSignInSurfaces:
         assert "no card, ever" in signup
         assert "no card, ever" not in login
         # both post to the same magic-link endpoint
-        assert login.count('action="/auth/magic-link"') == 1
-        assert signup.count('action="/auth/magic-link"') == 1
+        assert login.count('action="/auth/signin-link"') == 1
+        assert signup.count('action="/auth/signin-link"') == 1
 
     def test_signed_in_users_are_sent_to_the_dashboard_not_the_form(self, app: FastAPI) -> None:
         client = signed_in(app)
@@ -114,7 +114,7 @@ class TestSignInSurfaces:
         recorder = _Recorder()
         app.state.mail = recorder
         client = TestClient(app, base_url="https://testserver")
-        client.post("/auth/magic-link", data={"email": "fresh@example.com"})
+        client.post("/auth/signin-link", data={"email": "fresh@example.com"})
         resp = client.get(recorder.magic_links[-1][1], follow_redirects=False)
         assert resp.status_code == 303
         assert resp.headers["location"] == "/dashboard"

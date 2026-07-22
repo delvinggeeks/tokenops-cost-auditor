@@ -33,7 +33,7 @@ def fresh_signup(app: FastAPI, email: str = EMAIL) -> TestClient:
     recorder = _Recorder()
     app.state.mail = recorder
     client = TestClient(app, base_url="https://testserver")
-    client.post("/auth/magic-link", data={"email": email})
+    client.post("/auth/signin-link", data={"email": email})
     client.get(recorder.magic_links[-1][1], follow_redirects=False)
     return client
 
@@ -52,7 +52,7 @@ class TestTheSignupCredit:
         # a second login does NOT grant another
         recorder = _Recorder()
         app.state.mail = recorder
-        client.post("/auth/magic-link", data={"email": EMAIL})
+        client.post("/auth/signin-link", data={"email": EMAIL})
         client.get(recorder.magic_links[-1][1], follow_redirects=False)
         with app.state.session_factory() as session:
             user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
