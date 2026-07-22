@@ -15,6 +15,38 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-LIVE-PRICING + R-LIVE-AUDIT (2026-07-22) — autonomous pricing, live audit status — DEPLOYED
+
+Founder ruling (verbatim): no human gate on pricing, cover leftover jobs, show
+real-time status during auditing — "always manual looses the game." SUPERSEDES
+the human-approval gate in R-PRICING-OPS / R-PRICING-AGENT (recorded PLAN §0.1).
+DECISIONS: (1) "no human gate" done safely = automated validation replaces the
+human, not blind trust. Source = the STRUCTURED LiteLLM model-prices JSON (the
+feed R-PRICING-AGENT already trusted), NOT heuristic HTML scraping (providers
+delete models from pages — the gpt-4o-mini incident's root cause). (2) A separate
+machine-managed overlay `prices.auto.yaml` (gitignored, env-local, written by
+ofelia on prod) is merged append-only over the hand-verified base; the base is
+never touched; every auto row carries `source: litellm-auto`. A HUMAN base row
+always wins a same-date tie (cold-review f.1). (3) Validation gates: four-rate
+shape, plausible band, jump-guard holds swings >±60%, no-op skip, $0 never
+written (cache 0 → input fallback). (4) `--cover-from-usage` scans usage for
+unpriceable models, covers them, RE-AUDITS affected sources; two ofelia jobs
+(pricing-sync-refresh daily 02:50, pricing-cover every 3h). (5) R-LIVE-AUDIT:
+connect kickoff creates a queued Audit synchronously → live theater; worker
+extracted to module-level `_process_first_pull` drives queued→processing→
+done/failed (cold-review f.2). FILE MAP DELTA: +scripts/pricing_sync.py,
++tests/test_pricing_sync.py; pricing/table.py (overlay merge), source_audit.py
+(finalize pre-created row), routes_sources.py (+_process_first_pull/_mark_failed),
+_wizard_verdict.html (land on theater), daily_digest.py (sync FYI+alert),
+ofelia.ini (2 jobs), .gitignore (overlay). GATES: vv-engineer PASS, cold-reviewer
+FAIL→fixed→PASS. DEPLOYED 2026-07-22 (backup tokenops_2026-07-22.dump; app
+rebuilt, ofelia reloaded, DNS healthz 200, prod feed reachable). First real
+cover-from-usage priced gpt-4o-mini and re-audited the founder's source (now
+priced, 0 findings = honest "no waste", not "unpriced"). No migration (head
+e5b8c2f74a19 unchanged). No rate VALUES changed in base card. OPEN: two-reading
+persistence for held swings is a BACKLOG enhancement (currently held one cycle,
+surfaced in digest); legacy claude-3.x coverage is demand-driven via usage.
+
 ## R-PRICING-FINAL-2 + R-DAILY-LOOP (2026-07-22) — dual-market pricing + the daily surface
 
 Ratified after five founder amendment rounds (analysis in
