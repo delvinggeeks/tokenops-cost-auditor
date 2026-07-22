@@ -199,6 +199,10 @@ def close_account(
         had_paid_sub = bool(sub and sub.status != subscriptions.CANCELLED)
         if had_paid_sub and sub is not None:
             sub.status = subscriptions.CANCELLED
+        # Real session kill (readiness audit 2026-07-22): stateless signed
+        # cookies can't be deleted server-side, so we bump the session epoch —
+        # every cookie issued before now is now rejected, on every device.
+        user.sessions_valid_from = utcnow()
         auditlog.append(
             session,
             user.email,

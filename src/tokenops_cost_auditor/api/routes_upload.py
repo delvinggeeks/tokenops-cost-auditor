@@ -32,7 +32,7 @@ from tokenops_cost_auditor.persistence.repo import (
 from tokenops_cost_auditor.services.ingest.base import ALLOWED_EXTENSIONS, IngestError, check_file
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments.base import claim_credit, unconsumed_credit
-from tokenops_cost_auditor.web.auth import SESSION_COOKIE, verify_session
+from tokenops_cost_auditor.web.auth import resolve_session
 
 router = APIRouter(prefix="/api/v1", tags=["audits"])
 
@@ -49,12 +49,10 @@ def current_user(request: Request, x_user_email: str | None = Header(default=Non
     """FR-17: magic-link session cookie wins; X-User-Email is a NON-PROD dev/test
     shim only (refused in prod)."""
     settings: Settings = request.app.state.settings
-    cookie = request.cookies.get(SESSION_COOKIE)
-    if cookie:
-        email = verify_session(settings.secret_key, cookie, settings.session_ttl_days)
-        if email:
-            request.state.user_email = email  # NFR-12 rate-limit key
-            return email
+    email = resolve_session(request, settings.secret_key, settings.session_ttl_days)
+    if email:
+        request.state.user_email = email  # NFR-12 rate-limit key
+        return email
     if settings.app_env != "prod" and x_user_email and EMAIL_RE.match(x_user_email):
         request.state.user_email = x_user_email.lower()
         return x_user_email.lower()

@@ -182,3 +182,41 @@ class TestPublicBaseUrlFallback:
     def test_a_set_base_url_wins(self) -> None:
         s = Settings(app_base_url="https://staging.example.com", _env_file=None)
         assert s.public_base_url == "https://staging.example.com"
+
+
+class TestSessionEpoch:
+    """Wave 3: resolve_session honors the per-user session epoch (real
+    revocation over a stateless signed cookie)."""
+
+    def test_null_epoch_always_passes(self, app) -> None:
+        from tokenops_cost_auditor.web.auth import SESSION_COOKIE, issue_session
+
+        with app.state.session_factory() as s:
+            s.add(User(email="live@example.com"))
+            s.commit()
+        client = TestClient(app)
+        client.cookies.set(
+            SESSION_COOKIE, issue_session(app.state.settings.secret_key, "live@example.com")
+        )
+        assert client.get("/dashboard").status_code == 200
+
+    def test_cookie_issued_before_the_epoch_is_rejected(self, app) -> None:
+        import time
+        from datetime import UTC, datetime
+
+        from tokenops_cost_auditor.web.auth import SESSION_COOKIE, issue_session
+
+        with app.state.session_factory() as s:
+            s.add(User(email="revoked@example.com"))
+            s.commit()
+        client = TestClient(app)
+        client.cookies.set(
+            SESSION_COOKIE, issue_session(app.state.settings.secret_key, "revoked@example.com")
+        )
+        assert client.get("/dashboard").status_code == 200  # valid before the bump
+        time.sleep(1.1)
+        with app.state.session_factory() as s:
+            user = s.execute(select(User).where(User.email == "revoked@example.com")).scalar_one()
+            user.sessions_valid_from = datetime.now(UTC)
+            s.commit()
+        assert client.get("/dashboard").status_code == 401  # dead after the bump

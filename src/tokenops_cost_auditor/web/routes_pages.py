@@ -15,7 +15,7 @@ from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
-from tokenops_cost_auditor.web.auth import SESSION_COOKIE, verify_session
+from tokenops_cost_auditor.web.auth import resolve_session
 
 log = structlog.get_logger("tokenops_cost_auditor.web")
 
@@ -28,11 +28,8 @@ def _render(request: Request, template: str, **ctx: object) -> HTMLResponse:
 
 
 def session_email(request: Request) -> str | None:
-    cookie = request.cookies.get(SESSION_COOKIE)
-    if not cookie:
-        return None
     settings = request.app.state.settings
-    return verify_session(settings.secret_key, cookie, settings.session_ttl_days)
+    return resolve_session(request, settings.secret_key, settings.session_ttl_days)
 
 
 HERO_COOKIE = "hero_v"

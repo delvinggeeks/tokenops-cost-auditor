@@ -186,6 +186,34 @@ class TestCloseAccount:
             )
             assert (entry.detail or {}).get("provider_cancellation_required") is True
 
+    def test_closing_kills_a_session_captured_on_another_device(
+        self, app: FastAPI, tmp_path
+    ) -> None:
+        """Readiness audit: 'session kill' only deleted the acting browser's
+        cookie; a cookie captured elsewhere stayed valid. Closing now bumps
+        the session epoch so EVERY prior cookie is rejected — proven by using
+        a second client that never sent the close request."""
+        import time
+
+        from tokenops_cost_auditor.web.auth import SESSION_COOKIE, issue_session
+
+        self._seed(app, tmp_path)
+        secret = app.state.settings.secret_key
+        # a session cookie captured on another device, issued before the close
+        stolen = issue_session(secret, EMAIL)
+        other = TestClient(app)
+        other.cookies.set(SESSION_COOKIE, stolen)
+        assert other.get("/dashboard").status_code == 200  # valid before close
+        time.sleep(1.1)  # the epoch check allows 1s of clock skew
+        TestClient(app).post(
+            "/settings/close-account",
+            headers=HDR,
+            data={"confirm": "CLOSE MY ACCOUNT"},
+            follow_redirects=False,
+        )
+        # the stolen cookie is now dead everywhere, not just where close ran
+        assert other.get("/dashboard").status_code == 401
+
     def test_the_settings_page_states_the_consequences(self, app: FastAPI) -> None:
         page = TestClient(app).get("/settings", headers=HDR).text
         assert "CLOSE MY ACCOUNT" in page
