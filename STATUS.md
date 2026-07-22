@@ -63,6 +63,33 @@ customer's real spend is likely Anthropic — connect-Anthropic nudge is a
 follow-up. No gate needed (config + infra, no money-math logic change; full
 suite green).
 
+## R-FLYWHEEL L3 + FULL-HISTORY (2026-07-23) — forecast shipped, entire year priced — DEPLOYED
+
+Founder direction: the moat is proactiveness/tokenomics per docs/12-FLYWHEEL
+(already-documented design; NOT new scope — corrected my own scope-freeze
+misread in-session). Founder picked "before-the-invoice forecast + anomaly
+alerts" as the first rung. SHIPPED as deterministic-now L3: services/forecast
+project_cycle() (month-end projection vs trailing-90d baseline, all money via
+daily.spend_between), dashboard _forecast widget, daily-digest heads-up line.
+Honesty Law enforced: prints basis, refuses to project below data thresholds,
+holds the alert on a partially-unpriced BASELINE (false-alarm guard), flags
+unpriced CURRENT-month usage as "understated" (cold-review f.1 — alert still
+fires; understatement is conservative-safe). T-NFR-01 now guards forecast.py
+(GUARDED_MODULES). GATES: cold PASS-WITH-NOTES (f.1 fixed, f.2 advisory
+accepted), vv PASS-WITH-NOTES (import-guard + branch tests closed). Commits
+01334e8, c925222, d5475dd.
+FULL-HISTORY CHAIN (same day): backfill 365d re-pull found the REAL account —
+46,868 calls / 23 models / Jul2025-Jun2026 (the 30d window had shown 35 calls).
+Two coverage bugs fixed (commit after d5475dd): gap scan now checks
+priceability at each bucket's USAGE date (was: today), and cover back-dates
+COVERAGE_BACKDATE_DAYS=400 spanning the audit window (was 90 — covered-today
+models left 2025 buckets unpriced; audit read $0.17). Honesty caveat recorded:
+current feed rate applied across the window, provenance litellm-auto. RESULT
+IN PROD: audit 36963bd0 = $96.87 spend, 46,868 rows, 86 days, 11 findings,
+21.9% savings identified. 41 overlay rates written, 0 held. healthz 200,
+pricing age 0 days. NEXT: founder connecting an Anthropic key is the highest
+value step (their real spend is Claude-side).
+
 ## R-PRICING-FINAL-2 + R-DAILY-LOOP (2026-07-22) — dual-market pricing + the daily surface
 
 Ratified after five founder amendment rounds (analysis in
