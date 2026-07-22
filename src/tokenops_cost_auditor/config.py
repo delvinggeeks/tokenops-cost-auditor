@@ -200,12 +200,16 @@ class Settings(BaseSettings):
     # its single audit is metered by the signup comp credit, and the
     # scheduler never pulls free sources (entitlement filter).
     plan_source_limits: dict[str, int] = {"free": 1, "pro": 1, "team": 5}
-    # Connect (T2): first-connect backfill window. Was 30 (accepted default Q2),
-    # widened to 180 (founder incident 2026-07-22): real usage is often weeks or
-    # months old, so a 30-day window pulled a sliver and the dashboard read
-    # empty. The provider Usage API serves ~a year; 6 months captures a real
-    # spend history without an unbounded first pull. Env-overridable.
-    connect_backfill_days: int = 180
+    # Connect (T2): first-connect backfill window. 30 -> 180 (empty-dashboard
+    # incident 2026-07-22) -> 365 (R-FLYWHEEL L3 substrate, 2026-07-23): the
+    # before-the-invoice forecast needs a full year of history for a stable
+    # baseline and seasonality, and "entire history" is the founder ask. The
+    # Usage API paginates ~a month per page; a year is ~12 pages. Env-overridable.
+    connect_backfill_days: int = 365
+    # R-FLYWHEEL L3 (deterministic-now): a projected month-end spend this far
+    # above the trailing-quarter average fires the before-the-invoice anomaly
+    # alert (observe-only, X-02 intact).
+    forecast_overspend_pct: float = 30.0
     # Alerts (WP-3, observe-and-alert only; accepted defaults Q10 — see STATUS M1)
     alert_spend_spike_dod_pct: float = 30.0
     alert_waste_target_pct: float = 25.0

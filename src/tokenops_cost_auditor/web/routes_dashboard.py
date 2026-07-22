@@ -50,6 +50,7 @@ SORTS = {
 WIDGETS = (
     "savings",
     "yesterday",
+    "forecast",
     "spend_trend",
     "waste_trend",
     "top_findings",
@@ -110,6 +111,9 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
             widgets={
                 "savings": w_savings,
                 "yesterday": metrics.yesterday_spend(
+                    session, request.app.state.pricing_table, user.id
+                ),
+                "forecast": metrics.forecast(
                     session, request.app.state.pricing_table, user.id
                 ),
                 "spend_trend": metrics.spend_trend(session, user.id),
@@ -176,6 +180,8 @@ def widget_partial(
             widget, _ = metrics.savings(session, user.id)
         elif key == "yesterday":
             widget = metrics.yesterday_spend(session, request.app.state.pricing_table, user.id)
+        elif key == "forecast":
+            widget = metrics.forecast(session, request.app.state.pricing_table, user.id)
         elif key == "alerts":
             watching = alerts_dispatch.plan_watches(
                 request.app.state.settings, user_plan(session, user.id)

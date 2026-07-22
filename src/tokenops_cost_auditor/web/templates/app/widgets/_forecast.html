@@ -1,0 +1,31 @@
+{% from "app/_widget_head.html" import widget_head %}
+<section class="widget w-4" id="w-forecast">
+  {{ widget_head("i-trend-up", "forecast", help) }}
+  {% if w.empty %}
+    <div class="empty">
+      <p>{{ w.provenance }} — we project your month-end spend from a connected
+        source's history, and show it here once there's enough to be honest about.</p>
+      <a class="btn btn-quiet" href="/sources">Connect a source</a>
+    </div>
+  {% else %}
+    {% if w.data.anomaly %}
+      {# alert-only, before the invoice (X-02: we flag, we never block) #}
+      <div class="since-here" style="border-color: var(--estimate); margin-bottom: var(--s2);">
+        <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+        <span>On track to spend <strong>{{ "%.0f"|format(w.data.over_pct) }}% above</strong>
+          your usual this month — worth a look before the bill lands.</span>
+      </div>
+    {% endif %}
+    <div class="stat-lg money">${{ "%.2f"|format(w.data.projected) }}<span class="muted"
+      style="font-size:14px;font-family:var(--sans)"> projected this month</span></div>
+    <p style="margin-top: var(--s1)">
+      <span class="money">${{ "%.2f"|format(w.data.mtd) }}</span> so far ·
+      usual <span class="money">${{ "%.2f"|format(w.data.baseline) }}</span>/mo
+      {% if w.data.over_pct is not none %}
+        · <span class="{{ 'badge badge-estimate' if w.data.anomaly else 'muted' }}"
+          >{{ "%+.0f"|format(w.data.over_pct) }}%</span>
+      {% endif %}
+    </p>
+  {% endif %}
+  <div class="provenance">{{ w.provenance }}</div>
+</section>

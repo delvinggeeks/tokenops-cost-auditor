@@ -306,6 +306,42 @@ def yesterday_spend(
     )
 
 
+def forecast(
+    session: Session, table: object, user_id: str, now: datetime | None = None
+) -> Widget:
+    """R-FLYWHEEL L3 (deterministic-now): before-the-invoice month-end projection
+    + overspend anomaly. Alert-only (X-02 intact). Same coster as every other
+    spend surface, so the forecast, the digest and the audit never disagree.
+    Below its data threshold it returns the empty state with an honest basis,
+    never a projection from noise (Honesty Law)."""
+    from tokenops_cost_auditor.services import forecast as fc
+
+    sources = (
+        session.execute(select(Source).where(Source.user_id == user_id, Source.status == "active"))
+        .scalars()
+        .all()
+    )
+    if not sources:
+        return Widget(empty=True, provenance="No connected sources")
+    f = fc.project_cycle(session, table, user_id, now=now)  # type: ignore[arg-type]
+    if not f.ready:
+        # honest "building your forecast — needs ~N more days" basis
+        return Widget(empty=True, provenance=f.basis)
+    return Widget(
+        empty=False,
+        provenance=f.basis,
+        data={
+            "projected": f.projected_usd,
+            "mtd": f.mtd_usd,
+            "baseline": f.baseline_usd,
+            "over_pct": f.over_pct,
+            "anomaly": f.anomaly,
+            "days_elapsed": f.days_elapsed,
+            "days_in_month": f.days_in_month,
+        },
+    )
+
+
 def onboarding(session: Session, user_id: str) -> dict:
     """The 5-step activation path (Wave A). Each step derives from data that
     already exists, so it self-completes as the customer progresses — the aha

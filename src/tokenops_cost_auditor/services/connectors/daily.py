@@ -167,6 +167,15 @@ def run_digests(
                 yesterday - timedelta(days=1),
             )
             mtd = spend_between(session, table, user.id, today.replace(day=1), yesterday)
+            # R-FLYWHEEL L3 (deterministic-now): before-the-invoice overspend
+            # heads-up. Observe-only (X-02). No per-month dedup needed — the
+            # daily digest is already once-per-day and the customer opted in.
+            from tokenops_cost_auditor.services import forecast as forecast_svc
+
+            fc = forecast_svc.project_cycle(
+                session, table, user.id, now=now, threshold_pct=settings.forecast_overspend_pct
+            )
+            forecast_alert = fc.ready and fc.anomaly
             budget_rule = session.execute(
                 select(AlertRule).where(AlertRule.user_id == user.id, AlertRule.rule == SOFT_BUDGET)
             ).scalar_one_or_none()
@@ -175,7 +184,7 @@ def run_digests(
                 if budget_rule is not None
                 else None
             )
-            if day.total_usd <= 0 and stage is None:
+            if day.total_usd <= 0 and stage is None and not forecast_alert:
                 # R-STMT-GATING grammar: nothing to show, nothing sent
                 user.last_daily_digest_at = now
                 session.commit()
@@ -197,6 +206,12 @@ def run_digests(
             lines.append(
                 f"Month so far: {_fmt(mtd.total_usd)}{_inr_line(settings, currency, mtd.total_usd)}"
             )
+            if forecast_alert:
+                lines.append(
+                    f"⚠ On track for {_fmt(fc.projected_usd)} this month — "
+                    f"{fc.over_pct:+.0f}% vs your usual {_fmt(fc.baseline_usd)}/mo. "
+                    "A look now beats a surprise on the invoice."
+                )
             if budget_rule is not None and budget_rule.enabled and budget_rule.threshold:
                 pct = mtd.total_usd / float(budget_rule.threshold) * 100.0
                 budget_amount = _fmt(float(budget_rule.threshold))
@@ -210,6 +225,10 @@ def run_digests(
 
             if stage == 100:
                 subject = f"Over budget: {_fmt(mtd.total_usd)} this month — TokenOps daily"
+            elif forecast_alert:
+                subject = (
+                    f"Heads up: on track for {_fmt(fc.projected_usd)} this month — TokenOps daily"
+                )
             elif stage is not None:
                 subject = (
                     f"{stage}% of budget used — {_fmt(day.total_usd)} yesterday — TokenOps daily"

@@ -64,6 +64,14 @@ widgets:
     do: "A step change usually means a deploy — compare it against the findings from the same week."
     link_text: "Reading your spend chart"
     link: "/guide/spend-chart"
+  forecast:
+    title: "Month-end forecast"
+    tells: "Where this month's bill is heading — before the invoice, not after."
+    what: "Your spend so far this month, projected to month-end at your current pace, against your usual monthly average."
+    where: "Projected from complete days this month at our human-verified rate card; the baseline is your prior 90 days. Every figure prints what it was built from."
+    do: "If the projection runs well above your usual, that is your cue to look now — we flag it, we never block it."
+    link_text: "How the forecast works"
+    link: "/guide/forecast"
   waste_share:
     title: "Waste share"
     tells: "How much of that spend our detectors can account for as avoidable."

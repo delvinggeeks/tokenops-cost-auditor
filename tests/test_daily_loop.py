@@ -13,7 +13,7 @@ discipline without a spreadsheet.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -28,6 +28,8 @@ from tokenops_cost_auditor.persistence.models import (
     User,
 )
 from tokenops_cost_auditor.services.connectors import daily, schedule
+from tokenops_cost_auditor.services.pricing.table import PricingTable as _PT
+from tokenops_cost_auditor.services.pricing.table import Rate as _Rate
 
 EMAIL = "daily@example.com"
 NOW = datetime.now(UTC)
@@ -100,6 +102,62 @@ def _run(app: FastAPI, mail: CapturingMail) -> dict[str, int]:
         return daily.run_digests(
             session, app.state.settings, app.state.pricing_table, mail, now=NOW
         )
+
+
+# A fully-priced synthetic card ($10/M input from 2026-01-01) so the digest
+# forecast tests exercise the ALERT wiring, not rate-card effective_from edges
+# (the real card starts 2026-06-01, which would leave a baseline window unpriced).
+_FC_TABLE = _PT(
+    version="fc",
+    last_verified=None,
+    _entries={
+        ("anthropic", "claude-fable-5"): (
+            _Rate(input=10.0, output=50.0, cache_read=1.0, cache_write=12.5,
+                  effective_from=date(2026, 1, 1)),
+        )
+    },
+)
+
+
+class TestForecastAnomalyInDigest:
+    """R-FLYWHEEL L3: a projected overspend must reach the customer BEFORE the
+    invoice, via the daily digest — even on a day yesterday itself was quiet."""
+
+    def test_projected_overspend_lands_in_the_digest(self, app: FastAPI) -> None:
+        # unique email: the shared app DB carries other tests' users, so target
+        # this recipient specifically instead of mail.sent[0].
+        who = "fc-anomaly@example.com"
+        fixed = datetime(2026, 7, 16, tzinfo=UTC)  # day 16 -> 15 elapsed days, ready
+        src = _source(app, _paid_user(app, email=who))
+        # baseline ~$20/mo across the prior quarter (claude-fable-5 = $10/M input)
+        for d in (date(2026, 4, 15), date(2026, 5, 15), date(2026, 6, 15)):
+            _usage(app, src, day=d, prompt=2_000_000)  # $20 each
+        # this month trending high: $15 over 15 days -> projected $31 (+55%)
+        _usage(app, src, day=date(2026, 7, 5), prompt=1_500_000)  # $15
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            daily.run_digests(session, app.state.settings, _FC_TABLE, mail, now=fixed)
+        mine = [m for m in mail.sent if m[0] == who]
+        assert mine, "an anomaly must send even though yesterday (Jul 15) was quiet"
+        _to, subject, body = mine[0]
+        assert "Heads up" in subject
+        assert "On track for" in body
+
+    def test_on_track_account_gets_no_heads_up(self, app: FastAPI) -> None:
+        who = "fc-ontrack@example.com"
+        fixed = datetime(2026, 7, 16, tzinfo=UTC)
+        src = _source(app, _paid_user(app, email=who))
+        for d in (date(2026, 4, 15), date(2026, 5, 15), date(2026, 6, 15)):
+            _usage(app, src, day=d, prompt=2_000_000)  # baseline $20/mo
+        _usage(app, src, day=date(2026, 7, 15), prompt=1_000_000)  # $10 yesterday, in-line
+        mail = CapturingMail()
+        with app.state.session_factory() as session:
+            daily.run_digests(session, app.state.settings, _FC_TABLE, mail, now=fixed)
+        mine = [m for m in mail.sent if m[0] == who]
+        assert mine  # still sends (yesterday had spend)
+        _to, subject, body = mine[0]
+        assert "Heads up" not in subject
+        assert "On track for" not in body
 
 
 class TestTheDigest:
