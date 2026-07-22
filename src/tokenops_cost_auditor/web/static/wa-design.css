@@ -390,6 +390,27 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .help-body dt:first-child { margin-top: 0; }
 .help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
 
+/* ---- ACCOUNT MENU (topbar; walkthrough 2026-07-22) ---- */
+.account-menu { position: relative; }
+.account-menu > summary { list-style: none; cursor: pointer; color: var(--ink-soft);
+  font-size: 13px; padding: 4px 10px; border: 1px solid var(--rule);
+  border-radius: var(--radius); }
+.account-menu > summary::-webkit-details-marker { display: none; }
+.account-menu > summary::after { content: " ▾"; font-size: 10px; }
+.account-menu > summary:hover { color: var(--accent); border-color: var(--accent); }
+.account-menu[open] > summary { color: var(--on-accent); background: var(--accent);
+  border-color: var(--accent); }
+.account-pop { position: absolute; right: 0; top: 34px; z-index: 30; min-width: 200px;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-3); padding: var(--s1);
+  display: grid; gap: 2px; animation: swap-in var(--t-fast) var(--ease); }
+.account-pop a { display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: var(--radius); font-size: 13.5px; color: var(--ink); }
+.account-pop a:hover { background: var(--wash); text-decoration: none; }
+.account-pop form { border-top: 1px solid var(--rule); margin-top: 4px;
+  padding-top: 6px; }
+.account-pop form .btn { width: 100%; justify-content: flex-start; }
+
 /* ---- GUIDED TOUR (§2a): spotlight + popover ---- */
 .tour-veil { position: fixed; inset: 0; background: var(--veil);
   z-index: 40; }

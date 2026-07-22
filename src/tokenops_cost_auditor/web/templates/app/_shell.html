@@ -69,7 +69,19 @@
          button names the mood it takes you to, like every dark-mode switch. #}
       <button class="btn btn-quiet mood-toggle" type="button" data-mood-toggle
               aria-label="Switch between the day and night looks">Aura</button>
-      <span class="muted">{{ user_email }}</span>
+      {# Account menu (founder walkthrough 2026-07-22: "no logout, account,
+         management in the dashboard") — the email IS the menu, the way
+         every SaaS topbar works. details/summary: no JS, closes on blur. #}
+      <details class="account-menu">
+        <summary aria-label="Account menu">{{ user_email }}</summary>
+        <div class="account-pop">
+          <a href="/settings">{{ icon("i-settings") }}Account settings</a>
+          <a href="/billing">{{ icon("i-billing") }}Plan &amp; billing</a>
+          <form method="post" action="/auth/logout">
+            <button class="btn btn-quiet" type="submit">Log out</button>
+          </form>
+        </div>
+      </details>
     </header>
     <main class="main">
       {# Section purpose line (R-CLARITY §3): what you do here, in one sentence #}

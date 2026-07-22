@@ -245,3 +245,25 @@ class TestTheBrandMark:
         assert page.count('class="wa-mark"') >= 2  # header + footer
         assert "by WitAura" in page and "© 2026 WitAura" in page
         assert 'rel="icon"' in page and "og:image" in page
+
+
+class TestAccountMenu:
+    """Walkthrough 2026-07-22: a signed-in founder found no logout, account
+    or management surface. The topbar email is now the account menu."""
+
+    def test_every_app_page_carries_logout_and_account_links(self, app: FastAPI) -> None:
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert 'action="/auth/logout"' in page
+        assert ">Log out<" in page
+        assert 'href="/settings"' in page and "Account settings" in page
+        assert 'href="/billing"' in page and "Plan &amp; billing" in page
+
+    def test_logout_actually_ends_the_session(self, app: FastAPI) -> None:
+        client = TestClient(app, base_url="https://testserver")
+        resp = client.post("/auth/logout", follow_redirects=False)
+        assert resp.status_code == 303 and resp.headers["location"] == "/"
+        # the cookie is cleared on the way out
+        assert "top_session=" in resp.headers.get("set-cookie", "")
+        assert 'top_session=""' in resp.headers.get(
+            "set-cookie", ""
+        ) or "Max-Age=0" in resp.headers.get("set-cookie", "")
