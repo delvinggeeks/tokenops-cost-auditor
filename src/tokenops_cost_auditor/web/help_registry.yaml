@@ -18,6 +18,8 @@ destinations:
     purpose: "Work through what is worth fixing, largest dollar impact first."
   reports:
     purpose: "Open or download any past audit, including its full report PDF."
+  explore:
+    purpose: "Slice your entire history — by time, model, source or finding — and read it as one report."
   sources:
     purpose: "Connect a provider so we pull your usage automatically, or revoke one."
   get_logs:

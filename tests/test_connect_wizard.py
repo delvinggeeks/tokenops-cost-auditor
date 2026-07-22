@@ -370,3 +370,63 @@ class TestColdReviewRegressionsV9:
             assert client.get("/sample").status_code == 200
         assert len(builds) == 1, f"engine ran {len(builds)} times for 3 requests"
         sample._RENDERED = None
+
+
+class TestMultiSource:
+    """R-MULTI-SOURCE (founder order 2026-07-23): a second ACCOUNT of the same
+    provider connects fine up to the plan limit; the SAME key is blocked by
+    fingerprint, with the existing connection named in plain words."""
+
+    def test_two_accounts_same_provider_connect_with_distinct_labels(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        give_plan(app, "team")
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        pulls: list[str] = []
+        monkeypatch.setattr(
+            routes_sources,
+            "_kickoff_first_pull",
+            lambda request, source_id: pulls.append(source_id),
+        )
+        client = TestClient(app)
+        first = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-A"}
+        )
+        second = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-B"}
+        )
+        assert first.status_code == 200 and second.status_code == 200
+        with app.state.session_factory() as session:
+            sources = session.execute(select(Source)).scalars().all()
+            assert len(sources) == 2
+            assert {s.label for s in sources} == {"openai usage", "openai usage #2"}
+            fps = {s.key_fingerprint for s in sources}
+            assert None not in fps and len(fps) == 2, "distinct keys, distinct fingerprints"
+        assert len(pulls) == 2, "each account gets its own first pull"
+
+    def test_same_key_again_is_blocked_naming_the_existing_connection(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        give_plan(app, "team")
+        monkeypatch.setattr(
+            validate, "validate_key", lambda *a, **k: validate.VERDICTS[validate.OK]
+        )
+        from tokenops_cost_auditor.web import routes_sources
+
+        monkeypatch.setattr(routes_sources, "_kickoff_first_pull", lambda request, source_id: None)
+        client = TestClient(app)
+        assert (
+            client.post(
+                "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-A"}
+            ).status_code
+            == 200
+        )
+        again = client.post(
+            "/sources/connect/openai/validate", headers=HDR, data={"api_key": "sk-org-A"}
+        )
+        assert again.status_code == 409
+        assert "openai usage" in again.json()["detail"]

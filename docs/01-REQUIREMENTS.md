@@ -59,6 +59,19 @@ FR-16 (S) Shareable redacted sample report for marketing (synthetic data).
 FR-28 (M) [amendment 2026-07-17, R-PRICING-OPS] Every report (JSON + PDF
 methodology) prints pricing table version/last_verified and the count+list
 of unpriced models encountered.
+FR-32 (M) [amendment 2026-07-23, R-EXPLORER; extended same day by
+R-MULTI-SOURCE] Report explorer: logged-in customers compose filtered views
+over their ENTIRE retained history — filters: date range, grouping
+(day/month), source tier OR a specific connected account (per-account
+attribution via audits.source_id; pre-attribution audits stated honestly),
+model, finding type, severity, feedback status. SSR + htmx in the dashboard shell. Laws
+attached: filtered totals reconcile ±0.5% (NFR-07); purged audits
+participate as retained aggregates + metadata, labeled (FR-21/FR-31);
+per-view tier coverage stated honestly; FR-30 line renders when any audit
+in view carries equiv-spend; overlapping audit coverage counted once
+(latest audit wins per day×model bucket, NOTES-sheet derivation); FR-22
+counts-only throughout. Saved views + export are a later slice (held on
+PLAN-FLYWHEEL §6 Q6).
 
 ## D. Accounts, payments, admin
 

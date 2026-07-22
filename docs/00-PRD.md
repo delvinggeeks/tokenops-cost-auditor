@@ -153,6 +153,34 @@ under "Amendments" with date + reason.
   (4) Sequence: R-LAUNCH-POLISH + R-ONBOARD → walkthrough → launch thread
   with Connect flows honestly absent from claims → AGG build starts
   immediately after.
+- 2026-07-23 R-EXPLORER (founder): FR-32 promoted from BACKLOG
+  (WP-REPORT-EXPLORER) — filterable full-history report explorer inside the
+  dashboard shell, per the founder order "client should be able to select the
+  report of all his history data … multiple options to filter". Sequencing
+  override: built immediately on this order (ahead of WP-PIPELINE-UI). Slices
+  C1+C2 ship now (filter backend + SSR surface, ux mockup gated first per
+  R-DESIGN); C3 saved views + view-export HELD pending PLAN-FLYWHEEL §6 Q6
+  (interplay with the registered data-export trigger). Money-adjacent default
+  recorded in the golden NOTES sheet: overlapping audit coverage de-duplicates
+  as "latest audit wins per (day, model) bucket" — stored costs are summed,
+  no estimator changes.
+- 2026-07-23 R-MULTI-SOURCE (founder, same-day follow-up to R-EXPLORER:
+  "only one source can be connected at a time, no option to select multiple
+  llm accounts and switching it to that details"): (1) the connect flow's
+  per-provider uniqueness block is REMOVED — it was an implementation
+  shortcut, not part of R-Q5/Q6, and it capped Team's ruled 5 sources at 2
+  in practice. R-Q5's "a source = one active provider org connection" stands:
+  multiple sources per provider are multiple org connections, counted against
+  the plan limit unchanged. (2) What replaces it: a keyed one-way fingerprint
+  of the API key — connecting the SAME key twice is refused with the existing
+  connection named (the double-counting guard the old block actually
+  protected); pre-existing sources backfill fingerprints on their next pull.
+  (3) audits.source_id (migration 013, additive) attributes every connected
+  audit to its account; FR-32 explorer gains a per-account selector; Sources
+  rows gain "View usage" deep-links (switch-to-account-details = a filter,
+  not a new page). Honest limit recorded: two DIFFERENT admin keys of the
+  same provider org fingerprint differently and are not caught — org-level
+  identity hardening is a registered BACKLOG line.
 - 2026-07-20 GRAND CONSOLIDATED ORDER v2 (founder): platform vision recorded
   (PLAN §0.0 — WitAura AI Agentic Engineering Governance Platform ecosystem;
   buyer = business owner; proof = verified savings; three rings strictly

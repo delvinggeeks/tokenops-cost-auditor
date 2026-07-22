@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Report explorer (FR-32, R-EXPLORER) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (one per flow): the slice recount — on Apply, "Spend in view"
+     settles with the number-moment tick from MOTION-SPECS (money never
+     shimmers; the figure lands, it does not animate while unknown). -->
+<style>
+  /* mockup-local layout only; all tokens from wa-design.css */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: flex-end;
+    padding-bottom: var(--s3); border-bottom: 1px solid var(--rule); margin-bottom: var(--s3); }
+  .filter-bar label { display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+  .filter-bar select, .filter-bar input { min-width: 130px; }
+  .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s3);
+    margin-bottom: var(--s4); }
+  .honesty { margin: var(--s2) 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  @media (max-width: 720px) { .stat-row { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="app-body">
+<main class="wrap" style="padding-top: var(--s4); padding-bottom: var(--s4);">
+
+  <h1>Explore your history</h1>
+  <p class="tells">Compose a report over everything we have ever measured for you —
+    pick the slice, the math stays audit-grade.</p>
+
+  <!-- Filter bar: every control is a plain form field; Apply is one server
+       round-trip (SSR — the URL is the state, shareable and bookmarkable). -->
+  <form class="filter-bar">
+    <label>From <input type="date" value="2026-01-01"></label>
+    <label>To <input type="date" value="2026-07-23"></label>
+    <label>Group by
+      <select><option selected>Month</option><option>Day</option></select></label>
+    <label>Data source
+      <select><option selected>All</option><option>Uploads</option>
+        <option>Connected accounts</option></select></label>
+    <label>Model
+      <select><option selected>All models</option><option>gpt-4o-mini</option>
+        <option>claude-sonnet-5</option></select></label>
+    <label>Finding type
+      <select><option selected>All</option><option>Uncached repeated prompts</option>
+        <option>Oversized model for the task</option></select></label>
+    <label>Severity
+      <select><option selected>Any</option><option>High</option>
+        <option>Medium</option><option>Low</option></select></label>
+    <label>Status
+      <select><option selected>Any</option><option>Applied</option>
+        <option>Dismissed</option><option>Not reviewed</option></select></label>
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn btn-quiet" href="#">Reset</a>
+  </form>
+
+  <!-- Stat row: kit stat() output verbatim — .stat-card/.stat-k/.stat-v money.
+       MONEY NEVER SHIMMERS. -->
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-k">Spend in view</div>
+      <div class="stat-v money">$4,812.37</div>
+      <div class="stat-m">Jan 1 – Jul 23 · 204 days</div></div>
+    <div class="stat-card"><div class="stat-k">Waste identified</div>
+      <div class="stat-v money tone-waste">$1,102.20/mo</div>
+      <div class="stat-m">across 7 findings</div></div>
+    <div class="stat-card"><div class="stat-k">Calls</div>
+      <div class="stat-v money">1,284,102</div></div>
+    <div class="stat-card"><div class="stat-k">Tokens in / out</div>
+      <div class="stat-v money">2.1B / 340M</div>
+      <div class="stat-m">18% served from cache</div></div>
+    <div class="stat-card"><div class="stat-k">Audits in view</div>
+      <div class="stat-v money">9</div>
+      <div class="stat-m">2 with raw logs purged</div></div>
+  </div>
+
+  <!-- Honesty block: every caveat that applies to THIS slice, in words. -->
+  <p class="honesty muted">Some of this usage came from connected provider accounts:
+    three detectors need per-request logs and could not run on those audits.
+    Days covered by more than one audit use the most recent audit’s numbers.</p>
+
+  <div class="grid-2">
+    <section class="surface">
+      <h2>Where the money went — by model</h2>
+      <table class="ledger">
+        <thead><tr>
+          <th class="sortable">Model <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+          <th class="sortable r">Calls <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+          <th class="r">Tokens</th>
+          <th class="sortable r money" aria-sort="descending">Spend <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+        </tr></thead>
+        <tbody>
+          <tr><td>gpt-4o-mini</td><td class="r">980,014</td><td class="r">1.6B</td>
+            <td class="r money">$2,904.11</td></tr>
+          <tr><td>claude-sonnet-5</td><td class="r">201,388</td><td class="r">620M</td>
+            <td class="r money">$1,401.90</td></tr>
+          <tr><td>gpt-4o</td><td class="r">102,700</td><td class="r">220M</td>
+            <td class="r money">$506.36</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="surface">
+      <h2>Spend over time — by month</h2>
+      <table class="ledger">
+        <thead><tr>
+          <th class="sortable" aria-sort="ascending">Month <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+          <th class="r">Calls</th>
+          <th class="r money">Spend</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>2026-03</td><td class="r">310,112</td><td class="r money">$1,180.40</td></tr>
+          <tr><td>2026-04</td><td class="r">402,551</td><td class="r money">$1,411.02</td></tr>
+          <tr><td>2026-05</td><td class="r">298,433</td><td class="r money">$1,092.88</td></tr>
+          <tr><td>2026-06</td><td class="r">273,006</td><td class="r money">$1,128.07</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="surface" style="margin-top: var(--s3);">
+    <h2>Findings in this slice — 7, largest first</h2>
+    <table class="ledger">
+      <thead><tr>
+        <th class="sortable">Finding <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+        <th class="sortable">Severity <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+        <th>Model</th>
+        <th class="sortable r money" aria-sort="descending">Monthly impact <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+        <th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Uncached repeated prompts</td>
+          <td><span class="sev sev-high">High</span></td>
+          <td>claude-sonnet-5</td><td class="r money">$688.75</td>
+          <td><span class="badge badge-verified">applied</span></td>
+          <td><button class="btn btn-quiet" aria-expanded="false"
+                aria-controls="drawer">Details</button></td></tr>
+        <tr><td>Oversized model for the task</td>
+          <td><span class="sev sev-med">Medium</span></td>
+          <td>gpt-4o</td><td class="r money">$413.45</td>
+          <td><span class="muted">not reviewed</span></td>
+          <td><button class="btn btn-quiet" aria-expanded="false"
+                aria-controls="drawer">Details</button></td></tr>
+      </tbody>
+    </table>
+    <!-- Row → drawer expansion: same one-component pattern as /findings
+         (table row → expanded card), htmx-swapped into #drawer. -->
+    <section class="surface" id="drawer" aria-live="polite" style="margin-top: var(--s3);">
+      <p class="muted">Select a finding to see why it was flagged, its evidence,
+        the fix, and what your next audit will show.</p>
+    </section>
+    <div class="provenance">Composed from 9 audits · seen-in-2-audits findings shown
+      once, most recent occurrence · figures as priced at each audit’s run</div>
+  </section>
+
+  <p class="muted" style="margin-top: var(--s4); font-size: 13px;">MOCKUP v1.1 —
+    sample data. Delight on this surface: the slice recount number-moment on Apply.</p>
+
+</main>
+</body>
+</html>

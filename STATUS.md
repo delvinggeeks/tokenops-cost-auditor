@@ -15,6 +15,37 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## M-EXPLORER (2026-07-23) — FR-32 report explorer + R-MULTI-SOURCE, branch wp-report-explorer
+
+Founder same-day orders: (1) R-EXPLORER — "client selects reports over all
+history with filter options... still not implemented" → FR-32 promoted (PRD
+amendment) and BUILT; (2) R-MULTI-SOURCE — "only one source can be connected
+at a time, no option to select multiple llm accounts and switching to that
+details" → per-provider connect block REMOVED (it was an implementation
+shortcut, not R-Q5/Q6 law, and capped Team's 5 sources at 2), replaced by a
+keyed one-way key-fingerprint dedup (same key twice = 409 naming the
+existing label; pre-013 sources backfill on next pull); audits gain
+source_id (additive migration 013); explorer gains a per-account selector;
+Sources rows gain "View usage" deep-links. DECISIONS: overlap law "latest
+audit wins per (day,model) bucket" (money-adjacent default, NOTES-sheet
+derivation + test); findings de-dup on the R-Q9 (detector,route) key,
+latest occurrence + seen-in count; unattributed pre-013 connected audits
+stated in words on per-account views, never silently dropped. PROCESS:
+ux-reviewer gated the mockup BEFORE wiring (FAIL → rebuilt on kit
+vocabulary → PASS-WITH-NOTES; systemic --serif note parked as BACKLOG F17).
+DISCREPANCIES OF RECORD: (a) tests/test_pricing_sync.py imported bare
+`scripts` — collection breaks under the canonical `uv run pytest`; fixed
+forward with the test_ops_scripts file-loader pattern; (b) the CI mypy gate
+was RED at HEAD (19 pre-existing errors in 8 files, none from this
+milestone) — closed with an annotations-only pass, zero behavior change.
+FILE MAP DELTA: +services/dashboard/explorer.py, +web/routes_explorer.py,
++templates/app/explore.html, +design/mockups/explore-v1.html,
++migrations/013_source_attribution, +tests/test_explorer.py;
+crypto.credential_fingerprint, pull backfill, source_audit/routes_sources
+attribution+dedup, sources.html links, help_registry explore key, _shell
+nav. OPEN: PLAN-FLYWHEEL §6 rulings R-F1 (training vs promise — still the
+blocker for Tracks A/B), Q6 (C3 saved views + export), Q4/Q5/Q7/Q8.
+
 ## PLAN-FLYWHEEL drafted (2026-07-23) — AWAITING FOUNDER APPROVAL, no code
 
 Founder order (train-on-entire-history / front gate / preventive

@@ -10,6 +10,8 @@ connect.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import structlog
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -17,13 +19,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
+from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, User, utcnow
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.connectors import validate
-from tokenops_cost_auditor.services.connectors.crypto import encrypt_credential
+from tokenops_cost_auditor.services.connectors.crypto import (
+    credential_fingerprint,
+    encrypt_credential,
+)
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.payments.base import unconsumed_credit
+from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.web import help as help_registry
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -162,12 +169,19 @@ def wizard_validate(
                 status_code=403,
                 detail=f"plan '{plan}' allows {limit} active connection(s) — revoke one first",
             )
-        # Idempotency (f.3): a double-submit must not create a second live
-        # connection to the same provider, nor a second first-pull.
-        if any(s.provider == provider for s in active):
+        # R-MULTI-SOURCE (founder order 2026-07-23): a second ACCOUNT of the
+        # same provider is allowed (up to the plan limit) — what is blocked is
+        # the SAME key twice, which would pull the same usage into two sources
+        # and double-count spend. Also the double-submit guard (f.3).
+        fingerprint = credential_fingerprint(settings.secret_key, key)
+        dup = next((s for s in active if s.key_fingerprint == fingerprint), None)
+        if dup is not None:
             raise HTTPException(
                 status_code=409,
-                detail=f"{provider} is already connected — revoke it first to replace it",
+                detail=(
+                    f"that key is already connected as “{dup.label}” — "
+                    "use a different account's key, or revoke it first"
+                ),
             )
 
     verdict = validate.validate_key(provider, key)
@@ -184,16 +198,21 @@ def wizard_validate(
                 .scalars()
                 .all()
             )
-            if len(still_active) >= limit or any(s.provider == provider for s in still_active):
+            if len(still_active) >= limit or any(
+                s.key_fingerprint == fingerprint for s in still_active
+            ):
                 # Someone won the race between our check and this write.
                 raise HTTPException(
                     status_code=409, detail=f"{provider} was connected a moment ago"
                 )
+            # Distinct labels per account: "openai usage", then "openai usage #2".
+            nth = sum(1 for s in still_active if s.provider == provider) + 1
             source = Source(
                 user_id=user_id,
                 provider=provider,
-                label=f"{provider} usage",
+                label=f"{provider} usage" if nth == 1 else f"{provider} usage #{nth}",
                 credentials_encrypted=encrypt_credential(settings.secret_key, key),
+                key_fingerprint=fingerprint,
             )
             session.add(source)
             auditlog.append(session, user_email, "source.connected", provider)
@@ -262,7 +281,12 @@ def _kickoff_first_pull(
         source = session.get(Source, source_id)
         if source is None:
             return None
-        audit = Audit(user_id=source.user_id, status="queued", paid_via="subscription")
+        audit = Audit(
+            user_id=source.user_id,
+            status="queued",
+            paid_via="subscription",
+            source_id=source.id,  # R-MULTI-SOURCE: per-account attribution
+        )
         session.add(audit)
         session.commit()
         audit_id = audit.id
@@ -285,7 +309,12 @@ def _mark_failed(session: Session, audit_id: str, why: str) -> None:
 
 
 def _process_first_pull(
-    factory, settings, table, source_id: str, audit_id: str, claim_for_user: str | None
+    factory: Callable[[], Session],
+    settings: Settings,
+    table: PricingTable,
+    source_id: str,
+    audit_id: str,
+    claim_for_user: str | None,
 ) -> None:
     """The connect first-pull worker (runs in a daemon thread; extracted to a
     module-level function so the lifecycle is unit-testable). Drives the
@@ -303,7 +332,8 @@ def _process_first_pull(
             if source is None or row is None:
                 if row is not None:
                     _mark_failed(
-                        session, audit_id,
+                        session,
+                        audit_id,
                         "The connection was removed before its first audit ran.",
                     )
                 return
@@ -322,7 +352,8 @@ def _process_first_pull(
         try:
             with factory() as session:
                 _mark_failed(
-                    session, audit_id,
+                    session,
+                    audit_id,
                     "We couldn't finish this first audit. We'll retry automatically.",
                 )
         except Exception:  # failure-marking is best-effort; never re-raise
@@ -363,12 +394,26 @@ def connect_source(
                 status_code=403,
                 detail=f"plan '{plan}' allows {limit} active connection(s) — revoke one first",
             )
+        # R-MULTI-SOURCE: same key twice = double-counted usage; block with the
+        # existing connection named. A different account of the same provider
+        # is fine.
+        fingerprint = credential_fingerprint(settings.secret_key, api_key.strip())
+        dup = next((s for s in active if s.key_fingerprint == fingerprint), None)
+        if dup is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"that key is already connected as “{dup.label}” — "
+                    "use a different account's key, or revoke it first"
+                ),
+            )
         session.add(
             Source(
                 user_id=user.id,
                 provider=provider,
                 label=label.strip()[:120] or provider,
                 credentials_encrypted=encrypt_credential(settings.secret_key, api_key.strip()),
+                key_fingerprint=fingerprint,
             )
         )
         auditlog.append(session, user.email, "source.connected", provider)

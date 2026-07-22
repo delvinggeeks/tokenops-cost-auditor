@@ -92,6 +92,13 @@ promotion still requires a PRD amendment.
   [Limit registered, founder-approved 2026-07-22: >5 new paying customers
   in any week = the call stops scaling → onboarding automation becomes a
   build item.]
+- **Org-level source identity** (R-MULTI-SOURCE 2026-07-23, honest limit) —
+  the same-key fingerprint guard cannot catch two DIFFERENT admin keys of
+  the SAME provider org (double-count risk stays open by that path).
+  Hardening = fetch the org id during wizard validation and enforce
+  uniqueness per (provider, org). Trigger: first support incident of a
+  double-connected org, or the provider-OAuth item below firing (OAuth
+  grants carry org identity for free).
 - **Provider OAuth for usage scopes** (R-MAGIC-CONNECT 2026-07-22 §5) —
   TRIPWIRE: the day OpenAI or Anthropic ships OAuth covering usage
   reporting, it promotes immediately as the connect path and the paste
@@ -301,6 +308,11 @@ surface; none warrants its own round.]
   today; consolidate on next touch.
 - F15 landing mobile: hero capture below the fold (copy+CTA above it) —
   revisit with post-launch funnel data.
+- F17 (ux-reviewer note at the FR-32 mockup gate, 2026-07-23): `--serif`
+  token is defined in wa-design.css but never referenced — money figures
+  render in --sans, not the serif display numerals R-DESIGN #4 calls for.
+  Design-system-wide; fold into the next surface-wide visual pass, not a
+  per-page fix.
 
 ## WP-FRAMEWORK-ADAPT — frontend framework migration path (founder, 2026-07-26)
 
@@ -349,17 +361,15 @@ Until a trigger fires: new ideas here, never into code.
   second record.]
 
 
-## WP-REPORT-EXPLORER — filterable full-history client reports (founder order 2026-07-23; PLAN-FLYWHEEL Track C)
+## WP-REPORT-EXPLORER — PROMOTED + C1/C2 SHIPPED (R-EXPLORER PRD amendment 2026-07-23)
 
-Client-selectable report over the customer's ENTIRE retained history —
-filters: date range, provider, model, source/tier, tag/endpoint, detector,
-severity, L0 feedback status; saved named views; report-grade SSR+htmx
-rendering. Laws attached at birth: every filtered total reconciles ±0.5%
-(NFR-07), purged audits appear metadata-only (FR-21/FR-31), tier-coverage
-stated honestly per view, FR-22 allowlist on any export. Proposed FR-32 —
-promotion requires a PRD amendment (PLAN-FLYWHEEL §6 Q3). Sequenced
-immediately after WP-PIPELINE-UI (shared surfaces + kit vocabulary). Full
-slice breakdown with AC/DoD: PLAN-FLYWHEEL.md §3 Track C.
+FR-32 promoted and built on the founder's direct order (same day): /explore
+in the dashboard shell — filters date range, grouping, source tier, model,
+finding type, severity, feedback status; ux mockup gated PASS-WITH-NOTES
+before wiring; tests tests/test_explorer.py. RESIDUE PARKED: C3 saved named
+views + "export this view" — HELD pending PLAN-FLYWHEEL §6 Q6 (export
+partially fires the registered data-export trigger below; founder ruling
+needed on whether it ships early or waits for that trigger).
 
 ## WP-PIPELINE-UI — FIRST post-launch gated milestone (R-PIPELINE-UI-SEQ, 2026-07-27)
 Runs list (every audit: status, trigger, duration, expandable stage

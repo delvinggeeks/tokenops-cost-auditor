@@ -140,10 +140,17 @@ def run_source_audit(
         by_day_acc[day_key] = by_day_acc.get(day_key, 0.0) + c
 
     if audit is None:
-        audit = Audit(user_id=source.user_id, status="done", paid_via="subscription")
+        audit = Audit(
+            user_id=source.user_id,
+            status="done",
+            paid_via="subscription",
+            source_id=source.id,  # R-MULTI-SOURCE: per-account attribution
+        )
         session.add(audit)
     else:
         audit.status = "done"  # finalize the pre-created queued/processing row
+        if audit.source_id is None:
+            audit.source_id = source.id
     session.flush()
 
     report = ReportModel(

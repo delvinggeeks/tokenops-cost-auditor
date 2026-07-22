@@ -38,6 +38,7 @@ from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
 from tokenops_cost_auditor.web.routes_billing import router as billing_router
 from tokenops_cost_auditor.web.routes_dashboard import router as dashboard_router
+from tokenops_cost_auditor.web.routes_explorer import router as explorer_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
 from tokenops_cost_auditor.web.routes_settings import router as settings_router
@@ -189,6 +190,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin_router)  # admin panel (FR-19)
     app.include_router(sources_router)  # T2 connect/revoke (v1.5 WP-1)
     app.include_router(dashboard_router)  # owner dashboard + guide + tour (v1.5 WP-2)
+    app.include_router(explorer_router)  # FR-32 report explorer (R-EXPLORER)
     app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)
     app.include_router(statements_router)  # monthly owner artifact (v1.5 WP-4)
     app.include_router(settings_router)  # account/data controls (v1.5 WP-5)
@@ -207,12 +209,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # (readiness audit 2026-07-22): a person who hit the 402/400/413 path saw a
     # raw JSON envelope. API clients (no text/html in Accept) keep the JSON.
     _UPLOAD_ERROR_COPY = {
-        400: ("That file didn't work", "We couldn't read that file. Upload a JSONL or CSV "
-              "export of your usage and try again."),
-        402: ("You've used your free audit", "Your free audit is spent. Choose a plan to run "
-              "another, or connect a provider for weekly audits."),
-        413: ("That file is too large", "The upload is over our size limit. Split it, or "
-              "connect your provider so we pull the data directly."),
+        400: (
+            "That file didn't work",
+            "We couldn't read that file. Upload a JSONL or CSV export of your usage and try again.",
+        ),
+        402: (
+            "You've used your free audit",
+            "Your free audit is spent. Choose a plan to run "
+            "another, or connect a provider for weekly audits.",
+        ),
+        413: (
+            "That file is too large",
+            "The upload is over our size limit. Split it, or "
+            "connect your provider so we pull the data directly.",
+        ),
     }
 
     def _upload_error_page(status: int, detail: str) -> HTMLResponse:

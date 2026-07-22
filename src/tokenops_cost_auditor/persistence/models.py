@@ -101,6 +101,12 @@ class Audit(Base):
     # traffic, so any figure derived from it carries the equiv-spend line.
     equiv_spend: Mapped[bool | None] = mapped_column(Boolean)
     paid_via: Mapped[str | None] = mapped_column(String(32))
+    # R-MULTI-SOURCE (migration 013): which connected account produced this
+    # audit; NULL for uploads and for connected audits that ran before
+    # attribution shipped. Plain string, no FK — sources are soft-deleted
+    # (revoked, never dropped), so integrity is by convention and the column
+    # stays trivially additive on both backends.
+    source_id: Mapped[str | None] = mapped_column(String(32), index=True)
     error: Mapped[str | None] = mapped_column(Text)  # user-safe message only (LLD §8)
     upload_path: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -227,6 +233,10 @@ class Source(Base):
     # Fernet token (HKDF from SECRET_KEY). Decrypted ONLY in the pull path;
     # revoke deletes this value. Never logged, never in repr (T-KEY-03).
     credentials_encrypted: Mapped[str | None] = mapped_column(Text)
+    # R-MULTI-SOURCE: keyed one-way HMAC of the API key — blocks connecting
+    # the SAME key twice (double-counting) while allowing another account of
+    # the same provider. NULL on pre-013 rows until the next pull backfills.
+    key_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True)
     status: Mapped[str] = mapped_column(String(16), default="active", index=True)
     # active | paused (downgrade, oldest-first — R-Q6) | revoked
     schedule: Mapped[str] = mapped_column(String(16), default="daily")  # pull cadence

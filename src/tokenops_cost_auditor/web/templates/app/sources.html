@@ -24,7 +24,7 @@
   {% else %}
     <span class="muted addbar-note">
       Your plan allows {{ limit }} active connection{{ "s" if limit != 1 else "" }}.
-      Revoke one below to connect a different provider, or
+      Revoke one below to connect another account, or
       <a href="/billing">see plans</a>.
     </span>
   {% endif %}
@@ -55,6 +55,9 @@
       <td>{{ s.last_pull_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_pull_at else "—" }}</td>
       <td>{{ s.last_audit_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_audit_at else "—" }}</td>
       <td class="row-actions">
+        {# R-MULTI-SOURCE: jump to this account's slice of the explorer —
+           "switch to that account's details" is a filter, not a new page. #}
+        {{ kit.button("View usage", href="/explore?source=" ~ s.id) }}
         {{ kit.drawer_toggle("src-" ~ s.id) }}
         <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
               data-confirm="{{ t('app.confirm.revoke') }}">

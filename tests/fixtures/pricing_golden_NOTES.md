@@ -244,3 +244,12 @@ summed (a summed 1,125.00 is asserted absent).
 - 2026-07-17 | Founder review: D4/D5 golden derivations accepted;
   detector-level values approved as engineered-fixture ground truth.
   | Lokesh Prasanna Kumar S
+- 2026-07-23 | R-EXPLORER overlap default (money-adjacent, FR-32): the
+  /explore view de-duplicates re-audited coverage as "latest audit wins per
+  (day, model) bucket" BEFORE summing spend — the aggregate-level analogue of
+  the UAT-D5 max-complete-usage dedup law. No estimator changed: stored
+  cost_usd values are summed, never recomputed. Derivation fixture: two
+  audits, same bucket, cost 5.00 (older) vs 6.00 (newer) → view spend 6.00,
+  calls 120 (newer), overlap_buckets 1
+  (tests/test_explorer.py::TestMath::test_04_overlap_latest_audit_wins).
+  | Lokesh Prasanna Kumar S

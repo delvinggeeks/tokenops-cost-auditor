@@ -271,9 +271,12 @@ the migration's move set.
    copy/test change.
 2. **R-F2**: confirm X-01/X-02 untouched; "front gate" remains the T5 /
    control-plane path on its registered trigger.
-3. **R-F3**: promote FR-32 (report explorer) via PRD amendment now, or
-   leave parked until a customer asks? (WP-PIPELINE-UI ships the runs list
-   either way; the explorer is the customer-facing sibling.)
+3. **R-F3 — RULED (founder, 2026-07-23, same-day follow-up order: "this
+   selection is still not implemented in the dashboard").** FR-32 promoted
+   (PRD amendment R-EXPLORER recorded) and built immediately: C1+C2 shipped
+   on branch wp-report-explorer with the full DoD (§2). C3 saved views +
+   export remains held on Q6 below. The §4 sequencing row for M-EXPLORER is
+   superseded by this ruling.
 4. **L2 activation floor**: per-customer calibration on own labels at ≥10
    labels/detector (proposed), while cross-customer priors wait for n≥25 —
    confirm both numbers.

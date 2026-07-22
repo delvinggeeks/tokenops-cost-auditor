@@ -53,7 +53,9 @@ class TestKeyEncryption:
             encoding="utf-8"
         )
         assert not re.search(r"^\s*(import|from)\s+(logging|structlog)", crypto_src, re.M)
-        assert "print(" not in crypto_src
+        # \b: a real print( call, not the credential_fingerprint( function name
+        # (R-MULTI-SOURCE) — the guard's target is output, not the substring.
+        assert not re.search(r"\bprint\(", crypto_src)
         src = Source(
             user_id="u1",
             provider="openai",

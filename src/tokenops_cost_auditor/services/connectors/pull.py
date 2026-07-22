@@ -18,7 +18,10 @@ from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Source, SourceUsage, utcnow
 from tokenops_cost_auditor.services.connectors import anthropic_usage, openai_usage
 from tokenops_cost_auditor.services.connectors.base import PullStats, SupportsGet
-from tokenops_cost_auditor.services.connectors.crypto import decrypt_credential
+from tokenops_cost_auditor.services.connectors.crypto import (
+    credential_fingerprint,
+    decrypt_credential,
+)
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
 
@@ -41,6 +44,11 @@ def run_pull(
 
     fetch, endpoint = _CLIENTS[source.provider]
     api_key = decrypt_credential(settings.secret_key, source.credentials_encrypted)
+    if source.key_fingerprint is None:
+        # R-MULTI-SOURCE backfill: pre-013 sources gain their fingerprint on
+        # the first pull after upgrade, so the same-key-twice guard covers
+        # them without ever re-asking for the key. Rides this pull's commit.
+        source.key_fingerprint = credential_fingerprint(settings.secret_key, api_key)
 
     end_day = datetime.now(UTC).date()
     if source.last_pull_at is not None:

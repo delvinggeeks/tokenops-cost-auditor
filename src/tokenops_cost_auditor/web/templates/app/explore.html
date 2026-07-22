@@ -1,0 +1,195 @@
+{% extends "app/_shell.html" %}
+{% block title %}Explore — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+{# Delight (one per flow): the slice recount number-moment on Apply —
+   figures land settled; money never shimmers. #}
+<style>
+  .filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: flex-end;
+    padding-bottom: var(--s3); border-bottom: 1px solid var(--rule); margin-bottom: var(--s3); }
+  .filter-bar label { display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+  .filter-bar select, .filter-bar input { min-width: 130px; }
+  .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s3);
+    margin-bottom: var(--s4); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  @media (max-width: 720px) { .stat-row { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; } }
+</style>
+
+<form class="filter-bar" method="get" action="/explore">
+  <label>From <input type="date" name="from" value="{{ f.date_from or '' }}"></label>
+  <label>To <input type="date" name="to" value="{{ f.date_to or '' }}"></label>
+  <label>Group by
+    <select name="group">
+      <option value="auto" {{ "selected" if f.group == "auto" }}>Auto</option>
+      <option value="month" {{ "selected" if f.group == "month" }}>Month</option>
+      <option value="day" {{ "selected" if f.group == "day" }}>Day</option>
+    </select></label>
+  <label>Data source
+    <select name="source">
+      <option value="">All</option>
+      <option value="uploads" {{ "selected" if f.tier == "uploads" and not f.source_id }}>Uploads</option>
+      <option value="connected" {{ "selected" if f.tier == "connected" and not f.source_id }}>All connected accounts</option>
+      {% for sid, slabel, sstatus in view.source_options %}
+        <option value="{{ sid }}" {{ "selected" if f.source_id == sid }}>{{ slabel }}{{ " (revoked)" if sstatus == "revoked" }}</option>
+      {% endfor %}
+    </select></label>
+  <label>Model
+    <select name="model">
+      <option value="">All models</option>
+      {% for m in view.model_options %}
+        <option value="{{ m }}" {{ "selected" if f.model == m }}>{{ m }}</option>
+      {% endfor %}
+    </select></label>
+  <label>Finding type
+    <select name="detector">
+      <option value="">All</option>
+      {% for d in view.detector_options %}
+        <option value="{{ d }}" {{ "selected" if f.detector == d }}>{{ detector_labels[d] }}</option>
+      {% endfor %}
+    </select></label>
+  <label>Severity
+    <select name="severity">
+      <option value="any" {{ "selected" if f.severity == "any" }}>Any</option>
+      {% for s, label in severity_labels.items() %}
+        <option value="{{ s }}" {{ "selected" if f.severity == s }}>{{ label }}</option>
+      {% endfor %}
+    </select></label>
+  <label>Status
+    <select name="status">
+      <option value="any" {{ "selected" if f.status == "any" }}>Any</option>
+      {% for s, label in status_labels.items() %}
+        <option value="{{ s }}" {{ "selected" if f.status == s }}>{{ label }}</option>
+      {% endfor %}
+    </select></label>
+  <button class="btn btn-primary" type="submit">Apply</button>
+  <a class="btn btn-quiet" href="/explore">Reset</a>
+</form>
+
+{% if view.audits_in_view == 0 %}
+  {% if f.source_id or f.tier != "all" or view.model_options %}
+    {{ kit.empty_state(
+         "Nothing matches this slice",
+         "Your history has data, but not inside these filters. Widen the date "
+           ~ "range or reset the filters to see everything again.",
+         action_label="Reset filters", action_href="/explore") }}
+  {% else %}
+    {{ kit.empty_state(
+         "No history to explore yet",
+         "Connect a provider or upload a log file — every audit you run adds to "
+           ~ "the history you can slice here.",
+         action_label="Connect a source", action_href="/sources",
+         alt_label="Upload a log file", alt_href="/upload") }}
+  {% endif %}
+{% else %}
+
+<div class="stat-row">
+  {{ kit.stat("Spend in view", "${:,.2f}".format(view.spend_usd),
+       meta=(view.days_covered ~ " days of usage")) }}
+  {{ kit.stat("Waste identified", "${:,.2f}/mo".format(view.waste_monthly_usd),
+       meta=("across " ~ view.findings_total ~ " findings"), tone="waste") }}
+  {{ kit.stat("Calls", "{:,}".format(view.calls)) }}
+  {{ kit.stat("Tokens in / out",
+       "{:,}".format(view.prompt_tokens) ~ " / " ~ "{:,}".format(view.completion_tokens),
+       meta=("{:,}".format(view.cached_tokens) ~ " served from cache")) }}
+  {{ kit.stat("Audits in view", view.audits_in_view,
+       meta=(view.purged_in_view ~ " with raw logs purged" if view.purged_in_view else None)) }}
+</div>
+
+{# Honesty block: every caveat that applies to THIS slice, in words. #}
+{% if view.connected_in_view or view.overlap_buckets or view.unpriced_calls or view.equiv_any
+      or (f.source_id and view.unattributed_connected) %}
+<p class="muted">
+  {% if view.connected_in_view %}Some of this usage came from connected provider
+    accounts: three detectors need per-request logs and could not run on those
+    audits. {% endif %}
+  {% if f.source_id and view.unattributed_connected %}{{ view.unattributed_connected }}
+    earlier connected audit{{ "s" if view.unattributed_connected != 1 }} ran before
+    per-account attribution shipped and can't be assigned to this account —
+    see them under “All connected accounts”. {% endif %}
+  {% if view.overlap_buckets %}Days covered by more than one audit use the most
+    recent audit’s numbers. {% endif %}
+  {% if view.unpriced_calls %}{{ "{:,}".format(view.unpriced_calls) }} calls in this
+    slice are not yet on our verified rate card — they are counted, not priced. {% endif %}
+  {% if view.equiv_any %}{{ equiv_line }}{% endif %}
+</p>
+{% endif %}
+
+<div class="grid-2">
+  {{ kit.surface_open(title="Where the money went — by model") }}
+    {{ kit.table_open([
+         {"label": "Model"},
+         {"label": "Calls", "numeric": True},
+         {"label": "Tokens", "numeric": True},
+         {"label": "Spend", "numeric": True, "cls": "money", "sort": "descending"},
+       ]) }}
+      {% for m in view.by_model %}
+        <tr><td>{{ m.model }}</td>
+          <td class="r">{{ "{:,}".format(m.calls) }}</td>
+          <td class="r">{{ "{:,}".format(m.prompt_tokens + m.completion_tokens) }}</td>
+          <td class="r money">${{ "{:,.2f}".format(m.cost_usd) }}</td></tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+  {{ kit.surface_close() }}
+
+  {{ kit.surface_open(title=("Spend over time — by " ~ view.group)) }}
+    {{ kit.table_open([
+         {"label": "Month" if view.group == "month" else "Day", "sort": "ascending"},
+         {"label": "Calls", "numeric": True},
+         {"label": "Spend", "numeric": True, "cls": "money"},
+       ]) }}
+      {% for p in view.by_period %}
+        <tr><td>{{ p.period }}</td>
+          <td class="r">{{ "{:,}".format(p.calls) }}</td>
+          <td class="r money">${{ "{:,.2f}".format(p.cost_usd) }}</td></tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+  {{ kit.surface_close() }}
+</div>
+
+{{ kit.surface_open(title=("Findings in this slice — " ~ view.findings_total ~ ", largest first"), span=12) }}
+  {% if not view.findings %}
+    <p class="muted">No findings match this slice.</p>
+  {% else %}
+    {{ kit.table_open([
+         {"label": "Finding"},
+         {"label": "Severity"},
+         {"label": "Model"},
+         {"label": "Monthly impact", "numeric": True, "cls": "money", "sort": "descending"},
+         {"label": "Status"},
+         {"label": ""},
+       ]) }}
+      {% for it in view.findings %}
+        <tr>
+          <td>{{ detector_labels.get(it.detector, it.detector) }}
+            {%- if it.seen_in > 1 %} <span class="muted">· seen in {{ it.seen_in }} audits</span>{% endif %}</td>
+          <td><span class="sev sev-{{ it.severity }}">{{ severity_labels.get(it.severity, it.severity) }}</span></td>
+          <td>{{ it.route or "—" }}</td>
+          <td class="r money">${{ "{:,.2f}".format(it.monthly_usd) }}</td>
+          <td>{% if it.verdict == "applied" %}<span class="badge badge-verified">applied</span>
+            {% elif it.verdict %}<span class="muted">{{ status_labels.get(it.verdict, it.verdict) }}</span>
+            {% else %}<span class="muted">not reviewed</span>{% endif %}</td>
+          <td><button class="btn btn-quiet" aria-expanded="false" aria-controls="drawer"
+                hx-get="/findings/{{ it.audit_id }}/{{ it.finding_id }}"
+                hx-target="#drawer" hx-swap="innerHTML">Details</button></td>
+        </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% if view.findings_total > view.findings | length %}
+      <p class="muted">Showing the top {{ view.findings | length }} by impact of
+        {{ view.findings_total }} — narrow the filters to see the rest.</p>
+    {% endif %}
+  {% endif %}
+  <div class="provenance">Composed from {{ view.audits_in_view }} audits ·
+    repeat findings shown once, most recent occurrence · figures as priced at
+    each audit’s run</div>
+{{ kit.surface_close() }}
+
+{{ kit.surface_open(span=12, id="drawer", live=True) }}
+  <p class="muted">Select a finding to see why it was flagged, its evidence, the fix,
+    and what your next audit will show.</p>
+{{ kit.surface_close() }}
+
+{% endif %}
+{% endblock %}

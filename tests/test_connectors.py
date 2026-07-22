@@ -274,3 +274,21 @@ class TestFetchPaths:
                         "sk-super-secret", date(2026, 7, 1), date(2026, 7, 2), client
                     )
                 assert "sk-super-secret" not in str(exc.value)
+
+
+class TestFingerprintBackfill:
+    """R-MULTI-SOURCE: pre-013 sources gain their key fingerprint on the next
+    pull, so the same-key-twice guard covers them without re-asking for keys."""
+
+    def test_pull_backfills_missing_fingerprint(self, session: Session, settings: Settings) -> None:
+        from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
+
+        src = make_source(session, settings, "openai")
+        assert src.key_fingerprint is None
+        run_pull(session, settings, src, FakeHTTP(OPENAI_PAGE))
+        session.commit()
+        assert src.key_fingerprint == credential_fingerprint(
+            settings.secret_key, "sk-admin-secret-1"
+        )
+        # One-way: the fingerprint is never the key and never contains it.
+        assert "sk-admin-secret-1" not in src.key_fingerprint
