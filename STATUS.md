@@ -15,6 +15,25 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## PLAN-FLYWHEEL drafted (2026-07-23) — AWAITING FOUNDER APPROVAL, no code
+
+Founder order (train-on-entire-history / front gate / preventive
+intelligence / customized per-client / filterable full-history reports)
+broken down in PLAN-FLYWHEEL.md. Coverage audit finding: most of the order
+is already SHIPPED (365-day backfill + back-dating, L0 labels, L3
+deterministic forecast, observe-only alerts/digest) or trigger-registered
+(T5 front gate — X-01/X-02 untouched); buildable gaps are L1 peer
+benchmarks, L2 shadow threshold calibration, and a NEW report explorer
+(proposed FR-32, parked as WP-REPORT-EXPLORER in BACKLOG). BLOCKER ruling
+R-F1: "never used for training" is live verbatim on 5 surfaces (report
+model.py:52, public shell, Terms, Privacy, docs-site) and test-pinned —
+training/benchmark scope cannot start until the founder picks option
+A/B/C (PLAN-FLYWHEEL §1). Eight numbered questions await ruling (§6),
+incl. TE-5 amendment: Fable authors PRD/design, Opus implements, Sonnet
+gates. Sequencing proposal slots new milestones AFTER the ruled queue
+(WP-CC-LINK → WP-PIPELINE-UI); nothing already ruled moves. File map
+delta: +PLAN-FLYWHEEL.md, BACKLOG.md (+WP-REPORT-EXPLORER), this entry.
+
 ## R-LIVE-PRICING + R-LIVE-AUDIT (2026-07-22) — autonomous pricing, live audit status — DEPLOYED
 
 Founder ruling (verbatim): no human gate on pricing, cover leftover jobs, show

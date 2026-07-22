@@ -349,6 +349,18 @@ Until a trigger fires: new ideas here, never into code.
   second record.]
 
 
+## WP-REPORT-EXPLORER — filterable full-history client reports (founder order 2026-07-23; PLAN-FLYWHEEL Track C)
+
+Client-selectable report over the customer's ENTIRE retained history —
+filters: date range, provider, model, source/tier, tag/endpoint, detector,
+severity, L0 feedback status; saved named views; report-grade SSR+htmx
+rendering. Laws attached at birth: every filtered total reconciles ±0.5%
+(NFR-07), purged audits appear metadata-only (FR-21/FR-31), tier-coverage
+stated honestly per view, FR-22 allowlist on any export. Proposed FR-32 —
+promotion requires a PRD amendment (PLAN-FLYWHEEL §6 Q3). Sequenced
+immediately after WP-PIPELINE-UI (shared surfaces + kit vocabulary). Full
+slice breakdown with AC/DoD: PLAN-FLYWHEEL.md §3 Track C.
+
 ## WP-PIPELINE-UI — FIRST post-launch gated milestone (R-PIPELINE-UI-SEQ, 2026-07-27)
 Runs list (every audit: status, trigger, duration, expandable stage
 timeline); per-stage drill-in (rows ingested vs rejected, priced vs
