@@ -5,6 +5,14 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.23 (d616eac) · GO DARK complete. The old-domain
+  redirect mechanism is deleted end to end — Caddy vhosts, compose env,
+  .env.example, runbook mechanics, and the server's env var; runbook
+  §2b is now a completed-migration record. tokenops-cost-auditor.com is
+  the only name the platform answers on. SMOKE PASS: new-domain
+  healthz/landing/docs 200; the former domain no longer terminates TLS
+  here (founder removes its DNS zone at the registrar/Cloudflare side).
+
 - 2026-07-22 · v1.5.22 (cutover, config-only — no code change) · DOMAIN
   CUTOVER + MAIL LIVE. tokenops-cost-auditor.com is now the serving
   domain (apex/www/docs, TLS auto-provisioned); the retired domain
