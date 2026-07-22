@@ -50,7 +50,7 @@ appended by the person deploying, same day.
 
 - 2026-07-22 · v1.5.16 (3f178f5) · DOCS REACHABLE. Walkthrough punch
   "there is no docs, rate limiting, API documentation" → diagnosis: all
-  three EXISTED (docs-site live at docs.tokenops.cloud; NFR-03/12
+  three EXISTED (docs-site live at docs.tokenops-cost-auditor.com; NFR-03/12
   limiter with Retry-After, tested; api/overview + endpoints pages) but
   every product link pointed at /docs-site/, a path the app never
   serves — a 404 behind every Docs click. Fixed: ONE config origin
@@ -70,7 +70,7 @@ appended by the person deploying, same day.
   registered-not-released). FR-31 traceability row now records its ruled
   deferral to WP-PIPELINE-UI. launch/FEATURE-INVENTORY.md = the full
   punch-card incl. override menu + parked-without-trigger list. SMOKE
-  PASS: docs.tokenops.cloud/engineering/architecture/ 200, new section
+  PASS: docs.tokenops-cost-auditor.com/engineering/architecture/ 200, new section
   serving (7 marker hits). Static-docs deploy — app containers untouched.
 
 - 2026-07-22 · v1.5.14 (fc3b9eb) · R-PRICING-FINAL-2 + R-DAILY-LOOP live.
@@ -222,7 +222,7 @@ appended by the person deploying, same day.
   pub css 4,165B gz). Walkthrough resumes.
 
 - 2026-07-21 · v1.5.2 (e8a552b) · DESIGN ROUND + SAAS BASICS + PIPELINE
-  THEATER LIVE on https://tokenops.cloud. Ships: the founder deep-audit
+  THEATER LIVE on https://tokenops-cost-auditor.com. Ships: the founder deep-audit
   remediation (F1-F10 all confirmed fixed by founder verdict, evidence pairs
   in design/evidence/), R-STMT-GATING, R-SAAS-BASICS 1-3+4a (Scale rename
   with the no-Team ruled test, support affordance, status link, close
@@ -238,11 +238,11 @@ appended by the person deploying, same day.
   routes 200; auth-gated 401 incl. the theater endpoints; close-account
   shipped on box; REAL Postmark magic link sent to the founder (mail.sent
   logged). Hardware: disk 11%, mem ~1GB used of 7.9GB. Founder-owned before
-  the thread: UptimeRobot page + CNAME for status.tokenops.cloud. NEXT GATE:
+  the thread: UptimeRobot page + CNAME for status.tokenops-cost-auditor.com. NEXT GATE:
   founder production walkthrough — punch list by number, ACCEPT/HOLD.
 
 - 2026-07-21 · v1.5.1 (1b0c0b6) · UNIFIED UI + LANDING LIVE on
-  https://tokenops.cloud. Ships the R-LOOK-FINAL execution block end to end:
+  https://tokenops-cost-auditor.com. Ships the R-LOOK-FINAL execution block end to end:
   component kit + three signatures, §5 server-authority laws (alerts
   plan-gated with honest upsell; explicit-confirm with consequence-in-words
   on Applied/revoke/purge), §6 i18n key layer (en), all 7 screens composed
@@ -267,7 +267,7 @@ appended by the person deploying, same day.
   PRODUCTION WALKTHROUGH — the program's final gate; launch thread posts
   only on founder ACCEPT.
 
-- 2026-07-24 · v1.5.0 (35ad41d) · v1.5 MONITOR LIVE on https://tokenops.cloud.
+- 2026-07-24 · v1.5.0 (35ad41d) · v1.5 MONITOR LIVE on https://tokenops-cost-auditor.com.
   PRE-FLIGHT CAUGHT A FALSE PREMISE: the deploy order specified an incremental
   migration "001->007 (rehearsed)", but production stood at 002 (9 tables) with
   live data (3 users, 4 audits, 452 aggregates, 15,022 findings) — so the real
@@ -290,7 +290,7 @@ appended by the person deploying, same day.
   over real DNS/TLS, cert valid to 2026-10-17); landing 200 with FR-23
   verbatim; /sample 200; /legal/terms renders $500 · ₹45,000 from the price
   config; auth-gated /dashboard,/sources,/billing correctly 401; REAL Postmark
-  magic link accepted for delivery to lokesh@tokenops.cloud (mail.sent logged,
+  magic link accepted for delivery to lokesh@tokenops-cost-auditor.com (mail.sent logged,
   request_id d5c7f270efec432d); engine end-to-end through the real detectors
   (17 calls, 2 findings, deterministic spend). HARDWARE RE-CHECKS: 4 vCPU,
   load 0.23, 933Mi/7.8Gi memory used, 9.2G/96G disk (10%), app 210MB RSS at
@@ -342,7 +342,7 @@ appended by the person deploying, same day.
   NO PRODUCTION DEPLOY: that remains a separate founder GO after the gates.
 
 - 2026-07-19 · d13-live → d13-live.1 (8bd96a6) · FIRST PRODUCTION DEPLOY —
-  https://tokenops.cloud on founder VPS (Contabo Cloud VPS 4: x86, 4 vCPU,
+  https://tokenops-cost-auditor.com on founder VPS (Contabo Cloud VPS 4: x86, 4 vCPU,
   7.8 GiB, Ubuntu 24.04, 169.58.44.80) via `scripts/provision.sh` one-command
   path. Three runs: initial (hardened first: ufw 22/80/443, password auth
   off, fail2ban; died at smoke), re-run proving idempotence (.env kept,
@@ -355,7 +355,7 @@ appended by the person deploying, same day.
   OOM) → `--workers 1` (8bd96a6; NFR-13 cap still bounds audit
   concurrency). SMOKE ALL PASS: healthz db:true; landing control
   narrative; magic-link 200 with REAL Postmark send (mail.sent, sender
-  noreply@tokenops.cloud); ofelia 3 jobs; docs-site 200; www 301; external
+  noreply@tokenops-cost-auditor.com); ofelia 3 jobs; docs-site 200; www 301; external
   TLS = Let's Encrypt on apex + www + docs. HW RE-VALIDATION (this box):
   2 × 195 MB / 1.3M-row audits CONCURRENT → both done 34m20s wall, peak
   app 5.14 GiB + pg 150 MiB of 7.8 GiB, zero deaths post-fix; single 1M

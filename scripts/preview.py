@@ -42,7 +42,7 @@ from tokenops_cost_auditor.services.statements import build as statements
 from tokenops_cost_auditor.web.auth import issue_magic_token
 
 PREVIEW_DIR = Path(".preview")
-EMAIL = "founder@tokenops.cloud"
+EMAIL = "founder@tokenops-cost-auditor.com"
 HOST, PORT = "127.0.0.1", 8000
 
 FINDINGS = [

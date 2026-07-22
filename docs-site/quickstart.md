@@ -5,7 +5,7 @@ and the platform does everything else. Prefer a one-off? Upload a log file.
 
 ## Fastest: connect your account
 
-1. [Start free](https://tokenops.cloud/signup) — email or Google/Microsoft/
+1. [Start free](https://tokenops-cost-auditor.com/signup) — email or Google/Microsoft/
    GitHub sign-in; your first audit is on us, no card.
 2. **Sources → Connect** — pick OpenAI or Anthropic and paste a READ-ONLY
    admin/usage key (we show you exactly where to create one). The key is

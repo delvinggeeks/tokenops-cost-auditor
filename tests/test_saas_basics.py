@@ -75,13 +75,13 @@ class TestSupportAndStatus:
             ("/billing", "billing page"),
         ):
             page = client.get(path, headers=HDR)
-            assert "mailto:support@tokenops.cloud" in page.text, where
+            assert "mailto:support@tokenops-cost-auditor.com" in page.text, where
         # the response-time promise travels with the affordance
         assert "1 business day" in client.get("/billing", headers=HDR).text
 
     def test_status_page_is_linked_publicly(self, app: FastAPI) -> None:
         page = TestClient(app).get("/")
-        assert 'href="https://status.tokenops.cloud"' in page.text
+        assert 'href="https://status.tokenops-cost-auditor.com"' in page.text
 
 
 class TestCloseAccount:

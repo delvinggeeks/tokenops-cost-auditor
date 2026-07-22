@@ -5,7 +5,7 @@ read this instead of exploring the repo.
 
 ## FOUNDER-OWNED TASKS (consolidated order 2026-07-27 §4)
 
-1. UptimeRobot public status page + CNAME status.tokenops.cloud (runbook
+1. UptimeRobot public status page + CNAME status.tokenops-cost-auditor.com (runbook
    §3b, ~5 min) — the footer link must resolve BEFORE the launch thread.
 2. Production walkthrough immediately after the unified-deploy verdict:
    clarity + function only, punch list by number, ACCEPT/HOLD.
@@ -625,7 +625,7 @@ scheduled day 3 — founder held to it.
 Part A: vision recorded verbatim PLAN §0.0. Part B: docs/12-FLYWHEEL.md
 created (T1-T5 one-contract tiers, LLM-free label factory, L0-L4 honesty
 law, four moats verbatim, R-STANDARDS); docs-site Standards page written
-promise-free, shipped LIVE to docs.tokenops.cloud. Part C: verified
+promise-free, shipped LIVE to docs.tokenops-cost-auditor.com. Part C: verified
 already applied in 82024a1 (digest set+proven, NFR-04 amendment+VPS
 benchmarks live, ledger ritual audited) — NOT redone; digest-arrival
 confirmation pending founder inbox 03:00 UTC. Part D: recorded in PLAN
@@ -640,7 +640,7 @@ of PLAN-V15 + rulings on its §4 questions.
 
 ## D13 FOLLOW-UP RULINGS APPLIED (founder 2026-07-20)
 
-(1) DIGEST_TO=lokesh@tokenops.cloud set on the box, app recreated; manual
+(1) DIGEST_TO=lokesh@tokenops-cost-auditor.com set on the box, app recreated; manual
 digest run SENT (mail.sent logged) — it surfaced a real NFR-08 alert ("no
 backup dump found"), so the backup job was run manually (pg dump 4.0M +
 reports tar 5.6M) and the digest re-run is alert-free; scheduled digest
@@ -649,7 +649,7 @@ restated <=11 min/660s on the 4-vCPU class; VPS measured 624s — honest
 number published, spec amended, never the reverse); docs-site performance
 page gained the production-hardware section (624s/2.25GiB single; 34m20s/
 5.14GiB 2x-concurrent; Contabo spec stated) and was REBUILT AND SHIPPED to
-docs.tokenops.cloud (live-verified); traceability NFR-04 row updated same
+docs.tokenops-cost-auditor.com (live-verified); traceability NFR-04 row updated same
 commit. (3) Ledger row 2 ritual audited: tick applied only AFTER the
 founder's explicit VERIFIED message, log line signed in the same commit
 (7112519) — stands; offer open to revert to pending if the founder wants
@@ -680,13 +680,13 @@ grep of launch assets + web templates shows ZERO Connect references —
 §4 sequence completes; R-LAUNCH-POLISH and R-ONBOARD contents NOT YET
 RECEIVED — awaiting founder text before any polish/onboard work.
 
-## D13 PHYSICAL DEPLOY — LIVE at https://tokenops.cloud (founder GO 2026-07-19; two defects found+fixed)
+## D13 PHYSICAL DEPLOY — LIVE at https://tokenops-cost-auditor.com (founder GO 2026-07-19; two defects found+fixed)
 
 Deployed via provision.sh one-command path to founder's Contabo VPS 4
 (4 vCPU / 7.8 GiB; hardening ran FIRST per founder order: keys-only, ufw,
 fail2ban). DNS apex+www+docs all serve with Let's Encrypt TLS; www 301s to
 apex; docs-site (new Caddy block + provision step 4c build+rsync) serves
-at docs.tokenops.cloud; Postmark SMTP live (mail.sent verified to founder
+at docs.tokenops-cost-auditor.com; Postmark SMTP live (mail.sent verified to founder
 Gmail); payments env-gated OFF. DEFECTS: (1) smoke's https://localhost
 probe has no Caddy site under a real DOMAIN → --resolve SNI probes
 (d33263b). (2) SEV: uvicorn multiprocess supervisor 5s keep-alive ping

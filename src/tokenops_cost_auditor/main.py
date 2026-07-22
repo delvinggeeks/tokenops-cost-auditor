@@ -124,7 +124,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.jinja.globals["docs_url"] = settings.docs_url
     app.state.jinja.globals["support_email"] = settings.support_email
     app.state.jinja.globals["status_url"] = settings.status_url
-    app.state.jinja.globals["base_url"] = settings.app_base_url or "https://tokenops.cloud"
+    app.state.jinja.globals["base_url"] = settings.app_base_url or "https://tokenops-cost-auditor.com"
 
     # Asset versioning (walkthrough round 3): static assets carried NO
     # Cache-Control, so browsers heuristically cached them and two design

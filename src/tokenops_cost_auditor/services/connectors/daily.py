@@ -204,7 +204,7 @@ def run_digests(
                     "Some models had no verified rate and are excluded: "
                     + ", ".join(sorted(day.unpriced))
                 )
-            base = settings.app_base_url or "https://tokenops.cloud"
+            base = settings.app_base_url or "https://tokenops-cost-auditor.com"
             lines.append(f"\nDashboard: {base}/dashboard")
 
             if stage is not None:

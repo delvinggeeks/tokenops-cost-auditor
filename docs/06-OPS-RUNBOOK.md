@@ -80,21 +80,21 @@ Every provider is config-gated by its own credential pair; its "Continue
 with …" button renders on /login + /signup only once configured (dead
 buttons are promises). Restart after each .env change.
 - Google: console.cloud.google.com → OAuth client (web), authorized redirect
-  URI https://tokenops.cloud/auth/google/callback → .env GOOGLE_CLIENT_ID /
+  URI https://tokenops-cost-auditor.com/auth/google/callback → .env GOOGLE_CLIENT_ID /
   GOOGLE_CLIENT_SECRET.
 - Microsoft: portal.azure.com → Entra ID → App registrations → New (web),
   supported accounts: "any org directory + personal Microsoft accounts",
-  redirect URI https://tokenops.cloud/auth/microsoft/callback → client
+  redirect URI https://tokenops-cost-auditor.com/auth/microsoft/callback → client
   secret under Certificates & secrets → .env MICROSOFT_CLIENT_ID /
   MICROSOFT_CLIENT_SECRET.
 - GitHub: github.com/settings/developers → New OAuth App, callback URL
-  https://tokenops.cloud/auth/github/callback → generate client secret →
+  https://tokenops-cost-auditor.com/auth/github/callback → generate client secret →
   .env GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET.
 Deliberate absences: Apple (consumer/iOS-mandated; its private-relay
 addresses defeat the work-email identity — BACKLOG trigger) and SAML/Okta
 enterprise SSO (X-03 multi-org territory, ruled trigger).
 
-## 2b. Domain cutover — tokenops.cloud → tokenops-cost-auditor.com (R-DOMAIN-MIGRATE)
+## 2b. Domain cutover → tokenops-cost-auditor.com (R-DOMAIN-MIGRATE)
 
 Everything outward-facing is config; the cutover is DNS + one .env flip.
 
@@ -104,11 +104,11 @@ FOUNDER (registrar for tokenops-cost-auditor.com), do first:
   A  docs  -> 169.58.44.80
   (status CNAME comes later with UptimeRobot, §3b. MX/mailbox for
   support@tokenops-cost-auditor.com whenever you set up mail — until then
-  SUPPORT_EMAIL stays on tokenops.cloud, which keeps working.)
+  SUPPORT_EMAIL stays pinned in the server .env to the retired-domain mailbox, which keeps working.)
 
 THEN, on the box (one flip; old domain keeps redirecting forever):
   1 .env: DOMAIN=tokenops-cost-auditor.com
-          OLD_DOMAIN=tokenops.cloud
+          OLD_DOMAIN=<the retired domain>
           APP_BASE_URL=https://tokenops-cost-auditor.com
           DOCS_URL=https://docs.tokenops-cost-auditor.com
   2 repo one-time sweep (already staged in the migration commit checklist):
@@ -125,12 +125,12 @@ THEN, on the box (one flip; old domain keeps redirecting forever):
 
 ## 3b. Status page (R-SAAS-BASICS 3)
 
-status.tokenops.cloud = UptimeRobot public status page. Founder-dashboard
+status.tokenops-cost-auditor.com = UptimeRobot public status page. Founder-dashboard
 steps (no UptimeRobot/DNS credential lives in this repo or on the box):
 1 UptimeRobot -> Status Pages -> create public page from the existing
-  healthz monitor. 2 Set custom domain status.tokenops.cloud; UptimeRobot
+  healthz monitor. 2 Set custom domain status.tokenops-cost-auditor.com; UptimeRobot
   shows the CNAME target. 3 At the DNS provider add
-  CNAME status -> <target from step 2>. 4 Verify https://status.tokenops.cloud
+  CNAME status -> <target from step 2>. 4 Verify https://status.tokenops-cost-auditor.com
   serves the page; the site footer already links it.
 
 ## 4. Backup & restore (NFR-08)

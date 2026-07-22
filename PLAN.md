@@ -760,7 +760,7 @@ federation (OAuth) implementation, payment-gateway activation audit, and
 market-grounded pricing (deep-research commissioned) — tracked as the
 same-day follow-on workstreams.
 
-**R-DOMAIN-MIGRATE (founder 2026-07-22): tokenops.cloud →
+**R-DOMAIN-MIGRATE (founder 2026-07-22): tokenops-cost-auditor.com →
 tokenops-cost-auditor.com.** Prepared same-day, cutover BLOCKED ON DNS
 (the new domain resolves to nothing; Caddy cannot obtain certs until the
 founder adds A records — exact records in runbook §2b). Every
@@ -875,8 +875,8 @@ the internal key stays "team" — subscription rows are data and migrations are
 additive-only; every display path now goes through the catalogue (str.title()
 on the key was silently resurrecting "Team"); ruled test: no rendered public
 surface says Team as a plan name. Multi-user seats remain at the X-03 trigger.
-(2) Contact support (mailto support@tokenops.cloud, replies within 1 business
-day) in the app Help group, public footer and billing. (3) status.tokenops.cloud
+(2) Contact support (mailto support@tokenops-cost-auditor.com, replies within 1 business
+day) in the app Help group, public footer and billing. (3) status.tokenops-cost-auditor.com
 linked in the footer; UptimeRobot public page + CNAME are founder-dashboard
 steps recorded in the runbook (no UptimeRobot/DNS credential exists in this
 system). (4a) Close account: typed-phrase explicit-confirm with every

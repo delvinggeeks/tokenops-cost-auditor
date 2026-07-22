@@ -70,7 +70,7 @@ class TestTheStagesLightHonestly:
         page = TestClient(app).get(f"/audits/{audit_id}/progress/partial", headers=HDR).text
         assert "row 3: timestamp is not ISO-8601" in page  # what happened
         assert "upload the file again" in page  # what to do
-        assert "support@tokenops.cloud" in page
+        assert "support@tokenops-cost-auditor.com" in page
         assert "hx-trigger" not in page
 
     def test_the_poll_partial_is_never_cached(self, app: FastAPI, tmp_path) -> None:

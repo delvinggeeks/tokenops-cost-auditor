@@ -2,7 +2,7 @@
 
 This page is about the MODEL RATE CARD — the provider prices we use to
 price *your* usage. (Our own subscription prices live on the
-[pricing page](https://tokenops.cloud/#plans) and vary by region.)
+[pricing page](https://tokenops-cost-auditor.com/#plans) and vary by region.)
 
 Money math is only as good as the rate card behind it. Ours is versioned,
 effective-dated, and verified by a human — deliberately, as a trust
