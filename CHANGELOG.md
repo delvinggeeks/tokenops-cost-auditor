@@ -5,6 +5,18 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.26 · SIGN-IN EMAIL PROFESSIONALIZED + FEDERATION
+  PROVEN. Google sign-in confirmed end-to-end in prod logs (callback
+  303, account created 11:48, signup credit granted). "Magic link"
+  scrubbed from every visible surface: form now posts /auth/signin-link
+  (no alias; old path 405s), email arrives from "TokenOps Cost Auditor
+  <noreply@…>" with professional secure-link copy and subject "Sign in
+  to TokenOps Cost Auditor". Gmail delivery diagnosis: Postmark SMTP
+  accepts (mail.sent) but external-recipient delivery pends Postmark
+  ACCOUNT APPROVAL (new accounts send same-domain only) — founder
+  requests approval in the Postmark dashboard; same-domain test emails
+  sent to support@ (arrives via inbound routing). SMOKE PASS.
+
 - 2026-07-22 · v1.5.25 (activation, config-only — no code change) ·
   GOOGLE SIGN-IN LIVE. Founder parked the OAuth client pair
   (/root/secrets pattern; secrets never in transcript/repo); wired into
