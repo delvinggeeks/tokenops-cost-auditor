@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.30 · READINESS WAVE 2 live — domain-truth. Statement
+  no longer claims "every finding actioned" when zero findings existed.
+  Connect distinguishes a bad/revoked key (401 → "mistyped, revoked, or
+  from a different org") from a permission gap (403 → honest Admin-key
+  copy); stale "box to tick" wording removed. Yesterday tile names
+  unpriced models instead of silently dropping them. "Daily usage
+  pulls" verified true (ofelia tick scheduled + running). India Scale
+  price asymmetry surfaced for founder ruling (pricing decision, not a
+  code fix). SMOKE PASS.
+
 - 2026-07-22 · v1.5.29 (1cb8442) · READINESS WAVE 1 live — ship-blockers
   + integrity. Microsoft nOAuth account-takeover CLOSED (id_token
   xms_edov required; the vuln-enshrining test rewritten to prove the
