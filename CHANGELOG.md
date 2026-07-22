@@ -5,6 +5,17 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-22 · v1.5.36 · WAVE B FINISHED + STRIPE PROVEN. Verified-savings
+  celebration (savings hero pops, motion-spec C11, reduced-motion safe,
+  gated strictly on re-audit-proven verified>0 — honest by construction,
+  ux-gate PASS). Digest opt-out (users.daily_digest_emails, migration 012
+  applied in prod, settings toggle, run_digests skips only on explicit
+  False). Stripe (global/USD) confirmed code-complete with a new
+  payment-webhook e2e test (signed checkout → credit → live audit; forged
+  sig grants nothing) — same link+webhook design as Razorpay, needs only
+  the founder's dashboard credentials. SMOKE PASS: digest toggle +
+  celebration live, healthz ok, alembic head e5b8c2f74a19.
+
 - 2026-07-22 · v1.5.35 · WAVE A+B UX — activation + retention live. Wave
   A: a getting-started checklist (connect→audit→review→apply→verified),
   self-completing from real data, progress bar, next-step CTA, hideable,
