@@ -18,6 +18,14 @@ TEMPLATES = Path(__file__).parents[1] / "src/tokenops_cost_auditor/web/templates
 DESIGNED = "/static/wa-design.css"
 
 
+
+def _consume_link(client, link, follow_redirects=False):
+    """GET now only shows a confirm page; POST signs in (readiness audit)."""
+    from urllib.parse import parse_qs, urlparse
+
+    token = parse_qs(urlparse(link).query)["token"][0]
+    return client.post("/auth/verify", data={"token": token}, follow_redirects=follow_redirects)
+
 class _Recorder:
     def __init__(self) -> None:
         self.magic_links: list[tuple[str, str]] = []
@@ -39,7 +47,7 @@ def signed_in(app: FastAPI) -> TestClient:
     # drops Secure, but the app-shell pages are the same either way).
     client = TestClient(app, base_url="https://testserver")
     client.post("/auth/signin-link", data={"email": "seam@example.com"})
-    client.get(recorder.magic_links[-1][1], follow_redirects=False)
+    _consume_link(client, recorder.magic_links[-1][1])
     return client
 
 
@@ -115,7 +123,7 @@ class TestSignInSurfaces:
         app.state.mail = recorder
         client = TestClient(app, base_url="https://testserver")
         client.post("/auth/signin-link", data={"email": "fresh@example.com"})
-        resp = client.get(recorder.magic_links[-1][1], follow_redirects=False)
+        resp = _consume_link(client, recorder.magic_links[-1][1])
         assert resp.status_code == 303
         assert resp.headers["location"] == "/dashboard"
 

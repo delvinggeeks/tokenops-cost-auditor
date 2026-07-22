@@ -1,0 +1,28 @@
+{% extends "_public_shell.html" %}
+{% block title %}Confirm sign-in — TokenOps Cost Auditor{% endblock %}
+{% block main %}
+<main class="pub-main">
+<div class="auth-split">
+  <aside class="auth-brand" data-mood="aura">
+    {% include "_wa_mark.html" %}
+    <h2>TokenOps Cost Auditor</h2>
+    <p>One more tap and you're in. We ask for this click so that automatic
+      email scanners — the ones that open links to check them — can't use up
+      your one-time link before you do.</p>
+  </aside>
+  <div class="auth-form-panel">
+  <div class="signin">
+  <h1 class="page-h1">Confirm sign-in</h1>
+  <p class="signin-lede">Sign in to TokenOps Cost Auditor{% if email %} as
+    <strong>{{ email }}</strong>{% endif %}.</p>
+  <form method="post" action="/auth/verify" class="signin-form">
+    <input type="hidden" name="token" value="{{ token }}">
+    <button class="btn btn-primary" type="submit">Sign me in</button>
+  </form>
+  <p class="signin-note">This link works once and expires 15 minutes after it
+    was sent. If it's expired, just request a new one.</p>
+  </div>
+  </div>
+</div>
+</main>
+{% endblock %}

@@ -58,6 +58,20 @@ def request_link(client: TestClient, mail: MailRecorder, email: str) -> str:
     return link
 
 
+def _token_of(link: str) -> str:
+    from urllib.parse import parse_qs, urlparse
+
+    return parse_qs(urlparse(link).query)["token"][0]
+
+
+def consume(client: TestClient, link: str, follow_redirects: bool = False):
+    """The sign-in now takes two hops: GET shows a confirm page (harmless to a
+    mail scanner's prefetch), POST actually signs in (readiness audit)."""
+    return client.post(
+        "/auth/verify", data={"token": _token_of(link)}, follow_redirects=follow_redirects
+    )
+
+
 class TestTAUTH01Issue:
     def test_link_issued_and_logged(self, client: TestClient, mail: MailRecorder) -> None:
         link = request_link(client, mail, "cto@example.com")
@@ -81,7 +95,7 @@ class TestTAUTH02Consume:
         self, client: TestClient, mail: MailRecorder
     ) -> None:
         link = request_link(client, mail, "cto@example.com")
-        resp = client.get(link, follow_redirects=False)
+        resp = consume(client, link)
         assert resp.status_code == 303
         set_cookie = resp.headers["set-cookie"]
         assert "top_session=" in set_cookie
@@ -97,7 +111,7 @@ class TestTAUTH02Consume:
         self, sclient: TestClient, mail: MailRecorder, app: FastAPI
     ) -> None:
         link = request_link(sclient, mail, "cto@example.com")
-        sclient.get(link, follow_redirects=False)  # TestClient keeps the cookie jar
+        consume(sclient, link)  # TestClient keeps the cookie jar
         # no X-User-Email header: the session cookie must authenticate (FR-17)
         resp = sclient.get("/api/v1/audits/nonexistent/status")
         assert resp.status_code == 404  # authenticated; audit genuinely absent
@@ -108,10 +122,24 @@ class TestTAUTH02Consume:
 class TestTAUTH03SingleUse:
     def test_second_consume_rejected(self, client: TestClient, mail: MailRecorder) -> None:
         link = request_link(client, mail, "cto@example.com")
-        assert client.get(link, follow_redirects=False).status_code == 303
-        second = client.get(link, follow_redirects=False)
+        assert consume(client, link).status_code == 303
+        second = consume(client, link)
         assert second.status_code == 400
         assert "already used" in second.text
+
+    def test_get_does_not_consume_so_a_mail_scanner_cannot_burn_the_link(
+        self, client: TestClient, mail: MailRecorder
+    ) -> None:
+        """Readiness audit: corporate mail security prefetches links with GET.
+        The GET must only SHOW a confirm page — the human's POST still signs
+        in afterwards. Consuming on GET locked out scanned work-email buyers."""
+        link = request_link(client, mail, "cto@example.com")
+        shown = client.get(link, follow_redirects=False)  # the scanner's prefetch
+        assert shown.status_code == 200
+        assert "Confirm sign-in" in shown.text
+        assert "top_session=" not in shown.headers.get("set-cookie", "")  # nothing consumed
+        # the human clicks — the link still works
+        assert consume(client, link).status_code == 303
 
 
 class TestTAUTH04Expiry:
@@ -121,7 +149,7 @@ class TestTAUTH04Expiry:
         link = request_link(client, mail, "cto@example.com")
         real = time.time()
         monkeypatch.setattr(time, "time", lambda: real + 16 * 60)  # 15-min expiry
-        resp = client.get(link, follow_redirects=False)
+        resp = consume(client, link)
         assert resp.status_code == 400
         assert "expired" in resp.text
 
@@ -265,9 +293,9 @@ class TestG5F2SameSecondReissue:
     ) -> None:
         """f.2: login and immediate re-request must not lock the user out."""
         first = request_link(client, mail, "fast@example.com")
-        assert client.get(first, follow_redirects=False).status_code == 303
+        assert consume(client, first).status_code == 303
         second = request_link(client, mail, "fast@example.com")  # same wall-clock second
-        assert client.get(second, follow_redirects=False).status_code == 303
+        assert consume(client, second).status_code == 303
 
 
 class TestRGTMControlLanding:
@@ -322,7 +350,9 @@ class TestSessionCookieFlags:
         from tokenops_cost_auditor.web.auth import issue_magic_token
 
         token = issue_magic_token(app.state.settings.secret_key, "flags@example.com")
-        return TestClient(app).get(f"/auth/verify?token={token}", follow_redirects=False)
+        return TestClient(app).post(
+            "/auth/verify", data={"token": token}, follow_redirects=False
+        )
 
     def test_dev_cookie_is_sendable_over_http(self, app: FastAPI) -> None:
         resp = self._login(app)

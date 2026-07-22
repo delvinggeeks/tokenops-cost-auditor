@@ -15,6 +15,14 @@ from sqlalchemy import select
 from tokenops_cost_auditor.persistence.models import Payment, Source, User
 
 EMAIL = "freeconnect@example.com"
+
+def _consume_link(client, link, follow_redirects=False):
+    """GET now only shows a confirm page; POST signs in (readiness audit)."""
+    from urllib.parse import parse_qs, urlparse
+
+    token = parse_qs(urlparse(link).query)["token"][0]
+    return client.post("/auth/verify", data={"token": token}, follow_redirects=follow_redirects)
+
 HDR = {"X-User-Email": EMAIL}
 
 
@@ -34,7 +42,7 @@ def fresh_signup(app: FastAPI, email: str = EMAIL) -> TestClient:
     app.state.mail = recorder
     client = TestClient(app, base_url="https://testserver")
     client.post("/auth/signin-link", data={"email": email})
-    client.get(recorder.magic_links[-1][1], follow_redirects=False)
+    _consume_link(client, recorder.magic_links[-1][1])
     return client
 
 
@@ -53,7 +61,7 @@ class TestTheSignupCredit:
         recorder = _Recorder()
         app.state.mail = recorder
         client.post("/auth/signin-link", data={"email": EMAIL})
-        client.get(recorder.magic_links[-1][1], follow_redirects=False)
+        _consume_link(client, recorder.magic_links[-1][1])
         with app.state.session_factory() as session:
             user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
             n = len(

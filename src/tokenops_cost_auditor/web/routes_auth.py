@@ -99,7 +99,23 @@ def request_magic_link(request: Request, email: str = Form(...)) -> HTMLResponse
 
 
 @router.get("/verify", response_model=None)
-def verify(request: Request, token: str) -> HTMLResponse | RedirectResponse:
+def verify_show(request: Request, token: str) -> HTMLResponse:
+    """Show a confirm button — do NOT consume the link. Corporate mail security
+    (Outlook SafeLinks, Proofpoint) prefetches links with GET to scan them;
+    consuming on GET burned the one-time link before the human clicked, locking
+    out exactly the work-email buyer we target (readiness audit 2026-07-22).
+    Signature + expiry are checked here; only the POST below signs in."""
+    settings = request.app.state.settings
+    try:
+        email = verify_magic_token(settings.secret_key, token, None)  # signature + expiry only
+    except AuthTokenError as exc:
+        return HTMLResponse(status_code=400, content=f"<h1>Sign-in failed</h1><p>{exc}</p>")
+    tpl = request.app.state.jinja.get_template("verify_confirm.html")
+    return HTMLResponse(tpl.render(token=token, email=email, user_email=None))
+
+
+@router.post("/verify", response_model=None)
+def verify(request: Request, token: str = Form(...)) -> HTMLResponse | RedirectResponse:
     settings = request.app.state.settings
     with _session(request) as session:
         # peek at the email without trusting it yet, to load last_login
