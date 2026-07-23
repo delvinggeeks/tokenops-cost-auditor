@@ -15,13 +15,15 @@ the same reason.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
 import structlog
 
-from tokenops_cost_auditor.services.connectors import anthropic_usage, openai_usage
+from tokenops_cost_auditor.services.connectors import anthropic_usage, azure_usage, openai_usage
 from tokenops_cost_auditor.services.connectors.base import SupportsGet
 from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
 
@@ -87,14 +89,46 @@ VERDICTS = {
 }
 
 
+# Azure refusals name Azure's own objects (ux gate note 8: error copy must
+# say what went wrong and how to fix it — "Admin key" words would mislead).
+AZURE_OVERRIDES = {
+    BAD_KEY: Verdict(
+        status=BAD_KEY,
+        headline="Azure couldn't authenticate those values.",
+        detail=(
+            "One of the four values is wrong, or the client secret has "
+            "expired. Check the Directory ID, Application ID and Resource ID "
+            "against the portal — or create a fresh client secret and paste "
+            "its Value (not its ID)."
+        ),
+        can_save=False,
+    ),
+    NO_SCOPE: Verdict(
+        status=NO_SCOPE,
+        headline="This principal can't read metrics on that resource.",
+        detail=(
+            "The credentials authenticate, but the app is missing the "
+            "Monitoring Reader role on the resource you pasted. On the "
+            "resource: Access control (IAM) → Add role assignment → "
+            "Monitoring Reader → select your app, then try again."
+        ),
+        can_save=False,
+    ),
+}
+
+
 def validate_key(provider: str, api_key: str, client: SupportsGet | None = None) -> Verdict:
     """One day of usage is enough to prove the key can read reports."""
     end = datetime.now(UTC).date()
     start = end - timedelta(days=1)
-    fetch = {
+    # One calling shape, provider-specific client protocols (Azure also
+    # POSTs its token exchange) — Callable[...] mirrors pull.py's registry.
+    fetchers: dict[str, Callable[..., tuple[list[dict[str, Any]], int]]] = {
         "openai": openai_usage.fetch_usage,
         "anthropic": anthropic_usage.fetch_usage,
-    }.get(provider)
+        "azure-openai": azure_usage.fetch_usage,
+    }
+    fetch = fetchers.get(provider)
     if fetch is None:
         raise ValueError(f"unknown provider: {provider}")
 
@@ -107,7 +141,12 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
         # The provider actively refused the key — a real answer, so we do NOT
         # save it. Tell the truth about WHICH refusal: 401 = the key itself is
         # bad/revoked; 403 = the key is valid but lacks admin permission.
-        return VERDICTS[BAD_KEY] if exc.status == 401 else VERDICTS[NO_SCOPE]
+        # Azure's token endpoint answers 400 for bad ids/secrets — same
+        # meaning as 401 here: the credential itself is not accepted.
+        status = BAD_KEY if exc.status in (400, 401) else NO_SCOPE
+        if provider == "azure-openai":
+            return AZURE_OVERRIDES[status]
+        return VERDICTS[status]
     except Exception as exc:
         log.info("connect.validate_unreachable", provider=provider, error=str(exc)[:120])
         return VERDICTS[UNREACHABLE]

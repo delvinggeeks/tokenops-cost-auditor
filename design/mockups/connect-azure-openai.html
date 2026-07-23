@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Connect Azure OpenAI (WP-CLOUD-T2 C-A) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (one per flow): the four credential fields check off left-to-right
+     as they validate (A-class transition, reduced-motion safe) — the same
+     settled-when-done grammar as every wizard. Money never appears here. -->
+<style>
+  /* mockup-local layout only; wizard grammar (steps-bar, key-truth, cando)
+     is the kit's own — no new dialect. */
+  .cred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2) var(--s3); }
+  @media (max-width: 860px) { .cred-grid { grid-template-columns: 1fr; } }
+  .cred-grid label { display: block; font-size: 13px; font-weight: 600;
+    color: var(--ink-soft); margin-bottom: 4px; }
+  .cred-grid input { width: 100%; }
+  .cred-full { grid-column: 1 / -1; }
+</style>
+</head>
+<body class="app-body">
+<main class="wrap" style="padding: var(--s4) 0; max-width: 900px;">
+
+  <section class="widget w-8">
+    <div class="steps-bar" aria-label="Connect Azure OpenAI, step 1 of 3">
+      <span class="cur"><span class="step-n">1</span></span>
+      <span class="cur lbl">Grant a read-only service principal in Azure</span>
+      <span class="step-n">2</span><span class="lbl">Paste its four values here</span>
+      <span class="step-n">3</span><span class="lbl">We take it from there</span>
+    </div>
+
+    <p class="muted" style="margin-top: var(--s1);">Connecting
+      OpenAI or Anthropic instead? <a href="#">Switch →</a></p>
+
+    <h2>Grant us read-only eyes on your metrics — Azure enforces it</h2>
+    <p>Azure OpenAI publishes token and request counts as Azure Monitor
+      metrics on your resource. We read those metrics with a service
+      principal you create, holding exactly one role: <strong>Monitoring
+      Reader</strong>, on exactly one resource. Five minutes in the portal:</p>
+    <ol style="font-size: 14px; line-height: 1.6;">
+      <li><strong>Microsoft Entra ID → App registrations → New registration.</strong>
+        Name it (e.g. <code>tokenops-cost-auditor-reader</code>), register.</li>
+      <li>Copy the <strong>Directory (tenant) ID</strong> and
+        <strong>Application (client) ID</strong> from the overview page.</li>
+      <li><strong>Certificates &amp; secrets → New client secret.</strong>
+        Give it an expiry; copy the secret <em>Value</em> now (Azure shows it once).</li>
+      <li>Open your <strong>Azure OpenAI resource → Access control (IAM) →
+        Add role assignment → Monitoring Reader</strong> → select your new app.</li>
+      <li>On the resource's <strong>Properties</strong> page, copy the
+        <strong>Resource ID</strong> (starts <code>/subscriptions/…</code>).</li>
+    </ol>
+
+    <div class="key-truth">
+      <p class="key-kind"><svg class="i" aria-hidden="true"><use href="#i-source"/></svg>
+        This is an <strong>Entra ID service principal with the Monitoring
+        Reader role</strong>. Anyone with Owner or User Access Administrator
+        on the resource can grant it.</p>
+      <div class="cando">
+        <div>
+          <span class="cando-h">The principal <em>can</em></span>
+          <p>read monitoring metrics for the one resource you granted —
+            token counts, request counts, by model and deployment.</p>
+        </div>
+        <div>
+          <span class="cando-h cando-ok">It <em>cannot</em></span>
+          <p>call your models, read prompts or completions, or touch any
+            other resource — Azure's own RBAC enforces this, not our promise.</p>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px; margin:0">Set an expiry on the
+        secret when you create it, and revoke here whenever you like —
+        revoking deletes our copy immediately.</p>
+    </div>
+
+    <p class="muted" style="font-size: 13px; margin-top: var(--s2);">
+      Signed in but App registrations is blocked? Your directory restricts
+      who may register apps — ask an Entra admin, or
+      <a href="#">the upload path works right now →</a>
+      · <a href="#">Which shape is your account? →</a></p>
+
+    <h2>Paste the four values here</h2>
+    <p>We exchange them for a read-only token against Azure right away and
+      show you exactly what we can see. Encrypted the moment they arrive,
+      never written to a log, deleted the instant you revoke.</p>
+    <form>
+      <div class="cred-grid">
+        <div>
+          <label for="tenant_id">Directory (tenant) ID</label>
+          <input id="tenant_id" name="tenant_id" autocomplete="off" required
+                 placeholder="00000000-0000-0000-0000-000000000000">
+        </div>
+        <div>
+          <label for="client_id">Application (client) ID</label>
+          <input id="client_id" name="client_id" autocomplete="off" required
+                 placeholder="00000000-0000-0000-0000-000000000000">
+        </div>
+        <div class="cred-full">
+          <label for="client_secret">Client secret (the Value, not the ID)</label>
+          <input id="client_secret" name="client_secret" type="password"
+                 autocomplete="off" required placeholder="paste the secret value">
+        </div>
+        <div class="cred-full">
+          <label for="resource_id">Resource ID of your Azure OpenAI resource</label>
+          <input id="resource_id" name="resource_id" autocomplete="off" required
+                 placeholder="/subscriptions/…/resourceGroups/…/providers/Microsoft.CognitiveServices/accounts/…">
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px; margin:6px 0 0">
+        We verify the grant, encrypt all four values, and use them only to
+        read usage metrics. We never see your prompts and never call your
+        models — the Monitoring Reader role cannot.</p>
+      <p style="margin-top: var(--s2);">
+        <button class="btn btn-primary" type="button">Check and connect</button>
+        <span class="muted">Checking with Azure…</span>
+      </p>
+    </form>
+    <div class="provenance">All four values are encrypted the moment they
+      arrive, never written to logs, and deleted the moment you revoke.</div>
+  </section>
+
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
+      <h2>What we read</h2>
+    </div>
+    <p><strong>We read:</strong> Azure Monitor's usage metrics — how many
+      calls, which models, and how many tokens; the same counts behind
+      your bill.</p>
+    <p><strong>We never read:</strong> your prompts, your completions, or
+      your customers' data. The role we hold cannot call your models.</p>
+    <p><strong>What Azure doesn't expose:</strong> cached-token counts for
+      standard deployments. Detectors that need cache visibility say
+      <em>"not observable on Azure"</em> in your report — an honest label,
+      never a guessed zero.</p>
+    <div class="provenance">Full detail in our data handling docs.</div>
+  </section>
+
+  <p class="muted" style="margin-top:var(--s4); font-size:13px;">MOCKUP v1 —
+    SAMPLE DATA. Wizard grammar reused whole (steps-bar, key-truth, cando);
+    only .cred-grid is new layout (4 fields, stacks at 860px). Honest
+    states: portal-permission wall taught with the upload fallback; the
+    Azure cache blind spot disclosed BEFORE connect, not discovered after.</p>
+
+</main>
+</body>
+</html>

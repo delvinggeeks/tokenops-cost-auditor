@@ -24,7 +24,7 @@
        surface ever linked it. Rendered from the registry, so a future
        provider appears here the day its wizard ships. #}
     {% for prov in help.wizard_providers() %}
-      {{ kit.button("Connect " ~ prov|title,
+      {{ kit.button("Connect " ~ help.wizard(prov).provider_name,
            href="/sources/connect/" ~ prov,
            variant="primary" if loop.first else "quiet", icon="plus") }}
     {% endfor %}

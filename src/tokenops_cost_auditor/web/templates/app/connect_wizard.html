@@ -9,14 +9,15 @@
     {# Breadcrumbs: the step's purpose stated in a sentence (R-DESIGN-V3 §2d) #}
     <div class="steps-bar" aria-label="Connect {{ copy.provider_name }}, step 1 of 3">
       <span class="cur"><span class="step-n">1</span></span>
-      <span class="cur lbl">Create an Admin key in {{ copy.provider_name }}</span>
-      <span class="step-n">2</span><span class="lbl">Paste it here</span>
+      <span class="cur lbl">{{ copy.step1_short or ("Create an Admin key in " ~ copy.provider_name) }}</span>
+      <span class="step-n">2</span><span class="lbl">{{ copy.step2_short or "Paste it here" }}</span>
       <span class="step-n">3</span><span class="lbl">We take it from there</span>
     </div>
 
     {% for other in help.wizard_providers() if other != provider %}
       <p class="muted" style="margin-top: var(--s1);">Connecting
-        {{ other|title }} instead? <a href="/sources/connect/{{ other }}">Switch →</a></p>
+        {{ help.wizard(other).provider_name }} instead?
+        <a href="/sources/connect/{{ other }}">Switch →</a></p>
     {% endfor %}
 
     {% if at_limit %}
@@ -32,6 +33,14 @@
     {% else %}
       <h2>{{ copy.step1_title }}</h2>
       <p>{{ copy.step1_body }}</p>
+      {% if copy.step1_steps %}
+      {# Multi-step providers (Azure): the portal walk as a numbered list —
+         order IS information here, a real sequence. #}
+      <ol style="font-size: 14px; line-height: 1.6;">
+        {% for step in copy.step1_steps %}<li>{{ step }}</li>
+        {% endfor %}
+      </ol>
+      {% endif %}
 
       {# Honest key-authority disclosure (walkthrough 2026-07-22): the usage
          API needs an ORG ADMIN key — there is no usage-only key. We say so
@@ -58,7 +67,7 @@
       <p style="margin-top: var(--s3)">
         <a class="btn btn-primary" href="{{ copy.console_url }}" target="_blank"
            rel="noopener noreferrer">
-          Open {{ copy.provider_name }}'s Admin keys page</a>
+          {{ copy.console_label or ("Open " ~ copy.provider_name ~ "'s Admin keys page") }}</a>
         <small class="muted">Opens in a new tab — {{ copy.create_hint }}, then come
           back here with the key.</small>
       </p>
@@ -78,10 +87,35 @@
       <p>{{ copy.step2_body }}</p>
       <form hx-post="/sources/connect/{{ provider }}/validate"
             hx-target="#verdict" hx-swap="innerHTML" hx-indicator="#checking">
+        {% if provider == "azure-openai" %}
+        <div class="cred-grid">
+          <div>
+            <label for="tenant_id">Directory (tenant) ID</label>
+            <input id="tenant_id" name="tenant_id" autocomplete="off" required
+                   placeholder="00000000-0000-0000-0000-000000000000">
+          </div>
+          <div>
+            <label for="client_id">Application (client) ID</label>
+            <input id="client_id" name="client_id" autocomplete="off" required
+                   placeholder="00000000-0000-0000-0000-000000000000">
+          </div>
+          <div class="cred-full">
+            <label for="client_secret">Client secret (the Value, not the ID)</label>
+            <input id="client_secret" name="client_secret" type="password"
+                   autocomplete="off" required placeholder="paste the secret value">
+          </div>
+          <div class="cred-full">
+            <label for="resource_id">Resource ID of your Azure OpenAI resource</label>
+            <input id="resource_id" name="resource_id" autocomplete="off" required
+                   placeholder="/subscriptions/…/resourceGroups/…/providers/Microsoft.CognitiveServices/accounts/…">
+          </div>
+        </div>
+        {% else %}
         <label for="api_key">Paste the {{ copy.key_kind }}</label>
         <input id="api_key" name="api_key" type="password" autocomplete="off" required
                placeholder="{{ 'sk-admin-…' if provider == 'openai' else 'sk-ant-admin…' }}"
                style="width:100%; max-width:34em" aria-label="Your organization Admin key">
+        {% endif %}
         {# The promise restated where the hand is (ux gate f.3): a reassurance
            one visual hop away is a reassurance half-read. #}
         <p class="muted" style="font-size:13px; margin:6px 0 0">

@@ -10,6 +10,7 @@ connect.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 
 import structlog
@@ -37,7 +38,7 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
 
-PROVIDERS = ("openai", "anthropic")
+PROVIDERS = ("openai", "anthropic", "azure-openai")
 
 
 def _session(request: Request) -> Session:
@@ -151,16 +152,46 @@ def wizard_page(
 def wizard_validate(
     request: Request,
     provider: str,
-    api_key: str = Form(...),
+    api_key: str = Form(""),
+    tenant_id: str = Form(""),
+    client_id: str = Form(""),
+    client_secret: str = Form(""),
+    resource_id: str = Form(""),
     user_email: str = Depends(current_user),
 ) -> HTMLResponse:
     """Live validation, then save. R-WIZ-DEGRADE: an unreachable provider
-    saves the key and says so plainly — it never blocks the customer."""
+    saves the key and says so plainly — it never blocks the customer.
+
+    Azure (WP-CLOUD-T2 C-A) posts four fields instead of one key; they are
+    packed into one canonical JSON credential here, so everything downstream
+    (fingerprint dedup, encryption, revoke-deletes-all) treats it as the one
+    opaque credential it is."""
     if provider not in PROVIDERS:
         raise HTTPException(status_code=404, detail="unknown provider")
-    key = api_key.strip()
-    if not key:
-        raise HTTPException(status_code=400, detail="key required")
+    if provider == "azure-openai":
+        fields = {
+            "tenant_id": tenant_id.strip(),
+            "client_id": client_id.strip(),
+            "client_secret": client_secret.strip(),
+            "resource_id": resource_id.strip(),
+        }
+        if not all(fields.values()):
+            raise HTTPException(status_code=400, detail="all four Azure values are required")
+        if not fields["resource_id"].startswith("/subscriptions/") or (
+            "/providers/Microsoft.CognitiveServices/accounts/" not in fields["resource_id"]
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "that doesn't look like an Azure OpenAI Resource ID — copy it "
+                    "from the resource's Properties page (starts /subscriptions/…)"
+                ),
+            )
+        key = json.dumps(fields, sort_keys=True)
+    else:
+        key = api_key.strip()
+        if not key:
+            raise HTTPException(status_code=400, detail="key required")
     settings = request.app.state.settings
 
     # AUTHORIZE, THEN VALIDATE (V-D9 cold-review f.1): never spend a customer's
@@ -402,6 +433,22 @@ def connect_source(
         raise HTTPException(status_code=400, detail="unknown provider")
     if not api_key.strip():
         raise HTTPException(status_code=400, detail="key required")
+    if provider == "azure-openai":
+        # The plain POST path must carry the SAME packed four-field JSON the
+        # wizard produces — a bare key here would fail every later pull.
+        from tokenops_cost_auditor.services.connectors import azure_usage
+        from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
+
+        try:
+            azure_usage.parse_credential(api_key)
+        except ConnectorAuthError:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Azure needs its four values — use the guided connect "
+                    "at /sources/connect/azure-openai"
+                ),
+            ) from None
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         plan = user_plan(session, user.id)

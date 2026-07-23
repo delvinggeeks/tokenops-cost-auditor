@@ -321,6 +321,16 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .ribbon-4 { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 860px) { .ribbon-4 { grid-template-columns: 1fr; } }
 
+/* Multi-field credential grid (WP-CLOUD-T2 C-A wizard): four labeled
+   inputs, two columns, stacking at the kit's 860px breakpoint. Label
+   typography lives HERE, not per-page (ux gate note 5). */
+.cred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2) var(--s3); }
+@media (max-width: 860px) { .cred-grid { grid-template-columns: 1fr; } }
+.cred-grid label { display: block; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); margin-bottom: 4px; }
+.cred-grid input { width: 100%; }
+.cred-full { grid-column: 1 / -1; }
+
 /* ---- ICON SYSTEM (R-DESIGN-V3 §1a): one self-hosted stroke sprite ---- */
 .i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none;
   stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;

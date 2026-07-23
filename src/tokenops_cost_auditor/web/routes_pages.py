@@ -25,6 +25,11 @@ router = APIRouter(tags=["pages"])
 
 def _render(request: Request, template: str, **ctx: object) -> HTMLResponse:
     tpl = request.app.state.jinja.get_template(template)
+    # help is ambient on every page here: the get-logs tabs render the
+    # provider list from the registry (R-CONNECT-VISIBLE), signin included.
+    from tokenops_cost_auditor.web import help as help_registry
+
+    ctx.setdefault("help", help_registry)
     return HTMLResponse(tpl.render(**ctx))
 
 

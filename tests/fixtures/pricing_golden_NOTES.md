@@ -6,6 +6,31 @@ computed INDEPENDENTLY of the code under test (plain Decimal arithmetic from the
 provider rate cards — generator preserved verbatim below) and must be hand-verified
 by the founder against provider pricing pages BEFORE gate sweep G2 runs (R-Q3).
 
+## Azure OpenAI rows G16-G19 (WP-CLOUD-T2 C-A, added 2026-07-23) — FOUNDER-VERIFY BEFORE DEPLOY
+
+DERIVATION: Azure OpenAI **Global Standard** pay-as-you-go lists the same
+per-token rates as OpenAI's own list for the mirrored models; cross-checked
+2026-07-23 against third-party trackers (gpt-5.4 Global Standard 2.50/15.00
+= the openai row exactly). Rows mirror prices.yaml `openai` models
+gpt-5.5/5.4/5.4-mini/5.4-nano/5.3-codex with identical rates.
+- source_url: https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/
+- **Regional / Data-Zone deployments price HIGHER than Global** — these rows
+  are Global Standard only; stated in report methodology. If the founder's
+  verification finds a divergent rate, fix prices.yaml + these goldens in
+  the same commit.
+- gpt-5.6 family (luna/sol/terra) deliberately NOT mirrored: its cache-write
+  premium semantics are OpenAI-specific and Azure availability is
+  unverified. An Azure deployment reporting a 5.6 model lands in
+  unpriced_models (FR-28: listed, never guessed).
+- The Azure CONNECTOR never reports cached tokens (Azure Monitor exposes no
+  cached-token count for standard deployments — verified against
+  Microsoft's monitoring reference 2026-07-23). cache_read rows engage only
+  for T1 uploads of Azure logs that carry cached counts (G18 exercises
+  that path). The cache detector (d2) is NOT RUN on azure-openai source
+  audits — coverage says "not observable on Azure" (R-Q1).
+- Golden values computed independently with Decimal arithmetic (same
+  generator discipline as G01+).
+
 ## Rate sources (fetched 2026-07-17)
 
 - Anthropic: https://platform.claude.com/docs/en/about-claude/pricing

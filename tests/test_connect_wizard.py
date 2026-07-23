@@ -474,7 +474,14 @@ class TestConsoleLinks:
     building); every wizard names its destination host in the visible note
     and teaches the not-signed-in failure mode."""
 
-    OFFICIAL = frozenset({"platform.claude.com", "console.anthropic.com", "platform.openai.com"})
+    OFFICIAL = frozenset(
+        {
+            "platform.claude.com",
+            "console.anthropic.com",
+            "platform.openai.com",
+            "portal.azure.com",  # WP-CLOUD-T2 C-A: App registrations blade
+        }
+    )
 
     def test_console_urls_are_official_domains_only(self) -> None:
         from urllib.parse import urlparse
@@ -518,7 +525,11 @@ class TestConsoleLinks:
             copy = help_registry.wizard(prov)
             assert copy["missing_note"], f"{prov}: no missing_note"
             page = _re.sub(r"\s+", " ", client.get(f"/sources/connect/{prov}", headers=HDR).text)
-            assert "Admin keys" in page or "Admin-keys" in page
+            # The wall differs per provider: OpenAI/Anthropic gate usage
+            # behind org Admin keys; Azure behind App-registration rights.
+            assert "Admin keys" in page or "Admin-keys" in page or "App registrations" in page, (
+                f"{prov}: permission wall not taught"
+            )
             assert 'href="/upload"' in page, f"{prov}: no upload fallback offered"
         anthropic = help_registry.wizard("anthropic")["missing_note"]
         assert "ORGANIZATIONS" in anthropic and "Settings → Organization" in anthropic

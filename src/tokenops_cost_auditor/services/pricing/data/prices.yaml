@@ -133,3 +133,42 @@ providers:
           input: 1.75
           output: 14.00
           cache_read: 0.175
+
+  azure-openai:
+    # WP-CLOUD-T2 C-A. DERIVATION: Azure OpenAI Global Standard pay-as-you-go
+    # lists the same per-token rates as OpenAI's own list for these models
+    # (cross-checked 2026-07-23 against third-party trackers: gpt-5.4 at
+    # 2.50/15.00 Global Standard matches the openai rows above).
+    # source_url: https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/
+    # FOUNDER-VERIFY BEFORE DEPLOY (money law): confirm each row against the
+    # Azure pricing page for your billing region/deployment type. Regional
+    # and Data-Zone deployments price HIGHER than Global — these rows are
+    # Global Standard, stated in the report methodology.
+    # NOTE: the Azure connector never observes cached tokens (Azure Monitor
+    # limit), so cache_read below engages only for T1 uploads of Azure logs.
+    models:
+      gpt-5.5:
+        - effective_from: 2026-06-01
+          input: 5.00
+          output: 30.00
+          cache_read: 0.50
+      gpt-5.4:
+        - effective_from: 2026-06-01
+          input: 2.50
+          output: 15.00
+          cache_read: 0.25
+      gpt-5.4-mini:
+        - effective_from: 2026-06-01
+          input: 0.75
+          output: 4.50
+          cache_read: 0.075
+      gpt-5.4-nano:
+        - effective_from: 2026-06-01
+          input: 0.20
+          output: 1.25
+          cache_read: 0.02
+      gpt-5.3-codex:
+        - effective_from: 2026-06-01
+          input: 1.75
+          output: 14.00
+          cache_read: 0.175

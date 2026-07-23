@@ -227,11 +227,40 @@ wizard:
     step3_title: "Connected — the platform takes it from here."
     step3_body: "We pull the last 30 days now, so your dashboard fills within minutes, then refresh your usage once a day. Nothing else for you to do."
 
+  azure-openai:
+    # WP-CLOUD-T2 C-A. Verified against Microsoft's monitoring reference
+    # (2026-07-23): usage lives as Azure Monitor metrics on the Cognitive
+    # Services resource; a service principal with ONLY the Monitoring Reader
+    # role can read them — read-only by Azure RBAC, not by our promise.
+    provider_name: "Azure OpenAI"
+    key_kind: "Entra ID service principal with the Monitoring Reader role"
+    step1_short: "Grant a read-only service principal in Azure"
+    step2_short: "Paste its four values here"
+    step1_title: "Grant us read-only eyes on your metrics — Azure enforces it"
+    step1_body: "Azure OpenAI publishes token and request counts as Azure Monitor metrics on your resource. We read those metrics with a service principal you create, holding exactly one role: Monitoring Reader, on exactly one resource. Five minutes in the portal:"
+    step1_steps:
+      - "Microsoft Entra ID → App registrations → New registration. Name it (e.g. tokenops-cost-auditor-reader), register."
+      - "Copy the Directory (tenant) ID and Application (client) ID from the overview page."
+      - "Certificates & secrets → New client secret. Give it an expiry; copy the secret Value now (Azure shows it once)."
+      - "Open your Azure OpenAI resource → Access control (IAM) → Add role assignment → Monitoring Reader → select your new app."
+      - "On the resource's Properties page, copy the Resource ID (starts /subscriptions/…)."
+    console_url: "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+    console_label: "Open Azure's App registrations page"
+    console_note: "This opens Azure's real portal at portal.azure.com (App registrations). If it shows an error or an empty page: sign in with the account that manages your Azure subscription. Manual path once signed in: Microsoft Entra ID → App registrations."
+    missing_note: "Signed in but App registrations is blocked? Your directory restricts who may register apps — ask an Entra admin to create the registration, or to grant you the role."
+    who_can: "Anyone with Owner or User Access Administrator on the resource can grant the role."
+    key_can: "read monitoring metrics for the one resource you granted — token counts, request counts, by model and deployment"
+    we_do: "query Azure Monitor's usage metrics daily — never your deployments, never your content (the Monitoring Reader role cannot)"
+    create_hint: "register the app, add the role, collect the four values"
+    step2_title: "Paste the four values here"
+    step2_body: "We exchange them for a read-only token against Azure right away and show you exactly what we can see. Encrypted the moment they arrive, never written to a log, deleted the instant you revoke."
+    step3_title: "Connected — the platform takes it from here."
+    step3_body: "We pull the last 30 days of metrics now, so your dashboard fills within minutes, then refresh your usage once a day. One honest limit, stated up front: Azure exposes no cached-token counts for standard deployments, so the cache detector reports 'not observable on Azure' rather than guessing."
 guide_pages:
   account-paths:
     title: "Individual or organization? Every account shape has a path"
     audience: "Both"
-    body: "Connections read your provider's official usage reports, and providers gate those behind organization credentials — that constraint is theirs, not ours. Here is every shape and its path. OpenAI: every API account already has an organization; if you're its Owner, connect directly — otherwise ask your Owner for the Admin key, or upload meanwhile. Anthropic: an individual Console account has no Admin-keys page at all — create your organization under Settings → Organization (about a minute; you become its Admin) and connect; in someone else's org without the Admin role, ask your admin. Using Claude through a claude.ai plan (Pro or Max) with Claude Code? There is no API bill to pull — export your local transcripts with our one-command exporter instead, and your figures are labeled as API-equivalent value, because that is what they are. Chat-only accounts (ChatGPT or claude.ai without the API or Claude Code) have no usage we can read — we will say so rather than invent numbers. Azure OpenAI, Bedrock and Gemini connectors are on the roadmap; upload their usage exports today. And whatever your shape: uploading always works — zero keys, nothing to provision, the same six-detector audit."
+    body: "Connections read your provider's official usage reports, and providers gate those behind organization credentials — that constraint is theirs, not ours. Here is every shape and its path. OpenAI: every API account already has an organization; if you're its Owner, connect directly — otherwise ask your Owner for the Admin key, or upload meanwhile. Anthropic: an individual Console account has no Admin-keys page at all — create your organization under Settings → Organization (about a minute; you become its Admin) and connect; in someone else's org without the Admin role, ask your admin. Using Claude through a claude.ai plan (Pro or Max) with Claude Code? There is no API bill to pull — export your local transcripts with our one-command exporter instead, and your figures are labeled as API-equivalent value, because that is what they are. Chat-only accounts (ChatGPT or claude.ai without the API or Claude Code) have no usage we can read — we will say so rather than invent numbers. Azure OpenAI connects today: anyone with Owner or User Access Administrator on the resource grants us a read-only Monitoring Reader principal — the wizard walks the five portal steps. Bedrock and Gemini connectors are next on the roadmap; upload their usage exports today. And whatever your shape: uploading always works — zero keys, nothing to provision, the same six-detector audit."
   how-it-works:
     title: "How TokenOps works"
     audience: "Both"

@@ -54,6 +54,16 @@ UPGRADE_PATH_LINE = (
     "Requires per-request logs — upload a JSONL export or run the collector "
     "to enable this detector."
 )
+# WP-CLOUD-T2 C-A (R-Q1 honesty): Azure Monitor exposes no cached-token
+# COUNT for standard deployments, so cached_tokens is 0 by construction in
+# azure buckets. Running the cache detector against that fabricated zero
+# would flag "missing cache" at customers who cache heavily — d2 is
+# NOT OBSERVABLE there, and says so, rather than guessing.
+CACHE_BLIND_PROVIDERS: tuple[str, ...] = ("azure-openai",)
+CACHE_BLIND_LINE = (
+    "Not observable on Azure — Azure Monitor exposes no cached-token count "
+    "for standard deployments. Upload a JSONL export to enable this detector."
+)
 
 MONTH_DAYS = 30.0
 
@@ -279,7 +289,11 @@ def run_aggregate_detectors(
 ) -> list[Finding]:
     findings = (
         d1_aggregate(frame, provider, table, settings, observed_days)
-        + d2_aggregate(frame, provider, table, settings, observed_days)
+        + (
+            d2_aggregate(frame, provider, table, settings, observed_days)
+            if provider not in CACHE_BLIND_PROVIDERS
+            else []  # cache counts are fabricated zeros there — see CACHE_BLIND_LINE
+        )
         + d3_aggregate(frame, provider, table, settings, observed_days)
     )
     return sorted(findings, key=lambda f: f.monthly_cost_impact_usd, reverse=True)

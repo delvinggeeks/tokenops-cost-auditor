@@ -42,6 +42,8 @@ from tokenops_cost_auditor.services.pricing.table import PricingGapError, Pricin
 from tokenops_cost_auditor.services.report.model import ReportModel
 from tokenops_cost_auditor.services.report.render_json import render_json
 from tokenops_cost_auditor.services.rules.aggregate import (
+    CACHE_BLIND_LINE,
+    CACHE_BLIND_PROVIDERS,
     INACTIVE_ON_AGGREGATE,
     UPGRADE_PATH_LINE,
     run_aggregate_detectors,
@@ -52,16 +54,35 @@ log = structlog.get_logger("tokenops_cost_auditor.connectors")
 ACTIVE_ON_AGGREGATE = ("d1_oversized_model", "d2_missing_cache", "d3_prompt_bloat")
 
 
-def coverage_rows() -> tuple[dict[str, object], ...]:
+def active_detectors(provider: str) -> tuple[str, ...]:
+    """The detectors that HONESTLY run on this provider's aggregates —
+    cache-blind providers drop d2 (R-Q1: never run against fabricated zeros)."""
+    if provider in CACHE_BLIND_PROVIDERS:
+        return tuple(d for d in ACTIVE_ON_AGGREGATE if d != "d2_missing_cache")
+    return ACTIVE_ON_AGGREGATE
+
+
+def coverage_rows(provider: str = "") -> tuple[dict[str, object], ...]:
     active: tuple[dict[str, object], ...] = tuple(
         {"detector": d, "status": "active", "note": "runs on provider usage aggregates"}
-        for d in ACTIVE_ON_AGGREGATE
+        for d in active_detectors(provider)
+    )
+    blind: tuple[dict[str, object], ...] = (
+        (
+            {
+                "detector": "d2_missing_cache",
+                "status": "not_observable",
+                "note": CACHE_BLIND_LINE,
+            },
+        )
+        if provider in CACHE_BLIND_PROVIDERS
+        else ()
     )
     inactive: tuple[dict[str, object], ...] = tuple(
         {"detector": d, "status": "requires_per_request_logs", "note": UPGRADE_PATH_LINE}
         for d in INACTIVE_ON_AGGREGATE
     )
-    return active + inactive
+    return active + blind + inactive
 
 
 def run_source_audit(
@@ -109,7 +130,7 @@ def run_source_audit(
         else []
     )
     # Honest zeros over the detectors that actually run on aggregates.
-    by_detector: dict[str, int] = {d: 0 for d in ACTIVE_ON_AGGREGATE}
+    by_detector: dict[str, int] = {d: 0 for d in active_detectors(source.provider)}
     for f in findings:
         by_detector[f.detector] = by_detector.get(f.detector, 0) + 1
     t_detect = datetime.now(UTC)
@@ -192,7 +213,7 @@ def run_source_audit(
         generated_at=generated_at,
         equiv_spend=False,  # T2 pulls ARE metered-API billing
         tier="account",
-        coverage=coverage_rows(),
+        coverage=coverage_rows(source.provider),
     )
 
     # Each scheduled run creates a NEW audit deliberately: the weekly series
