@@ -55,7 +55,7 @@ territory.
 
 ## 🔜 NEXT — ruled order, nothing moves without a new ruling
 
-1. **WP-CC-LINK** (2-3d) — `pipx install tokenops && tokenops link <code>`:
+1. **WP-CC-LINK** (2-3d) — `pipx install tokenops-cost-auditor && tokenops-cost-auditor link <code>`:
    consent-first device-link collector for Claude Code fleets (T3).
    DoD: UAT-D5 dedup law, counts-only by construction, FR-26 idempotent
    ships, Sources gains the machine list + revoke. Trigger: post-launch.

@@ -250,9 +250,10 @@ retainer) remain Phase-2, unpromoted.
 ## WP-CC-LINK — CORE JOURNEY SHIPPED 2026-07-23 (see STATUS); residue below
 
 SHIPPED: device-link + consent floor + ship→audit + machines UI + revoke +
-cron helper. RESIDUE (packaging, this milestone's slice 2): `tokenops`
-short name on PyPI (founder-lane publish), Claude Code skill auto-install,
-pipx self-update path.
+cron helper. RESIDUE (packaging, this milestone's slice 2): PyPI publish
+of `tokenops-cost-auditor` (founder-lane; R-NAMING correction 2026-07-23 —
+NO short name, the full name IS the command), Claude Code skill
+auto-install, pipx self-update path.
 
 ## WP-CC-LINK — one command, one consent (R-CC-LINK 2026-07-23)
 
@@ -261,7 +262,9 @@ They were two entries describing two halves of one install; a customer was
 never going to run two commands. TRIGGER: immediately post-v1.5 launch,
 est. 2-3 days.
 
-    pipx install tokenops && tokenops link <code>
+    pipx install tokenops-cost-auditor && tokenops-cost-auditor link <code>
+    [R-NAMING correction 2026-07-23: the register's original short-name
+    command is superseded — full product name, everywhere, always]
 
 Device-link pattern: the dashboard issues a short-lived code, the CLI
 exchanges it for a scoped, revocable device token. NO KEYS ARE EVER TYPED —

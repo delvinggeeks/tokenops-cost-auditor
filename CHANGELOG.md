@@ -17,7 +17,8 @@ appended by the person deploying, same day.
   a third time today; 0600-from-birth config; rate limits), system-tester
   PARTIAL→answered as standing journey tests. Migration 016 applied.
   SMOKE PASS: HTTPS healthz ok, head e8f31a5c92d7. Residue in BACKLOG:
-  PyPI short name (founder-lane), skill auto-install, self-update.
+  PyPI publish of tokenops-cost-auditor (founder-lane; R-NAMING — no
+  short name exists), skill auto-install, self-update.
 
 - 2026-07-23 · v1.6.6 · ACCOUNT-SHAPES GUIDE (founder: "lot of
   combinations — how to handle?"). /guide/account-paths routes every

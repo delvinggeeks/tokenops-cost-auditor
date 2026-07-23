@@ -226,6 +226,23 @@ class TestColdReviewPins:
 
         monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: FakeResp())
         assert cli._cmd_link("code123", "https://example.test") == 0
-        cfg = tmp_path / "tokenops" / "device.json"
+        cfg = tmp_path / "tokenops-cost-auditor" / "device.json"  # R-NAMING
         assert cfg.exists()
         assert oct(os.stat(cfg).st_mode & 0o777) == "0o600"
+
+    def test_10_full_product_name_everywhere(self, app: FastAPI) -> None:
+        """R-NAMING (founder, reaffirmed 2026-07-23: 'not tokenops, its full
+        name'): the command, the config dir, and the rendered install line
+        all carry tokenops-cost-auditor — no short name exists anywhere."""
+        from tokenops_cost_auditor import cli
+
+        assert "tokenops-cost-auditor" in str(cli._config_path())
+        grant(app)
+        client = TestClient(app)
+        partial = client.post("/sources/claude-code/code", headers=HDR).text
+        assert "pipx install tokenops-cost-auditor" in partial
+        assert "tokenops-cost-auditor link" in partial
+        import re as _re
+
+        bare = _re.findall(r"\btokenops\b(?!-cost-auditor)", partial)
+        assert not bare, f"short name leaked into the install instructions: {bare}"

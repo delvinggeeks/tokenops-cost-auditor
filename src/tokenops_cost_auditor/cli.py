@@ -38,7 +38,7 @@ def _config_path() -> Path:
     import os
 
     base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "tokenops" / "device.json"
+    return base / "tokenops-cost-auditor" / "device.json"  # R-NAMING: full name, everywhere
 
 
 def _cmd_link(code: str, server: str) -> int:
