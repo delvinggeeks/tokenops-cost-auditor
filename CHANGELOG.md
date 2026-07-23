@@ -5,6 +5,20 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.9 · WP-PIPELINE-UI RUNS OBSERVATORY (queue card 2,
+  FR-31 closed). /runs lists every audit ever run: trigger, status,
+  duration from StageEvents recorded at run time (never estimated),
+  kit-ribbon stage drawers with honest detector zeros stated verbatim,
+  per-detector dollar lines plus an "Identified" total summed BEFORE
+  rounding (system-tester caught the cent-drift vs the dashboard
+  headline), FR-31 purged rows metadata-only, pull ledger including
+  user-safe failures, alert-check ledger ("checked — nothing crossed" is
+  evidence), in-flight self-poll that idles at rest. Migration 017
+  (stage_events, pull_events, alert_checks). Gate round: ux v1 FAIL→v2
+  PASS-WITH-NOTES, spec PASS, vv PASS (95.4% total), cold PWN fixed,
+  system-tester PWN fixed. F14 nav CSS dedup folded in.
+  SMOKE: (appended after deploy)
+
 - 2026-07-23 · v1.6.8 · R-NAMING SWEEP (founder correction: "not tokenops
   its full name tokenops-cost-auditor"). The short-name drift is gone:
   CLI config dir, install instructions, registers, board, and today's
