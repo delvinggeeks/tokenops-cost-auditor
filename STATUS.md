@@ -15,6 +15,40 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## WP-CLOUD-T2 C-B (2026-07-23) — AWS Bedrock connector built + gated; DEPLOY BLOCKED with C-A on founder golden verification
+
+Slice C-B end to end (R-VERTICAL). connectors/bedrock_usage.py reads the
+AWS/Bedrock CloudWatch namespace (Invocations / InputTokenCount /
+OutputTokenCount / CacheReadInputTokens / CacheWriteInputTokens by
+ModelId; VERIFIED against AWS docs 2026-07-23) via stdlib-SigV4-signed
+JSON-protocol POSTs (no AWS SDK). Credential = 3 fields (access key id,
+secret, region) packed to canonical JSON on the Fernet + fingerprint
+path; is_valid_region() public for the route pre-check. Token composition
+mirrors anthropic_usage VERBATIM (prompt = input + cache_read +
+cache_write; cached = cache_read). Bedrock EXPOSES cache counts → d2 RUNS
+here (test-pinned mirror of Azure's blindness). ModelId normalization
+strips region-routing prefixes + -vN:M suffixes ("us.anthropic.claude-
+sonnet-5-v1:0" prices as "anthropic.claude-sonnet-5"). Wizard fields now
+REGISTRY-DRIVEN (copy.fields; azure migrated — no template forks) and
+every provider's honesty_note renders in the MAIN column before the CTA
+(fixed the mobile stacking gap in both cloud wizards, ux C-B note 4).
+MONEY: bedrock rows mirror anthropic exactly (on-demand parity, sonnet-5
+epochs); goldens G20-G23 independent-Decimal, pin 19→23; batch/PTU NOT
+modeled (stated); Nova/Llama/Mistral unpriced-never-guessed (FR-28),
+disclosed pre-connect. Guard pins extended CONSCIOUSLY: OFFICIAL domain
+set + per-provider wall-phrase map (a new provider without a registered
+wall phrase now fails the suite). Gate round (commit 7800d50): ux mockup
+PWN ("grammar exemplary") · spec PASS (8/8) · vv PASS (all four goldens
+hand-recomputed ✓, bedrock_usage 91.8%) · cold PWN → f.1 docstring
+lifetime honesty, f.2 is_valid_region() public, f.3 chunk/NextToken
+accumulation pinned (101 models, 4 pages, counts land exactly once) ·
+system-tester PWN zero product findings (real in-process pull→audit
+priced $0.18; 16-target crawl clean; N1 note: the validate hx target
+fires a real signed AWS call — mind networked CI crawlers). Fixes commit
+ed14f67; full chain green. NEXT: founder verifies BOTH pricing sections
+(azure-openai G16-G19 + bedrock G20-G23) → deploy v1.7.0 together.
+Queue after: C-C Gemini/Vertex.
+
 ## WP-CLOUD-T2 C-A (2026-07-23) — Azure OpenAI connector built + gated; DEPLOY BLOCKED on founder golden verification
 
 Queue card WP-CLOUD-T2, slice C-A, end to end (R-VERTICAL). Adapter
