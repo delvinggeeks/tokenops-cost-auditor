@@ -320,3 +320,73 @@ class TestEveryProviderIsReachable:
             for other in providers:
                 if other != prov:
                     assert f"/sources/connect/{other}" in page.text
+
+
+class TestDeclaredEqualsReachable:
+    """R-REACHABILITY (founder question 2026-07-23: 'why didn't the system
+    validator catch this?'). Root cause: the crawler verified every link
+    pages EMIT — it had no inventory of what the product DECLARES, so a
+    shipped capability with zero inbound links (the Anthropic wizard,
+    live-but-unlinked since WP-1) was invisible to it. This law closes the
+    class: the DECLARED inventory (registry wizards, guide pages, app
+    destinations) must be a subset of the crawl closure from /dashboard.
+    It fails on the v1.6.1 tree; it must never fail again."""
+
+    def _crawl_closure(self, client, start: str = "/dashboard", limit: int = 150) -> set[str]:
+        seen: list[str] = []
+        paths: set[str] = set()
+        queue = [start]
+        while queue and len(seen) < limit:
+            url = queue.pop(0)
+            if url in seen:
+                continue
+            seen.append(url)
+            r = client.get(url, headers=HDR, follow_redirects=True)
+            if r.status_code >= 400:
+                continue
+            paths.add(url.split("?")[0])
+            if "text/html" not in r.headers.get("content-type", ""):
+                continue
+            for link in HREF.findall(r.text):
+                if SKIP.match(link) or link.startswith("/static"):
+                    continue
+                if link not in seen:
+                    queue.append(link)
+        return paths
+
+    def test_every_declared_capability_is_reachable_by_clicking(self, app: FastAPI) -> None:
+        from tokenops_cost_auditor.web import help as help_registry
+        from tokenops_cost_auditor.web.help import _raw
+
+        seed(app)  # data so data-dependent links render
+        inventory: set[str] = set(APP_PAGES)
+        inventory |= {f"/sources/connect/{p}" for p in help_registry.wizard_providers()}
+        inventory |= {f"/guide/{g['slug']}" for g in help_registry.guide_index()}
+        inventory |= {
+            str(w["link"])
+            for w in _raw()["widgets"].values()
+            if str(w.get("link", "")).startswith("/guide/")
+        }
+        closure = self._crawl_closure(TestClient(app))
+        unreachable = sorted(inventory - closure)
+        assert not unreachable, (
+            "shipped capabilities a customer cannot click their way to: " + ", ".join(unreachable)
+        )
+
+    def test_every_plan_sees_its_honest_sources_page(self, app: FastAPI) -> None:
+        """Blind spot 3: walks always ORM-granted plans, so nobody saw what a
+        real Free account sees. Pin each plan's rendered truth."""
+        from tokenops_cost_auditor.persistence.models import Subscription
+
+        client = TestClient(app)
+        client.get("/dashboard", headers=HDR)  # creates the account
+        free = client.get("/sources", headers=HDR).text
+        assert "of 1</b> connection" in free  # free = 1 connection, stated
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            session.add(Subscription(user_id=user.id, provider="manual", plan="team"))
+            session.commit()
+        team = client.get("/sources", headers=HDR).text
+        assert "of 5</b> connection" in team  # team = 5 connections, stated
+        for prov in ("openai", "anthropic"):
+            assert f"/sources/connect/{prov}" in team

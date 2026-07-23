@@ -52,6 +52,22 @@ order), f.2 FIXED: a flywheel exception can never 500 the admin panel
 history", f.4 FIXED: unknown row_count/observed_days pass through as
 None, never fake zeros (schema types widened; allowlist unchanged).
 
+## R-REACHABILITY (2026-07-23) — why the validator missed it, and the laws that close it
+
+Founder question after the unlinked-Anthropic escape: "why is this not
+captured by the system validator?" Root cause recorded in docs/10
+amendment 2026-07-23b — three blind spots, three laws: (1) the crawler
+checked links pages EMIT, not what the product DECLARES → new CI law
+TestDeclaredEqualsReachable (registry inventory ⊆ click-closure from
+/dashboard); its FIRST run caught a second live instance the same day
+(/guide/benchmarks reachable only via the dormant benchmark widget —
+guide_index now lists synthesized pages); (2) milestone-scoped walks never
+chose the connect journey → charter: every shipped surface reached by
+CLICKING, never by URL; (3) walks ORM-granted plans, so nobody ever saw a
+real Free account → charter: one flow per run as Free AND as a granted
+plan, via the admin grant endpoint (runbook §9), never SQL. Plus the
+plan-reality render test (free=1 / team=5 stated on /sources).
+
 ## M-FLY-1 (2026-07-23) — L1 peer benchmarks, both surfaces; gate round FAIL→fixed
 
 Widget (mockup ux-gated first, all notes actioned) + report block; dormant

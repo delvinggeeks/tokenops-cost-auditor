@@ -124,7 +124,20 @@ def guide_page(slug: str) -> dict[str, str]:
 
 
 def guide_index() -> list[dict[str, str]]:
-    return [{"slug": s, **p} for s, p in _raw()["guide_pages"].items()]
+    """Hand-written pages PLUS every widget-synthesized guide slug
+    (R-REACHABILITY, 2026-07-23: /guide/benchmarks existed but its only
+    inbound link sat on a dormant widget — a declared page must be
+    reachable from the index, always)."""
+    pages = [{"slug": s, **p} for s, p in _raw()["guide_pages"].items()]
+    listed = {p["slug"] for p in pages}
+    for w in _raw()["widgets"].values():
+        link = str(w.get("link", ""))
+        if link.startswith("/guide/"):
+            slug = link.removeprefix("/guide/")
+            if slug not in listed:
+                listed.add(slug)
+                pages.append({"slug": slug, "title": str(w["title"]), "audience": "Both"})
+    return pages
 
 
 def detector_keys() -> list[str]:

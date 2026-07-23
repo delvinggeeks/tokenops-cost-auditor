@@ -158,3 +158,23 @@ TE-5 as amended: PRD/design breakdowns are authored on Fable; implementation
 milestones run on Opus; gate agents stay Sonnet (set in agent frontmatter).
 Opus remains the main build thread's tier; PLAN authoring moves to Fable.
 CLAUDE.md rule 7 carries the same sentence.
+
+## Amendment 2026-07-23b — R-REACHABILITY (founder: "why didn't the system validator catch this?")
+
+Honest root cause of the unlinked-Anthropic escape, recorded so the lesson
+outlives the fix. The journey suite verified every link pages EMIT — an
+integrity oracle. It had no inventory of what the product DECLARES, so a
+shipped capability with zero inbound links was structurally invisible; the
+system-tester's milestone-scoped walks never chose the connect journey; and
+walks granted plans via the ORM, so no one experienced a real Free account.
+Three laws close the three blind spots:
+1. DECLARED = REACHABLE, in CI: the registry-derived inventory (wizards,
+   guide pages, destinations) must sit inside the click-closure from
+   /dashboard (TestDeclaredEqualsReachable). Its FIRST run caught a second
+   instance the same day (/guide/benchmarks, linked only from a dormant
+   widget) — the law works.
+2. Ship = walk: the system-tester reaches every shipped surface by clicking,
+   never by URL (charter addendum).
+3. Plans are real in walks: at least one flow per run as Free AND as a
+   granted plan; the admin grant endpoint (runbook §9) exists so this never
+   needs SQL.

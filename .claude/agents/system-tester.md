@@ -36,3 +36,15 @@ test so the class dies, not the instance.
 TE-8 verdict format: VERDICT (PASS | PASS-WITH-NOTES | FAIL), numbered
 findings each citing file:line or URL → observed vs expected, max 300
 words. K-1: exceeding budget = PARTIAL + numbered questions.
+
+REACHABILITY LAW (R-REACHABILITY, 2026-07-23 — the unlinked-Anthropic
+lesson): declared capability = reachable capability. Your crawler verified
+links pages EMIT; a shipped wizard with zero inbound links was invisible to
+it for weeks. The in-CI half is tests/test_journeys.py::
+TestDeclaredEqualsReachable (registry-declared inventory ⊆ click-closure
+from /dashboard). Your half, every run: (a) anything the milestone SHIPPED
+must be reached by CLICKING from the shell nav, never by typing a URL; (b)
+walk at least one flow as Free AND as a granted plan — plans change what
+renders, and ORM-granting in walks is how the founder became the first
+person to see Free's reality (the admin grant endpoint exists precisely so
+prod walks never need SQL).
