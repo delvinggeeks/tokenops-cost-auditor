@@ -1,9 +1,12 @@
 """WP-CC-LINK — device link + counts-only shipping for Claude Code fleets (T3).
 
 THE LAW (R-CC-LINK 2, permanent): ONE HUMAN ACTION IS THE FLOOR, NEVER
-ZERO. The link endpoint refuses without an explicit consent flag that the
-CLI only sets after a person reads the consent text at a prompt; consent
-is recorded on the device row (NOT NULL by schema) and in the audit log.
+ZERO. Enforcement is honestly split (cold-review f.2): the TTY prompt
+lives in the reference CLI; the server can only verify that consent was
+ASSERTED — a direct API caller asserting it has still performed a human
+action with a code they had to obtain from their own dashboard. The
+assertion, not a verified fact, is what the device row (NOT NULL) and the
+audit log record — stated plainly here so nobody mistakes the boundary.
 
 Token handling mirrors R-CONNECT keys: hashed at rest via the keyed
 one-way fingerprint (plaintext exists only in the customer's own config
@@ -17,13 +20,16 @@ from __future__ import annotations
 import secrets
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
+from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.models import Device, IdempotencyKey, LinkCode, User, utcnow
 from tokenops_cost_auditor.persistence.repo import (
     create_audit as repo_create_audit,
@@ -84,10 +90,11 @@ def issue_link_code(request: Request, user_email: str = Depends(current_user)) -
 
 
 @router.post("/api/v1/collector/link")
+@limiter.limit("5/minute")
 def link_device(request: Request, payload: dict[str, object]) -> JSONResponse:
-    """Exchange a link code for a device token. REFUSES without consent
-    (R-CC-LINK 2): the CLI sets consent only after a human agreed at the
-    prompt — this endpoint is the server half of that floor."""
+    """Exchange a link code for a device token. Refuses without the consent
+    ASSERTION (R-CC-LINK 2 — see the module docstring for the honest trust
+    boundary: the prompt lives in the CLI; the server records the claim)."""
     settings = request.app.state.settings
     code = str(payload.get("code", "")).strip()
     hostname = str(payload.get("hostname", "")).strip()[:120] or "unknown-machine"
@@ -112,7 +119,16 @@ def link_device(request: Request, payload: dict[str, object]) -> JSONResponse:
             raise HTTPException(
                 status_code=410, detail="code expired — issue a fresh one from Sources"
             )
-        row.consumed_at = now
+        # Atomic one-shot claim (cold-review f.1 — the check-then-set race
+        # class, third catch today): UPDATE-where-unconsumed, rowcount-checked.
+        # Two concurrent exchanges of one code cannot both mint a device.
+        claimed = session.execute(
+            update(LinkCode)
+            .where(LinkCode.id == row.id, LinkCode.consumed_at.is_(None))
+            .values(consumed_at=now)
+        )
+        if cast("CursorResult[Any]", claimed).rowcount != 1:
+            raise HTTPException(status_code=404, detail="unknown or already-used code")
         token = secrets.token_urlsafe(32)
         device = Device(
             user_id=row.user_id,
@@ -155,6 +171,7 @@ def _device(request: Request, session: Session, token: str | None) -> Device:
 
 
 @router.post("/api/v1/collector/ship", status_code=201)
+@limiter.limit("10/minute")
 def ship(
     request: Request,
     background: BackgroundTasks,

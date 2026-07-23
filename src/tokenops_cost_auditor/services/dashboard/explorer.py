@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.persistence.models import (
     Audit,
     CallAggregate,
+    Device,
     FindingFeedback,
     FindingRow,
     Source,
@@ -231,6 +232,16 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
         (s.id, s.label, s.status)
         for s in session.execute(
             select(Source).where(Source.user_id == user_id).order_by(Source.created_at)
+        ).scalars()
+    ]
+    # WP-CC-LINK (system-tester recon): linked machines are sources too — the
+    # eye-link from Sources must land on a selector that NAMES what it
+    # selected. Revoked machines stay listed; their audited history is the
+    # customer's (same law as revoked provider sources).
+    view.source_options += [
+        (d.id, f"{d.hostname} (Claude Code)", "revoked" if d.revoked_at else "active")
+        for d in session.execute(
+            select(Device).where(Device.user_id == user_id).order_by(Device.created_at)
         ).scalars()
     ]
     if f.source_id:

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -390,3 +391,57 @@ class TestDeclaredEqualsReachable:
         assert "of 5</b> connection" in team  # team = 5 connections, stated
         for prov in ("openai", "anthropic"):
             assert f"/sources/connect/{prov}" in team
+
+
+class TestCollectorJourney:
+    """system-tester WP-CC-LINK gaps, closed as standing tests: plan-scoped
+    rendering (via the ADMIN GRANT product path, not ORM), and the
+    device→explorer→findings chain a linking customer actually walks."""
+
+    def test_collector_scopes_by_plan_and_devices_reach_the_explorer(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.get("/dashboard", headers=HDR)  # create the free account
+        free = re.sub(r"\s+", " ", client.get("/sources", headers=HDR).text)
+        assert "part of Pro" in free  # honest gate for Free (Q4)
+        # the CONTROL is gated (the tells-line prose legitimately renders):
+        assert 'hx-post="/sources/claude-code/code"' not in free
+        # plan via the PRODUCT path (charter preference): admin grant
+        app.state.settings.admin_token = "t-admin"
+        granted = client.post(
+            "/admin/plans/grant",
+            headers={"X-Admin-Token": "t-admin"},
+            data={"email": EMAIL, "plan": "team"},
+        )
+        assert granted.status_code == 200
+        pro = client.get("/sources", headers=HDR).text
+        assert 'hx-post="/sources/claude-code/code"' in pro
+        assert "part of Pro" not in pro
+        # link a machine and ship (as the CLI would)
+        partial = client.post("/sources/claude-code/code", headers=HDR).text
+        code = re.search(r"link ([A-Za-z0-9_\-]+) --server", partial).group(1)
+        assert "counts only" in re.sub(r"\s+", " ", partial)  # consent words (Q3)
+        token = client.post(
+            "/api/v1/collector/link",
+            json={"code": code, "hostname": "ci-runner", "consent": True},
+        ).json()["device_token"]
+        fixture = Path(__file__).parent / "fixtures" / "waste_pack_anthropic.jsonl"
+        shipped = client.post(
+            "/api/v1/collector/ship",
+            files={"file": ("c.jsonl", fixture.read_bytes(), "application/json")},
+            headers={"X-Device-Token": token},
+        )
+        assert shipped.status_code == 201
+        # Q1: the explorer's selector NAMES the machine, and its slice narrows
+        exp = client.get("/explore", headers=HDR).text
+        assert "ci-runner (Claude Code)" in exp
+        with app.state.session_factory() as session:
+            from tokenops_cost_auditor.persistence.models import Device
+
+            device_id = session.execute(select(Device)).scalars().one().id
+        sliced = re.sub(
+            r"\s+", " ", client.get("/explore", headers=HDR, params={"source": device_id}).text
+        )
+        assert "Composed from 1 audits" in sliced
+        # Q2: the shipped audit's findings render on /findings
+        findings = client.get("/findings", headers=HDR).text
+        assert "findings" in findings and 'id="drawer"' in findings

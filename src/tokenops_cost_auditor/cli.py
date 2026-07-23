@@ -71,10 +71,14 @@ def _cmd_link(code: str, server: str) -> int:
         detail = exc.read().decode(errors="replace")[:300]
         print(f"link refused ({exc.code}): {detail}")
         return 1
+    import os
+
     cfg = _config_path()
     cfg.parent.mkdir(parents=True, exist_ok=True)
-    cfg.write_text(json.dumps({"server": server, "token": payload["device_token"]}))
-    cfg.chmod(0o600)
+    # 0600 at CREATION (cold-review f.3): never a world-readable window
+    fd = os.open(cfg, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(json.dumps({"server": server, "token": payload["device_token"]}))
     print(
         f"linked as {socket.gethostname()} — consent recorded. "
         "Ship with: tokenops-cost-auditor ship"

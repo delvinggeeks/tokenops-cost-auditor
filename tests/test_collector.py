@@ -185,3 +185,47 @@ class TestCliConsent:
         monkeypatch.setattr("builtins.input", lambda prompt="": "no thanks")
         assert cli._cmd_link("code123", "https://example.test") == 2
         assert "not linked" in capsys.readouterr().out
+
+
+class TestColdReviewPins:
+    def test_07_one_shot_claim_is_atomic_by_construction(self) -> None:
+        """cold f.1: the claim must be UPDATE-where-unconsumed with rowcount
+        checked — the check-then-set race class, pinned at source level like
+        the sibling fixes (concurrency itself is untestable on sqlite)."""
+        src = Path("src/tokenops_cost_auditor/web/routes_devices.py").read_text()
+        assert "update(LinkCode)" in src
+        assert "LinkCode.consumed_at.is_(None)" in src
+        assert ".rowcount != 1" in src
+
+    def test_08_link_and_ship_are_rate_limited(self) -> None:
+        """cold f.4: NFR-03/12 — the codebase's own pattern, applied."""
+        src = Path("src/tokenops_cost_auditor/web/routes_devices.py").read_text()
+        assert src.count("@limiter.limit") >= 2
+
+    def test_09_config_file_is_0600_from_birth(self, tmp_path: Path, monkeypatch) -> None:
+        """cold f.3: no world-readable window between write and chmod."""
+        import json as _json
+        import os
+        import sys
+
+        from tokenops_cost_auditor import cli
+
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+        monkeypatch.setattr("builtins.input", lambda prompt="": "I agree")
+
+        class FakeResp:
+            def read(self):
+                return _json.dumps({"device_token": "tok123", "device_id": "d1"}).encode()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: FakeResp())
+        assert cli._cmd_link("code123", "https://example.test") == 0
+        cfg = tmp_path / "tokenops" / "device.json"
+        assert cfg.exists()
+        assert oct(os.stat(cfg).st_mode & 0o777) == "0o600"

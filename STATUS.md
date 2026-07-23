@@ -52,6 +52,27 @@ order), f.2 FIXED: a flywheel exception can never 500 the admin panel
 history", f.4 FIXED: unknown row_count/observed_days pass through as
 None, never fake zeros (schema types widened; allowlist unchanged).
 
+### WP-CC-LINK gate round (2026-07-23) — spec PASS · cold PWN fixed · system-tester PARTIAL→answered
+
+spec-guard PASS 7/7 (consent law both halves, no bypass anywhere, FR-22
+columns clean, exporter lift byte-for-byte, R-VERTICAL journey complete,
+residue registered). cold-reviewer PASS-WITH-NOTES, all four fixed: f.1
+one-shot code claim now UPDATE-where-unconsumed rowcount-checked (the
+check-then-set race class, third catch today — source-pinned); f.2 the
+consent trust boundary stated HONESTLY (the TTY prompt lives in the CLI;
+the server verifies the ASSERTION and audit-logs it — docstring no longer
+overclaims); f.3 device config written 0600 from birth (no world-readable
+window — pinned by an actual stat() test); f.4 link/ship rate-limited per
+the codebase's own NFR-03/12 pattern. system-tester PARTIAL (K-1) → its
+recon gap CONFIRMED REAL and fixed (R-IMPROVISE): the explorer's selector
+now NAMES linked machines ("hostname (Claude Code)") so the eye-link
+lands on a selector that says what it selected; its four open questions
+all answered as standing journey tests (plan gating via the ADMIN GRANT
+product path, consent words on the partial, device slice narrows,
+findings render). One test-side false alarm honestly resolved: the
+'Link a machine' PROSE renders for all plans (it describes the surface);
+the CONTROL is what's gated, and that is what the test now asserts.
+
 ## WP-CC-LINK core (2026-07-23) — one command, one consent; the T3 journey is live end to end
 
 Vertical per rule 9: dashboard mints a one-shot hashed code (10min, Pro+)
