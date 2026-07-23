@@ -28,6 +28,7 @@ from tokenops_cost_auditor.services.connectors import (
     azure_usage,
     bedrock_usage,
     openai_usage,
+    vertex_usage,
 )
 from tokenops_cost_auditor.services.connectors.base import SupportsGet
 from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
@@ -148,6 +149,31 @@ BEDROCK_OVERRIDES = {
 }
 
 
+# Vertex refusals name Google's own objects (same law as Azure/Bedrock).
+VERTEX_OVERRIDES = {
+    BAD_KEY: Verdict(
+        status=BAD_KEY,
+        headline="Google couldn't authenticate that key.",
+        detail=(
+            "The service-account key was rejected — it may be the wrong file, "
+            "disabled, or from a different project. Create a fresh JSON key for "
+            "the service account and paste the whole file again."
+        ),
+        can_save=False,
+    ),
+    NO_SCOPE: Verdict(
+        status=NO_SCOPE,
+        headline="This service account can't read metrics.",
+        detail=(
+            "The key authenticates, but the service account is missing the "
+            "Monitoring Viewer role on the project. Grant roles/monitoring.viewer "
+            "to the service account, then try again."
+        ),
+        can_save=False,
+    ),
+}
+
+
 def validate_key(provider: str, api_key: str, client: SupportsGet | None = None) -> Verdict:
     """One day of usage is enough to prove the key can read reports."""
     end = datetime.now(UTC).date()
@@ -159,6 +185,7 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
         "anthropic": anthropic_usage.fetch_usage,
         "azure-openai": azure_usage.fetch_usage,
         "bedrock": bedrock_usage.fetch_usage,
+        "vertex-ai": vertex_usage.fetch_usage,
     }
     fetch = fetchers.get(provider)
     if fetch is None:
@@ -183,6 +210,8 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
             return AZURE_OVERRIDES[status]
         if provider == "bedrock":
             return BEDROCK_OVERRIDES[status]
+        if provider == "vertex-ai":
+            return VERTEX_OVERRIDES[status]
         return VERDICTS[status]
     except Exception as exc:
         log.info("connect.validate_unreachable", provider=provider, error=str(exc)[:120])

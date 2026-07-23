@@ -249,3 +249,36 @@ providers:
           output: 15.00
           cache_write: 3.75
           cache_read: 0.30
+
+  vertex-ai:
+    # WP-CLOUD-T2 C-C. DERIVATION: Vertex AI serves Gemini at Google's
+    # published Gemini API per-token rates; rows mirror the independent
+    # feed exactly (per 1M tokens). The STRICT gate scripts/pricing_verify.py
+    # corroborates every current row against that feed on each release
+    # (R-AUTO-PRICING — no human gate). source_url:
+    # https://ai.google.dev/gemini-api/docs/pricing
+    # Models not listed here (Imagen, older Gemini, tuned models) land in
+    # unpriced_models, never guessed (FR-28). The connector is cache-blind
+    # (the Cloud Monitoring token metric has no cache split); cache_read
+    # below engages only for T1 uploads that carry cached counts.
+    models:
+      gemini-2.5-pro:
+        - effective_from: 2026-06-01
+          input: 1.25
+          output: 10.00
+          cache_read: 0.125
+      gemini-2.5-flash:
+        - effective_from: 2026-06-01
+          input: 0.30
+          output: 2.50
+          cache_read: 0.03
+      gemini-2.5-flash-lite:
+        - effective_from: 2026-06-01
+          input: 0.10
+          output: 0.40
+          cache_read: 0.01
+      gemini-2.0-flash:
+        - effective_from: 2026-06-01
+          input: 0.10
+          output: 0.40
+          cache_read: 0.025

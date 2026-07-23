@@ -35,6 +35,30 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## WP-CLOUD-T2 C-C (2026-07-24) — Google Vertex AI connector; the model-cloud set is complete
+
+Built end to end (R-VERTICAL) on the founder's "proceed on connectors".
+connectors/vertex_usage reads Vertex's Cloud Monitoring token_count metric
+(aiplatform.googleapis.com/publisher/online_serving/token_count, input/
+output by model_user_id — VERIFIED against Google docs + integration refs)
+via the SA-JSON service-account flow: an RS256 JWT (stdlib base64/json +
+cryptography for the signature — cryptography already a dep via Fernet, NO
+new dep) exchanged at token_uri for an access token, then Cloud Monitoring
+v3 timeSeries.list with roles/monitoring.viewer. Credential = the whole SA
+key JSON on the Fernet path; wizard uses a registry-driven TEXTAREA field
+(the template gained textarea support). CACHE-BLIND like Azure (this metric
+has no cache split) → cached_tokens=0, d2 not run, coverage "not observable
+on Vertex" (the blind note is now provider-named). MONEY: Gemini rows
+mirror the feed (2.5-pro 1.25/10, 2.5-flash 0.30/2.50, 2.5-flash-lite +
+2.0-flash 0.10/0.40); goldens G24-G27 independent-Decimal; count pin 23→27;
+the STRICT gate scripts/pricing_verify.py corroborated all four against the
+feed — 35/35, NO human gate (R-AUTO-PRICING working exactly as ruled).
+Non-Gemini/older Vertex models unpriced (FR-28). Now FIVE model providers:
+OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex AI. Guard pins
+extended (console.cloud.google.com domain + "service account" wall phrase).
+11 tests, full chain green. Gate round next; then WP-COPILOT-AGG (seat
+tools), Works-with rider, then the SDK queue (S-6, O-0).
+
 ## S-1 CLOSED (2026-07-23) — cold re-gate PASS, all four fixes verified
 
 cold re-gate PASS: f.1 DSN-parse-never-raises (bad-port env → inert, not a

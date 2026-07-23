@@ -481,6 +481,7 @@ class TestConsoleLinks:
             "platform.openai.com",
             "portal.azure.com",  # WP-CLOUD-T2 C-A: App registrations blade
             "console.aws.amazon.com",  # WP-CLOUD-T2 C-B: IAM Users page
+            "console.cloud.google.com",  # WP-CLOUD-T2 C-C: Service Accounts page
         }
     )
 
@@ -533,6 +534,7 @@ class TestConsoleLinks:
                 "anthropic": ("Admin keys", "Admin-keys"),
                 "azure-openai": ("App registrations",),
                 "bedrock": ("IAM",),
+                "vertex-ai": ("service account", "Service Accounts"),
             }
             assert prov in wall_phrases, f"{prov}: no wall phrase registered"
             assert any(w in page for w in wall_phrases[prov]), f"{prov}: permission wall not taught"

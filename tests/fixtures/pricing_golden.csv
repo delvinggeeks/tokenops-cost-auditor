@@ -22,3 +22,7 @@ G20,bedrock,anthropic.claude-opus-4-8,2026-07-01,10000,8000,0,500,0.0265,bedrock
 G21,bedrock,anthropic.claude-sonnet-5,2026-07-01,100000,50000,10000,2000,0.135,intro epoch mirrors anthropic G04: (40000*2 + 50000*0.20 + 10000*2.50 + 2000*10)/1e6
 G22,bedrock,anthropic.claude-sonnet-5,2026-09-15,100000,50000,10000,2000,0.2025,standard epoch mirrors anthropic G05: (40000*3 + 50000*0.30 + 10000*3.75 + 2000*15)/1e6
 G23,bedrock,anthropic.claude-haiku-4-5,2026-07-01,2048,1024,0,256,0.0024064,mirrors anthropic G06: (1024*1 + 1024*0.10 + 256*5)/1e6
+G24,vertex-ai,gemini-2.5-pro,2026-07-01,100000,0,0,8000,0.205,connector shape (cached 0): (100000*1.25 + 8000*10)/1e6
+G25,vertex-ai,gemini-2.5-flash,2026-07-01,2000000,0,0,150000,0.975,(2000000*0.30 + 150000*2.50)/1e6
+G26,vertex-ai,gemini-2.5-pro,2026-07-10,50000,10000,0,4000,0.09125,T1 upload MAY carry cached: (40000*1.25 + 10000*0.125 + 4000*10)/1e6
+G27,vertex-ai,gemini-2.0-flash,2026-07-01,1000000,0,0,200000,0.18,(1000000*0.10 + 200000*0.40)/1e6

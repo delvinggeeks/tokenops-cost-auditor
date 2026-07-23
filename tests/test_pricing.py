@@ -97,7 +97,7 @@ class TestTPRC04GoldenValues:
         EXACTLY at float precision."""
         with (FIXTURES / "pricing_golden.csv").open() as fh:
             cases = list(csv.DictReader(fh))
-        assert len(cases) == 23  # G16-G19 azure-openai (C-A) + G20-G23 bedrock (C-B)
+        assert len(cases) == 27  # + G24-G27 vertex-ai (C-C)
         rows = [
             {
                 "provider": c["provider"],

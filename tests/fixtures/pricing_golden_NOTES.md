@@ -63,6 +63,26 @@ suffixes).
   cache counts, so d2 runs on this provider (no cache-blind gating).
 - Golden values computed independently with Decimal arithmetic.
 
+## Google Vertex AI rows G24-G27 (WP-CLOUD-T2 C-C, added 2026-07-23) — AGENT-VERIFIED (R-AUTO-PRICING, 35/35)
+
+DERIVATION: Vertex AI serves Gemini at Google's published Gemini API
+per-token rates; prices.yaml `vertex-ai` rows mirror the independent feed
+exactly (gemini-2.5-pro 1.25/10.00, gemini-2.5-flash 0.30/2.50,
+gemini-2.5-flash-lite 0.10/0.40, gemini-2.0-flash 0.10/0.40 per 1M).
+scripts/pricing_verify.py corroborated all four against the feed on
+2026-07-23 (35/35) — no human gate (R-AUTO-PRICING).
+- source_url: https://ai.google.dev/gemini-api/docs/pricing
+- The CONNECTOR is cache-blind (the Cloud Monitoring token_count metric
+  splits input/output only, no cache field) — cached_tokens=0 by
+  construction, d2 not run on vertex-ai (coverage: "not observable on
+  Vertex"). cache_read rows engage only for T1 uploads carrying cached
+  counts (G26 exercises that path).
+- Non-Gemini or older Vertex models (Imagen, tuned, 1.0) deliberately NOT
+  priced — unpriced_models, never guessed (FR-28).
+- Model normalization: the metric's model_user_id (e.g.
+  "gemini-1.5-flash-002") strips a trailing -NNN snapshot to the pricing key.
+- Golden values computed independently with Decimal arithmetic.
+
 ## Rate sources (fetched 2026-07-17)
 
 - Anthropic: https://platform.claude.com/docs/en/about-claude/pricing

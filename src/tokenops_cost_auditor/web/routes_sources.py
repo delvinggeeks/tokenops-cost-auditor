@@ -38,7 +38,7 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
 
-PROVIDERS = ("openai", "anthropic", "azure-openai", "bedrock")
+PROVIDERS = ("openai", "anthropic", "azure-openai", "bedrock", "vertex-ai")
 
 
 def _session(request: Request) -> Session:
@@ -172,6 +172,7 @@ def wizard_validate(
     access_key_id: str = Form(""),
     secret_access_key: str = Form(""),
     region: str = Form(""),
+    service_account: str = Form(""),
     user_email: str = Depends(current_user),
 ) -> HTMLResponse:
     """Live validation, then save. R-WIZ-DEGRADE: an unreachable provider
@@ -219,6 +220,19 @@ def wizard_validate(
                 detail="that doesn't look like an AWS region — e.g. us-east-1",
             )
         key = json.dumps(aws_fields, sort_keys=True)
+    elif provider == "vertex-ai":
+        from tokenops_cost_auditor.services.connectors import vertex_usage
+        from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
+
+        blob = service_account.strip()
+        if not blob:
+            raise HTTPException(status_code=400, detail="paste the service-account key JSON")
+        try:
+            vertex_usage.parse_credential(blob)  # validate shape before storing
+        except ConnectorAuthError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
+        # already JSON; store canonically so the fingerprint is stable
+        key = json.dumps(json.loads(blob), sort_keys=True)
     else:
         key = api_key.strip()
         if not key:
@@ -464,17 +478,21 @@ def connect_source(
         raise HTTPException(status_code=400, detail="unknown provider")
     if not api_key.strip():
         raise HTTPException(status_code=400, detail="key required")
-    if provider in ("azure-openai", "bedrock"):
+    if provider in ("azure-openai", "bedrock", "vertex-ai"):
         # The plain POST path must carry the SAME packed JSON the wizard
         # produces — a bare key here would fail every later pull.
-        from tokenops_cost_auditor.services.connectors import azure_usage, bedrock_usage
+        from tokenops_cost_auditor.services.connectors import (
+            azure_usage,
+            bedrock_usage,
+            vertex_usage,
+        )
         from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
 
-        parser = (
-            azure_usage.parse_credential
-            if provider == "azure-openai"
-            else bedrock_usage.parse_credential
-        )
+        parser = {
+            "azure-openai": azure_usage.parse_credential,
+            "bedrock": bedrock_usage.parse_credential,
+            "vertex-ai": vertex_usage.parse_credential,
+        }[provider]
         try:
             parser(api_key)
         except ConnectorAuthError:

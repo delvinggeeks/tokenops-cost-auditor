@@ -59,11 +59,13 @@ UPGRADE_PATH_LINE = (
 # azure buckets. Running the cache detector against that fabricated zero
 # would flag "missing cache" at customers who cache heavily — d2 is
 # NOT OBSERVABLE there, and says so, rather than guessing.
-CACHE_BLIND_PROVIDERS: tuple[str, ...] = ("azure-openai",)
+CACHE_BLIND_PROVIDERS: tuple[str, ...] = ("azure-openai", "vertex-ai")
 CACHE_BLIND_LINE = (
-    "Not observable on Azure — Azure Monitor exposes no cached-token count "
-    "for standard deployments. Upload a JSONL export to enable this detector."
+    "Not observable on {provider} — the provider's usage metric splits "
+    "input/output only, not cached tokens. Upload a JSONL export to enable "
+    "this detector."
 )
+CACHE_BLIND_DISPLAY = {"azure-openai": "Azure", "vertex-ai": "Vertex"}
 
 MONTH_DAYS = 30.0
 

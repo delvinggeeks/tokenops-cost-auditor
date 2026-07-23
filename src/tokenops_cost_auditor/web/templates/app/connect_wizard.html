@@ -95,9 +95,16 @@
           {% for f in copy.fields %}
           <div{% if f.full %} class="cred-full"{% endif %}>
             <label for="{{ f.name }}">{{ f.label }}</label>
+            {% if f.textarea %}
+            <textarea id="{{ f.name }}" name="{{ f.name }}" rows="8" required
+                      autocomplete="off" spellcheck="false"
+                      style="width:100%; font:12px var(--mono);"
+                      placeholder="{{ f.placeholder }}"></textarea>
+            {% else %}
             <input id="{{ f.name }}" name="{{ f.name }}"
                    {% if f.secret %}type="password" {% endif %}autocomplete="off"
                    required placeholder="{{ f.placeholder }}">
+            {% endif %}
           </div>
           {% endfor %}
         </div>

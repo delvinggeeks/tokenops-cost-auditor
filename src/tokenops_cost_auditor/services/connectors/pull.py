@@ -23,6 +23,7 @@ from tokenops_cost_auditor.services.connectors import (
     azure_usage,
     bedrock_usage,
     openai_usage,
+    vertex_usage,
 )
 from tokenops_cost_auditor.services.connectors.base import PullStats, SupportsGet
 from tokenops_cost_auditor.services.connectors.crypto import (
@@ -41,6 +42,7 @@ _CLIENTS: dict[str, tuple[Callable[..., tuple[list[dict[str, Any]], int]], str]]
     "anthropic": (anthropic_usage.fetch_usage, anthropic_usage.BASE_URL),
     "azure-openai": (azure_usage.fetch_usage, azure_usage.BASE_URL),
     "bedrock": (bedrock_usage.fetch_usage, bedrock_usage.BASE_URL),
+    "vertex-ai": (vertex_usage.fetch_usage, vertex_usage.BASE_URL),
 }
 
 

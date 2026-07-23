@@ -68,7 +68,7 @@ territory.
 
 1. **WP-CLOUD-T2** — C-A Azure + C-B Bedrock DEPLOYED v1.7.0
    2026-07-23 (agent-verified pricing, R-AUTO-PRICING);
-   C-C Gemini/Vertex next →
+   C-C Google Vertex AI SHIPPED+GATING 2026-07-24 (Gemini via Cloud Monitoring; agent-verified pricing). Model-cloud set COMPLETE (5 providers) →
 1a. **R-SDK-PLATFORM (PLAN-SDK)** — S-0 ingest DSN SHIPPED+GATED
    2026-07-23 (five gates closed incl. security verify + proxy-headers
    prod fix). S-1 Python SDK SHIPPED+GATING 2026-07-23. NEXT: S-6 API platform (read tokens +

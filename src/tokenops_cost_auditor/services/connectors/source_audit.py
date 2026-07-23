@@ -42,6 +42,7 @@ from tokenops_cost_auditor.services.pricing.table import PricingGapError, Pricin
 from tokenops_cost_auditor.services.report.model import ReportModel
 from tokenops_cost_auditor.services.report.render_json import render_json
 from tokenops_cost_auditor.services.rules.aggregate import (
+    CACHE_BLIND_DISPLAY,
     CACHE_BLIND_LINE,
     CACHE_BLIND_PROVIDERS,
     INACTIVE_ON_AGGREGATE,
@@ -72,7 +73,9 @@ def coverage_rows(provider: str = "") -> tuple[dict[str, object], ...]:
             {
                 "detector": "d2_missing_cache",
                 "status": "not_observable",
-                "note": CACHE_BLIND_LINE,
+                "note": CACHE_BLIND_LINE.format(
+                    provider=CACHE_BLIND_DISPLAY.get(provider, provider)
+                ),
             },
         )
         if provider in CACHE_BLIND_PROVIDERS
