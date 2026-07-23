@@ -19,7 +19,10 @@ appended by the person deploying, same day.
   reworded to machine-verified. Gate rounds: C-A five gates, C-B five
   gates, R-AUTO-PRICING four gates (one spec FAIL fixed same-hour); all
   cold/system-tester findings fixed + pinned. Verifier: 31/31 rows.
-  SMOKE: (appended after deploy)
+  SMOKE PASS: HTTPS healthz ok, both cloud wizards live (auth-gated),
+  head f2a94b6d81c3 (no new migrations). Pre-deploy backup OK; runbook 4b
+  strict verify ran live (31/31; caught + fixed its own same-day restamp
+  guard on the first ride).
 
 - 2026-07-23 · v1.6.9 · WP-PIPELINE-UI RUNS OBSERVATORY (queue card 2,
   FR-31 closed). /runs lists every audit ever run: trigger, status,
