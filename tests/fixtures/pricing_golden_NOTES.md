@@ -31,6 +31,29 @@ gpt-5.5/5.4/5.4-mini/5.4-nano/5.3-codex with identical rates.
 - Golden values computed independently with Decimal arithmetic (same
   generator discipline as G01+).
 
+## AWS Bedrock rows G20-G23 (WP-CLOUD-T2 C-B, added 2026-07-23) — FOUNDER-VERIFY BEFORE DEPLOY
+
+DERIVATION: Bedrock lists Anthropic Claude models at Anthropic's own
+per-token rates for ON-DEMAND inference (Bedrock's long-standing parity
+for Anthropic models). prices.yaml `bedrock` rows MIRROR the `anthropic`
+section exactly — same rates, same epochs (incl. sonnet-5 intro→standard)
+— keyed by the normalized Bedrock model id (anthropic.<model>; the
+adapter strips region prefixes us./eu./apac./global./jp./au. and -vN:M
+suffixes).
+- source_url: https://aws.amazon.com/bedrock/pricing/
+- **Batch and Provisioned Throughput pricing differ and are NOT modeled**
+  — these rows are on-demand only; stated in report methodology.
+- Non-Anthropic Bedrock models (Nova, Llama, Mistral, Titan…) are
+  deliberately NOT priced — unpriced_models, never guessed (FR-28); the
+  wizard's honesty_note discloses this BEFORE connect.
+- Token composition (verified against AWS docs 2026-07-23): CloudWatch
+  InputTokenCount EXCLUDES cache fields (Anthropic semantics), so
+  prompt_tokens = InputTokenCount + CacheReadInputTokens +
+  CacheWriteInputTokens and cached_tokens = CacheReadInputTokens — the
+  same composition anthropic_usage.parse_page uses. Bedrock DOES expose
+  cache counts, so d2 runs on this provider (no cache-blind gating).
+- Golden values computed independently with Decimal arithmetic.
+
 ## Rate sources (fetched 2026-07-17)
 
 - Anthropic: https://platform.claude.com/docs/en/about-claude/pricing

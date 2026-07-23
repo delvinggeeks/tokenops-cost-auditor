@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Connect AWS Bedrock (WP-CLOUD-T2 C-B) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (one per flow): same settled-when-done wizard grammar; the
+     region select confirms itself with the kit's standard focus ring.
+     Money never appears on this screen. -->
+<!-- Layout reuses the shipped wizard grammar whole: steps-bar, key-truth,
+     cando, and the promoted .cred-grid (C-A). No new dialect. -->
+</head>
+<body class="app-body">
+<main class="wrap" style="padding: var(--s4) 0;">
+
+  <section class="widget w-8">
+    <div class="steps-bar" aria-label="Connect AWS Bedrock, step 1 of 3">
+      <span class="cur"><span class="step-n">1</span></span>
+      <span class="cur lbl">Create a read-only IAM key in AWS</span>
+      <span class="step-n">2</span><span class="lbl">Paste its three values here</span>
+      <span class="step-n">3</span><span class="lbl">We take it from there</span>
+    </div>
+
+    <p class="muted" style="margin-top: var(--s1);">Connecting
+      OpenAI, Anthropic or Azure OpenAI instead? <a href="#">Switch →</a></p>
+
+    <h2>Grant us read-only eyes on your metrics — IAM enforces it</h2>
+    <p>Bedrock publishes token and request counts as CloudWatch metrics.
+      We read them with an IAM access key that holds exactly one
+      permission set: <strong>CloudWatch read-only</strong>. Three minutes
+      in the console:</p>
+    <ol style="font-size: 14px; line-height: 1.6;">
+      <li><strong>IAM → Users → Create user.</strong> Name it (e.g.
+        <code>tokenops-cost-auditor-reader</code>); no console access needed.</li>
+      <li><strong>Attach policies directly → CloudWatchReadOnlyAccess.</strong>
+        (Or an inline policy allowing only <code>cloudwatch:GetMetricData</code>
+        and <code>cloudwatch:ListMetrics</code> — tighter still.)</li>
+      <li><strong>Security credentials → Create access key</strong> (choose
+        "Third-party service"). Copy the <em>Access key ID</em> and the
+        <em>Secret access key</em> now — AWS shows the secret once.</li>
+      <li>Note the <strong>AWS region</strong> your Bedrock workloads run in
+        (e.g. <code>us-east-1</code>) — metrics live in the region.</li>
+    </ol>
+
+    <div class="key-truth">
+      <p class="key-kind"><svg class="i" aria-hidden="true"><use href="#i-source"/></svg>
+        This is an <strong>IAM access key with CloudWatch read-only
+        permissions</strong>. Anyone with IAM user-management rights can
+        create it.</p>
+      <div class="cando">
+        <div>
+          <span class="cando-h">The key <em>can</em></span>
+          <p>read CloudWatch metrics in your account — token counts,
+            request counts, by model.</p>
+        </div>
+        <div>
+          <span class="cando-h cando-ok">It <em>cannot</em></span>
+          <p>invoke your models, read prompts or completions, or change
+            anything — AWS IAM enforces this, not our promise.</p>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px; margin:0">Rotate or delete the
+        key in IAM whenever you like; revoking here deletes our copy
+        immediately.</p>
+    </div>
+
+    <p class="muted" style="font-size: 13px; margin-top: var(--s2);">
+      No IAM rights on this account? Ask whoever administers your AWS
+      account, or <a href="#">the upload path works right now →</a>
+      · <a href="#">Which shape is your account? →</a></p>
+
+    <h2>Paste the three values here</h2>
+    <p>We run one read-only metrics query against CloudWatch right away and
+      show you exactly what we can see. Encrypted the moment they arrive,
+      never written to a log, deleted the instant you revoke.</p>
+    <form>
+      <div class="cred-grid">
+        <div>
+          <label for="access_key_id">Access key ID</label>
+          <input id="access_key_id" name="access_key_id" autocomplete="off"
+                 required placeholder="AKIA…">
+        </div>
+        <div>
+          <label for="region">Region</label>
+          <input id="region" name="region" autocomplete="off" required
+                 placeholder="us-east-1">
+        </div>
+        <div class="cred-full">
+          <label for="secret_access_key">Secret access key</label>
+          <input id="secret_access_key" name="secret_access_key" type="password"
+                 autocomplete="off" required placeholder="paste the secret">
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px; margin:6px 0 0">
+        We verify the grant, encrypt all three values, and use them only to
+        read usage metrics. We never see your prompts and never invoke your
+        models — the read-only policy cannot.</p>
+      <p style="margin-top: var(--s2);">
+        <button class="btn btn-primary" type="button">Check and connect</button>
+        <span class="muted">Checking with AWS…</span>
+      </p>
+    </form>
+    <div class="provenance">All three values are encrypted the moment they
+      arrive, never written to logs, and deleted the moment you revoke.</div>
+  </section>
+
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
+      <h2>What we read</h2>
+    </div>
+    <p><strong>We read:</strong> CloudWatch's Bedrock metrics — how many
+      invocations, which models, and how many tokens, cache reads and
+      writes included; the same counts behind your bill.</p>
+    <p><strong>We never read:</strong> your prompts, your completions, or
+      your customers' data. The key we hold cannot invoke models.</p>
+    <p><strong>Priced models:</strong> Anthropic Claude models on Bedrock,
+      at rates a human verified. Other Bedrock models (Nova, Llama,
+      Mistral…) appear in your report as <em>unpriced</em> — listed, never
+      guessed — until their rates are verified too.</p>
+    <div class="provenance">Full detail in our data handling docs.</div>
+  </section>
+
+  <p class="muted" style="margin-top:var(--s4); font-size:13px;">MOCKUP v1 —
+    SAMPLE DATA. Wizard grammar reused whole (steps-bar, key-truth, cando,
+    .cred-grid from the design system). Honest states: the no-IAM-rights
+    wall with the upload fallback; the unpriced-models truth disclosed
+    BEFORE connect. Unlike Azure, Bedrock exposes cache counts — the cache
+    detector runs, and the panel says so by listing cache reads/writes.</p>
+
+</main>
+</body>
+</html>

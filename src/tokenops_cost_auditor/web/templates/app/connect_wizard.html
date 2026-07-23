@@ -87,28 +87,19 @@
       <p>{{ copy.step2_body }}</p>
       <form hx-post="/sources/connect/{{ provider }}/validate"
             hx-target="#verdict" hx-swap="innerHTML" hx-indicator="#checking">
-        {% if provider == "azure-openai" %}
+        {% if copy.fields %}
+        {# Multi-field providers, registry-driven (C-B refactor): a provider's
+           field set lives in its wizard copy — no per-provider template
+           branches to forget. #}
         <div class="cred-grid">
-          <div>
-            <label for="tenant_id">Directory (tenant) ID</label>
-            <input id="tenant_id" name="tenant_id" autocomplete="off" required
-                   placeholder="00000000-0000-0000-0000-000000000000">
+          {% for f in copy.fields %}
+          <div{% if f.full %} class="cred-full"{% endif %}>
+            <label for="{{ f.name }}">{{ f.label }}</label>
+            <input id="{{ f.name }}" name="{{ f.name }}"
+                   {% if f.secret %}type="password" {% endif %}autocomplete="off"
+                   required placeholder="{{ f.placeholder }}">
           </div>
-          <div>
-            <label for="client_id">Application (client) ID</label>
-            <input id="client_id" name="client_id" autocomplete="off" required
-                   placeholder="00000000-0000-0000-0000-000000000000">
-          </div>
-          <div class="cred-full">
-            <label for="client_secret">Client secret (the Value, not the ID)</label>
-            <input id="client_secret" name="client_secret" type="password"
-                   autocomplete="off" required placeholder="paste the secret value">
-          </div>
-          <div class="cred-full">
-            <label for="resource_id">Resource ID of your Azure OpenAI resource</label>
-            <input id="resource_id" name="resource_id" autocomplete="off" required
-                   placeholder="/subscriptions/…/resourceGroups/…/providers/Microsoft.CognitiveServices/accounts/…">
-          </div>
+          {% endfor %}
         </div>
         {% else %}
         <label for="api_key">Paste the {{ copy.key_kind }}</label>
@@ -121,6 +112,12 @@
         <p class="muted" style="font-size:13px; margin:6px 0 0">
           We verify it, encrypt it, and use it only to read your usage and cost
           reports. We never see your prompts and never call your models.</p>
+        {% if copy.honesty_note %}
+        {# Provider-specific truth stated IN the main column, before the
+           button (ux gate C-B note 4: the side panel stacks below the CTA
+           on mobile, so a disclosure living only there arrives late). #}
+        <p class="muted" style="font-size:13px; margin:6px 0 0">{{ copy.honesty_note }}</p>
+        {% endif %}
         <p style="margin-top: var(--s2);">
           <button class="btn btn-primary" type="submit">Check and connect</button>
           <span id="checking" class="htmx-indicator muted">Checking with

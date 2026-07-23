@@ -38,7 +38,7 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 log = structlog.get_logger("tokenops_cost_auditor.connectors")
 
-PROVIDERS = ("openai", "anthropic", "azure-openai")
+PROVIDERS = ("openai", "anthropic", "azure-openai", "bedrock")
 
 
 def _session(request: Request) -> Session:
@@ -157,6 +157,9 @@ def wizard_validate(
     client_id: str = Form(""),
     client_secret: str = Form(""),
     resource_id: str = Form(""),
+    access_key_id: str = Form(""),
+    secret_access_key: str = Form(""),
+    region: str = Form(""),
     user_email: str = Depends(current_user),
 ) -> HTMLResponse:
     """Live validation, then save. R-WIZ-DEGRADE: an unreachable provider
@@ -188,6 +191,22 @@ def wizard_validate(
                 ),
             )
         key = json.dumps(fields, sort_keys=True)
+    elif provider == "bedrock":
+        aws_fields = {
+            "access_key_id": access_key_id.strip(),
+            "secret_access_key": secret_access_key.strip(),
+            "region": region.strip(),
+        }
+        if not all(aws_fields.values()):
+            raise HTTPException(status_code=400, detail="all three AWS values are required")
+        from tokenops_cost_auditor.services.connectors import bedrock_usage
+
+        if not bedrock_usage._REGION_RE.match(aws_fields["region"]):
+            raise HTTPException(
+                status_code=400,
+                detail="that doesn't look like an AWS region — e.g. us-east-1",
+            )
+        key = json.dumps(aws_fields, sort_keys=True)
     else:
         key = api_key.strip()
         if not key:
@@ -433,20 +452,25 @@ def connect_source(
         raise HTTPException(status_code=400, detail="unknown provider")
     if not api_key.strip():
         raise HTTPException(status_code=400, detail="key required")
-    if provider == "azure-openai":
-        # The plain POST path must carry the SAME packed four-field JSON the
-        # wizard produces — a bare key here would fail every later pull.
-        from tokenops_cost_auditor.services.connectors import azure_usage
+    if provider in ("azure-openai", "bedrock"):
+        # The plain POST path must carry the SAME packed JSON the wizard
+        # produces — a bare key here would fail every later pull.
+        from tokenops_cost_auditor.services.connectors import azure_usage, bedrock_usage
         from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
 
+        parser = (
+            azure_usage.parse_credential
+            if provider == "azure-openai"
+            else bedrock_usage.parse_credential
+        )
         try:
-            azure_usage.parse_credential(api_key)
+            parser(api_key)
         except ConnectorAuthError:
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Azure needs its four values — use the guided connect "
-                    "at /sources/connect/azure-openai"
+                    f"{provider} needs its packed credential fields — use the "
+                    f"guided connect at /sources/connect/{provider}"
                 ),
             ) from None
     with _session(request) as session:

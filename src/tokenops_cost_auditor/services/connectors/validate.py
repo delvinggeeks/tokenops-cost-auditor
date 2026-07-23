@@ -23,7 +23,12 @@ from typing import Any
 import httpx
 import structlog
 
-from tokenops_cost_auditor.services.connectors import anthropic_usage, azure_usage, openai_usage
+from tokenops_cost_auditor.services.connectors import (
+    anthropic_usage,
+    azure_usage,
+    bedrock_usage,
+    openai_usage,
+)
 from tokenops_cost_auditor.services.connectors.base import SupportsGet
 from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
 
@@ -117,6 +122,32 @@ AZURE_OVERRIDES = {
 }
 
 
+# Bedrock refusals name AWS's own objects (same law as the Azure overrides).
+BEDROCK_OVERRIDES = {
+    BAD_KEY: Verdict(
+        status=BAD_KEY,
+        headline="AWS couldn't authenticate that key pair.",
+        detail=(
+            "The Access key ID or Secret access key is wrong, deactivated, "
+            "or the region doesn't match. Check all three against IAM — or "
+            "create a fresh access key and paste both values again."
+        ),
+        can_save=False,
+    ),
+    NO_SCOPE: Verdict(
+        status=NO_SCOPE,
+        headline="This key can't read CloudWatch metrics.",
+        detail=(
+            "The key authenticates, but its IAM user is missing CloudWatch "
+            "read access. Attach the CloudWatchReadOnlyAccess policy (or an "
+            "inline policy allowing cloudwatch:GetMetricData and "
+            "cloudwatch:ListMetrics), then try again."
+        ),
+        can_save=False,
+    ),
+}
+
+
 def validate_key(provider: str, api_key: str, client: SupportsGet | None = None) -> Verdict:
     """One day of usage is enough to prove the key can read reports."""
     end = datetime.now(UTC).date()
@@ -127,6 +158,7 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
         "openai": openai_usage.fetch_usage,
         "anthropic": anthropic_usage.fetch_usage,
         "azure-openai": azure_usage.fetch_usage,
+        "bedrock": bedrock_usage.fetch_usage,
     }
     fetch = fetchers.get(provider)
     if fetch is None:
@@ -149,6 +181,8 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
         status = BAD_KEY if exc.status in (0, 400, 401) else NO_SCOPE
         if provider == "azure-openai":
             return AZURE_OVERRIDES[status]
+        if provider == "bedrock":
+            return BEDROCK_OVERRIDES[status]
         return VERDICTS[status]
     except Exception as exc:
         log.info("connect.validate_unreachable", provider=provider, error=str(exc)[:120])

@@ -18,7 +18,12 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import PullEvent, Source, SourceUsage, utcnow
-from tokenops_cost_auditor.services.connectors import anthropic_usage, azure_usage, openai_usage
+from tokenops_cost_auditor.services.connectors import (
+    anthropic_usage,
+    azure_usage,
+    bedrock_usage,
+    openai_usage,
+)
 from tokenops_cost_auditor.services.connectors.base import PullStats, SupportsGet
 from tokenops_cost_auditor.services.connectors.crypto import (
     credential_fingerprint,
@@ -35,6 +40,7 @@ _CLIENTS: dict[str, tuple[Callable[..., tuple[list[dict[str, Any]], int]], str]]
     "openai": (openai_usage.fetch_usage, openai_usage.BASE_URL),
     "anthropic": (anthropic_usage.fetch_usage, anthropic_usage.BASE_URL),
     "azure-openai": (azure_usage.fetch_usage, azure_usage.BASE_URL),
+    "bedrock": (bedrock_usage.fetch_usage, bedrock_usage.BASE_URL),
 }
 
 
@@ -42,7 +48,10 @@ def run_pull(
     session: Session,
     settings: Settings,
     source: Source,
-    http_client: SupportsGet | azure_usage.SupportsHttp | None = None,
+    http_client: SupportsGet
+    | azure_usage.SupportsHttp
+    | bedrock_usage.SupportsSignedPost
+    | None = None,
 ) -> PullStats:
     if source.provider not in _CLIENTS:
         raise ValueError(f"unknown provider: {source.provider}")

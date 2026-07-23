@@ -172,3 +172,79 @@ providers:
           input: 1.75
           output: 14.00
           cache_read: 0.175
+
+  bedrock:
+    # WP-CLOUD-T2 C-B. DERIVATION: AWS Bedrock lists Anthropic Claude models
+    # at Anthropic's own per-token rates for on-demand inference (Bedrock's
+    # long-standing pricing parity for Anthropic models). Rows below MIRROR
+    # the anthropic provider section above — same rates, same epochs (incl.
+    # sonnet-5 introductory→standard) — keyed by the NORMALIZED Bedrock
+    # model id (vendor-prefixed; region prefixes and -vN:M suffixes are
+    # stripped by the adapter).
+    # source_url: https://aws.amazon.com/bedrock/pricing/
+    # FOUNDER-VERIFY BEFORE DEPLOY (money law): confirm each row against the
+    # Bedrock pricing page for on-demand in your region. Batch and
+    # provisioned-throughput pricing differ and are NOT modeled — stated in
+    # the report methodology. Non-Anthropic Bedrock models (Nova, Llama,
+    # Mistral…) are deliberately NOT priced: unpriced_models, never guessed
+    # (FR-28).
+    models:
+      anthropic.claude-fable-5:
+        - effective_from: 2026-06-09
+          input: 10.00
+          output: 50.00
+          cache_write: 12.50
+          cache_read: 1.00
+      anthropic.claude-haiku-4-5:
+        - effective_from: 2025-10-01
+          input: 1.00
+          output: 5.00
+          cache_write: 1.25
+          cache_read: 0.10
+      anthropic.claude-opus-4-5:
+        - effective_from: 2025-11-01
+          input: 5.00
+          output: 25.00
+          cache_write: 6.25
+          cache_read: 0.50
+      anthropic.claude-opus-4-6:
+        - effective_from: 2026-06-01
+          input: 5.00
+          output: 25.00
+          cache_write: 6.25
+          cache_read: 0.50
+      anthropic.claude-opus-4-7:
+        - effective_from: 2026-06-01
+          input: 5.00
+          output: 25.00
+          cache_write: 6.25
+          cache_read: 0.50
+      anthropic.claude-opus-4-8:
+        - effective_from: 2026-06-01
+          input: 5.00
+          output: 25.00
+          cache_write: 6.25
+          cache_read: 0.50
+      anthropic.claude-sonnet-4-5:
+        - effective_from: 2025-09-29
+          input: 3.00
+          output: 15.00
+          cache_write: 3.75
+          cache_read: 0.30
+      anthropic.claude-sonnet-4-6:
+        - effective_from: 2026-06-01
+          input: 3.00
+          output: 15.00
+          cache_write: 3.75
+          cache_read: 0.30
+      anthropic.claude-sonnet-5:
+        - effective_from: 2026-06-01
+          input: 2.00
+          output: 10.00
+          cache_write: 2.50
+          cache_read: 0.20
+        - effective_from: 2026-09-01
+          input: 3.00
+          output: 15.00
+          cache_write: 3.75
+          cache_read: 0.30

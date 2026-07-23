@@ -480,6 +480,7 @@ class TestConsoleLinks:
             "console.anthropic.com",
             "platform.openai.com",
             "portal.azure.com",  # WP-CLOUD-T2 C-A: App registrations blade
+            "console.aws.amazon.com",  # WP-CLOUD-T2 C-B: IAM Users page
         }
     )
 
@@ -525,11 +526,16 @@ class TestConsoleLinks:
             copy = help_registry.wizard(prov)
             assert copy["missing_note"], f"{prov}: no missing_note"
             page = _re.sub(r"\s+", " ", client.get(f"/sources/connect/{prov}", headers=HDR).text)
-            # The wall differs per provider: OpenAI/Anthropic gate usage
-            # behind org Admin keys; Azure behind App-registration rights.
-            assert "Admin keys" in page or "Admin-keys" in page or "App registrations" in page, (
-                f"{prov}: permission wall not taught"
-            )
+            # The wall differs per provider — every NEW provider must
+            # register its wall phrase here consciously, or this fails.
+            wall_phrases = {
+                "openai": ("Admin keys", "Admin-keys"),
+                "anthropic": ("Admin keys", "Admin-keys"),
+                "azure-openai": ("App registrations",),
+                "bedrock": ("IAM",),
+            }
+            assert prov in wall_phrases, f"{prov}: no wall phrase registered"
+            assert any(w in page for w in wall_phrases[prov]), f"{prov}: permission wall not taught"
             assert 'href="/upload"' in page, f"{prov}: no upload fallback offered"
         anthropic = help_registry.wizard("anthropic")["missing_note"]
         assert "ORGANIZATIONS" in anthropic and "Settings → Organization" in anthropic
