@@ -135,6 +135,19 @@ class TestObserveOnly:
         assert _wrap(C, "create", extract_openai, lambda r: None) is True
         assert _wrap(C, "create", extract_openai, lambda r: None) is False  # already wrapped
 
+    def test_07b_wrapper_preserves_name(self) -> None:
+        """cold-review f.4: functools.wraps keeps the patched method's
+        identity so callers that introspect create() aren't broken."""
+
+        class C:
+            def create(self) -> Any:
+                """the real docstring"""
+                return openai_response()
+
+        _wrap(C, "create", extract_openai, lambda r: None)
+        assert C.create.__name__ == "create"
+        assert C.create.__doc__ == "the real docstring"
+
 
 class FakeHTTP:
     """Captures batches the batcher POSTs, no network."""
@@ -227,11 +240,41 @@ class TestDsnAndInit:
         assert _parse_dsn("https://no-user-host.com") is None
         assert _parse_dsn("not a url") is None
 
+    def test_11b_bad_port_and_ipv6_never_raise(self) -> None:
+        """cold-review f.1/f.2: a typo'd port must return None (never raise
+        out of init into the customer's process); IPv6 keeps its brackets."""
+        assert _parse_dsn("https://ik_key@host:abc") is None  # non-numeric port
+        assert _parse_dsn("https://ik_key@[::1]:8000") == ("https://[::1]:8000", "ik_key")
+        assert _parse_dsn("https://ik_key@host:8000") == ("https://host:8000", "ik_key")
+
     def test_12_init_inert_without_dsn(self, monkeypatch: Any) -> None:
         monkeypatch.delenv("TOKENOPS_COST_AUDITOR_DSN", raising=False)
         toca._reset_for_tests()
         assert toca.init() is False
         toca.record({"provider": "openai", "model": "m", "prompt_tokens": 1})  # no-op, no raise
+
+    def test_12b_reinit_closes_the_previous_batcher(self, monkeypatch: Any) -> None:
+        """cold-review f.3: a second init() must close the first — no leaked
+        thread, no double-shipping the same calls."""
+        import urllib.request
+
+        monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: None)
+        toca._reset_for_tests()
+        assert toca.init("https://ik_one@h") is True
+        first = toca._batcher
+        assert first is not None
+        assert toca.init("https://ik_two@h") is True
+        assert first._closed is True  # the previous batcher was closed
+        assert toca._batcher is not first  # replaced, not stacked
+        toca.close()
+        toca._reset_for_tests()
+
+    def test_12c_bad_dsn_env_does_not_raise_out_of_init(self, monkeypatch: Any) -> None:
+        """cold-review f.1 end to end: a typo'd DSN env var makes init inert,
+        never crashes the host app."""
+        monkeypatch.setenv("TOKENOPS_COST_AUDITOR_DSN", "https://ik_key@host:not-a-port")
+        toca._reset_for_tests()
+        assert toca.init() is False  # inert, no exception
 
 
 class TestEndToEnd:

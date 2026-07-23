@@ -35,6 +35,27 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-1 gate round (2026-07-23) — spec PWN · vv PWN · cold FAIL→fixed (re-gate pending)
+
+spec PASS-WITH-NOTES (all 6 checks; its note: the PEP-758 bare-except is
+ruff-format-enforced on 3.14 — kept per TE-11 pinned-toolchain authority).
+vv PASS-WITH-NOTES (suite green EXITCODE=0, coverage 95.0%, money paths
+100%, every SDK guarantee independently verified; note: add formal
+T-SDK-xx ids in a follow-up — prose descriptions in docs/04 for now,
+consistent with S-0). cold FAIL, all four fixed: f.1 _parse_dsn's .port
+access now INSIDE the try (a typo'd DSN env var returned None, never
+crashes the customer's init — this was the severe one: an SDK that breaks
+the host app); f.2 IPv6 hosts keep their brackets; f.3 a second init()
+CLOSES the previous batcher (was leaking the thread AND double-shipping
+every call); f.4 functools.wraps on the wrapper (introspection intact).
+Four proof-tests added (bad-port/IPv6 never-raise, reinit-closes-first,
+bad-DSN-env inert, wrapper-preserves-name). Full chain green. Cold
+confirmed the load-bearing guarantees hold: X-01 wrapper propagates the
+customer's OWN exceptions (real call outside the try), FR-22 clean, inert
+path leaks nothing. Judgment: ux/system-tester not run for this
+client-library slice (only surface change is a snippet in the already-
+gated S-0 reveal). Re-gate cold on the fix diff, then S-1 closes.
+
 ## S-1 (2026-07-23) — the Python SDK: one call, usage flows, counts-only BY CONSTRUCTION
 
 Built end to end (R-VERTICAL). `import tokenops_cost_auditor.sdk as toca;

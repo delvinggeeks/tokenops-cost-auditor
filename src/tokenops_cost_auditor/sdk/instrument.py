@@ -13,6 +13,7 @@ version-tolerant (missing attributes are skipped, never raised).
 
 from __future__ import annotations
 
+import functools
 import time
 from collections.abc import Callable
 from typing import Any
@@ -35,6 +36,7 @@ def _wrap(owner: Any, method_name: str, extractor: ExtractFn, record: RecordFn) 
     if original is None or getattr(original, _MARK, False):
         return False
 
+    @functools.wraps(original)  # keep name/signature so introspection works (f.4)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         t0 = time.monotonic()
         response = original(*args, **kwargs)  # the REAL call — never altered

@@ -38,15 +38,21 @@ _tag: str = ""
 
 
 def _parse_dsn(dsn: str) -> tuple[str, str] | None:
-    """https://ik_<key>@<host> -> (host_base_url, key). None if malformed."""
+    """https://ik_<key>@<host> -> (host_base_url, key). None if malformed.
+
+    Every field access is inside the guard (cold-review f.1): .port raises
+    ValueError on a non-numeric port, so a typo'd DSN must return None here,
+    never escape as an exception out of init() into the customer's process."""
     try:
         u = urlparse(dsn)
+        if not u.username or not u.hostname or u.scheme not in ("http", "https"):
+            return None
+        # IPv6 hostnames need their brackets back for a valid URL (f.2)
+        host = f"[{u.hostname}]" if ":" in u.hostname else u.hostname
+        port = f":{u.port}" if u.port else ""
     except ValueError:
         return None
-    if not u.username or not u.hostname or u.scheme not in ("http", "https"):
-        return None
-    port = f":{u.port}" if u.port else ""
-    return f"{u.scheme}://{u.hostname}{port}", u.username
+    return f"{u.scheme}://{host}{port}", u.username
 
 
 def init(
@@ -72,6 +78,11 @@ def init(
         log.warning("sdk.inert", reason="malformed DSN")
         return False
     host, key = parsed
+    # cold-review f.3: a second init() must replace, not stack — else the old
+    # daemon thread leaks AND both batchers ship every instrumented call,
+    # double-counting usage. Close the previous one first.
+    if _batcher is not None:
+        _batcher.close()
     _tag = (tag or environment or "")[:120]
     _batcher = Batcher(
         host, key, flush_interval=flush_interval, batch_size=batch_size, max_queue=max_queue
