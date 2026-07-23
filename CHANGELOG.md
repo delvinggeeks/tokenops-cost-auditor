@@ -5,6 +5,14 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.8 · R-NAMING SWEEP (founder correction: "not tokenops
+  its full name tokenops-cost-auditor"). The short-name drift is gone:
+  CLI config dir, install instructions, registers, board, and today's
+  benchmark prose all carry the full product name; no second PyPI package
+  will ever exist — the full name IS the command. Pinned by a regex test
+  that fails on any bare 'tokenops' in the rendered install instructions.
+  SMOKE PASS: HTTPS healthz ok.
+
 - 2026-07-23 · v1.6.7 · WP-CC-LINK COLLECTOR (queue card 1) — one command,
   one consent, live for Claude Code fleets. Sources mints a one-shot
   hashed code (Pro+); the CLI refuses to link without a person typing
