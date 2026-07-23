@@ -563,7 +563,11 @@ def pipeline(
             "state": "active",
             "value": f"{top.data['total']} findings",
             "note": (
-                "${:,.2f}/mo identified".format(cast(float, sav.data["identified"]))
+                # Scope stated in words (system-tester C3 walk f.1): this
+                # figure is the LATEST audit's identified waste; the explorer
+                # sums the whole slice — same word, different scope, so both
+                # surfaces say WHICH or a founder reads a 3x contradiction.
+                "${:,.2f}/mo identified — latest audit".format(cast(float, sav.data["identified"]))
                 if not sav.empty
                 else "Findings ranked by dollars"
             ),

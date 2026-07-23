@@ -114,7 +114,8 @@
   {{ kit.stat("Spend in view", "${:,.2f}".format(view.spend_usd),
        meta=(view.days_covered ~ " days of usage")) }}
   {{ kit.stat("Waste identified", "${:,.2f}/mo".format(view.waste_monthly_usd),
-       meta=("across " ~ view.findings_total ~ " findings"), tone="waste") }}
+       meta=("across " ~ view.findings_total ~ " finding" ~ ("s" if view.findings_total != 1)
+             ~ " in this slice"), tone="waste") }}
   {{ kit.stat("Calls", "{:,}".format(view.calls)) }}
   {{ kit.stat("Tokens in / out",
        "{:,}".format(view.prompt_tokens) ~ " / " ~ "{:,}".format(view.completion_tokens),

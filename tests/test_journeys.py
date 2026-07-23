@@ -213,3 +213,43 @@ class TestCrossSurfaceConsistency:
         assert "customer-reported" in dash  # R-Q9: shown separately, never verified
         exp = client.get("/explore", headers=HDR).text
         assert "Findings in this slice — 1" in exp  # surfaces agree
+
+    def test_identified_waste_is_scoped_in_words_on_both_surfaces(self, app: FastAPI) -> None:
+        """system-tester C3 walk f.1: with two audits carrying different
+        findings, the dashboard's Report note (latest audit) and the
+        explorer's waste stat (whole slice) are DIFFERENT true facts — each
+        must say which scope it means, or a user reads a 3x contradiction."""
+        seed(app)  # audit 1: one $100 finding
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            newer = Audit(
+                user_id=user.id,
+                status="done",
+                row_count=800,
+                observed_days=9,
+                total_spend_usd=30.0,
+                created_at=datetime.now(UTC),
+                report_ready_at=datetime.now(UTC),
+            )
+            session.add(newer)
+            session.flush()
+            session.add(
+                FindingRow(
+                    audit_id=newer.id,
+                    finding_id="D1-001",
+                    detector="d1_oversized_model",
+                    route="gpt-4o",
+                    severity="med",
+                    monthly_impact_usd=15.0,
+                    confidence="estimated",
+                    fix_text="downsize",
+                    evidence_sample=[{"row_idx": 1, "tokens": 5}],
+                )
+            )
+            session.commit()
+        client = TestClient(app)
+        dash = re.sub(r"\s+", " ", client.get("/dashboard", headers=HDR).text)
+        assert "$15.00/mo identified — latest audit" in dash  # scoped
+        exp = re.sub(r"\s+", " ", client.get("/explore", headers=HDR).text)
+        assert "$115.00/mo" in exp  # the slice's sum ($100 + $15)
+        assert "findings in this slice" in exp  # scoped

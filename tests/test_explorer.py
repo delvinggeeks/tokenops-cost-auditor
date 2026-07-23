@@ -603,3 +603,36 @@ class TestSavedViews:
         )
         assert over.status_code == 400
         assert "delete one first" in over.json()["detail"]
+
+    def test_34_serialize_round_trip_covers_every_filter_field(self, app: FastAPI) -> None:
+        """vv-gate f.5: a Filters field added without a serialize_filters
+        branch must fail HERE — never silently vanish from saved views."""
+        import dataclasses
+        from urllib.parse import parse_qsl
+
+        full = explorer.Filters(
+            date_from=date(2026, 3, 1),
+            date_to=date(2026, 3, 31),
+            group="month",
+            tier="connected",
+            source_id="src123",
+            model="gpt-4o-mini",
+            detector="d2_missing_cache",
+            severity="high",
+            status="applied",
+        )
+        rt = explorer.parse_filters(dict(parse_qsl(explorer.serialize_filters(full))))
+        assert rt == full  # lossless round-trip with EVERY field non-default
+        # The field ledger: adding a Filters field forces updating this test
+        # and, with it, the serialize branch the round-trip proves.
+        assert {f.name for f in dataclasses.fields(explorer.Filters)} == {
+            "date_from",
+            "date_to",
+            "group",
+            "tier",
+            "source_id",
+            "model",
+            "detector",
+            "severity",
+            "status",
+        }
