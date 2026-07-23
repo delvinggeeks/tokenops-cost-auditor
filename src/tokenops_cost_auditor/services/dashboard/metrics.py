@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -476,3 +476,153 @@ def audit_clarity(session: Session, table: object, user_id: str) -> dict[str, An
     if unpriced:
         return {"state": "unpriced", "models": unpriced, "row_count": audit.row_count or 0}
     return {"state": "clean", "row_count": audit.row_count or 0, "spend": 0.0}
+
+
+def pipeline(
+    session: Session, table: object, user_id: str, watching: bool = True
+) -> dict[str, Any]:
+    """W0 — the spine's five stages, computed LIVE (R-PIPELINE-LIVE, founder
+    2026-07-23). While an audit is queued/processing the active stage goes
+    `live` (the A6 status pulse) and the widget polls itself; idle stages
+    state what HAS happened. "Waiting" is reserved for stages nothing has
+    ever reached — the founder's ribbon read "Waiting" on Analyze beside 11
+    findings because it keyed on widget emptiness (an unpriced audit empties
+    the spend trend), not on the audit record itself."""
+    src = sources_health(session, user_id)
+    latest = latest_audit(session, user_id)
+    clarity = audit_clarity(session, table, user_id)
+    sav, _summary = savings(session, user_id)
+    top = top_findings(session, user_id)
+    armed = alerts_armed(session, user_id, watching=watching)
+    in_flight = session.execute(
+        select(Audit)
+        .where(Audit.user_id == user_id, Audit.status.in_(("queued", "processing")))
+        .order_by(Audit.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    n_sources = len(cast("list[object]", src.data["items"])) if not src.empty else 0
+
+    if (
+        in_flight is not None
+        and in_flight.paid_via == "subscription"
+        and (in_flight.status == "queued")
+    ):
+        input_stage = {
+            "label": "Input",
+            "state": "live",
+            "value": "Pulling usage now",
+            "note": src.provenance,
+        }
+    elif n_sources:
+        input_stage = {
+            "label": "Input",
+            "state": "active",
+            "value": f"{n_sources} source(s)",
+            "note": src.provenance,
+        }
+    else:
+        input_stage = {
+            "label": "Input",
+            "state": "waiting",
+            "value": "Start here",
+            "note": "Connect a provider or upload a log file",
+        }
+
+    if in_flight is not None:
+        analyze = {
+            "label": "Analyze",
+            "state": "live",
+            "value": (
+                f"{in_flight.row_count:,} calls read"
+                if in_flight.row_count is not None
+                else ("Reading your data" if in_flight.status == "processing" else "Queued to run")
+            ),
+            "note": f"running now — audit {in_flight.id[:4]}…{in_flight.id[-3:]}",
+        }
+    elif latest is not None:
+        value = f"{latest.row_count:,} calls" if latest.row_count is not None else "Analyzed"
+        if latest.observed_days:
+            value += f" · {latest.observed_days} day(s)"
+        note = _stamp(latest)
+        if clarity.get("state") == "unpriced":
+            value += " — pricing pending"
+            note = "models not on the rate card yet; we price and re-run automatically"
+        analyze = {"label": "Analyze", "state": "active", "value": value, "note": note}
+    else:
+        analyze = {
+            "label": "Analyze",
+            "state": "waiting",
+            "value": "Waiting",
+            "note": "runs the moment data lands",
+        }
+
+    if latest is not None and not top.empty:
+        report = {
+            "label": "Report",
+            "state": "active",
+            "value": f"{top.data['total']} findings",
+            "note": (
+                "${:,.2f}/mo identified".format(cast(float, sav.data["identified"]))
+                if not sav.empty
+                else "Findings ranked by dollars"
+            ),
+        }
+        if in_flight is not None:
+            report["note"] = "refreshing — a new run is in progress"
+    elif latest is not None:
+        # An audit RAN — zero findings is a result, never "Waiting" (ux gate
+        # f.1: same state-from-emptiness bug class the Analyze fix targeted).
+        if clarity.get("state") == "clean":
+            report = {
+                "label": "Report",
+                "state": "active",
+                "value": "0 findings — clean",
+                "note": "no avoidable waste found; we keep watching",
+            }
+        else:  # unpriced: no findings COULD land until the models are priced
+            report = {
+                "label": "Report",
+                "state": "active",
+                "value": "0 findings — pricing pending",
+                "note": "findings land once the models are on the rate card",
+            }
+        if in_flight is not None:
+            report["note"] = "refreshing — a new run is in progress"
+    elif in_flight is not None:
+        report = {
+            "label": "Report",
+            "state": "waiting",
+            "value": "Lands when this run finishes",
+            "note": "",
+        }
+    else:
+        report = {
+            "label": "Report",
+            "state": "waiting",
+            "value": "Waiting",
+            "note": "Findings ranked by dollars",
+        }
+
+    act = {
+        "label": "Act",
+        "state": "active" if sav.data.get("verified_count") else "waiting",
+        "value": f"{sav.data.get('verified_count', 0)} applied",
+        "note": (
+            "${:,.2f}/mo verified".format(cast(float, sav.data["verified"]))
+            if not sav.empty
+            else "Apply a fix, we verify the saving"
+        ),
+    }
+
+    prevent = {
+        "label": "Prevent",
+        "state": "active" if not armed.empty else "waiting",
+        "value": f"{armed.data['count']} armed" if not armed.empty else "Not set up",
+        "note": armed.provenance,
+    }
+
+    return {
+        "stages": [input_stage, analyze, report, act, prevent],
+        "in_flight": in_flight is not None,
+    }

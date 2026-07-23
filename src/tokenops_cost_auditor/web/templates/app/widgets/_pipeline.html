@@ -1,0 +1,31 @@
+{% import "kit/_kit.html" as kit %}
+{# W0 — the holistic spine (R-DESIGN-SHELL §3), LIVE per R-PIPELINE-LIVE
+   (founder 2026-07-23). Deliberately NOT a .widget: full-bleed strip with
+   its own chrome. While an audit runs, the active seg carries the A6
+   status pulse and this section polls itself every 2.5s; the outerHTML
+   swap drops the trigger the moment the run lands, so an idle dashboard
+   makes zero polling requests. MONEY NEVER SHIMMERS — figures re-render
+   settled; only stage names pulse. #}
+<section class="w-12" id="w-pipeline"
+         {% if w.in_flight %}hx-get="/dashboard/w/pipeline"
+         hx-trigger="every 2.5s" hx-swap="outerHTML"{% endif %}>
+  {% set h = help.widget("pipeline") %}
+  <div class="widget-head">
+    <svg class="i i-lg" aria-hidden="true"><use href="#i-detector"/></svg>
+    <h2>{{ h.title }}</h2>
+    <details class="help">
+      <summary aria-label="What is this?">?</summary>
+      <div class="help-body">
+        <dl>
+          <dt>What this shows</dt><dd>{{ h.what }}</dd>
+          <dt>Where the number comes from</dt><dd>{{ h.where }}</dd>
+          <dt>What to do with it</dt><dd>{{ h.do }}</dd>
+        </dl>
+        <a href="{{ h.link }}">{{ h.link_text }} →</a>
+      </div>
+    </details>
+  </div>
+  <p class="tells">{{ h.tells }}</p>
+  {# ONE ribbon implementation — the kit's (design audit F4). #}
+  {{ kit.pipeline_ribbon(w.stages, id="pipeline-ribbon") }}
+</section>

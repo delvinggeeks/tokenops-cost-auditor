@@ -439,3 +439,60 @@ class TestMetricsCoverage:
         assert _render_thresholds("literal {oops} placeholder", s) == "literal {oops} placeholder"
         assert _render_thresholds("stray { brace", s) == "stray { brace"
         assert "25" in _render_thresholds("repeats {d2_cache_min_repeats}", s)
+
+
+class TestPipelineLive:
+    """R-PIPELINE-LIVE (founder, 2026-07-23): ribbon states come from the
+    audit RECORD, not widget emptiness — 'Waiting' can never sit beside 11
+    findings — and the spine animates + polls only while a run is in
+    flight, going fully quiet the moment it lands."""
+
+    def _partial(self, app: FastAPI) -> str:
+        return TestClient(app).get("/dashboard/w/pipeline", headers=HDR).text
+
+    def test_done_audit_states_what_happened_not_waiting(self, app: FastAPI) -> None:
+        seed_audit(app, findings=[("D2-001", "d2_missing_cache", 100.0)])
+        html = self._partial(app)
+        assert "5,000 calls" in html  # Analyze names the work that ran
+        assert "1 findings" in html
+        assert "hx-trigger" not in html  # idle dashboard makes zero poll requests
+        assert 'class="seg live"' not in html
+
+    def test_in_flight_run_pulses_and_polls(self, app: FastAPI) -> None:
+        seed_audit(app, findings=[("D2-001", "d2_missing_cache", 100.0)])
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            session.add(Audit(user_id=user.id, status="processing", row_count=1234))
+            session.commit()
+        html = self._partial(app)
+        assert 'class="seg live"' in html  # the A6 pulse rides this class
+        assert "1,234 calls read" in html
+        assert 'hx-trigger="every 2.5s"' in html  # self-poll while running
+        assert "refreshing — a new run is in progress" in html  # old report stands, honestly
+
+    def test_queued_run_is_live_before_rows_land(self, app: FastAPI) -> None:
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one_or_none()
+            if user is None:
+                user = User(email=EMAIL)
+                session.add(user)
+                session.flush()
+            session.add(Audit(user_id=user.id, status="queued"))
+            session.commit()
+        html = self._partial(app)
+        assert "Queued to run" in html
+        assert 'class="seg live"' in html
+        assert "hx-trigger" in html
+
+    def test_zero_state_still_teaches(self, app: FastAPI) -> None:
+        html = self._partial(app)
+        assert "Start here" in html
+        assert "hx-trigger" not in html
+
+    def test_clean_audit_reports_zero_findings_not_waiting(self, app: FastAPI) -> None:
+        """ux gate f.1: an audit that ran clean is a RESULT on Report —
+        'Waiting' is reserved for a pipeline nothing has reached."""
+        seed_audit(app, findings=[])  # ran, priced ($900 spend), zero findings
+        html = self._partial(app)
+        assert "0 findings — clean" in html
+        assert "no avoidable waste found" in html

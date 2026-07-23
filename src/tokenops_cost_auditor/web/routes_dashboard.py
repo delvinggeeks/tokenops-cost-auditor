@@ -57,6 +57,7 @@ WIDGETS = (
     "sources",
     "next_audit",
     "alerts",
+    "pipeline",  # W0 spine — live states + self-poll while a run is in flight
 )
 
 
@@ -120,6 +121,9 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 "sources": metrics.sources_health(session, user.id),
                 "next_audit": metrics.next_audit(session, user.id),
                 "alerts": metrics.alerts_armed(session, user.id, watching=watching),
+                "pipeline": metrics.pipeline(
+                    session, request.app.state.pricing_table, user.id, watching=watching
+                ),
             },
             # Wave A activation checklist: shown until every step is done or the
             # customer hides it (a cookie — a non-critical preference, no schema).
@@ -172,6 +176,7 @@ def widget_partial(
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
+        widget: object
         if key == "savings":
             widget, _ = metrics.savings(session, user.id)
         elif key == "yesterday":
@@ -183,6 +188,13 @@ def widget_partial(
                 request.app.state.settings, user_plan(session, user.id)
             )
             widget = metrics.alerts_armed(session, user.id, watching=watching)
+        elif key == "pipeline":
+            watching = alerts_dispatch.plan_watches(
+                request.app.state.settings, user_plan(session, user.id)
+            )
+            widget = metrics.pipeline(
+                session, request.app.state.pricing_table, user.id, watching=watching
+            )
         else:
             fn = {"sources": "sources_health"}.get(key, key)
             widget = getattr(metrics, fn)(session, user.id)

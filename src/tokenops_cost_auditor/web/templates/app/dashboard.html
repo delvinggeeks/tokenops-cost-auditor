@@ -65,57 +65,10 @@
   </section>
   {% endif %}
 
-  {# W0 — the holistic spine. Deliberately NOT a .widget: it is a full-bleed
-     strip with its own 1px chrome (R-DESIGN-SHELL §3). #}
-  <section class="w-12">
-    {% set h = help.widget("pipeline") %}
-    <div class="widget-head">
-      <svg class="i i-lg" aria-hidden="true"><use href="#i-detector"/></svg>
-      <h2>{{ h.title }}</h2>
-      <details class="help">
-        <summary aria-label="What is this?">?</summary>
-        <div class="help-body">
-          <dl>
-            <dt>What this shows</dt><dd>{{ h.what }}</dd>
-            <dt>Where the number comes from</dt><dd>{{ h.where }}</dd>
-            <dt>What to do with it</dt><dd>{{ h.do }}</dd>
-          </dl>
-          <a href="{{ h.link }}">{{ h.link_text }} →</a>
-        </div>
-      </details>
-    </div>
-    <p class="tells">{{ h.tells }}</p>
-    {# ONE ribbon implementation — the kit's (design audit F4). #}
-    {% import "kit/_kit.html" as kit %}
-    {{ kit.pipeline_ribbon([
-      {"label": "Input",
-       "state": "active" if not widgets.sources.empty else "waiting",
-       "value": (widgets.sources.data['items']|length ~ " source(s)")
-                if not widgets.sources.empty else "Start here",
-       "note": widgets.sources.provenance},
-      {"label": "Analyze",
-       "state": "active" if not widgets.spend_trend.empty else "waiting",
-       "value": "%.0f days"|format(widgets.spend_trend.data.days)
-                if not widgets.spend_trend.empty else "Waiting",
-       "note": widgets.spend_trend.provenance},
-      {"label": "Report",
-       "state": "active" if not widgets.top_findings.empty else "waiting",
-       "value": (widgets.top_findings.data.total ~ " findings")
-                if not widgets.top_findings.empty else "Waiting",
-       "note": "${:,.2f}/mo identified".format(widgets.savings.data.identified)
-               if not widgets.savings.empty else "Findings ranked by dollars"},
-      {"label": "Act",
-       "state": "active" if widgets.savings.data.get('verified_count') else "waiting",
-       "value": widgets.savings.data.get('verified_count', 0) ~ " applied",
-       "note": "${:,.2f}/mo verified".format(widgets.savings.data.verified)
-               if not widgets.savings.empty else "Apply a fix, we verify the saving"},
-      {"label": "Prevent",
-       "state": "active" if not widgets.alerts.empty else "waiting",
-       "value": (widgets.alerts.data.count ~ " armed")
-                if not widgets.alerts.empty else "Not set up",
-       "note": widgets.alerts.provenance},
-    ], id="pipeline-ribbon") }}
-  </section>
+  {# W0 — the holistic spine, now LIVE-computed server-side and self-polling
+     while a run is in flight (R-PIPELINE-LIVE; states from the audit record,
+     never from widget emptiness — the "Waiting beside 11 findings" fix). #}
+  {% with w = widgets.pipeline %}{% include "app/widgets/_pipeline.html" %}{% endwith %}
 
   {% with w = widgets.savings %}{% include "app/widgets/_savings.html" %}{% endwith %}
   {% with w = widgets.yesterday %}{% include "app/widgets/_yesterday.html" %}{% endwith %}
