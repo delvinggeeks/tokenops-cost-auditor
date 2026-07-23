@@ -5,6 +5,14 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.3 · R-REACHABILITY. New CI law: everything the product
+  DECLARES (wizards, guide pages, destinations) must be CLICK-reachable
+  from /dashboard — the oracle that would have caught the unlinked
+  Anthropic wizard, and whose first run caught /guide/benchmarks (linked
+  only from the dormant benchmark widget; guide index now lists
+  synthesized pages). System-tester charter: ship = walk-by-clicking;
+  plans real in walks (Free AND granted). SMOKE PASS: HTTPS healthz ok.
+
 - 2026-07-23 · v1.6.2 · CONNECTOR VISIBILITY + ADMIN PLAN GRANTS (founder
   prod report: "only openai connector seen"). Every shipped provider wizard
   is now linked from every connect surface (sources addbar renders from the
