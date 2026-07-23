@@ -659,11 +659,6 @@ def pipeline(
     }
 
 
-def _ordinal(n: int) -> str:
-    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{suffix}"
-
-
 def benchmark(session: Session, settings: object, user_id: str) -> Widget:
     """M-FLY-1 L1: the customer's waste-share percentile among included
     customers. LEAKAGE LAW: this widget's data is {percentile, n} and
@@ -681,7 +676,7 @@ def benchmark(session: Session, settings: object, user_id: str) -> Widget:
         provenance=f"based on {b.n} companies · your latest audit",
         data={
             "percentile": b.percentile,
-            "label": _ordinal(b.percentile),
+            "label": bench.ordinal(b.percentile),
             "leaner_than": 100 - b.percentile,
             "n": b.n,
         },

@@ -71,3 +71,29 @@ def waste_percentile(session: Session, settings: Settings, user_id: str) -> Benc
         percentile=round(100 * at_or_below / n),
         reason="",
     )
+
+
+def ordinal(n: int) -> str:
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+REPORT_BLOCK_KEYS = frozenset({"percentile", "label", "based_on_companies", "method"})
+
+
+def report_block(session: Session, settings: Settings, user_id: str) -> dict[str, object] | None:
+    """M-FLY-1 B1b: the report's benchmark block, or None (dormant = the key
+    never exists — absent fixtures stay byte-identical, zero-state law).
+    LEAKAGE LAW: REPORT_BLOCK_KEYS is exhaustive and test-pinned — nothing
+    else can ride into a customer-visible report from the cohort."""
+    b = waste_percentile(session, settings, user_id)
+    if not b.live or b.percentile is None:
+        return None
+    return {
+        "percentile": b.percentile,
+        "label": ordinal(b.percentile),
+        "based_on_companies": b.n,
+        "method": (
+            "nearest-rank inclusive over each company's own audited waste share; lower is leaner"
+        ),
+    }

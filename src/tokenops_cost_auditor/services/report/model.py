@@ -76,6 +76,10 @@ class ReportModel:
     # FR-30: metered-API billing cannot be assumed (subscription-plan traffic,
     # e.g. Claude Code exports) — header note + methodology line rendered
     equiv_spend: bool = False
+    # M-FLY-1 B1b: peer-benchmark block; None = dormant = the JSON key never
+    # exists (fixtures stay byte-identical). Set via dataclasses.replace by
+    # the DB-backed callers only — the engine itself never computes it.
+    benchmark: dict[str, object] | None = None
     # Presentation-only cap for HTML/PDF renderers (UAT-1 dogfood fix, D11):
     # an unbounded findings list let WeasyPrint lay out a ~30k-card document
     # (18GB RSS). JSON always carries EVERY finding; web/PDF show the top N by

@@ -14,7 +14,7 @@ SCHEMA_VERSION = 1
 
 
 def report_to_dict(report: ReportModel) -> dict[str, object]:
-    return {
+    out: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
         "audit_id": report.audit_id,
         "generated_at": report.generated_at,
@@ -58,6 +58,10 @@ def report_to_dict(report: ReportModel) -> dict[str, object]:
         "tier": report.tier,
         "coverage": list(report.coverage),
     }
+    if report.benchmark is not None:
+        # M-FLY-1: present only when the cohort is honest (dormant = absent)
+        out["benchmark"] = dict(report.benchmark)
+    return out
 
 
 def render_json(report: ReportModel, path: Path) -> Path:

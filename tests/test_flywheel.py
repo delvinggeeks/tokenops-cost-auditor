@@ -312,3 +312,42 @@ class TestBenchmarks:
             other = bench.waste_percentile(session, app.state.settings, ids[4])
         assert not own.live  # no rank for the opted-out account
         assert other.n == 11  # and its value left the pool entirely
+
+    def test_17_report_block_keys_are_exhaustive(self, app: FastAPI) -> None:
+        """Leakage law at the report door: REPORT_BLOCK_KEYS is the whole
+        block — anything else trying to ride into a customer report fails."""
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, self.GOLDEN)
+        with app.state.session_factory() as session:
+            live = bench.report_block(session, app.state.settings, ids[4])
+        assert live is not None and set(live) == set(bench.REPORT_BLOCK_KEYS)
+        assert live["percentile"] == 42 and live["label"] == "42nd"
+        assert live["based_on_companies"] == 12
+
+    def test_18_report_json_carries_block_only_when_live(self, app: FastAPI) -> None:
+        """Dormant = the key never exists (fixture reports stay
+        byte-identical); live = the exact block, attached via replace."""
+        import dataclasses as dc
+
+        from test_runner import FIXTURES, TABLE
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.services.ingest import load
+        from tokenops_cost_auditor.services.pricing import coster
+        from tokenops_cost_auditor.services.report.model import ReportModel
+        from tokenops_cost_auditor.services.report.render_json import report_to_dict
+        from tokenops_cost_auditor.services.rules.base import DetectorContext
+        from tokenops_cost_auditor.services.rules.findings import observed_days
+        from tokenops_cost_auditor.services.rules.registry import run_all
+
+        frame, _ = load(FIXTURES / "waste_pack_anthropic.jsonl")
+        priced, unpriced = coster.apply(TABLE, frame)
+        ctx = DetectorContext(Settings(_env_file=None), TABLE, observed_days(priced))
+        report = ReportModel.build(
+            "a1", priced, run_all(priced, ctx), unpriced, TABLE, generated_at=None
+        )
+        assert "benchmark" not in report_to_dict(report)  # dormant = absent
+        block = {"percentile": 42, "label": "42nd", "based_on_companies": 12, "method": "m"}
+        with_block = dc.replace(report, benchmark=block)
+        rendered = report_to_dict(with_block)
+        assert rendered["benchmark"] == block

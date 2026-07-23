@@ -42,6 +42,19 @@
   </div>
 </section>
 
+{% if report.benchmark %}
+{# M-FLY-1 B1b — renders ONLY when the cohort is honest (n >= threshold);
+   absent fixtures keep this template byte-identical. Leakage law: the block
+   carries your rank and the population size, nothing else. #}
+<section class="benchmark-note">
+  <p><strong>How you compare:</strong> your waste share sits at the
+    {{ report.benchmark.label }} percentile of TokenOps customers — lower is
+    leaner — based on {{ report.benchmark.based_on_companies }} companies.
+    Only your rank is computed here; no other company's figures enter this
+    report.</p>
+</section>
+{% endif %}
+
 {# Presentation cap (D11): findings are ranked, so web/PDF show the top
    render_cap by impact; report.json always carries the complete list. #}
 {% set shown_findings = report.findings[:report.render_cap] %}

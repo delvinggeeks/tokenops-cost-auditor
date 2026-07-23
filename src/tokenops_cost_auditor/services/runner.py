@@ -24,6 +24,7 @@ from tokenops_cost_auditor.obs import errors as obs_errors
 from tokenops_cost_auditor.persistence.models import Audit, CallAggregate, FindingRow, User
 from tokenops_cost_auditor.persistence.repo import make_session_factory, processing_count
 from tokenops_cost_auditor.services import ingest
+from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
 from tokenops_cost_auditor.services.ingest.base import IngestError
 from tokenops_cost_auditor.services.ingest.validator import enforce, write_error_file
 from tokenops_cost_auditor.services.lifecycle import auditlog
@@ -129,6 +130,7 @@ class AuditRunner:
         with factory() as session:
             audit = session.get(Audit, audit_id)
             assert audit is not None
+            audit_user_id = audit.user_id
             audit.row_count = vr.total_rows
             audit.valid_pct = vr.valid_pct
             session.commit()
@@ -150,6 +152,12 @@ class AuditRunner:
             table=self.table,
             generated_at=datetime.now(UTC).isoformat(),
         )
+        # M-FLY-1 B1b: attach the peer-benchmark block when the cohort is
+        # honest (dormant = the key never exists). DB-backed path only.
+        with factory() as session:
+            block = flywheel_benchmarks.report_block(session, self.settings, audit_user_id)
+        if block is not None:
+            report = dataclasses.replace(report, benchmark=block)
         report_dir = Path(self.settings.report_dir) / audit_id
         render_json(report, report_dir / "report.json")
         report_dir.mkdir(parents=True, exist_ok=True)

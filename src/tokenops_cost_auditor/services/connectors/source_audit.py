@@ -36,6 +36,7 @@ from tokenops_cost_auditor.persistence.models import (
     SourceUsage,
     utcnow,
 )
+from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
 from tokenops_cost_auditor.services.pricing.table import PricingGapError, PricingTable
 from tokenops_cost_auditor.services.report.model import ReportModel
 from tokenops_cost_auditor.services.report.render_json import render_json
@@ -226,6 +227,10 @@ def run_source_audit(
     audit.report_ready_at = utcnow()
     source.last_audit_at = utcnow()
 
+    # M-FLY-1 B1b: benchmark block when the cohort is honest (else absent)
+    block = flywheel_benchmarks.report_block(session, settings, source.user_id)
+    if block is not None:
+        report = dataclasses.replace(report, benchmark=block)
     render_json(report, settings.report_dir / audit.id / "report.json")
     log.info(
         "connector.source_audit",

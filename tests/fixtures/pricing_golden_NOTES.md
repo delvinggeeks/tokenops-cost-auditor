@@ -266,5 +266,7 @@ summed (a summed 1,125.00 is asserted absent).
   v=35 (12 of 12)             p = round(100*12/12) = 100
   Ties: equal values share the same (higher) rank — v <= v_c counts both.
   Pinned by tests/test_flywheel.py::TestBenchmarks::test_13_golden_percentiles.
-  FOUNDER VERIFICATION PENDING (R-Q3 precedent: verify before merge to main).
+  FOUNDER-VERIFIED 2026-07-23 — approval given in direct response to the
+  verification request ('approved to deploy and proceed next'); recorded
+  per the R-Q3 ritual.
   | Lokesh Prasanna Kumar S
