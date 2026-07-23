@@ -52,28 +52,32 @@ territory.
   build remains a separate approval
 - Rulings recorded: R-PROCEED (TAAS Q1-5, FLYWHEEL Q4-7), TE-5 tiering
   (Fable designs · Opus implements · Sonnet gates)
+- WP-CC-LINK T3 collector: consent-first device link (hashed one-shot
+  codes, TTY-only 'I agree', revoke deletes key material), FR-26
+  idempotent ships via the T1 pipeline, machines list on Sources,
+  R-NAMING full-name pin — v1.6.7/v1.6.8 (migration 016)
+- WP-PIPELINE-UI runs observatory (FR-31 closed): /runs ledger with
+  kit-ribbon stage drill-ins from recorded StageEvents (both pipelines,
+  honest detector zeros), pull ledger incl. user-safe failures, alert
+  checks ("silence you can verify"), purged rows metadata-only, in-flight
+  self-poll, F14 CSS dedup; gates spec PASS · vv PASS · cold PWN fixed ·
+  system-tester PWN fixed (cent-drift reconciliation) · ux v2 PWN —
+  migration 017, pending deploy v1.6.9
 
 ## 🔜 NEXT — ruled order, nothing moves without a new ruling
 
-1. **WP-CC-LINK** (2-3d) — `pipx install tokenops-cost-auditor && tokenops-cost-auditor link <code>`:
-   consent-first device-link collector for Claude Code fleets (T3).
-   DoD: UAT-D5 dedup law, counts-only by construction, FR-26 idempotent
-   ships, Sources gains the machine list + revoke. Trigger: post-launch.
-2. **WP-PIPELINE-UI** (first post-launch gated milestone) — runs list,
-   per-stage drill-ins, honest-zero evidence, pull lineage, alert history,
-   stage_events migration; carries FR-31 purged-row metadata + F11-F16.
-3. **WP-CLOUD-T2** (4-6d total, one slice each) — C-A Azure OpenAI →
+1. **WP-CLOUD-T2** (4-6d total, one slice each) — C-A Azure OpenAI →
    C-B Bedrock → C-C Gemini/Vertex. DoD per slice: fixture-driven adapter,
    founder-verified golden pricing rows BEFORE merge, FR-22 tier tests,
    wizard + illustration, journey additions.
-4. **WP-COPILOT-AGG** (2d) — Copilot admin seat/credit export ingest
+2. **WP-COPILOT-AGG** (2d) — Copilot admin seat/credit export ingest
    (upload path, no API dependency), seat-waste findings.
-5. **M-FLY-2** (2.5-3d) — L2 threshold calibration, SHADOW mode (report
+3. **M-FLY-2** (2.5-3d) — L2 threshold calibration, SHADOW mode (report
    JSON block only, findings byte-identical); B3 activation behind
    founder flag after ≥1 month shadow evidence.
-6. **Landing "Works with" rider** (0.5d) — five tiers stated plainly,
+4. **Landing "Works with" rider** (0.5d) — five tiers stated plainly,
    Cursor/Lovable truth included; rides the next landing touch.
-7. **WP-PLAT-0** — monorepo migration (apps/ + wa-* packages); acceptance
+5. **WP-PLAT-0** — monorepo migration (apps/ + wa-* packages); acceptance
    gate = suite green + byte-identical golden report JSON.
 
 ## ⏸ TRIGGERED — parked by rule; fires on its event (BACKLOG.md is the register)

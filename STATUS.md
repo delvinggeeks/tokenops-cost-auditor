@@ -15,6 +15,39 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## WP-PIPELINE-UI (2026-07-23) — runs observatory shipped; FR-31 closed; five gates run
+
+The queue's card 2, end to end as one slice (R-VERTICAL). /runs (nav:
+Monitor) lists EVERY audit — trigger (paid_via mapped to scheduled pull /
+collector ship / file upload), status, duration from recorded StageEvents,
+kit-ribbon drawers (rich form + new cls hook, ribbon-4 track variant; ONE
+grammar, F4 honored), per-detector drill with honest zeros verbatim, FR-31
+purged rows metadata-only, pre-017 runs honestly say they predate stage
+timing, in-flight rows self-poll and link to the theater; idle pages never
+poll. Migration 017 (stage_events, pull_events with `updated` col renamed
+from a misnamed `skipped`, alert_checks), rehearsed to head. Instrumented:
+runner._pipeline + run_source_audit (4 StageEvents each, TRUE execution
+order — bucket audits detect before pricing), run_pull success row rides
+its own transaction, record_pull_failure (fixed user-safe strings only;
+schedule tick + first-pull worker, pull_ok flag so audit-step failures are
+never mislabeled), run_for_user AlertCheck per enabled rule committed
+before mail. F14 nav-group CSS dedup folded in (both pinned copies).
+Gate round: ux mockup v1 FAIL → v2 PASS-WITH-NOTES (note applied:
+processing badge → neutral). spec-guard PASS. vv-engineer PASS (suite by
+exit code; coverage: dispatch 100%, pull 97.9%, source_audit 98.9%,
+runner 93.6%, TOTAL 95.4%). cold PASS-WITH-NOTES → f.1 stale-StageEvent
+delete on re-driven pre-created rows + rerun test; f.3 commit contract
+documented; f.4 per-row priced_rows honesty; f.5 swallowed ledger failure
+now logged; f.2 DECLINED with reason (UI renders stored stages verbatim —
+dedup lives at the source, masking storage bugs in the template is
+dishonest). system-tester PASS-WITH-NOTES → REAL catch: per-detector
+cent-rounding could sum to $2.20 vs dashboard's $2.19; fixed with an
+"Identified" drawer total summed BEFORE rounding + scope words, pinned by
+cross-surface test_14; its admin-route question answered: admin mounts
+only when ADMIN_TOKEN is set (test env has none) — not a gap. Commits
+aa37e18 + 8e1f243. Pending: founder "approved to deploy" → v1.6.9
+(backup, alembic to 017, CHANGELOG).
+
 ### C3 gate round (2026-07-23) — spec PASS · cold PWN fixed · vv PWN closed · system-tester PARTIAL→FAIL→PASS
 
 spec-guard PASS 8/8 (scope = rulings exactly; export absent; R-F1 strings
