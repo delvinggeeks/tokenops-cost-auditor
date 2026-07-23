@@ -464,3 +464,42 @@ class TestMultiSource:
             labels = {s.label for s in session.execute(select(Source)).scalars().all()}
         assert first_label == "openai usage"
         assert labels == {"openai usage", "openai usage #2"}
+
+
+class TestConsoleLinks:
+    """Founder report 2026-07-23: the Anthropic console deep-link rendered
+    'Page not found' (real console, unauthenticated/wrong-account) and read
+    as phishing. Laws: console URLs live on an allowlist of official
+    provider domains ONLY (a typo-domain is a phishing vector we'd be
+    building); every wizard names its destination host in the visible note
+    and teaches the not-signed-in failure mode."""
+
+    OFFICIAL = {"platform.claude.com", "console.anthropic.com", "platform.openai.com"}
+
+    def test_console_urls_are_official_domains_only(self) -> None:
+        from urllib.parse import urlparse
+
+        from tokenops_cost_auditor.web import help as help_registry
+
+        for prov in help_registry.wizard_providers():
+            copy = help_registry.wizard(prov)
+            host = urlparse(copy["console_url"]).hostname
+            assert host in self.OFFICIAL, f"{prov}: {host} not an official provider domain"
+            assert copy["console_url"].startswith("https://")
+            # the visible note must NAME the host it sends people to — if the
+            # URL ever moves domains, the reassurance must move with it
+            assert host in copy["console_note"], f"{prov}: note does not name {host}"
+            assert "sign in" in copy["console_note"].lower()
+
+    def test_wizards_render_the_destination_note(self, app: FastAPI) -> None:
+        import re as _re
+
+        from tokenops_cost_auditor.web import help as help_registry
+
+        client = TestClient(app)
+        for prov in help_registry.wizard_providers():
+            page = client.get(f"/sources/connect/{prov}", headers=HDR)
+            squashed = _re.sub(r"\s+", " ", page.text)
+            host = help_registry.wizard(prov)["console_url"].split("/")[2]
+            assert host in squashed  # the destination is named on the page
+            assert "Page not found" in squashed or "an error" in squashed  # failure mode taught

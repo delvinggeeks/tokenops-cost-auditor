@@ -62,6 +62,10 @@
         <small class="muted">Opens in a new tab — {{ copy.create_hint }}, then come
           back here with the key.</small>
       </p>
+      {# R-WIZ-DEGRADE for the LINK itself (founder report 2026-07-23: the
+         console 404s for non-admin/wrong-account sign-ins, which reads as
+         phishing): name the real destination and teach the failure mode. #}
+      <p class="muted" style="font-size: 13px;">{{ copy.console_note }}</p>
 
       <h2>{{ copy.step2_title }}</h2>
       <p>{{ copy.step2_body }}</p>
