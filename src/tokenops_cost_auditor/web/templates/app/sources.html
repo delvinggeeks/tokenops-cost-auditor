@@ -19,7 +19,15 @@
 
 <div class="addbar">
   {% if active_count < limit %}
-    {{ kit.button("Connect a provider", href="/sources/connect/openai", variant="primary", icon="plus") }}
+    {# R-CONNECT-VISIBLE (founder report 2026-07-23): EVERY shipped provider
+       gets its own entry — Anthropic's wizard existed since WP-1 but no
+       surface ever linked it. Rendered from the registry, so a future
+       provider appears here the day its wizard ships. #}
+    {% for prov in help.wizard_providers() %}
+      {{ kit.button("Connect " ~ prov|title,
+           href="/sources/connect/" ~ prov,
+           variant="primary" if loop.first else "quiet", icon="plus") }}
+    {% endfor %}
     <span class="muted addbar-note">Guided — we show you exactly which key to make.</span>
   {% else %}
     <span class="muted addbar-note">
@@ -85,7 +93,8 @@
          "Nothing connected yet",
          "Connect a provider and TokenOps keeps auditing on its own — no more
           uploading files by hand.",
-         action_label="Connect a provider", action_href="/sources/connect/openai") }}
+         action_label="Connect OpenAI", action_href="/sources/connect/openai",
+         alt_label="Connect Anthropic", alt_href="/sources/connect/anthropic") }}
   {% else %}
     {{ kit.empty_state(
          "Nothing connected yet",

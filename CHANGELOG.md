@@ -5,6 +5,24 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.2 · CONNECTOR VISIBILITY + ADMIN PLAN GRANTS (founder
+  prod report: "only openai connector seen"). Every shipped provider wizard
+  is now linked from every connect surface (sources addbar renders from the
+  wizard registry; empty state + get-logs tab + cross-wizard switch links);
+  standing journey law: a wizard the registry declares MUST be linked and
+  render, with the way to every other provider — Anthropic's wizard existed
+  since WP-1 with zero inbound links. Admin gains POST /plans/grant
+  (manual-provider only, audit-logged, REAL subscriptions untouchable) —
+  scenario testing without SQL, runbook §9. SMOKE: pending this deploy.
+
+- 2026-07-23 · v1.6.1 · M-FLY-0 + M-FLY-1 LIVE (dormant). Flywheel data
+  spine (training frame, cohort ledger) + L1 peer benchmarks on dashboard
+  and report — absent below n>=10 by the honesty law; percentile goldens
+  founder-verified; leakage law test-pinned; five gate verdicts incl. a
+  cold FAIL fixed (one rank policy on every ingestion path). Pre-deploy
+  backup taken; SMOKE PASS (HTTPS healthz, head d7b28e41c6f9 unchanged —
+  no new migrations).
+
 - 2026-07-23 · v1.6.0 · THE FOUNDER-ORDER DAY SHIPPED. FR-32 explorer
   (filter any slice of history; per-account switching; saved views,
   whitelist-sanitized) · R-MULTI-SOURCE (multi-account connect, fingerprint

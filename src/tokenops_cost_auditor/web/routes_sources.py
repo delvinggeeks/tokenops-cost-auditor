@@ -78,6 +78,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         tpl = request.app.state.jinja.get_template("app/sources.html")
         return HTMLResponse(
             tpl.render(
+                help=help_registry,
                 sources=sources,
                 plan=plan,
                 plan_name=plans.get(settings, plan).name,

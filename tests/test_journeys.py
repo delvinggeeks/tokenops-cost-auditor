@@ -294,3 +294,29 @@ class TestCrossSurfaceConsistency:
         after = re.sub(r"\s+", " ", client.get("/dashboard", headers=v14).text)
         assert "based on 11 companies" in after  # the pool shrank for everyone
         assert "36th percentile" in after and "leaner than 64%" in after
+
+
+class TestEveryProviderIsReachable:
+    def test_every_shipped_wizard_is_linked_from_sources(self, app: FastAPI) -> None:
+        """R-CONNECT-VISIBLE (founder report 2026-07-23): Anthropic's wizard
+        existed since WP-1 but NO surface linked it — a shipped connector a
+        customer cannot reach does not exist. Every wizard the registry
+        declares must be linked wherever connecting is offered, and its page
+        must render."""
+        from tokenops_cost_auditor.web import help as help_registry
+
+        client = TestClient(app)
+        providers = help_registry.wizard_providers()
+        assert set(providers) >= {"openai", "anthropic"}
+        sources = client.get("/sources", headers=HDR).text
+        upload = client.get("/upload", headers=HDR).text
+        for prov in providers:
+            link = f"/sources/connect/{prov}"
+            assert link in sources, f"sources page never offers {prov}"
+            assert link in upload, f"get-logs tabs never offer {prov}"
+            page = client.get(link, headers=HDR)
+            assert page.status_code == 200, f"{link} -> {page.status_code}"
+            # the wizard offers the way to every OTHER provider too
+            for other in providers:
+                if other != prov:
+                    assert f"/sources/connect/{other}" in page.text

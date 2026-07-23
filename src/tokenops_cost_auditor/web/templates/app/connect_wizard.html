@@ -14,6 +14,11 @@
       <span class="step-n">3</span><span class="lbl">We take it from there</span>
     </div>
 
+    {% for other in help.wizard_providers() if other != provider %}
+      <p class="muted" style="margin-top: var(--s1);">Connecting
+        {{ other|title }} instead? <a href="/sources/connect/{{ other }}">Switch →</a></p>
+    {% endfor %}
+
     {% if at_limit %}
       {# Design audit F7: a compact taught state, not a message in a void. #}
       {% import "kit/_kit.html" as kit %}

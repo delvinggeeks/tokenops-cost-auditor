@@ -227,3 +227,27 @@ Drill log (append: date · drill · diagnosed-unassisted? · time-to-diagnosis
 Daily: digest email review (5 min), failed-audit triage, backup check.
 Weekly: dependency bump, restore drill (first month), pricing.yaml
 refresh vs provider price pages (versioned commit).
+
+## 9. Dogfood — testing scenarios in production (R-DOGFOOD, 2026-07-23)
+
+Founder question of record: "how to test all the scenarios?" The answer is
+never raw SQL (the permission layer blocks it, by design — an audit product
+must not need it). The paths:
+
+- **Plans**: `POST /admin/plans/grant` (X-Admin-Token) with `email`, `plan`
+  (free|pro|team). provider='manual', audit-logged as plan.granted;
+  `plan=free` reverts a manual grant. Accounts with REAL (stripe/razorpay)
+  subscriptions are refused — those change through billing only. Run it ON
+  the box so the token never leaves it:
+  `TOKEN=$(grep ^ADMIN_TOKEN /opt/tokenops-cost-auditor/.env | cut -d= -f2-)`
+  then curl -s -X POST http://localhost:8000/admin/plans/grant …
+- **Multi-source**: after a team grant, connect up to 5 accounts — every
+  shipped provider has an entry on /sources; same provider twice needs two
+  DIFFERENT org keys (same key is refused by fingerprint, on purpose).
+- **Second persona**: use a second email (magic-link) for cross-account
+  scoping checks; the founder's known accounts are listed by the admin
+  panel, never in docs.
+- **Everything else**: the full scenario matrix runs locally for free —
+  `uv run pytest` covers the laws; the journey suite + system-tester walks
+  are the product-level sweep. Prod dogfood is for the last mile: real
+  provider APIs, real TLS, real cron.

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tokenops_cost_auditor.persistence.models import Audit, User
+from tokenops_cost_auditor.persistence.models import Audit, Subscription, User
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments.base import grant_payment
@@ -72,6 +72,55 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
         f"<table border=1 cellpadding=4><tr><th>audit</th><th>user</th><th>status</th>"
         f"<th>paid via</th><th>created</th><th>purge</th></tr>{rows}</table>"
     )
+
+
+@router.post("/plans/grant")
+def grant_plan(
+    request: Request,
+    email: str = Form(...),
+    plan: str = Form(...),
+    actor: str = Depends(admin_actor),
+) -> dict[str, str]:
+    """Founder ops (R-DOGFOOD 2026-07-23): grant/set an account's plan without
+    touching the database by hand — the direct-SQL path is exactly what an
+    audit product must never need. provider='manual' marks it as an ops
+    grant, audit-logged with the actor; setting plan='free' removes the
+    manual subscription (reverts to the real state)."""
+    from tokenops_cost_auditor.services.payments import plans as catalogue
+
+    valid = set(catalogue.catalogue(request.app.state.settings))
+    if plan not in valid:
+        raise HTTPException(status_code=400, detail=f"unknown plan (one of {sorted(valid)})")
+    with _session(request) as session:
+        user = session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        if user is None:
+            raise HTTPException(status_code=404, detail="no such account")
+        sub = session.execute(
+            select(Subscription).where(Subscription.user_id == user.id)
+        ).scalar_one_or_none()
+        if plan == "free":
+            if sub is not None and sub.provider == "manual":
+                session.delete(sub)
+            elif sub is not None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="account has a REAL subscription — cancel via the provider, not here",
+                )
+        elif sub is None:
+            session.add(
+                Subscription(user_id=user.id, provider="manual", plan=plan, status="active")
+            )
+        elif sub.provider == "manual":
+            sub.plan = plan
+            sub.status = "active"
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="account has a REAL subscription — plan changes go through billing",
+            )
+        auditlog.append(session, actor, "plan.granted", email, {"plan": plan})
+        session.commit()
+    return {"ok": "granted", "email": email, "plan": plan}
 
 
 @router.post("/audits/{audit_id}/rerun")

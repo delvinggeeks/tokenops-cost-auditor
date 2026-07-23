@@ -42,7 +42,8 @@
       <summary><strong>{{ title }}</strong> — <span class="muted">{{ speed }}</span></summary>
       <p>{{ what }}</p>
       <p class="policy"><strong>What we receive:</strong> {{ counts_only }}</p>
-      <p><a class="cta" href="{{ href }}">{{ cta }}</a></p>
+      <p><a class="cta" href="{{ href }}">{{ cta }}</a>{% if key == "connect" %}
+        <span class="muted"> · or <a href="/sources/connect/anthropic">connect Anthropic →</a></span>{% endif %}</p>
     </details>
   {% endfor %}
 </section>

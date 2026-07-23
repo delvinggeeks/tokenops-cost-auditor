@@ -419,3 +419,67 @@ class TestBenchmarks:
             b = bench.waste_percentile(session, app.state.settings, ids[0], own_value=2.0)
         assert not b.live and b.percentile is None
         assert b.n == 11  # and their value stays out of everyone else's pool
+
+
+class TestAdminPlanGrant:
+    """R-DOGFOOD: scenario testing needs plans without SQL — token-gated,
+    audit-logged, and REAL subscriptions are untouchable from here."""
+
+    def _client(self, app: FastAPI):
+        from fastapi.testclient import TestClient
+
+        app.state.settings.admin_token = "test-admin-token"
+        return TestClient(app), {"X-Admin-Token": "test-admin-token"}
+
+    def test_23_grant_upgrade_and_revert(self, app: FastAPI) -> None:
+        from tokenops_cost_auditor.persistence.models import AuditLogEntry, Subscription
+
+        seed_customer(app, "own@x.com")
+        client, hdr = self._client(app)
+        r = client.post(
+            "/admin/plans/grant", headers=hdr, data={"email": "own@x.com", "plan": "team"}
+        )
+        assert r.status_code == 200 and r.json()["plan"] == "team"
+        with app.state.session_factory() as session:
+            sub = session.execute(select(Subscription)).scalars().one()
+            assert (sub.provider, sub.plan, sub.status) == ("manual", "team", "active")
+            actions = [e.action for e in session.execute(select(AuditLogEntry)).scalars()]
+            assert "plan.granted" in actions
+        # revert to free removes the manual row
+        r = client.post(
+            "/admin/plans/grant", headers=hdr, data={"email": "own@x.com", "plan": "free"}
+        )
+        assert r.status_code == 200
+        with app.state.session_factory() as session:
+            assert session.execute(select(Subscription)).scalars().all() == []
+
+    def test_24_real_subscriptions_are_untouchable(self, app: FastAPI) -> None:
+        from tokenops_cost_auditor.persistence.models import Subscription
+
+        uid = seed_customer(app, "paying@x.com")
+        with app.state.session_factory() as session:
+            session.add(Subscription(user_id=uid, provider="stripe", plan="pro", status="active"))
+            session.commit()
+        client, hdr = self._client(app)
+        for target in ("team", "free"):
+            r = client.post(
+                "/admin/plans/grant", headers=hdr, data={"email": "paying@x.com", "plan": target}
+            )
+            assert r.status_code == 400
+            assert "REAL subscription" in r.json()["detail"]
+
+    def test_25_gate_and_validation(self, app: FastAPI) -> None:
+        from fastapi.testclient import TestClient
+
+        app.state.settings.admin_token = "test-admin-token"
+        assert (
+            TestClient(app)
+            .post("/admin/plans/grant", data={"email": "x@x.com", "plan": "team"})
+            .status_code
+            == 404  # no token = the panel does not exist
+        )
+        client, hdr = self._client(app)
+        r = client.post(
+            "/admin/plans/grant", headers=hdr, data={"email": "x@x.com", "plan": "galactic"}
+        )
+        assert r.status_code == 400
