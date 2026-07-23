@@ -13,7 +13,10 @@ appended by the person deploying, same day.
   render, with the way to every other provider — Anthropic's wizard existed
   since WP-1 with zero inbound links. Admin gains POST /plans/grant
   (manual-provider only, audit-logged, REAL subscriptions untouchable) —
-  scenario testing without SQL, runbook §9. SMOKE: pending this deploy.
+  scenario testing without SQL, runbook §9. SMOKE PASS: HTTPS healthz ok,
+  anthropic wizard live (auth-gated 401 anon), first admin grant executed
+  through the product path (delving.geeks → team/manual, audit-logged);
+  the real stripe subscription untouched.
 
 - 2026-07-23 · v1.6.1 · M-FLY-0 + M-FLY-1 LIVE (dormant). Flywheel data
   spine (training frame, cohort ledger) + L1 peer benchmarks on dashboard
