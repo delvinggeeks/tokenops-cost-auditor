@@ -32,7 +32,10 @@ def upgrade() -> None:
         ),
         sa.Column("name", sa.String(80), nullable=False),
         sa.Column("params", sa.Text(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=True),
+        # NOT NULL, matching the non-Optional ORM annotation and the 001/003
+        # created_at convention (cold-review C3 f.3). Safe to edit in place:
+        # 014 has never been applied outside rehearsal databases.
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("user_id", "name", name="uq_saved_view_user_name"),
     )
     op.create_index("ix_saved_views_user_id", "saved_views", ["user_id"])

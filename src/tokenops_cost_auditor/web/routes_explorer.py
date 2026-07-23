@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
-from tokenops_cost_auditor.persistence.models import SavedView
+from tokenops_cost_auditor.persistence.models import SavedView, User
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.dashboard import explorer
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
@@ -94,6 +94,11 @@ def save_view(
     canonical = explorer.serialize_filters(explorer.parse_filters(dict(parse_qsl(params))))
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # Lock the user row so concurrent saves serialize on the count AND on
+        # the same-name upsert (cold-review C3 f.1/f.2 — the G-V1 f.1 bug
+        # class from routes_sources, not reintroduced twice). Row lock on
+        # Postgres; no-op on SQLite.
+        session.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
         existing = session.execute(
             select(SavedView).where(SavedView.user_id == user.id, SavedView.name == label)
         ).scalar_one_or_none()
