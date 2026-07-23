@@ -113,9 +113,8 @@ door, agent/RAG/k8s dimensions as tags, honest per-detector T4 coverage
 table, build estimate 3-5 days as its own future approval). QUEUE
 UNCHANGED per PLAN-TAAS §3: launch → WP-CC-LINK → WP-PIPELINE-UI →
 WP-CLOUD-T2 (C-A Azure → C-B Bedrock → C-C Gemini) → WP-COPILOT-AGG;
-M-FLY-0 (A1+A2) may interleave. AWAITING FOUNDER: deploy (one command,
-founder-observed) and the R-F1 sentence sign-off (drafts delivered in
-the session log).
+M-FLY-0 (A1+A2) may interleave. DEPLOYED: v1.6.0 live 2026-07-23 (founder-approved; smoke in
+CHANGELOG). R-F1 signed off and shipped same day (entry above).
 
 ### system-tester gate rounds 1-3 (2026-07-23) — FAIL → FAIL → PASS; the loop works
 

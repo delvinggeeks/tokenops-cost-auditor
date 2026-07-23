@@ -657,3 +657,32 @@ def pipeline(
         "stages": [input_stage, analyze, report, act, prevent],
         "in_flight": in_flight is not None,
     }
+
+
+def _ordinal(n: int) -> str:
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+def benchmark(session: Session, settings: object, user_id: str) -> Widget:
+    """M-FLY-1 L1: the customer's waste-share percentile among included
+    customers. LEAKAGE LAW: this widget's data is {percentile, n} and
+    nothing else — no other company's figure can render because no other
+    company's figure leaves the service layer. Dormant (n below threshold,
+    opted out, or unranked) = Widget.empty = the surface does not exist."""
+    from tokenops_cost_auditor.config import Settings as _S
+    from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+    b = bench.waste_percentile(session, cast(_S, settings), user_id)
+    if not b.live or b.percentile is None:
+        return Widget()
+    return Widget(
+        empty=False,
+        provenance=f"based on {b.n} companies · your latest audit",
+        data={
+            "percentile": b.percentile,
+            "label": _ordinal(b.percentile),
+            "leaner_than": 100 - b.percentile,
+            "n": b.n,
+        },
+    )

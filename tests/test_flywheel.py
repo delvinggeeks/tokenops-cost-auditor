@@ -19,6 +19,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI
+from sqlalchemy import select
 
 from tokenops_cost_auditor.persistence.models import (
     Audit,
@@ -240,3 +241,74 @@ class TestPackagePosture:
         page = TestClient(app).get("/admin", headers={"X-Admin-Token": "test-admin-token"})
         assert page.status_code == 200
         assert "Flywheel: 1 audited" in page.text
+
+
+class TestBenchmarks:
+    """M-FLY-1 B1 — golden percentile method, leakage law, honest dormancy."""
+
+    GOLDEN = (2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35)  # NOTES derivation
+
+    def _seed_cohort(self, app: FastAPI, values: tuple[int, ...]) -> list[str]:
+        ids = []
+        for i, v in enumerate(values):
+            uid = seed_customer(app, f"c{i}@x.com")
+            with app.state.session_factory() as session:
+                audit = session.execute(select(Audit).where(Audit.user_id == uid)).scalar_one()
+                audit.savings_pct = float(v)
+                session.commit()
+            ids.append(uid)
+        return ids
+
+    def test_13_golden_percentiles(self, app: FastAPI) -> None:
+        """Pins the NOTES-sheet derivation exactly (founder-verification row)."""
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, self.GOLDEN)
+        with app.state.session_factory() as session:
+            expect = {0: 8, 4: 42, 6: 58, 11: 100}  # index in GOLDEN -> percentile
+            for idx, want in expect.items():
+                b = bench.waste_percentile(session, app.state.settings, ids[idx])
+                assert b.live and b.n == 12
+                assert b.percentile == want, f"v={self.GOLDEN[idx]}: {b.percentile} != {want}"
+
+    def test_14_dormant_below_threshold_and_absent_on_dashboard(self, app: FastAPI) -> None:
+        from fastapi.testclient import TestClient
+
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, self.GOLDEN[:9])  # 9 < 10
+        with app.state.session_factory() as session:
+            b = bench.waste_percentile(session, app.state.settings, ids[0])
+        assert not b.live and b.percentile is None
+        page = TestClient(app).get("/dashboard", headers={"X-User-Email": "c0@x.com"})
+        assert "How you compare" not in page.text  # absence, never a countdown
+
+    def test_15_live_widget_prints_population_and_leaks_nothing(self, app: FastAPI) -> None:
+        """Honesty + leakage laws on the RENDERED surface: own rank + n only —
+        no other company's waste value appears anywhere in the HTML."""
+        from fastapi.testclient import TestClient
+
+        self._seed_cohort(app, self.GOLDEN)
+        page = TestClient(app).get("/dashboard", headers={"X-User-Email": "c4@x.com"})
+        html = re.sub(r"\s+", " ", page.text)
+        assert "42nd percentile" in html
+        assert "based on 12 companies" in html
+        assert "leaner than 58% of companies" in html
+        # leakage: no cohort member's absolute waste share renders (own = 14)
+        for v in [x for x in self.GOLDEN if x != 14]:
+            assert f"{v}.0%" not in html and f"waste {v}" not in html
+
+    def test_16_opted_out_customer_is_out_of_cohort_and_unranked(self, app: FastAPI) -> None:
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, self.GOLDEN)
+        with app.state.session_factory() as session:
+            user = session.get(User, ids[0])
+            assert user is not None
+            user.benchmark_sharing = False
+            session.commit()
+        with app.state.session_factory() as session:
+            own = bench.waste_percentile(session, app.state.settings, ids[0])
+            other = bench.waste_percentile(session, app.state.settings, ids[4])
+        assert not own.live  # no rank for the opted-out account
+        assert other.n == 11  # and its value left the pool entirely

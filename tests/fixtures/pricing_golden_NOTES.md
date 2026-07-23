@@ -253,3 +253,18 @@ summed (a summed 1,125.00 is asserted absent).
   calls 120 (newer), overlap_buckets 1
   (tests/test_explorer.py::TestMath::test_04_overlap_latest_audit_wins).
   | Lokesh Prasanna Kumar S
+- 2026-07-23 | M-FLY-1 L1 percentile method (money-adjacent; PLAN-FLYWHEEL B1
+  AC 3): nearest-rank inclusive — p(c) = round(100 * |{v <= v_c}| / n) over
+  the cohort of latest-done-audit savings_pct per INCLUDED customer
+  (benchmark_sharing honored; n counts the requester). No new spend math:
+  savings_pct is the engine's own audit-time figure; benchmarks only RANK.
+  12-customer golden derivation (values = waste %, sorted):
+  [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35] →
+  v=2  (1 of 12 at-or-below)  p = round(100*1/12)  = 8
+  v=14 (5 of 12)              p = round(100*5/12)  = 42
+  v=20 (7 of 12)              p = round(100*7/12)  = 58
+  v=35 (12 of 12)             p = round(100*12/12) = 100
+  Ties: equal values share the same (higher) rank — v <= v_c counts both.
+  Pinned by tests/test_flywheel.py::TestBenchmarks::test_13_golden_percentiles.
+  FOUNDER VERIFICATION PENDING (R-Q3 precedent: verify before merge to main).
+  | Lokesh Prasanna Kumar S

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — L1 peer-benchmark widget (M-FLY-1) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (one per flow): the percentile marker slides to its position on
+     first paint (motion-spec A-class transition, reduced-motion safe);
+     the figure itself lands settled — money never shimmers. -->
+<style>
+  /* mockup-local layout only; tokens from wa-design.css */
+  .bench-scale { position: relative; height: 10px; border-radius: 5px;
+    background: linear-gradient(to right, var(--verified-bg), var(--surface-tint));
+    border: 1px solid var(--rule); margin: var(--s3) 0 var(--s2); }
+  .bench-marker { position: absolute; top: -5px; width: 4px; height: 20px;
+    border-radius: 2px; background: var(--accent); left: 38%; }
+  .bench-ends { display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body class="app-body">
+<main class="wrap" style="padding: var(--s4) 0; max-width: 460px;">
+
+  <!-- LIVE state — the ONLY customer-visible state. Below n≥10 the widget
+       is NOT RENDERED at all (zero-state law: no countdowns, no promises;
+       the dashboard simply gains this card the day the cohort is big
+       enough to be honest). -->
+  <section class="widget w-4">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-trend-down"/></svg>
+      <h2>How you compare</h2>
+      <details class="help"><summary aria-label="What is this?">?</summary>
+        <div class="help-body"><dl>
+          <dt>What this shows</dt><dd>Where your waste share sits among
+            TokenOps customers, as a percentile.</dd>
+          <dt>Where the number comes from</dt><dd>Each company's own audit
+            computes its waste share; we rank yours among them. Only your
+            rank leaves the pool — never another company's numbers.</dd>
+          <dt>What to do with it</dt><dd>High percentile? Your findings list
+            is where the gap closes.</dd>
+        </dl></div>
+      </details>
+    </div>
+    <p class="tells">Your waste share, ranked among real companies —
+      never their numbers, only your place.</p>
+
+    <div class="stat-card">
+      <div class="stat-k">Waste share vs peers</div>
+      <div class="stat-v money">38th percentile</div>
+      <div class="stat-m">leaner than 62% of companies on TokenOps</div>
+      <div class="bench-scale" role="img"
+           aria-label="Your waste share sits at the 38th percentile — lower is leaner">
+        <span class="bench-marker"></span>
+      </div>
+      <div class="bench-ends"><span>leanest</span><span>most waste</span></div>
+      <div class="provenance">based on 12 companies · your latest audit ·
+        counts only, per our data promise</div>
+    </div>
+  </section>
+
+  <p class="muted" style="margin-top: var(--s4); font-size: 13px;">MOCKUP v1 —
+    SAMPLE DATA. Dormant state = the widget does not exist (absence, not a
+    countdown). Delight on this surface: the marker's first-paint slide.</p>
+
+</main>
+</body>
+</html>

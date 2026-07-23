@@ -790,3 +790,17 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
   animation: stage-pulse 1.6s var(--ease) infinite; border-radius: var(--radius-sm); }
 .theater-done { margin-top: var(--s3); }
 .theater-rejects { margin-top: var(--s2); font-size: 13.5px; }
+
+/* ---- L1 benchmark scale (M-FLY-1): rank-only rendering — the scale shows
+   WHERE you sit, never anyone else's number (leakage law). ---- */
+.bench-scale { position: relative; height: 10px; border-radius: 5px;
+  background: linear-gradient(to right, var(--verified-bg), var(--waste-bg));
+  border: 1px solid var(--rule); margin: var(--s3) 0 var(--s2); }
+.bench-marker { position: absolute; top: -5px; width: 4px; height: 20px;
+  border-radius: 2px; background: var(--accent);
+  /* first-paint slide (mockup delight); the global prefers-reduced-motion
+     rule kills all animations, so this needs no local override */
+  animation: bench-slide var(--t-med) var(--ease); }
+@keyframes bench-slide { from { transform: translateX(-10px); opacity: 0; } }
+.bench-ends { display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--ink-soft); }

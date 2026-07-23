@@ -1,0 +1,24 @@
+{% from "app/_widget_head.html" import widget_head %}
+{# M-FLY-1 L1 (mockup-gated). Dormant = ABSENT: no countdown, no promise —
+   the dashboard gains this card the day the cohort is honest (n >= L1
+   threshold). Delight: the marker's first-paint slide (reduced-motion
+   safe); the figure lands settled — money never shimmers. #}
+{% if not w.empty %}
+<section class="widget w-4" id="w-benchmark"
+         hx-get="/dashboard/w/benchmark" hx-trigger="audit-landed from:body"
+         hx-swap="outerHTML">
+  {{ widget_head("i-trend-down", "benchmark", help) }}
+  <div class="stat-card">
+    <div class="stat-k">Waste share vs peers</div>
+    <div class="stat-v">{{ w.data.label }} percentile</div>
+    <div class="stat-m">leaner than {{ w.data.leaner_than }}% of companies on TokenOps</div>
+    <div class="bench-scale" role="img"
+         aria-label="Your waste share sits at the {{ w.data.label }} percentile — lower is leaner">
+      <span class="bench-marker" style="left: {{ w.data.percentile }}%"></span>
+    </div>
+    <div class="bench-ends"><span>leanest</span><span>most waste</span></div>
+    <div class="stat-m">Sitting high? <a href="/findings">Your findings list</a> is where the gap closes.</div>
+    <div class="provenance">{{ w.provenance }} · counts only, per our data promise</div>
+  </div>
+</section>
+{% else %}<div id="w-benchmark" hidden></div>{% endif %}

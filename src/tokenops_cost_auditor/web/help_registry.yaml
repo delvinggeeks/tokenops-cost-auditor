@@ -42,6 +42,14 @@ destinations:
     purpose: "Read how every number in your report is calculated."
 
 widgets:
+  benchmark:
+    title: "How you compare"
+    tells: "Your waste share, ranked among real companies — never their numbers, only your place."
+    what: "Where your waste share sits among TokenOps customers, as a percentile. Lower is leaner."
+    where: "Each company's own audit computes its waste share; we rank yours among them. Only your rank leaves the pool — the figure always says how many companies it is based on."
+    do: "High percentile? Your findings list is where the gap closes."
+    link: "/guide/benchmarks"
+    link_text: "How benchmarks work"
   pipeline:
     title: "Your pipeline, right now"
     tells: "Where your money is in the loop — from logs coming in to alerts watching for the next surprise."

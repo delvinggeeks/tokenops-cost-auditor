@@ -54,6 +54,7 @@ effect below.
 | A4 | htmx swap-in (`@keyframes swap-in`) | partial swap | opacity 0→1, `translateY(4px→0)` | `--t-fast` `--ease` | swapped content appears | `--t-fast`, `--ease` |
 | A5 | Hero count-up (`@keyframes countup`) | page load, once | counter 0→target | 600ms `--ease` | **final number rendered immediately** via `.countup { --n: var(--target) }` | `--ease` |
 | A6 | Pipeline stage pulse (`@keyframes stage-pulse`) | audit in progress | ring `box-shadow` pulse on the active stage | 1.6s loop `--ease` | static ring on the active stage | `--accent` at 25% alpha |
+| A7 | Benchmark marker slide (`@keyframes bench-slide`) | widget first paint | `translateX(-10px)→0`, opacity 0→1 on the percentile marker | `--t-med` `--ease` | marker rendered in place immediately (global reduced-motion rule) | `--t-med`, `--ease`, `--accent` |
 | A7 | Ledger row tint | pointer hover | `background`→`--surface-tint` | `--t-fast` `--ease` | instant tint | `--surface-tint` |
 
 **A6 note.** Reused by the pipeline theater's `.seg.live .stage-name`

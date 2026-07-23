@@ -5,6 +5,21 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.0 · THE FOUNDER-ORDER DAY SHIPPED. FR-32 explorer
+  (filter any slice of history; per-account switching; saved views,
+  whitelist-sanitized) · R-MULTI-SOURCE (multi-account connect, fingerprint
+  dedup, audits.source_id) · R-ICON-ACTIONS · R-PIPELINE-LIVE +
+  R-LIVE-DASH (live states, audit-landed refresh, zero idle polling) ·
+  R-SYSTEM-TEST (journey suite + system-tester gate; 11 sweeps, 10 real
+  bugs fixed pre-launch) · R-F1-SIGNOFF (amended data promise on all five
+  surfaces + benchmark toggle, default ON disclosed, audit-logged) ·
+  M-FLY-0 flywheel spine (training frame + cohort ledger). Migrations
+  013-015 applied to live data (pre-deploy backup tokenops_2026-07-23.dump,
+  4.1M). SMOKE PASS: HTTPS healthz ok/db ok, alembic head d7b28e41c6f9,
+  amended promise live on landing, /explore 401-gated, ofelia 10 jobs,
+  docs-site 200, www 301. Deployed by founder approval ("approved to
+  deploy"), observed via session log.
+
 - 2026-07-22 · v1.5.36 · WAVE B FINISHED + STRIPE PROVEN. Verified-savings
   celebration (savings hero pops, motion-spec C11, reduced-motion safe,
   gated strictly on re-audit-proven verified>0 — honest by construction,
