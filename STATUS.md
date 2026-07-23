@@ -15,6 +15,26 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+### C3 gate round (2026-07-23) — spec PASS · cold PWN fixed · vv PWN closed · system-tester PARTIAL→FAIL→PASS
+
+spec-guard PASS 8/8 (scope = rulings exactly; export absent; R-F1 strings
+untouched; TE-5 amendment consistent). cold-reviewer PASS-WITH-NOTES, all
+fixed 8bdb2bd: f.1/f.2 save_view row-lock (the G-V1 count-then-insert race
+class — cap race + same-name 500 closed), f.3 migration 014 created_at →
+NOT NULL (edited in place; never deployed; chain re-rehearsed).
+vv-engineer PASS-WITH-NOTES (K-1 honest stop): both open items closed by
+main thread — full suite + coverage gate green (services 96.7%, money
+math 100%); f.5 field-ledger round-trip test added (a Filters field
+without a serialize branch now fails a test, never silently drops).
+system-tester: PARTIAL (K-1) → live-walk FAIL with the round's best
+catch — dashboard "$15/mo identified" vs explorer "$45/mo", two TRUE
+facts at different scopes wearing one word — fixed 1052957 by stating
+scope in words on both surfaces ("identified — latest audit" / "across N
+findings in this slice") + two-audit journey pin → final re-gate PASS
+(8/8 re-derivation, single-audit case still agrees at $100=$100).
+Role ledger to date: 6 sweeps, 8 findings, 7 real fixes test-pinned,
+1 lawful R-Q9 decline, 0 found by the founder.
+
 ## R-PROCEED (2026-07-23) — rulings recorded; C3 saved views + T4 spec shipped
 
 Founder ruled "proceed" on the standing question lists; recorded as the
