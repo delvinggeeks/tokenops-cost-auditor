@@ -190,9 +190,7 @@ class TestFR22Door:
             for i in range(MAX_KEYS_PER_USER):
                 session.add(IngestKey(user_id=uid, label=f"k{i}", key_hash=f"hash-{i}"))
             session.commit()
-        over = TestClient(app).post(
-            "/sources/sdk/key", data={"label": "one too many"}, headers=HDR
-        )
+        over = TestClient(app).post("/sources/sdk/key", data={"label": "one too many"}, headers=HDR)
         assert over.status_code == 403 and "limit" in over.json()["detail"]
 
 
@@ -242,3 +240,36 @@ class TestAuthority:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 402 and "pause" in err(resp)
+
+
+class TestRateAndDsnHardening:
+    def test_10_scheme_less_host_still_embeds_the_token(self, app: FastAPI) -> None:
+        """cold-review f.4 (re-gate proof): a base URL configured without a
+        scheme must NOT silently drop the token from the shown-once DSN."""
+        grant(app)
+        app.state.settings.app_base_url = "tokenops-cost-auditor.com"  # no scheme
+        resp = TestClient(app).post("/sources/sdk/key", data={"label": "prod"}, headers=HDR)
+        assert resp.status_code == 200
+        token = re.search(r"Bearer (ik_[A-Za-z0-9_\-]+)", resp.text).group(1)  # type: ignore[union-attr]
+        squashed = re.sub(r"\s+", " ", resp.text)
+        assert f"https://{token}@tokenops-cost-auditor.com" in squashed  # token embedded, uncut
+
+    def test_11_rate_key_buckets_per_token_and_falls_to_ip(self) -> None:
+        """cold-review f.5 (re-gate proof): distinct tokens get distinct
+        fairness buckets; anything not a well-formed ingest token falls to
+        IP so a bad-token flood can't mint unlimited buckets. The stacked
+        per-IP ceiling (_INGEST_IP_LIMIT) is the real abuse bound."""
+        from starlette.requests import Request
+
+        from tokenops_cost_auditor.web.routes_ingest import _INGEST_IP_LIMIT, _ingest_rate_key
+
+        def req(auth: str | None) -> Request:
+            headers = [(b"authorization", auth.encode())] if auth else []
+            return Request({"type": "http", "headers": headers, "client": ("9.9.9.9", 1234)})
+
+        a = _ingest_rate_key(req("Bearer ik_aaaaaaaa"))
+        b = _ingest_rate_key(req("Bearer ik_bbbbbbbb"))
+        assert a != b and a.startswith("ingest:")  # distinct per-key buckets
+        assert _ingest_rate_key(req(None)).startswith("ip:")  # no token → IP
+        assert _ingest_rate_key(req("Bearer sk-not-ours")).startswith("ip:")  # wrong prefix → IP
+        assert _INGEST_IP_LIMIT.endswith("/minute")  # the abuse ceiling exists

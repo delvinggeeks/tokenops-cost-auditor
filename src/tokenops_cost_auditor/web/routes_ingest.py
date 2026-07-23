@@ -58,17 +58,29 @@ _MAX_COUNT = 1_000_000_000_000
 
 
 def _ingest_rate_key(request: Request) -> str:
-    """Rate-limit per ingest key (cold-review f.5): the bearer-auth route
-    never populates request.state.user_email, so the global user-or-ip key
-    would bucket every key's traffic — and every bad-token 401 — under one
-    shared IP. Key on a HASH of the bearer token (never the plaintext);
-    unauthenticated calls fall to IP so they can't drain a real key's
-    budget."""
+    """Per-key FAIRNESS bucket (cold-review f.5): the bearer-auth route never
+    populates request.state.user_email, so the global user-or-ip key would
+    bucket every customer's traffic — and every bad-token 401 — under one
+    shared IP. Key on a HASH of the bearer token (never the plaintext) so one
+    noisy key can't starve another; unauthenticated calls fall to IP.
+
+    This bucket ALONE does not bound abuse: an attacker varying token bytes
+    would mint a fresh bucket per guess (re-gate finding). The stacked
+    per-IP ceiling (_INGEST_IP_LIMIT) is the real bound — it caps total
+    ingest attempts from one source regardless of how many token variations
+    it tries. Fairness and abuse-bounding are two limits, deliberately."""
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer ik_"):
         digest = hashlib.sha256(auth.encode()).hexdigest()[:32]
         return f"ingest:{digest}"
     return f"ip:{get_remote_address(request)}"
+
+
+# The brute-force / DoS ceiling: total ingest from one IP, whatever tokens it
+# presents. Set well above a single busy customer's per-key budget so it
+# only bites genuine abuse (the token itself is 256-bit; entropy, not rate,
+# defeats guessing — this bounds resource use).
+_INGEST_IP_LIMIT = "300/minute"
 
 
 # The documented generic contract, as a strict allowlist. Field -> (kind,
@@ -177,7 +189,8 @@ def _key_from_bearer(request: Request, session: Session, authorization: str | No
 
 
 @router.post("/api/v1/ingest")
-@limiter.limit("60/minute", key_func=_ingest_rate_key)
+@limiter.limit(_INGEST_IP_LIMIT, key_func=get_remote_address)  # abuse ceiling per source IP
+@limiter.limit("60/minute", key_func=_ingest_rate_key)  # fair per-key budget
 def ingest(
     request: Request,
     background: BackgroundTasks,

@@ -15,6 +15,24 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## S-0 gate round (2026-07-23) — spec PASS · vv PARTIAL-clean · system-tester PASS · cold FAIL→fixed→PASS-WITH-NOTES→hardened
+
+spec PASS 7/7. system-tester PASS zero product findings (full journey +
+17-link crawl). vv PARTIAL by honest K-1 (all static checks clean; suite
+already green in the pre-commit run). cold FAIL round 1 (5 findings) all
+fixed a7cb282: empty-required rejected at the door, int/num ceiling, mint
+cap row-locked (with_for_update — prod is Postgres; SQLite no-op is tests
+only, same accepted precedent as saved-views/link-codes), DSN scheme
+prepend, per-key rate bucket. Re-gate PASS-WITH-NOTES caught a REGRESSION
+MY OWN f.5 fix introduced — bucketing on token hash let an attacker mint
+a fresh 60/min bucket per guessed token, unbounding abuse. Fixed: a
+stacked per-IP ceiling (_INGEST_IP_LIMIT 300/min) is the real bound;
+per-key bucket stays for fairness. Both proof-tests the re-gate asked for
+added (test_10 scheme-less DSN still embeds the token; test_11 rate-key
+buckets per-token and falls to IP for non-ik/absent auth). Full chain
+green. Lesson: a rate-key keyed on attacker-controlled bytes is not a
+bound — pair per-principal fairness with a per-source ceiling.
+
 ## R-SDK-PLATFORM + S-0 (2026-07-23) — the Sentry adoption model ruled; the ingest DSN shipped
 
 Founder ruling R-SDK-PLATFORM ("we need like Sentry platform where people
