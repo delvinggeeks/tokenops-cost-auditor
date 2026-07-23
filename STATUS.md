@@ -15,6 +15,31 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-AUTO-PRICING gate round (2026-07-23) — spec FAIL→fixed→PASS · cold PWN all fixed · vv PARTIAL closed · system-tester PWN
+
+spec-guard FAIL round 1: docs-site/concepts/pricing-data.md still carried
+"## Human-verified, on the record" (capital-H escaped a case-sensitive
+sweep — lesson: sweeps are case-INSENSITIVE from now on). Fixed 9041c51;
+re-gate PASS-WITH-NOTES (rewording matches what verify+sync actually do;
+its residue note → launch collateral + mockups swept in the fix commit;
+PLAN/DOCS-PLAN history exempt). cold PASS-WITH-NOTES, all four fixed:
+f.1 future-dated rows now status "not-applicable", EXCLUDED from the
+verified tally (test_08); f.2 a feed-published write rate is compared
+UNCONDITIONALLY — published data disagreeing with our structural default
+now FAILS the gate (test_07 rewritten both directions; live feed checked:
+only the 5.6 family publishes write rates and all match); f.3 feed
+unreachable → clear message, exit 2 (distinct from mismatch=1; both block
+— nothing ships unverified is the intent, recorded); f.4 dated snapshots
+bucketed before -v keys (test_09). vv PARTIAL (honest K-1): its checks
+all passed (strict exits proven live both directions, goldens untouched);
+its leftover coverage run superseded by the main thread's full green
+suite post-fixes. Its note on test_runner's self-referential date pin:
+accepted — the report-template pin in test_report_web still anchors the
+rendered string. system-tester PWN zero product findings (report shows
+machine-verified 2026-07-23; popovers/wizard/guide correct; 60-link crawl
+clean; 31/31 live re-confirmed; its three-phrasings note logged as copy
+polish, not a bug). Verifier re-run after all fixes: 31/31.
+
 ## R-AUTO-PRICING (2026-07-23) — the human pricing gate is ABOLISHED; the agent verifies strictly
 
 Founder ruling (verbatim in substance): "all prices have to be automated

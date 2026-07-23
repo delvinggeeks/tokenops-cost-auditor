@@ -242,7 +242,7 @@ impl_end_to_end=True · dod_met=False · has_e2e_test=True
 **Acceptance criteria:**
 - A valid signed token serves the web report (200 HTML) and the PDF (200 application/pdf); tampered/expired/wrong-secret/missing-file all return a user-safe 404 with no internals leaked — MET (routes_report.py:23-29,37-46; tests TestTREP0506, TestWebReportRoute).
 - Report numbers are assembled once in ReportModel.build and never recomputed by a renderer; report.json is deterministic and carries EVERY finding while web/PDF show the top-50 by monthly impact with an explicit note — MET (model.py:91-144, render_json.py:63-69, run_all sorts by -impact registry.py:37, D11 tests).
-- Every user-facing claim (pricing 'human-verified <date>', 'purged 7 days after', 'expires in 30 days', 'never stored/trained') is backed by real current behavior — PARTIALLY MET: purge job exists (services/lifecycle/purge.py), dates match config today, but strings are hardcoded and decoupled from settings (finding 3).
+- Every user-facing claim (pricing 'machine-verified <date>', 'purged 7 days after', 'expires in 30 days', 'never stored/trained') is backed by real current behavior — PARTIALLY MET: purge job exists (services/lifecycle/purge.py), dates match config today, but strings are hardcoded and decoupled from settings (finding 3).
 - The signed report URL reaches the customer as an absolute, clickable link and that delivery is tested — NOT MET (findings 1 & 4).
 - The signed-URL signature is a real access control in production, i.e. no default/forgeable secret — NOT MET (finding 2).
 

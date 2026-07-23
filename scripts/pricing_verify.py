@@ -83,20 +83,15 @@ def _feed_entry(feed: dict, provider: str, model: str) -> tuple[str, dict] | Non
     for base in candidates:
         if base in feed:
             return base, feed[base]
-        # dated/versioned fallbacks: -YYYYMMDD..., -vN:M, @date (longest first
-        # so the newest dated snapshot wins deterministically)
-        variants = sorted(
-            (
-                k
-                for k in feed
-                if k.startswith(base + "-2")
-                or k.startswith(base + "-v")
-                or k.startswith(base + "@")
-            ),
-            reverse=True,
-        )
-        if variants:
-            return variants[0], feed[variants[0]]
+        # dated/versioned fallbacks, BUCKETED by style (cold-review f.4:
+        # one mixed reverse-sort let '-v' outrank a newer '-2026...' key):
+        # newest dated snapshot first, then versioned, then @-tagged.
+        dated = sorted((k for k in feed if k.startswith(base + "-2")), reverse=True)
+        versioned = sorted((k for k in feed if k.startswith(base + "-v")), reverse=True)
+        tagged = sorted((k for k in feed if k.startswith(base + "@")), reverse=True)
+        for bucket in (dated, versioned, tagged):
+            if bucket:
+                return bucket[0], feed[bucket[0]]
     return None
 
 
@@ -107,9 +102,12 @@ def verify(table: PricingTable, feed: dict, today: datetime | None = None) -> li
         try:
             rate = table.rate(provider, model, on_date)
         except Exception:
-            # no epoch effective today (future-dated row only) — nothing a
-            # customer can be billed at today; skip, honestly labeled
-            out.append(RowVerdict(provider, model, "verified", "no epoch effective today"))
+            # no epoch effective today (future-dated rows only) — nothing a
+            # customer can be billed at today. NOT counted as verified
+            # (cold-review f.1: a future-dated typo must never hide inside a
+            # green tally); listed separately so a human reading the output
+            # sees exactly which rows the gate could not apply to.
+            out.append(RowVerdict(provider, model, "not-applicable", "no epoch effective today"))
             continue
         resolved = _feed_entry(feed, provider, model)
         if resolved is None:
@@ -122,8 +120,11 @@ def verify(table: PricingTable, feed: dict, today: datetime | None = None) -> li
             ("cache_read", rate.cache_read, _per_million(entry.get("cache_read_input_token_cost"))),
         ]
         feed_write = _per_million(entry.get("cache_creation_input_token_cost"))
-        if feed_write is not None and rate.cache_write != rate.input:
-            # both sides publish a real write rate — compare it too
+        if feed_write is not None:
+            # the feed publishes a write rate: compare it UNCONDITIONALLY
+            # (cold-review f.2 — inferring "explicit" from value equality
+            # created false confidence; if published data disagrees with our
+            # structural default, that IS a divergence and must fail).
             checks.append(("cache_write", rate.cache_write, feed_write))
         problems = []
         for name, ours, theirs in checks:
@@ -155,16 +156,31 @@ def main(argv: list[str] | None = None) -> int:
     if args.feed:
         feed = json.loads(args.feed.read_text())
     else:
-        with urllib.request.urlopen(FEED_URL, timeout=60) as resp:
-            feed = json.load(resp)
+        try:
+            with urllib.request.urlopen(FEED_URL, timeout=60) as resp:
+                feed = json.load(resp)
+        except Exception as exc:  # cold-review f.3: a clear gate message,
+            # never a raw traceback. Exit 2 distinguishes "could not verify"
+            # from "verified and found wrong" (exit 1); BOTH block a release
+            # — nothing ships unverified is the ruling's intent.
+            print(f"STRICT GATE COULD NOT RUN: feed unreachable ({exc}).")
+            print("Nothing ships unverified (R-AUTO-PRICING) — retry, or pass --feed <file>.")
+            return 2
 
     table = PricingTable.load()
     verdicts = verify(table, feed)
-    bad = [v for v in verdicts if v.status != "verified"]
+    bad = [v for v in verdicts if v.status in ("mismatch", "uncovered")]
+    na = [v for v in verdicts if v.status == "not-applicable"]
+    ok = [v for v in verdicts if v.status == "verified"]
     for v in verdicts:
-        marker = "OK " if v.status == "verified" else "!! "
+        marker = (
+            "OK " if v.status == "verified" else ("na " if v.status == "not-applicable" else "!! ")
+        )
         print(f"{marker}{v.provider}/{v.model}: {v.status} — {v.detail}")
-    print(f"\n{len(verdicts) - len(bad)}/{len(verdicts)} rows verified")
+    tally = f"{len(ok)}/{len(verdicts)} rows verified"
+    if na:
+        tally += f" ({len(na)} not applicable today — future-dated epochs, listed above)"
+    print(f"\n{tally}")
     if bad:
         print("STRICT GATE FAILED (R-AUTO-PRICING): fix the rows above; nothing ships unverified.")
         return 1

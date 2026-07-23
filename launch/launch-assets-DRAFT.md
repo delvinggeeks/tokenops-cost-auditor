@@ -62,7 +62,7 @@ not per completed API call. 58% of rows were duplicates. The row was
 discarded; the exporter now prints its dedup arithmetic on every run.
 
 **5/** Why tell you this? Because an audit product's only real asset is
-arithmetic you can check. Every number traces to a versioned, human-verified
+arithmetic you can check. Every number traces to a versioned, machine-verified
 rate card and a hand-derived golden test. When the numbers were wrong, the
 discipline caught them BEFORE launch — and the discipline is the product.
 

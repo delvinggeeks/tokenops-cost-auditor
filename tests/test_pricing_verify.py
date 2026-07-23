@@ -109,12 +109,54 @@ class TestStrictContract:
         feed_file.write_text(json.dumps(full_feed()))
         assert main(["--feed", str(feed_file)]) == 0
 
-    def test_07_structural_write_default_not_compared(self) -> None:
-        """cache_write = input is OUR schema default, not a provider-published
-        number — the verifier must not demand the feed corroborate it."""
+    def test_07_published_write_rate_always_compared(self) -> None:
+        """cold-review f.2 (round 2): when the feed PUBLISHES a write rate it
+        is compared unconditionally — a published rate disagreeing with our
+        structural default is a real divergence and must fail; one agreeing
+        with it verifies."""
         feed = full_feed()
-        # azure rows default cache_write to input; inject a creation cost that
-        # would mismatch IF it were (wrongly) compared
+        # azure gpt-5.4 defaults cache_write to input (2.50): a published
+        # 3.125 disagrees -> mismatch, strictly
         feed["azure/gpt-5.4"]["cache_creation_input_token_cost"] = 3.125e-06
         verdicts = {(v.provider, v.model): v for v in verify(TABLE, feed, today=NOW)}
+        assert verdicts[("azure-openai", "gpt-5.4")].status == "mismatch"
+        assert "cache_write" in verdicts[("azure-openai", "gpt-5.4")].detail
+        # ...and a published rate that EQUALS the default verifies
+        feed["azure/gpt-5.4"]["cache_creation_input_token_cost"] = 2.5e-06
+        verdicts = {(v.provider, v.model): v for v in verify(TABLE, feed, today=NOW)}
         assert verdicts[("azure-openai", "gpt-5.4")].status == "verified"
+
+    def test_08_future_dated_row_is_not_applicable_never_verified(self) -> None:
+        """cold-review f.1: a row with only a FUTURE epoch cannot hide inside
+        the verified tally — it gets its own status."""
+        from datetime import date as _date
+
+        from tokenops_cost_auditor.services.pricing.table import PricingTable as PT
+        from tokenops_cost_auditor.services.pricing.table import Rate
+
+        table = PT(
+            version="t",
+            last_verified=None,
+            _entries={
+                ("openai", "gpt-future"): (
+                    Rate(
+                        input=1.0,
+                        output=2.0,
+                        cache_read=0.1,
+                        cache_write=1.0,
+                        effective_from=_date(2099, 1, 1),
+                    ),
+                )
+            },
+        )
+        verdicts = verify(table, {}, today=NOW)
+        assert [v.status for v in verdicts] == ["not-applicable"]
+
+    def test_09_dated_snapshot_outranks_versioned_key(self) -> None:
+        """cold-review f.4: '-v' must never beat a newer dated snapshot."""
+        feed = {
+            "anthropic.claude-haiku-4-5-v9:9": {"input_cost_per_token": 9e-06},
+            "anthropic.claude-haiku-4-5-20251001-v1:0": {"input_cost_per_token": 1e-06},
+        }
+        key, _ = _feed_entry(feed, "bedrock", "anthropic.claude-haiku-4-5")
+        assert key == "anthropic.claude-haiku-4-5-20251001-v1:0"
