@@ -401,3 +401,9 @@ it under R-PIPELINE-UI-SEQ.
   on (first customer request) AND (an export/API existing). Usage from
   these tools on customer-owned provider keys is ALREADY captured by the
   shipped T2 connectors — now stated on the landing.
+
+- SDK atexit retention (S-1 cold re-gate note, 2026-07-23, non-blocking):
+  each `init()` registers `Batcher.close` with atexit but never
+  `atexit.unregister`s a prior closed instance, so a process that re-inits
+  thousands of times retains that many small callbacks (object retention,
+  not a thread/socket leak). One-line fix in `close()` when touched next.

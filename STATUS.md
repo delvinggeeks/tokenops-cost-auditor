@@ -35,6 +35,18 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-1 CLOSED (2026-07-23) — cold re-gate PASS, all four fixes verified
+
+cold re-gate PASS: f.1 DSN-parse-never-raises (bad-port env → inert, not a
+host-app crash), f.2 IPv6 brackets, f.3 reinit closes the prior batcher
+(no leak, no double-ship), f.4 functools.wraps — all confirmed against the
+pinned toolchain, 18 tests exit 0. One minor non-blocking note (atexit
+callback retention on pathological re-init) → BACKLOG line. Final S-1
+verdicts: spec PWN · vv PWN · cold FAIL→fixed→PASS. The Python SDK is
+done: one call, counts-only by construction, observe-only, shipping to
+the S-0 endpoint. Queue advances to S-6 (read API platform), then O-0
+(workspace tenancy spine) on the founder's word.
+
 ## S-1 gate round (2026-07-23) — spec PWN · vv PWN · cold FAIL→fixed (re-gate pending)
 
 spec PASS-WITH-NOTES (all 6 checks; its note: the PEP-758 bare-except is
