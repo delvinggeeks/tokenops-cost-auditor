@@ -3,6 +3,15 @@
 1. **Scope freeze.** X-01..X-05 (docs/01-REQUIREMENTS.md §G) are forbidden: no live
    proxy/gateway, no policy/budget enforcement, no multi-org RBAC/SSO, no LLM-generated
    narrative in reports, no SPA frontend. New ideas go to BACKLOG.md, never into code.
+   [Amendment R-IMPROVISE, founder 2026-07-23: "ideas in between has to be
+   improvised and validated." The freeze governs SCOPE — new features and
+   surfaces. In-flight ideas that improve the CURRENT slice's journey (a
+   missing affordance, an honesty gap, a clearer word, a scope label) are
+   IMPROVISED INTO the slice and validated to the full DoD — tests, gates,
+   journey — never parked on ceremony and never shipped unvalidated. The
+   triage is binary and same-day: an in-between idea lands in code WITH its
+   validation, or in BACKLOG as one line. Silently dropping one is the only
+   forbidden outcome.]
 
 2. **No network/LLM imports in the engine.** `services/rules` and `services/pricing`
    import zero network or LLM libraries — enforced by import-guard test T-NFR-01.
