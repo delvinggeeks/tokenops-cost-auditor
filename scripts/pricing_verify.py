@@ -141,10 +141,13 @@ def verify(table: PricingTable, feed: dict, today: datetime | None = None) -> li
 
 def stamp_last_verified(path: Path, on_date: str) -> None:
     text = path.read_text()
-    new = re.sub(r"(?m)^last_verified: \S+", f"last_verified: {on_date}", text, count=1)
-    if new == text:
+    if not re.search(r"(?m)^last_verified: \S+", text):
         raise SystemExit("could not find last_verified line to stamp")
-    path.write_text(new)
+    new = re.sub(r"(?m)^last_verified: \S+", f"last_verified: {on_date}", text, count=1)
+    # a same-day restamp is a no-op, not an error (first live 4b run
+    # caught this: identical output tripped the not-found guard)
+    if new != text:
+        path.write_text(new)
 
 
 def main(argv: list[str] | None = None) -> int:
