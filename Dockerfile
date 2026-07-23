@@ -16,12 +16,12 @@ WORKDIR /app
 
 # Dependency layer first for build caching
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project --extra obs
 
 COPY alembic.ini ./
 COPY src ./src
 COPY scripts ./scripts
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --extra obs
 
 # Non-root runtime user; uploads/reports stored outside web root (HLD §6)
 RUN useradd --create-home --uid 1000 tokenops_cost_auditor \

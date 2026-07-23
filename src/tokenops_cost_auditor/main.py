@@ -91,7 +91,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "64-byte random value (runbook §5). Refusing to start."
         )
     configure_logging(settings.app_env)
-    obs_errors.init_errors(settings.sentry_dsn, settings.app_env)
+    obs_errors.init_errors(settings.sentry_dsn, settings.app_env, settings.release_tag)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

@@ -94,6 +94,14 @@ if [ ! -f .env ]; then
 else
     echo ".env exists — kept (secrets never regenerated)"
 fi
+# WP-DEVOPS-OBS: stamp the deployed tag so error tracking maps events to
+# releases. Idempotent upsert — the only line this script ever touches in
+# an EXISTING .env.
+if grep -q "^RELEASE_TAG=" .env; then
+    sed -i "s/^RELEASE_TAG=.*/RELEASE_TAG=$TAG/" .env
+else
+    echo "RELEASE_TAG=$TAG" >> .env
+fi
 ENVSETUP
 
 echo "== [4c] docs-site: build locally, ship to host (docs.$DOMAIN) =="

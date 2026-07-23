@@ -94,6 +94,9 @@ class Settings(BaseSettings):
 
     # Observability (NFR-06, env-gated)
     sentry_dsn: str = ""
+    # release stamped by provision.sh at deploy (WP-DEVOPS-OBS): errors in
+    # Sentry map to the exact deployed tag
+    release_tag: str = ""
 
     # Detector thresholds (docs/03-LLD.md §3; money-math defaults recorded in the
     # golden spreadsheet notes sheet per founder ruling R-Q6..Q12).
