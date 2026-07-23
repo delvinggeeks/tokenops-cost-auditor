@@ -17,7 +17,8 @@ appended by the person deploying, same day.
   (stage_events, pull_events, alert_checks). Gate round: ux v1 FAIL→v2
   PASS-WITH-NOTES, spec PASS, vv PASS (95.4% total), cold PWN fixed,
   system-tester PWN fixed. F14 nav CSS dedup folded in.
-  SMOKE: (appended after deploy)
+  SMOKE PASS: HTTPS healthz ok, landing 200, /runs auth-gated (401,
+  route live), head f2a94b6d81c3 (017). Pre-deploy backup 4.1M OK.
 
 - 2026-07-23 · v1.6.8 · R-NAMING SWEEP (founder correction: "not tokenops
   its full name tokenops-cost-auditor"). The short-name drift is gone:
