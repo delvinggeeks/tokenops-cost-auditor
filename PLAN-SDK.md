@@ -92,6 +92,15 @@ tokenops_cost_auditor.init()  # DSN from env; that's the whole setup
 - **S-3 MCP server** (~1-2d): `tokenops-cost-auditor mcp` (stdio) with
   read tools — get_spend, get_findings, get_run_status, latest_report —
   so AI dev tools sit ON the platform. Write tools deferred.
+- **S-6 API platform** (~2-3d, founder "proceed with both" 2026-07-23):
+  the READ half of the platform — read-scoped API auth tokens (list
+  audits/findings/spend via /api/v1, NFR-14 envelope), OAuth applications
+  (third-party apps a customer authorizes), and a Developer Settings
+  surface. Mirrors Sentry's Auth Tokens / OAuth Applications /
+  Developer Settings pages; the in-scope answer to "APIs". Personal-scoped
+  now; workspace-scoped after PLAN-ORG O-0. DoD: mint a read token →
+  GET /api/v1/audits returns the caller's audits, counts only (FR-22);
+  revoke stops it; scopes enforced.
 - **S-4 JS/TS SDK** (later): second language, same laws.
 - **S-5 Integrations** (later): GitHub Action (audit summary on PR),
   Slack alert delivery (X-02: notify, never enforce).

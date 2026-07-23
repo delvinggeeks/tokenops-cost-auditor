@@ -114,6 +114,19 @@ under "Amendments" with date + reason.
 
 ## Amendments
 
+- **R-ORG (founder, 2026-07-23, "proceed with both").** X-03 (multi-org
+  RBAC/SSO) is RELAXED to permit enterprise org-management as PRODUCT
+  governance: workspaces owning resources, members + invites, RBAC over
+  product actions (mint keys / see reports / manage billing / revoke
+  sources), and SSO login. Bounded hard: roles never touch the customer's
+  LLM traffic (X-01/X-02 stand); the audit engine stays tenant-blind
+  (tenancy at the web/persistence boundary only); single-tenant is the
+  default and orgs are opt-in; X-04 unchanged. PLAN-ORG.md is the ruled
+  design (slices O-0 workspace spine → O-1 members → O-2 roles → O-3 SSO
+  → O-4 workspace settings home). Reason: the densest part of a
+  production platform's settings (Sentry's Teams/Members/Auth) was the
+  one gap requiring a freeze change; the founder opened it deliberately.
+
 - **R-SDK-PLATFORM (founder, 2026-07-23).** "This platform should be used
   by many development platforms and cloud configurations... we need like
   Sentry platform where people can configure and use our platform."

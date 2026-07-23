@@ -167,3 +167,13 @@ X-05 is relaxed ONLY to server-side rendering + htmx partials — no SPA
 framework, no frontend build step. X-01/X-02 stand for the audit product
 (alert-only budget observation in v1.5 is NOT enforcement; enforcement
 remains forbidden). X-03/X-04 unchanged.]
+
+[Founder amendment 2026-07-23, R-ORG ("proceed with both"): X-03 is
+RELAXED to permit enterprise org-management as PRODUCT GOVERNANCE only —
+workspaces that own resources, members + invites, RBAC over who may
+see/do things in the product, and SSO login (PLAN-ORG.md, slices
+O-0..O-4). Hard boundary: roles never gate the customer's LLM traffic
+(X-01/X-02 stand — no proxy, no enforcement); the audit engine stays
+tenant-blind (tenancy at the web/persistence boundary, never inside
+services/rules|pricing); single-tenant is the default, orgs opt-in.
+X-04 unchanged.]

@@ -69,9 +69,16 @@ territory.
 1. **WP-CLOUD-T2** — C-A Azure + C-B Bedrock DEPLOYED v1.7.0
    2026-07-23 (agent-verified pricing, R-AUTO-PRICING);
    C-C Gemini/Vertex next →
-1a. **R-SDK-PLATFORM (PLAN-SDK)** — S-0 ingest DSN BUILT 2026-07-23
-   (gate round open); S-1 Python SDK next, then C-C; S-2 OTLP / S-3 MCP /
-   S-4 JS / S-5 integrations queued →
+1a. **R-SDK-PLATFORM (PLAN-SDK)** — S-0 ingest DSN SHIPPED+GATED
+   2026-07-23 (five gates closed incl. security verify + proxy-headers
+   prod fix). NEXT: S-1 Python SDK → S-6 API platform (read tokens +
+   OAuth apps + developer settings, "proceed with both"); then S-2 OTLP /
+   S-3 MCP / S-5 integrations →
+1a2. **R-ORG (PLAN-ORG)** — X-03 RELAXED (bounded, product-governance
+   only) 2026-07-23. Enterprise workspaces/members/RBAC/SSO as vertical
+   slices O-0 spine → O-1 members → O-2 roles → O-3 SSO → O-4 settings
+   home. Recommended order: after S-1+S-6, land O-0 (the tenancy
+   migration) once so both key types scope in it →
 1b. **WP-DEVOPS-OBS** — built 2026-07-23 (Sentry FR-22-scrubbed +
    release-mapped, PR template, deploy pipeline w/ auto-rollback,
    runbook §10 lifecycle); ACTIVATION = founder checklist (repo push,

@@ -12,6 +12,19 @@
    triage is binary and same-day: an in-between idea lands in code WITH its
    validation, or in BACKLOG as one line. Silently dropping one is the only
    forbidden outcome.]
+   [Amendment R-ORG, founder 2026-07-23 ("proceed with both"): X-03 is
+   RELAXED — but bounded. Enterprise adoption needs workspaces, members,
+   role-based governance, and SSO (PLAN-ORG.md). What is now PERMITTED:
+   an organization/workspace entity that owns resources; membership +
+   invites; RBAC over PRODUCT actions (who may mint keys, see reports,
+   manage billing, revoke sources); enterprise SSO login. What stays
+   FORBIDDEN, unchanged: X-01/X-02 — roles NEVER gate the customer's LLM
+   traffic, only who can see/do things IN OUR PRODUCT; no proxy, no
+   enforcement, ever. The audit ENGINE stays TENANT-BLIND: the tenancy
+   layer lives at the web/persistence boundary; services/rules and
+   services/pricing never learn what a workspace is. Single-tenant remains
+   the default (every user is a workspace of one); orgs are opt-in. X-04
+   (LLM narrative) and X-05-beyond-htmx unchanged.]
 
 2. **No network/LLM imports in the engine.** `services/rules` and `services/pricing`
    import zero network or LLM libraries — enforced by import-guard test T-NFR-01.
