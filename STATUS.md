@@ -15,6 +15,31 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## WP-DEVOPS-OBS gate round (2026-07-23) — ops PASS · spec PWN · cold FAIL→fixed→PASS · system-tester PARTIAL→closed
+
+ops-engineer PASS 11/11 (pipeline blocks on gate, concurrency, rollback
+target matches provision's stamp with first-run guard, secrets names
+match runbook, upsert idempotent, both Docker layers consistent with the
+lock, zero-egress path, §2/§10 no contradiction). spec PWN — its real
+catch merged into cold f.1; notes recorded: Dockerfile bundles the sdk in
+every build (footprint only, zero egress without DSN — accepted), and
+the traceability row lagged one commit inside the WP (process note:
+same-commit next time). cold FAIL, all four closed in 1d5dc52 and
+RE-GATED PASS: f.1 include_local_variables=False + _scrub strips frame
+vars/extra/contexts (defense in depth; test proves ABSENCE of the
+sensitive value, stack survives); f.2 _sentry_enabled reset
+unconditionally before the DSN check; f.3 blind spots tested; f.4
+first-run rollback skip called out in runbook §10 + prod hand-stamped
+RELEASE_TAG=v1.7.0 so the first pipeline run has a real target.
+system-tester PARTIAL (honest K-1): its Q1 (dual-DSN boot walk) closed
+EMPIRICALLY by test_05 — which itself caught the armed test leaving the
+global SDK live (egress attempt at session exit); teardown disarms. Its
+Q2 answered: no pricing files in this diff — the strict verify runs in
+CI and the deploy gate regardless. Full chain green; main kept current.
+AWAITING FOUNDER ACTIVATION (runbook §10 checklist): repo create+push
+(agent permission-blocked), secrets, branch protection, SENTRY_DSN,
+UptimeRobot. Queue resumes at C-C Gemini/Vertex on "proceed next".
+
 ## WP-DEVOPS-OBS (2026-07-23) — error tracking, PR/CI-CD, the lifecycle codified; v1.7.0 DEPLOYED first
 
 Founder question ("why not sentry / proper PR + CI/CD / bug lifecycle /
