@@ -69,6 +69,10 @@ class User(Base):
     last_daily_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Wave B digest control: opt out of the daily spend digest. None/True = on.
     daily_digest_emails: Mapped[bool | None] = mapped_column(Boolean)
+    # R-F1 SIGN-OFF (2026-07-23): peer-benchmark cohort membership.
+    # None = included (the default, disclosed); False = excluded. The
+    # training frame and every future cohort computation MUST honor it.
+    benchmark_sharing: Mapped[bool | None] = mapped_column(Boolean)
     # Wave B activity center: when the customer last opened their activity
     # feed. Events after this are "new" (the topbar bell badge).
     activity_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

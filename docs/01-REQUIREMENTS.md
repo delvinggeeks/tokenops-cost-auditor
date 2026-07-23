@@ -105,7 +105,7 @@ streamed data — the counts-only law applies at every ingestion tier's
 door, including the OTLP path where prompt-content attributes are dropped
 at ingest.]
 FR-23 (M) Landing page states data policy verbatim: "analyzed then
-deleted; nothing retained beyond 7 days; never used for training."
+deleted; nothing retained beyond 7 days; your logs and prompts are never used to train any model."
 NFR-01 (M) Analysis engine contains zero LLM/API inference calls.
 NFR-02 (M) TLS everywhere (Caddy auto-TLS); secrets via env only.
 NFR-03 (M) Rate limiting on upload + auth endpoints.

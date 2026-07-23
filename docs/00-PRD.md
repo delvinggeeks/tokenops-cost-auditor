@@ -164,6 +164,19 @@ under "Amendments" with date + reason.
   recorded in the golden NOTES sheet: overlapping audit coverage de-duplicates
   as "latest audit wins per (day, model) bucket" — stored costs are summed,
   no estimator changes.
+- 2026-07-23 R-F1-SIGNOFF (founder: "sign off R-F1"): the option-A promise
+  sentences are RULED VERBATIM and applied the same day. Footer/landing
+  (FR-23): "Your data: logs are analyzed then deleted; nothing retained
+  beyond 7 days; your logs and prompts are never used to train any model."
+  Report data-handling line: "Your logs and prompts are never used to train
+  any model." Privacy/Terms + Settings disclosure: "Anonymized usage counts
+  and fix outcomes — never your content — power cross-customer benchmarks
+  every customer benefits from. You can exclude your account any time in
+  Settings." Benchmark toggle ships (users.benchmark_sharing, migration
+  015): default ON per R-PROCEED Q7, opt-out one checkbox, every change
+  audit-logged. The training/benchmark blocker on PLAN-FLYWHEEL Tracks A/B
+  is LIFTED; the honesty law (population size printed, dormant below
+  thresholds) governs everything the cohort ever powers.
 - 2026-07-23 R-PROCEED (founder single-word ruling "proceed" on the standing
   question lists; recorded per §10): (1) PLAN-TAAS §4 approved as proposed —
   WP-CLOUD-T2 promoted (Azure OpenAI → Bedrock → Gemini/Vertex, each a gated

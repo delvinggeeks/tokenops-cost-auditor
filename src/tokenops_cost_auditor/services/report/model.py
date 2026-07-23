@@ -49,7 +49,7 @@ DATA_HANDLING = (
     "automatically purged 7 days after report generation, purge events are written "
     "to an append-only audit log, and no prompt or completion text is ever stored. "
     "Retained data is limited to token counts, aggregates, and this report. "
-    "Your data is never used for training."
+    "Your logs and prompts are never used to train any model."
 )
 
 

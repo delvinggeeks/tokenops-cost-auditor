@@ -49,7 +49,7 @@ our golden tests pin to hand-derived dollar figures — not customer data.
 
 Your data policy, verbatim from our landing page and privacy policy: uploaded
 logs are
-"analyzed then deleted; nothing retained beyond 7 days; never used for training."
+"analyzed then deleted; nothing retained beyond 7 days; your logs and prompts are never used to train any model."
 <!-- src: FR-23 verbatim -->
 
 In plain terms:

@@ -1,9 +1,9 @@
 # PLAN-FLYWHEEL.md — R-FLYWHEEL-TRAIN order breakdown (history → training → client intelligence → filterable reports)
 
-Status: **PARTIALLY RULED — R-EXPLORER (Q3) + R-PROCEED (Q4/Q5/Q6/Q7 and
-R-F1 option A in principle), recorded in docs/00 Amendments. The exact
-R-F1 promise sentences await a separate founder sign-off; M-FLY-0 A1+A2
-may build ahead of it.**
+Status: **RULED — R-EXPLORER (Q3), R-PROCEED (Q4/Q5/Q6/Q7), and
+R-F1-SIGNOFF (2026-07-23: sentences ruled verbatim and applied; toggle
+shipped, migration 015). Tracks A/B are unblocked; M-FLY-0 (A1+A2) is
+the next flywheel milestone in queue order.**
 Order source: founder, 2026-07-23 — "entire history of usage data to train
 our own model · front gate for usage · preventive measures intelligently ·
 customized solutions per client · client selects reports over all history

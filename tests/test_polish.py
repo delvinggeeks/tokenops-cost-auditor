@@ -11,7 +11,10 @@ import re
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-FR23 = "analyzed then deleted; nothing retained beyond 7 days; never used for training"
+FR23 = (
+    "analyzed then deleted; nothing retained beyond 7 days; "
+    "your logs and prompts are never used to train any model"
+)
 WS = re.compile(r"\s+")
 
 

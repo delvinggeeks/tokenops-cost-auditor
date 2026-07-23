@@ -13,7 +13,10 @@ from fastapi.testclient import TestClient
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.services.mail.smtp import SmtpMailAdapter
 
-FR23_VERBATIM = "analyzed then deleted; nothing retained beyond 7 days; never used for training"
+FR23_VERBATIM = (
+    "analyzed then deleted; nothing retained beyond 7 days; "
+    "your logs and prompts are never used to train any model"
+)
 
 
 class MailRecorder:

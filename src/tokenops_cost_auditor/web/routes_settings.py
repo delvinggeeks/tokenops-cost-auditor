@@ -73,6 +73,7 @@ def settings_page(
             source_limit=settings.plan_source_limits.get(plan, 0),
             statement_emails=user.statement_emails is not False,
             daily_digest_emails=user.daily_digest_emails is not False,
+            benchmark_sharing=user.benchmark_sharing is not False,
             held_uploads=len(held),
             retention_days=settings.purge_after_days,
             purge_phrase=PURGE_PHRASE,
@@ -91,6 +92,28 @@ def plan_display(plan: str, settings: object) -> str:
 
     p = catalogue.get(settings, plan)  # type: ignore[arg-type]
     return f"{p.name} — ${p.usd:,.0f}/mo" if p.usd else p.name
+
+
+@router.post("/benchmarks", response_model=None)
+def save_benchmark_pref(
+    request: Request,
+    benchmark_sharing: str | None = Form(default=None),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """R-F1 SIGN-OFF: cohort membership is the customer's call, one checkbox.
+    Audit-logged — leaving or rejoining the benchmark cohort is a data-use
+    decision, and data-use decisions leave a trail here."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        user.benchmark_sharing = benchmark_sharing is not None
+        auditlog.append(
+            session,
+            user.email,
+            "settings.benchmark_sharing",
+            "included" if benchmark_sharing is not None else "excluded",
+        )
+        session.commit()
+    return RedirectResponse("/settings", status_code=303)
 
 
 @router.post("/email", response_model=None)

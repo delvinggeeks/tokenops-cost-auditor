@@ -12,7 +12,10 @@ REPO = Path(__file__).parents[1]
 DOCS = REPO / "docs-site"
 TEMPLATES = REPO / "src/tokenops_cost_auditor/web/templates/legal"
 
-FR23 = "analyzed then deleted; nothing retained beyond 7 days; never used for training"
+FR23 = (
+    "analyzed then deleted; nothing retained beyond 7 days; "
+    "your logs and prompts are never used to train any model"
+)
 
 
 def bold_clauses(markdown_text: str) -> list[str]:

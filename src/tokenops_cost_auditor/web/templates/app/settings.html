@@ -40,6 +40,24 @@
       they are how the product works, not marketing.</div>
   {{ kit.surface_close() }}
 
+  {# R-F1 SIGN-OFF (2026-07-23): peer-benchmark cohort membership. The
+     disclosure is the label — the promise and the control in one place. #}
+  {{ kit.surface_open(title="Peer benchmarks", icon="detector", span=6) }}
+    <form method="post" action="/settings/benchmarks">
+      <label style="display:flex; gap:var(--s1); align-items:flex-start;">
+        <input type="checkbox" name="benchmark_sharing" value="1"
+               {% if benchmark_sharing %}checked{% endif %}>
+        <span>Include my account in peer benchmarks<br>
+          <small class="muted">Anonymized usage counts and fix outcomes — never
+            your content — power cross-customer benchmarks every customer
+            benefits from. Your logs and prompts are never used to train any
+            model, in or out of the cohort.</small></span>
+      </label>
+      <p style="margin-top: var(--s2);">
+        {{ kit.button("Save benchmark preference", variant="primary") }}</p>
+    </form>
+  {{ kit.surface_close() }}
+
   {# Sources — the same routes as /sources, surfaced where people look #}
   {{ kit.surface_open(title="Connected sources", icon="source", span=12) }}
     <p class="tells">What this tells you: which providers we pull usage from, and

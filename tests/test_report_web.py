@@ -69,7 +69,7 @@ class TestTREP04Methodology:
         assert "FLOORS" in html  # R-GOLDEN-C3 disclosure
         assert "0.7 haircut" in html and "20% suffix haircut" in html  # R-Q4/R-Q5
         assert "Data handling" in html
-        assert "never used for training" in html
+        assert "never used to train any model" in html
 
     def test_trep08_pricing_provenance_in_pdf_html(self, waste_report: ReportModel) -> None:
         html = render_report_html(waste_report, template="pdf/report.html")

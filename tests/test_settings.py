@@ -363,3 +363,54 @@ class TestColdReviewRegressionsV7:
         assert db_path is not None
         with app.state.session_factory() as session:
             assert session.execute(select(Statement)).scalars().all() != []
+
+
+class TestBenchmarkSharing:
+    """R-F1 SIGN-OFF: cohort membership — default ON (disclosed), one-checkbox
+    opt-out, audit-logged both directions."""
+
+    def test_default_on_and_disclosure_rendered(self, app: FastAPI) -> None:
+        page = TestClient(app).get("/settings", headers=HDR)
+        assert page.status_code == 200
+        import re
+
+        squashed = re.sub(r"\s+", " ", page.text)
+        assert "Include my account in peer benchmarks" in squashed
+        assert "never your content" in squashed
+        assert "never used to train any model" in squashed
+        checkbox = re.search(r'name="benchmark_sharing"[^>]*', page.text)
+        assert checkbox is not None and "checked" in checkbox.group(0)  # default ON
+
+    def test_opt_out_persists_and_is_audit_logged(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.get("/settings", headers=HDR)  # creates the user
+        resp = client.post("/settings/benchmarks", headers=HDR, data={}, follow_redirects=False)
+        assert resp.status_code == 303
+        from sqlalchemy import select
+
+        from tokenops_cost_auditor.persistence.models import AuditLogEntry, User
+
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            assert user.benchmark_sharing is False
+            entries = [
+                e
+                for e in session.execute(select(AuditLogEntry)).scalars()
+                if e.action == "settings.benchmark_sharing"
+            ]
+            assert entries and entries[-1].subject == "excluded"
+        page = client.get("/settings", headers=HDR)
+        import re
+
+        checkbox = re.search(r'name="benchmark_sharing"[^>]*', page.text)
+        assert checkbox is not None and "checked" not in checkbox.group(0)
+        # rejoin
+        client.post(
+            "/settings/benchmarks",
+            headers=HDR,
+            data={"benchmark_sharing": "1"},
+            follow_redirects=False,
+        )
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            assert user.benchmark_sharing is True

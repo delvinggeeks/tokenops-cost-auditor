@@ -7,7 +7,9 @@ Effective 2026-07-17
      section structure match. The web page is the authoritative copy. -->
 
 Your uploaded logs are
-"analyzed then deleted; nothing retained beyond 7 days; never used for training."
+"analyzed then deleted; nothing retained beyond 7 days; your logs and prompts are never used to train any model."
+
+Anonymized usage counts and fix outcomes — never your content — power cross-customer benchmarks every customer benefits from. You can exclude your account any time in Settings.
 
 **What we collect.** Your email address (for sign-in links and report
 delivery), the log file you upload, payment references from our payment

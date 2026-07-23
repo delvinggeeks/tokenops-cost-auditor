@@ -13,7 +13,7 @@ log set up to the published size limit.
 
 **2. Your data.** You must have the right to upload the logs you submit. We
 process them solely to produce your report: logs are analyzed then deleted;
-nothing retained beyond 7 days; never used for training.
+nothing retained beyond 7 days; your logs and prompts are never used to train any model.
 Details in the [privacy policy](privacy.md) and [DPA-lite](dpa.md).
 
 **3. Estimates, not guarantees.** Savings figures are conservative estimates
