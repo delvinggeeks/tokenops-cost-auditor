@@ -73,15 +73,25 @@ def status(session: Session, settings: Settings) -> CohortStatus:
     n_audit = len(audited_customers)
     n_label = len(labeled_customers)
 
-    def rung(name: str, n: int, threshold: int, extra_ok: bool = True, extra: str = "") -> Rung:
-        live = n >= threshold and extra_ok
+    def rung(
+        name: str,
+        n: int,
+        threshold: int,
+        months_ok: bool = True,
+        months_needed: int | None = None,
+    ) -> Rung:
+        live = n >= threshold and months_ok
+        need = max(threshold - n, 0)
         if live:
             note = "LIVE"
+        elif need and months_needed:
+            note = f"dormant (needs {need} more + {months_needed}mo history)"
+        elif need:
+            note = f"dormant (needs {need} more)"
         else:
-            need = max(threshold - n, 0)
-            note = (
-                f"dormant (needs {need} more{extra})" if need else f"dormant ({extra.strip(' +')})"
-            )
+            # cold-review f.3: "dormant (6mo)" read as "for 6 months"; the
+            # missing thing is HISTORY, said so.
+            note = f"dormant (needs {months_needed}mo history)"
         return Rung(name=name, n=n, threshold=threshold, live=live, note=note)
 
     rungs = (
@@ -91,8 +101,8 @@ def status(session: Session, settings: Settings) -> CohortStatus:
             "L3 learned",
             n_audit,
             settings.flywheel_l3_min_customers,
-            extra_ok=months >= settings.flywheel_l3_min_history_months,
-            extra=f" + {settings.flywheel_l3_min_history_months}mo",
+            months_ok=months >= settings.flywheel_l3_min_history_months,
+            months_needed=settings.flywheel_l3_min_history_months,
         ),
     )
     return CohortStatus(

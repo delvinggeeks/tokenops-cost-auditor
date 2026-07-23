@@ -180,3 +180,63 @@ class TestPackagePosture:
         for mod in pkg.glob("*.py"):
             hit = banned.search(mod.read_text())
             assert hit is None, f"{mod.name}: {hit.group(0)!r}"
+
+    def test_10_thresholds_are_config_driven_not_hardcoded(self, app: FastAPI) -> None:
+        """vv f.3 mutation guard: a rung hard-coding its threshold dies here —
+        the SAME data flips rungs when the config value changes."""
+        from tokenops_cost_auditor.config import Settings
+
+        for i in range(3):
+            seed_customer(app, f"u{i}@x.com", verdict="applied")
+        tiny = Settings(
+            app_env="test",
+            secret_key=SECRET,
+            database_url="sqlite://",
+            flywheel_l1_min_customers=3,
+            flywheel_l2_min_customers=3,
+            flywheel_l3_min_customers=3,
+            flywheel_l3_min_history_months=0,
+            _env_file=None,
+        )
+        with app.state.session_factory() as session:
+            default = cohort.status(session, app.state.settings)
+            custom = cohort.status(session, tiny)
+        assert not any(r.live for r in default.rungs)  # 3 < 10/25/50
+        assert all(r.live for r in custom.rungs)  # same data, config decides
+
+    def test_11_l2_boundary_is_exact(self, app: FastAPI) -> None:
+        """vv f.4 / PLAN-FLYWHEEL AC: 24 labeled ≠ 25 labeled."""
+        for i in range(24):
+            seed_customer(app, f"u{i}@x.com", verdict="applied")
+        with app.state.session_factory() as session:
+            s24 = cohort.status(session, app.state.settings)
+        assert not s24.rungs[1].live and "needs 1 more" in s24.rungs[1].note
+        seed_customer(app, "u24@x.com", verdict="dismissed")  # any L0 verdict labels
+        with app.state.session_factory() as session:
+            s25 = cohort.status(session, app.state.settings)
+        assert s25.rungs[1].live
+
+    def test_12_founder_surfaces_actually_render(self, app: FastAPI) -> None:
+        """vv f.6: the digest line and admin row are shipped surfaces, not
+        just a formatting function — render both for real."""
+        import sys
+        from pathlib import Path as P
+
+        sys.path.insert(0, str(P("scripts").resolve()))
+        seed_customer(app, "a@x.com")
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("daily_digest", P("scripts/daily_digest.py"))
+        assert spec is not None and spec.loader is not None
+        digest_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(digest_mod)
+        with app.state.session_factory() as session:
+            body = digest_mod.build_digest(session, app.state.settings)
+        assert "Flywheel: 1 audited / 0 labeled" in body
+        # admin row: token-gate the fixture app, then fetch the panel
+        from fastapi.testclient import TestClient
+
+        app.state.settings.admin_token = "test-admin-token"
+        page = TestClient(app).get("/admin", headers={"X-Admin-Token": "test-admin-token"})
+        assert page.status_code == 200
+        assert "Flywheel: 1 audited" in page.text

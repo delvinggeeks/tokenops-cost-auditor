@@ -56,10 +56,13 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
             f"<td>{'purged' if a.purged_at else '-'}</td></tr>"
             for a, email in audits
         )
-    with _session(request) as session:
-        from tokenops_cost_auditor.services.flywheel import cohort
+    try:
+        with _session(request) as session:
+            from tokenops_cost_auditor.services.flywheel import cohort
 
-        flywheel_line = cohort.status(session, request.app.state.settings).digest_line()
+            flywheel_line = cohort.status(session, request.app.state.settings).digest_line()
+    except Exception:  # cold-review f.2: a flywheel bug must never 500 the
+        flywheel_line = "Flywheel: unavailable (check logs)"  # founder's ops panel
     return HTMLResponse(
         "<h1>TokenOps Cost Auditor — admin</h1>"
         f"<p>{flywheel_line}</p>"

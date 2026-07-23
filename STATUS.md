@@ -35,6 +35,23 @@ findings in this slice") + two-audit journey pin → final re-gate PASS
 Role ledger to date: 6 sweeps, 8 findings, 7 real fixes test-pinned,
 1 lawful R-Q9 decline, 0 found by the founder.
 
+### M-FLY-0 gate round (2026-07-23) — three gates, no FAIL, all notes actioned
+
+vv PASS-WITH-NOTES → f.3 config-mutation guard added (same data, custom
+thresholds flip rungs — a hard-coded 10 now dies in test), f.4 L2 24/25
+boundary pinned, f.6 both founder surfaces rendered for real (digest via
+build_digest, admin fetched through its token gate). spec-guard
+PASS-WITH-NOTES → f.1 accepted-as-designed: frame enforcement is
+schema/type-level; runtime enum values are enforced upstream at
+FindingRow constraints (recorded); f.8 traceability citation made
+precise. cold-reviewer PASS-WITH-NOTES → f.1 FIXED: cross-RUN determinism
+(input findings sorted on a total key incl. finding_id/id before mapping;
+stable export sort preserves it — same-audit twins no longer ride DB scan
+order), f.2 FIXED: a flywheel exception can never 500 the admin panel
+("Flywheel: unavailable" fallback), f.3 FIXED: L3 note reads "needs 6mo
+history", f.4 FIXED: unknown row_count/observed_days pass through as
+None, never fake zeros (schema types widened; allowlist unchanged).
+
 ## M-FLY-0 (2026-07-23) — the flywheel's data spine: training frame (A1) + cohort ledger (A2)
 
 First flywheel milestone, built the day its blocker lifted. A1:

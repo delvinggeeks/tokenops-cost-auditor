@@ -93,8 +93,8 @@ class TrainingRow:
     baseline_monthly_usd: float
     verdict: str | None
     savings_realized_usd: float | None
-    audit_row_count: int
-    audit_observed_days: int
+    audit_row_count: int | None
+    audit_observed_days: int | None
     audit_when: str
 
 
@@ -120,9 +120,15 @@ def extract(session: Session, secret_key: str) -> list[TrainingRow]:
         ).scalars()
     }
     rows: list[TrainingRow] = []
-    for fr in (
-        session.execute(select(FindingRow).where(FindingRow.audit_id.in_(audits))).scalars().all()
-    ):
+    # Deterministic SOURCE order (cold-review f.1): two findings in one audit
+    # can share detector/route/severity, so the exported key alone cannot
+    # break the tie — DB scan order would decide, varying across runs. Sort
+    # the inputs on a total key; the stable sort below then preserves it.
+    source = sorted(
+        session.execute(select(FindingRow).where(FindingRow.audit_id.in_(audits))).scalars(),
+        key=lambda fr: (fr.audit_id, fr.finding_id, fr.id),
+    )
+    for fr in source:
         audit = audits[fr.audit_id]
         fb = verdicts.get((fr.audit_id, fr.finding_id))
         when = audit.report_ready_at or audit.created_at
@@ -142,8 +148,12 @@ def extract(session: Session, secret_key: str) -> list[TrainingRow]:
                     if fb is not None and fb.savings_realized_usd is not None
                     else None
                 ),
-                audit_row_count=int(audit.row_count or 0),
-                audit_observed_days=int(audit.observed_days or 0),
+                # None passes THROUGH (cold-review f.4): an unknown count is
+                # not a zero — downstream rungs must see the difference.
+                audit_row_count=int(audit.row_count) if audit.row_count is not None else None,
+                audit_observed_days=(
+                    int(audit.observed_days) if audit.observed_days is not None else None
+                ),
                 audit_when=f"{when:%Y-%m-%d}",
             )
         )
