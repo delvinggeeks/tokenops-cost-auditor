@@ -3,10 +3,19 @@
 This is the "notes sheet" required by founder ruling R-Q6..Q12(a): every default
 that touches money math is recorded here. Golden values in pricing_golden.csv were
 computed INDEPENDENTLY of the code under test (plain Decimal arithmetic from the
-provider rate cards — generator preserved verbatim below) and must be hand-verified
-by the founder against provider pricing pages BEFORE gate sweep G2 runs (R-Q3).
+provider rate cards — generator preserved verbatim below). AMENDED by
+R-AUTO-PRICING (founder 2026-07-23: "all prices have to be automated and no
+human gate — it has to be done by the agent strictly verifying"): the founder
+hand-verification step of R-Q3 is replaced by scripts/pricing_verify.py — a
+STRICT gate that fails the release unless every current rate row is
+corroborated exactly by an independent machine-readable source. Official
+provider price APIs (Azure Retail Prices, AWS Price List) were probed
+2026-07-23 and LAG the current model generation (zero gpt-5.x meters;
+Bedrock list still on Claude 3); the independent source of record is the
+LiteLLM feed until they catch up. First full run: 31/31 rows verified
+2026-07-23.
 
-## Azure OpenAI rows G16-G19 (WP-CLOUD-T2 C-A, added 2026-07-23) — FOUNDER-VERIFY BEFORE DEPLOY
+## Azure OpenAI rows G16-G19 (WP-CLOUD-T2 C-A, added 2026-07-23) — AGENT-VERIFIED 2026-07-23 (R-AUTO-PRICING, 31/31)
 
 DERIVATION: Azure OpenAI **Global Standard** pay-as-you-go lists the same
 per-token rates as OpenAI's own list for the mirrored models; cross-checked
@@ -31,7 +40,7 @@ gpt-5.5/5.4/5.4-mini/5.4-nano/5.3-codex with identical rates.
 - Golden values computed independently with Decimal arithmetic (same
   generator discipline as G01+).
 
-## AWS Bedrock rows G20-G23 (WP-CLOUD-T2 C-B, added 2026-07-23) — FOUNDER-VERIFY BEFORE DEPLOY
+## AWS Bedrock rows G20-G23 (WP-CLOUD-T2 C-B, added 2026-07-23) — AGENT-VERIFIED 2026-07-23 (R-AUTO-PRICING, 31/31)
 
 DERIVATION: Bedrock lists Anthropic Claude models at Anthropic's own
 per-token rates for ON-DEMAND inference (Bedrock's long-standing parity

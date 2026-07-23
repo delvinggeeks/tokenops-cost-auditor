@@ -21,7 +21,14 @@
 
 4. **Money-math discipline.** Any change to pricing/ or rules/ estimators requires a
    golden-file update in the same commit AND a spreadsheet diff referenced in the
-   commit message.
+   commit message. [Amendment R-AUTO-PRICING, founder 2026-07-23: "all prices
+   have to be automated and no human gate — it has to be done by the agent
+   strictly verifying." The founder hand-verification step is ABOLISHED;
+   scripts/pricing_verify.py is the strict gate — every current rate row must
+   be corroborated exactly by an independent machine-readable source or the
+   release fails (CI step + pre-deploy). Golden files and NOTES derivations
+   remain mandatory; last_verified now records the last successful agent
+   verification.]
 
 5. **Traceability.** docs/04-TRACEABILITY.md is updated in the same commit as any
    implemented requirement.

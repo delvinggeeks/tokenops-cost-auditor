@@ -90,7 +90,7 @@ Five gates stand between a raw log line and a number we archive:
 2. **Normalization contract** — every source normalizes to one record
    shape before pricing sees it. <!-- src: FR-02; T-ING-05..07 -->
 3. **Founder-verified golden pricing** — the rate card carries its source
-   URLs and a human-verified date; CI warns when it ages.
+   URLs and the date of the last successful strict verification run; CI warns when it ages.
    <!-- src: FR-05, NFR-15; T-PRC-01..03 -->
 4. **Detector conservative rails** — every estimator rounds against our
    own claim, pinned by golden files that a commit cannot change silently.

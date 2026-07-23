@@ -18,7 +18,7 @@
 # Seeded 2026-07-17. FOUNDER-VERIFIED BEFORE G2 per ruling R-Q3.
 
 version: "2026-07-17"
-last_verified: 2026-07-17  # NFR-15: founder-verified date; CI warns when >14 days old
+last_verified: 2026-07-23  # NFR-15: date of the last successful STRICT agent verification (R-AUTO-PRICING, scripts/pricing_verify.py); CI warns when >14 days old
 
 providers:
   anthropic:
@@ -140,10 +140,10 @@ providers:
     # (cross-checked 2026-07-23 against third-party trackers: gpt-5.4 at
     # 2.50/15.00 Global Standard matches the openai rows above).
     # source_url: https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/
-    # FOUNDER-VERIFY BEFORE DEPLOY (money law): confirm each row against the
-    # Azure pricing page for your billing region/deployment type. Regional
-    # and Data-Zone deployments price HIGHER than Global — these rows are
-    # Global Standard, stated in the report methodology.
+    # R-AUTO-PRICING (2026-07-23): rows verified by scripts/pricing_verify.py
+    # against the independent feed — strict gate in CI and pre-deploy; no
+    # human step. Regional and Data-Zone deployments price HIGHER than
+    # Global — these rows are Global Standard, stated in the methodology.
     # NOTE: the Azure connector never observes cached tokens (Azure Monitor
     # limit), so cache_read below engages only for T1 uploads of Azure logs.
     models:
@@ -182,8 +182,9 @@ providers:
     # model id (vendor-prefixed; region prefixes and -vN:M suffixes are
     # stripped by the adapter).
     # source_url: https://aws.amazon.com/bedrock/pricing/
-    # FOUNDER-VERIFY BEFORE DEPLOY (money law): confirm each row against the
-    # Bedrock pricing page for on-demand in your region. Batch and
+    # R-AUTO-PRICING (2026-07-23): rows verified by scripts/pricing_verify.py
+    # against the independent feed — strict gate in CI and pre-deploy; no
+    # human step. Batch and
     # provisioned-throughput pricing differ and are NOT modeled — stated in
     # the report methodology. Non-Anthropic Bedrock models (Nova, Llama,
     # Mistral…) are deliberately NOT priced: unpriced_models, never guessed

@@ -28,7 +28,7 @@ manual fallback.
 1 provision VPS, hardened: ufw allow 22/80/443, fail2ban, non-root user,
 SSH keys only. 2 install docker+compose plugin. 3 git clone repo;
 `cp .env.example .env` fill secrets. 4 `docker compose up -d --build`.
-5 `docker compose exec app alembic upgrade head`. 6 smoke: /healthz 200,
+4b pre-deploy STRICT pricing verification (R-AUTO-PRICING): `uv run python scripts/pricing_verify.py --stamp` must exit 0 — a mismatch or uncovered row blocks the deploy, no override. 5 `docker compose exec app alembic upgrade head`. 6 smoke: /healthz 200,
 landing loads, magic-link email arrives, sample audit (F1 fixture) end to
 end. 7 record deploy in CHANGELOG.
 Rollback: `git checkout <prev-tag> && docker compose up -d --build`;

@@ -15,6 +15,36 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-AUTO-PRICING (2026-07-23) — the human pricing gate is ABOLISHED; the agent verifies strictly
+
+Founder ruling (verbatim in substance): "all prices have to be automated
+and no human gate — it has to be done by the agent strictly verifying."
+Amends the founder's own R-Q3 hand-verification step; recorded in
+CLAUDE.md rule 4, docs/00-PRD Amendments, and auto-memory. Built the same
+hour: scripts/pricing_verify.py — a STRICT release gate (no advisory
+mode): every (provider, model) row effective TODAY in the merged table
+must be corroborated EXACTLY per-1M by an independent machine-readable
+source or the run exits 1. Source ladder recorded honestly: the OFFICIAL
+price APIs were probed live and LAG the current model generation (Azure
+Retail Prices: zero gpt-5.x meters across 7,573 Azure OpenAI + 1,431
+Foundry eastus meters; AWS Bedrock price list published 2026-07-23 still
+carries only Claude 3) — so the corroborating source of record is the
+LiteLLM feed (independent of this repo; already the R-LIVE-PRICING sync
+source), with dated/versioned key fallbacks (azure/<model>;
+anthropic.<model>-YYYYMMDD-vN:M). cache_write compared only when BOTH
+sides publish it — a structural default is not a provider number. FIRST
+RUN: 31/31 rows verified, including azure G16-G19 and bedrock G20-G23 —
+the two sections previously awaiting founder eyes are now agent-verified
+and v1.7.0 is unblocked. Wiring: CI step (fails the build), runbook §2
+step 4b (pre-deploy, --stamp), last_verified semantics = last successful
+agent verification (NFR-15 freshness now measures the machine). Copy
+sweep: every "human-verified" claim (report docstring + _report_body,
+help_registry ×4, docs-site ×3, PRD) reworded to "machine-verified
+against independent published price data" — the product may not claim a
+human it no longer has. Two brittle date pins made dynamic
+(test_report_web trep08, test_runner TREP08). 7 verifier tests, full
+chain green.
+
 ## WP-CLOUD-T2 C-B (2026-07-23) — AWS Bedrock connector built + gated; DEPLOY BLOCKED with C-A on founder golden verification
 
 Slice C-B end to end (R-VERTICAL). connectors/bedrock_usage.py reads the

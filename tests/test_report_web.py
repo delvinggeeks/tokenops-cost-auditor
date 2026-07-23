@@ -74,7 +74,7 @@ class TestTREP04Methodology:
     def test_trep08_pricing_provenance_in_pdf_html(self, waste_report: ReportModel) -> None:
         html = render_report_html(waste_report, template="pdf/report.html")
         assert waste_report.pricing_version in html  # FR-28
-        assert "human-verified 2026-07-17" in html
+        assert f"machine-verified {waste_report.pricing_last_verified}" in html
         assert "0 unpriced models" in html
 
 

@@ -10,7 +10,7 @@ of each waste class, and tests assert the engine reports each finding at an
 exact, hand-derived dollar figure — down to the sixth decimal
 ($0.246784/month for the cache golden). The derivations were computed
 independently of the engine (spreadsheet arithmetic first, engine second) and
-human-verified against provider rate pages; they live in the repository next
+machine-verified against independent published price data on every release; they live in the repository next
 to the fixtures. <!-- src: pricing_golden_NOTES.md; tests/test_rules.py -->
 
 This independence matters: during development, the independent derivation

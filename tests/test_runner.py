@@ -189,7 +189,9 @@ class TestTREP08PricingProvenance:
         report = ReportModel.build("a2", priced, [], unpriced, TABLE)
         payload = json.loads(render_json(report, tmp_path / "r.json").read_text())
         assert payload["pricing"]["version"] == TABLE.version  # FR-28
-        assert payload["pricing"]["last_verified"] == "2026-07-17"
+        # dynamic: last_verified is restamped by every green pricing_verify
+        # run (R-AUTO-PRICING) — the pin is table-consistency, not a date
+        assert payload["pricing"]["last_verified"] == TABLE.last_verified.isoformat()
         assert payload["pricing"]["unpriced_model_count"] == 0
         # unknown model shows up in the list, audit continues
         weird = frame.copy()

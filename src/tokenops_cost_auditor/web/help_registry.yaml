@@ -72,7 +72,7 @@ widgets:
     title: "Spend trend"
     tells: "What you are paying now versus the last 30 days."
     what: "Daily API spend across every connected source."
-    where: "Priced from your provider's reported token counts at our human-verified rate card, not from your invoice."
+    where: "Priced from your provider's reported token counts at our independently verified rate card — machine-checked against published price data on every release — not from your invoice."
     do: "A step change usually means a deploy — compare it against the findings from the same week."
     link_text: "Reading your spend chart"
     link: "/guide/spend-chart"
@@ -80,7 +80,7 @@ widgets:
     title: "Month-end forecast"
     tells: "Where this month's bill is heading — before the invoice, not after."
     what: "Your spend so far this month, projected to month-end at your current pace, against your usual monthly average."
-    where: "Projected from complete days this month at our human-verified rate card; the baseline is your prior 90 days. Every figure prints what it was built from."
+    where: "Projected from complete days this month at our independently verified rate card; the baseline is your prior 90 days. Every figure prints what it was built from."
     do: "If the projection runs well above your usual, that is your cue to look now — we flag it, we never block it."
     link_text: "How the forecast works"
     link: "/guide/forecast"
@@ -289,7 +289,7 @@ wizard:
     create_hint: "create the user, attach the policy, create the access key"
     step2_title: "Paste the three values here"
     step2_body: "We run one read-only metrics query against CloudWatch right away and show you exactly what we can see. Encrypted the moment they arrive, never written to a log, deleted the instant you revoke."
-    honesty_note: "One honest limit, before you connect: we price Anthropic Claude models on Bedrock at human-verified rates; other Bedrock models (Nova, Llama, Mistral…) appear as unpriced — listed, never guessed — until their rates are verified too."
+    honesty_note: "One honest limit, before you connect: we price Anthropic Claude models on Bedrock at machine-verified rates; other Bedrock models (Nova, Llama, Mistral…) appear as unpriced — listed, never guessed — until their rates are verified too."
     fields:
       - { name: access_key_id, label: "Access key ID", placeholder: "AKIA…" }
       - { name: region, label: "Region", placeholder: "us-east-1" }
@@ -304,7 +304,7 @@ guide_pages:
   how-it-works:
     title: "How TokenOps works"
     audience: "Both"
-    body: "Your usage comes in as a log file or a provider connection. We price every call against a rate card a human verified, run six deterministic detectors over it, and rank what they find by monthly dollars. You apply a fix; the next audit measures whether it worked. Nothing about that loop involves an AI judging your bill — it is arithmetic you can check."
+    body: "Your usage comes in as a log file or a provider connection. We price every call against a rate card verified against independent published price data, run six deterministic detectors over it, and rank what they find by monthly dollars. You apply a fix; the next audit measures whether it worked. Nothing about that loop involves an AI judging your bill — it is arithmetic you can check."
   first-audit:
     title: "Your first audit"
     audience: "Owner"

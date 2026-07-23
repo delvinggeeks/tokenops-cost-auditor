@@ -61,6 +61,8 @@ jobs:
         run: uv run python scripts/coverage_gate.py
       - name: pricing table age (NFR-15 — warns, never fails)
         run: uv run python scripts/pricing_age.py
+      - name: strict pricing verification (R-AUTO-PRICING — fails the build)
+        run: uv run python scripts/pricing_verify.py
 
   build:
     runs-on: ubuntu-latest

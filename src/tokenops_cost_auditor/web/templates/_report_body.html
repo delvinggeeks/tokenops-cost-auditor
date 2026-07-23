@@ -154,7 +154,7 @@
   <h2>Pricing data provenance</h2>
   <p>
     Rates from pricing table version <strong>{{ report.pricing_version }}</strong>,
-    human-verified {{ report.pricing_last_verified or "date unavailable" }}.
+    machine-verified {{ report.pricing_last_verified or "date unavailable" }}.
     Each call is priced at the rate in effect at its timestamp.
   </p>
   {% if report.unpriced_models %}

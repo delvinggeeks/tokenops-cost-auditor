@@ -114,6 +114,17 @@ under "Amendments" with date + reason.
 
 ## Amendments
 
+- **R-AUTO-PRICING (founder, 2026-07-23).** "All prices have to be automated
+  and no human gate — it has to be done by the agent strictly verifying."
+  Amends R-Q3: the founder hand-verification of pricing rows is abolished.
+  scripts/pricing_verify.py is the strict release gate (CI + pre-deploy):
+  every current rate row must be corroborated exactly, per 1M tokens, by an
+  independent machine-readable source or the release fails. Product copy
+  changed from "human-verified" to "machine-verified against independent
+  published price data" across report, help registry, and docs-site.
+  Reason: the human step's value was independence from the row author,
+  which an independent machine source preserves at zero founder cost.
+
 - 2026-07-17 R-NAMING (founder): product name "TokenOps Cost Auditor" in full across
   all dirs/files/code; spec strings updated accordingly (docs/01 FR-04 CLI name,
   docs/03 §1 tree `src/tokenops_cost_auditor/`, docs/04 coverage-rule paths,
@@ -127,7 +138,7 @@ under "Amendments" with date + reason.
 - 2026-07-17 R-PRICING-OPS (founder): NFR-15 (last_verified + CI staleness warning
   + digest age), FR-28 (report prints pricing version + unpriced models), FR-29
   (pricing_refresh.py read-only diff tooling; never writes prices.yaml). Docs-site
-  presents human-verified versioned pricing as a trust feature.
+  presents independently machine-verified versioned pricing as a trust feature (R-AUTO-PRICING, 2026-07-23: the strict agent gate replaced the human gate).
 - 2026-07-17 R-PRICING-AGENT (founder): WP-P1.5 pricing-watch pipeline recorded for
   post-launch week 3-4 (BACKLOG.md); NOT in D1-D14 scope. Hard rules: no
   auto-approval path in code; crawler has zero write access to prices.yaml;

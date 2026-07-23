@@ -124,6 +124,12 @@ class PricingTable:
                         )
                     )
 
+    def entries(self) -> tuple[tuple[str, str], ...]:
+        """Every (provider, model) the merged table prices — the iteration
+        surface for the strict verifier (R-AUTO-PRICING), so scripts never
+        reach into the private dict."""
+        return tuple(self._entries.keys())
+
     def rate(self, provider: str, model: str, on_date: date) -> Rate:
         """Latest entry with effective_from <= on_date. Model matching: exact,
         else key + dated-snapshot suffix ('-2...'), longest key wins — handles

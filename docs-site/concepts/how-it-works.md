@@ -25,7 +25,7 @@ Text fields are dropped at the door — they never reach the database
 not silently patched. <!-- src: FR-01/02; services/ingest -->
 
 **Price.** Each call is priced at the provider rate in effect at its
-timestamp, using a versioned, human-verified four-rate table (input, output,
+timestamp, using a versioned four-rate table (input, output,
 cache write, cache read). Models without a verified rate card are listed as
 unpriced and excluded from totals rather than guessed
 (see [Pricing data](pricing-data.md)). <!-- src: FR-05; R-Q4 four rates -->
