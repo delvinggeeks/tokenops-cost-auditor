@@ -281,6 +281,12 @@ The loop, with the tool that owns each step:
 Log rotation audit (2026-07-23): containers cap at 5 x 50MB json-file
 (compose logging options) — adequate; no daemon.json needed.
 
+FIRST-RUN NOTE: auto-rollback needs a PRIOR RELEASE_TAG in the host .env;
+when none exists the rollback step SKIPS (logged, not silent) and §2's
+manual redeploy of the previous tag is the fallback. (Prod was hand-stamped
+RELEASE_TAG=v1.7.0 on 2026-07-23, so the pipeline's first real run has a
+target.)
+
 ACTIVATION CHECKLIST (founder-lane, one-time):
 - [ ] Create the private GitHub repository and push (commands in STATUS —
       the agent is permission-blocked from publishing repos itself)

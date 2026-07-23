@@ -26,19 +26,39 @@ _SCRUBBED_REQUEST_KEYS = ("data", "cookies", "headers", "query_string", "env")
 
 
 def _scrub(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:
-    """before_send: counts-and-stacks only (FR-22). Never customer content."""
+    """before_send: counts-and-stacks only (FR-22). Never customer content.
+
+    Defense in depth alongside include_local_variables=False (cold-review
+    f.1: frame locals ship by default and send_default_pii does NOT govern
+    them) — even if a future SDK default drifts, frame vars, extra and
+    contexts are stripped here before anything leaves the box."""
     request = event.get("request")
     if isinstance(request, dict):
         for key in _SCRUBBED_REQUEST_KEYS:
             request.pop(key, None)
+    exception = event.get("exception")
+    if isinstance(exception, dict):
+        for value in exception.get("values") or []:
+            if not isinstance(value, dict):
+                continue
+            frames = (value.get("stacktrace") or {}).get("frames") or []
+            for frame in frames:
+                if isinstance(frame, dict):
+                    frame.pop("vars", None)
     # breadcrumbs replay log lines, which may carry emails/labels — drop whole
     event.pop("breadcrumbs", None)
     event.pop("user", None)
+    event.pop("extra", None)
+    event.pop("contexts", None)
     return event
 
 
 def init_errors(sentry_dsn: str, app_env: str, release: str = "") -> None:
     global _sentry_enabled
+    # unconditional reset FIRST (cold-review f.2): a re-init WITHOUT a DSN
+    # must disarm reporting — the zero-egress promise cannot depend on
+    # process history.
+    _sentry_enabled = False
     if not sentry_dsn:
         return
     try:
@@ -49,6 +69,10 @@ def init_errors(sentry_dsn: str, app_env: str, release: str = "") -> None:
             environment=app_env,
             release=release or None,
             send_default_pii=False,
+            # frame locals ship by DEFAULT and are NOT governed by
+            # send_default_pii — a connector parse error would carry the raw
+            # provider response verbatim (cold-review f.1, FR-22 hard rule)
+            include_local_variables=False,
             # the SDK types events as its own TypedDict; the scrubber is
             # deliberately plain-dict so tests need no sdk installed
             before_send=cast("Any", _scrub),
