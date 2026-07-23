@@ -403,3 +403,19 @@ class TestBenchmarks:
         with app.state.session_factory() as session:
             w = metrics.benchmark(session, app.state.settings, ids[4])
         assert set(w.data) == {"percentile", "label", "leaner_than", "n"}
+
+    def test_22_opted_out_requester_cannot_self_inject_a_rank(self, app: FastAPI) -> None:
+        """cold re-gate f.1: own_value must not override the customer's own
+        exclusion — opting out means no rank, even on your own fresh audit."""
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, self.GOLDEN)
+        with app.state.session_factory() as session:
+            user = session.get(User, ids[0])
+            assert user is not None
+            user.benchmark_sharing = False
+            session.commit()
+        with app.state.session_factory() as session:
+            b = bench.waste_percentile(session, app.state.settings, ids[0], own_value=2.0)
+        assert not b.live and b.percentile is None
+        assert b.n == 11  # and their value stays out of everyone else's pool

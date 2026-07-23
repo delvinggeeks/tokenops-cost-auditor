@@ -47,13 +47,16 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
-def _cohort(session: Session) -> dict[str, float]:
+def _included(session: Session) -> set[str]:
+    return {
+        u.id for u in session.execute(select(User)).scalars() if u.benchmark_sharing is not False
+    }
+
+
+def _cohort(session: Session, included: set[str]) -> dict[str, float]:
     """Latest done audit's savings_pct per INCLUDED customer. Deterministic:
     candidates sort on (when, id) and later entries overwrite — identical
     timestamps resolve by id, never by DB return order (cold f.2)."""
-    included = {
-        u.id for u in session.execute(select(User)).scalars() if u.benchmark_sharing is not False
-    }
     candidates = [
         a
         for a in session.execute(select(Audit).where(Audit.status == "done")).scalars()
@@ -74,10 +77,9 @@ def waste_percentile(
     reporting an in-flight audit pass own_value (the audit's own
     savings_pct) explicitly; it is authoritative over any stale DB row, so
     neither flush timing nor finalization order can change a rank."""
-    cohort = _cohort(session)
-    if own_value is not None and user_id in {
-        u.id for u in session.execute(select(User)).scalars() if u.benchmark_sharing is not False
-    }:
+    included = _included(session)  # ONE scan (cold re-gate c): cohort + guard share it
+    cohort = _cohort(session, included)
+    if own_value is not None and user_id in included:
         cohort[user_id] = float(own_value)
     mine = cohort.get(user_id)
     if mine is None:
