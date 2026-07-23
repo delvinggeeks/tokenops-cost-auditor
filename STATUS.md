@@ -15,6 +15,26 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-ICON-ACTIONS + R-PIPELINE-LIVE (2026-07-23) — same-branch follow-up orders, both shipped + gated
+
+Two founder orders after the M-EXPLORER gate round, on wp-report-explorer:
+(1) R-ICON-ACTIONS — Sources rows compacted to an icon action cluster
+(view/details/revoke) via new kit citizen `icon_action` (label REQUIRED →
+aria-label+title; icon-only never unnamed), i-eye/i-trash sprite symbols,
+.icon-btn role-token styles, danger-warms-on-hover; ux gate
+PASS-WITH-NOTES, note actioned (F10 mobile 44px tap targets extended to
+.icon-btn). (2) R-PIPELINE-LIVE — the W0 ribbon keyed states on widget
+EMPTINESS (founder saw "Waiting" on Analyze beside 11 findings; root
+cause: an unpriced audit empties spend_trend). Now metrics.pipeline()
+computes states from the audit RECORD: idle = what ran (+clarity
+"pricing pending"), in-flight = `live` A6 pulse ("Queued to run"/"Reading
+your data"/"N calls read") with htmx self-poll every 2.5s that drops on
+landing (idle dashboard = zero polls); clean audits report "0 findings —
+clean" (ux f.1), previous report stays visible marked "refreshing". ux
+gate PASS-WITH-NOTES, f.1 actioned. Tests: TestIconActions,
+TestPipelineLive (5). Commits 1bf1b0b, bcaf367; full chain
+lint+format+type+suite exit-0 on each.
+
 ## M-EXPLORER (2026-07-23) — FR-32 report explorer + R-MULTI-SOURCE, branch wp-report-explorer
 
 Founder same-day orders: (1) R-EXPLORER — "client selects reports over all
