@@ -522,3 +522,24 @@ class TestConsoleLinks:
             assert 'href="/upload"' in page, f"{prov}: no upload fallback offered"
         anthropic = help_registry.wizard("anthropic")["missing_note"]
         assert "ORGANIZATIONS" in anthropic and "Settings → Organization" in anthropic
+
+    def test_every_account_shape_has_a_routed_path(self, app: FastAPI) -> None:
+        """Founder question 2026-07-23 ('lot of combinations — how to
+        handle?'): the account-shape matrix is a PRODUCT surface, not chat
+        lore. The guide page exists, covers every shape, and every wizard
+        routes to it."""
+        import re as _re
+
+        from tokenops_cost_auditor.web import help as help_registry
+
+        page = help_registry.guide_page("account-paths")
+        body = page["body"]
+        for shape in ("individual", "Owner", "Admin", "Claude Code", "Bedrock", "upload"):
+            assert shape in body, f"matrix missing the {shape} shape"
+        assert "theirs, not ours" in body  # the constraint is honestly attributed
+        client = TestClient(app)
+        rendered = client.get("/guide/account-paths", headers=HDR)
+        assert rendered.status_code == 200
+        for prov in help_registry.wizard_providers():
+            wiz = _re.sub(r"\s+", " ", client.get(f"/sources/connect/{prov}", headers=HDR).text)
+            assert 'href="/guide/account-paths"' in wiz
