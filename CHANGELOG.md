@@ -5,6 +5,22 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.7.0 · CLOUD CONNECTORS + THE AGENT PRICING GATE.
+  Azure OpenAI connects via a Monitoring-Reader service principal (read-
+  only by Azure RBAC; cache counts honestly "not observable on Azure" —
+  d2 never runs on fabricated zeros). AWS Bedrock connects via a
+  CloudWatch read-only IAM key (stdlib SigV4; cache counts EXPOSED, d2
+  runs; ModelIds normalized; Nova/Llama/Mistral unpriced, never guessed).
+  Wizard fields registry-driven; every provider's honesty note in the
+  main column before the CTA. R-AUTO-PRICING (founder): the human pricing
+  gate is ABOLISHED — scripts/pricing_verify.py strictly corroborates
+  every current rate row against independent published price data or the
+  release fails (CI + pre-deploy step 4b); all "human-verified" copy
+  reworded to machine-verified. Gate rounds: C-A five gates, C-B five
+  gates, R-AUTO-PRICING four gates (one spec FAIL fixed same-hour); all
+  cold/system-tester findings fixed + pinned. Verifier: 31/31 rows.
+  SMOKE: (appended after deploy)
+
 - 2026-07-23 · v1.6.9 · WP-PIPELINE-UI RUNS OBSERVATORY (queue card 2,
   FR-31 closed). /runs lists every audit ever run: trigger, status,
   duration from StageEvents recorded at run time (never estimated),
