@@ -1,9 +1,35 @@
 # Quickstart
 
-Two ways in. Fastest: connect your provider account — about two minutes,
-and the platform does everything else. Prefer a one-off? Upload a log file.
+Three ways in. Instrument your code with the SDK (one call, then automatic);
+connect your provider account (about two minutes, the platform does the
+rest); or upload a log file for a one-off.
 
-## Fastest: connect your account
+## Instrument your code: the SDK
+
+For a per-call view — fuller than the provider connectors give, because it
+sees every request — drop the SDK into your app.
+
+1. **Sources → SDK & API → Mint an ingest key.** Copy the DSN it shows once:
+   `TOKENOPS_COST_AUDITOR_DSN=https://ik_…@tokenops-cost-auditor.com`. Put it
+   in your environment.
+2. **One call, then it's automatic:**
+
+   ```python
+   import tokenops_cost_auditor.sdk as toca
+   toca.init()   # reads TOKENOPS_COST_AUDITOR_DSN from the environment
+   ```
+
+   Every OpenAI and Anthropic call your process makes is now counted and
+   sent to your account, where it runs through the full six-detector audit.
+
+**What it reads, and what it never touches.** The SDK reads token counts,
+the model name, and timing off each response — nothing else. Your prompts
+and completions are never read, never serialized, never sent (proven in the
+SDK's own test suite). It is observe-only: it never sits in your request
+path and never alters, slows, or breaks a call. No DSN set = the SDK is
+inert. <!-- src: R-SDK-PLATFORM S-1; FR-22; X-01 -->
+
+## Or connect your provider account — about two minutes
 
 1. [Start free](https://tokenops-cost-auditor.com/signup) — email or Google/Microsoft/
    GitHub sign-in; your first audit is on us, no card.

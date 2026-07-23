@@ -71,7 +71,7 @@ territory.
    C-C Gemini/Vertex next →
 1a. **R-SDK-PLATFORM (PLAN-SDK)** — S-0 ingest DSN SHIPPED+GATED
    2026-07-23 (five gates closed incl. security verify + proxy-headers
-   prod fix). NEXT: S-1 Python SDK → S-6 API platform (read tokens +
+   prod fix). S-1 Python SDK SHIPPED+GATING 2026-07-23. NEXT: S-6 API platform (read tokens +
    OAuth apps + developer settings, "proceed with both"); then S-2 OTLP /
    S-3 MCP / S-5 integrations →
 1a2. **R-ORG (PLAN-ORG)** — X-03 RELAXED (bounded, product-governance

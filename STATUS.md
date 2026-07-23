@@ -35,6 +35,30 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-1 (2026-07-23) — the Python SDK: one call, usage flows, counts-only BY CONSTRUCTION
+
+Built end to end (R-VERTICAL). `import tokenops_cost_auditor.sdk as toca;
+toca.init()` reads TOKENOPS_COST_AUDITOR_DSN and auto-instruments the
+OpenAI + Anthropic client libs. THREE load-bearing guarantees, each
+test-pinned: (1) FR-22 BY CONSTRUCTION — sdk/extract reads only
+usage/model/timing off the response, never choices/content; a record
+built from a response whose text fields are POPULATED contains no text
+(test asserts "SECRET" not in str(record)); only allowlisted contract
+fields emitted. (2) X-01 OBSERVE-ONLY — the instrument wrapper runs the
+REAL provider call first and returns it UNMODIFIED; recording is
+best-effort in a try/except so a broken recorder (or our whole SDK)
+never breaks, slows, or alters the customer's call (test: a raising
+recorder still returns the real result); the batcher's record() never
+blocks (bounded deque, drops-counted under backpressure) and never
+raises; ship failures are swallowed — no retry-storm. (3) anthropic cache
+composition mirrors anthropic_usage (input + cache_read + cache_creation).
+Transport is stdlib urllib (zero new dep, SDK-only users pull nothing
+heavy), FR-26 idempotency key per batch, atexit flush for short scripts.
+Reveal now shows the Python snippet + the any-language curl; quickstart
+gains an SDK section. e2e test: SDK-built records → /api/v1/ingest → done
+audit, no export step. 14 tests, full chain green. Gate round next; then
+S-6, then O-0.
+
 ## S-0 gate round (2026-07-23) — spec PASS · vv PARTIAL-clean · system-tester PASS · cold FAIL→fixed→PASS-WITH-NOTES→hardened
 
 spec PASS 7/7. system-tester PASS zero product findings (full journey +

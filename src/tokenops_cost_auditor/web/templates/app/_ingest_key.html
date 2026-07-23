@@ -13,6 +13,13 @@
             data-dsn="{{ dsn }}">Copy DSN</button>
     <span class="muted" style="font-size:13px">Send usage with one POST:</span>
   </p>
+  <p style="margin:var(--s2) 0 0"><strong>Python — one call, then it's automatic:</strong></p>
+  <pre style="overflow-x:auto; font-size:12.5px"><code>import tokenops_cost_auditor.sdk as toca
+toca.init()   # reads the DSN above from your environment
+
+# every OpenAI &amp; Anthropic call is now counted — token counts only,
+# never your prompts; observe-only, never in your request path.</code></pre>
+  <p style="margin:var(--s2) 0 0"><strong>…or any language, one POST:</strong></p>
   <pre style="overflow-x:auto; font-size:12.5px"><code>curl -X POST {{ host }}/api/v1/ingest \
   -H "Authorization: Bearer {{ token }}" \
   -H "Idempotency-Key: my-batch-id" \
