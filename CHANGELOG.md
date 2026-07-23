@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.6 · ACCOUNT-SHAPES GUIDE (founder: "lot of
+  combinations — how to handle?"). /guide/account-paths routes every
+  account shape to its path: OpenAI Owner vs member, Anthropic individual
+  (create the org, a minute) vs non-admin, claude.ai Pro/Max + Claude
+  Code (exporter path, API-equivalent labeling), chat-only (nothing to
+  read — said plainly), cloud providers (queued; upload today), and the
+  universal zero-key upload tier. Provider constraint honestly attributed
+  ("theirs, not ours"); both wizards route to it; reachability law covers
+  the page via the guide index. SMOKE PASS: HTTPS healthz ok.
+
 - 2026-07-23 · v1.6.5 · THE ORG-ONLY WALL (founder report: "only api keys
   present no admin keys with claude"). Per Anthropic's docs, Admin keys —
   and the usage/cost reports the connector reads — exist only for Console
