@@ -99,7 +99,7 @@
 
 {# Honesty block: every caveat that applies to THIS slice, in words. #}
 {% if view.connected_in_view or view.overlap_buckets or view.unpriced_calls or view.equiv_any
-      or (f.source_id and view.unattributed_connected) %}
+      or (f.source_id and view.unattributed_connected) or view.no_breakdown_in_view %}
 <p class="muted">
   {% if view.connected_in_view %}Some of this usage came from connected provider
     accounts: three detectors need per-request logs and could not run on those
@@ -114,6 +114,10 @@
     recent audit’s numbers. {% endif %}
   {% if view.unpriced_calls %}{{ "{:,}".format(view.unpriced_calls) }} calls in this
     slice are not yet on our verified rate card — they are counted, not priced. {% endif %}
+  {% if view.no_breakdown_in_view %}{{ view.no_breakdown_in_view }}
+    audit{{ "s" if view.no_breakdown_in_view != 1 }} in this view
+    {{ "have" if view.no_breakdown_in_view != 1 else "has" }} no per-day usage
+    breakdown — findings are included, spend totals are unaffected. {% endif %}
   {% if view.equiv_any %}{{ equiv_line }}{% endif %}
 </p>
 {% endif %}

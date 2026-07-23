@@ -156,3 +156,19 @@ class TestNoStaleDashboard:
             session.commit()
         running = client.get("/dashboard/w/pipeline?live=1", headers=HDR)
         assert "HX-Trigger" not in running.headers
+
+
+class TestCrossSurfaceConsistency:
+    def test_explorer_never_contradicts_the_dashboard(self, app: FastAPI) -> None:
+        """system-tester f.1 (first sweep, 2026-07-23): the seed writes NO
+        aggregate rows, and the explorer showed 'No history to explore yet'
+        while the dashboard beside it claimed the findings. Two surfaces may
+        never disagree about whether history exists."""
+        seed(app)
+        client = TestClient(app)
+        dash = client.get("/dashboard", headers=HDR).text
+        assert "1 findings" in dash  # the dashboard's claim...
+        exp = client.get("/explore", headers=HDR).text
+        assert "No history to explore yet" not in exp
+        assert "Findings in this slice — 1" in exp  # ...is the explorer's claim
+        assert "no per-day usage" in re.sub(r"\s+", " ", exp)  # honesty about missing data

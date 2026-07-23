@@ -133,6 +133,10 @@ class ExplorerView:
     # R-MULTI-SOURCE: connected audits from before attribution shipped that a
     # per-account view necessarily excludes — stated on the page, never silent.
     unattributed_connected: int = 0
+    # R-SYSTEM-TEST gate f.1: audits with findings but no per-day aggregate
+    # rows are IN view (their findings are real and the dashboard counts
+    # them); they contribute no spend/day data, which the page states.
+    no_breakdown_in_view: int = 0
     by_model: list[ModelRow] = field(default_factory=list)
     by_period: list[PeriodRow] = field(default_factory=list)
     findings: list[dict[str, object]] = field(default_factory=list)
@@ -241,12 +245,13 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
     ranked = sorted(audits, key=lambda a: (_audit_when(a), a.id), reverse=True)
     rank = {a.id: i for i, a in enumerate(ranked)}
 
-    aggs = (
+    aggs = list(
         session.execute(select(CallAggregate).where(CallAggregate.audit_id.in_(by_id)))
         .scalars()
         .all()
     )
     view.model_options = sorted({r.model for r in aggs})
+    covered_ids = {r.audit_id for r in aggs}
 
     if f.date_from:
         aggs = [r for r in aggs if _day(r) >= f.date_from]
@@ -300,6 +305,23 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
         p = periods.setdefault(pkey, PeriodRow(period=pkey))
         p.calls += r.calls
         p.cost_usd += float(r.cost_usd or 0.0)
+
+    # R-SYSTEM-TEST gate f.1 (first system-tester run, 2026-07-23): an audit
+    # with findings but NO aggregate rows must not vanish — the dashboard
+    # counts its findings, and a surface that contradicts another surface is
+    # a FAIL by the sweep's law. A model slice is the one filter only
+    # aggregate rows can answer, so bare audits stay out of model views.
+    if not f.model:
+        for a in audits:
+            if a.id in covered_ids:
+                continue
+            when = _audit_when(a).date()
+            if f.date_from and when < f.date_from:
+                continue
+            if f.date_to and when > f.date_to:
+                continue
+            in_view_ids.add(a.id)
+            view.no_breakdown_in_view += 1
 
     view.days_covered = len(days)
     view.by_model = sorted(models.values(), key=lambda m: (-m.cost_usd, m.model))

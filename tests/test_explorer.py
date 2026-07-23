@@ -457,3 +457,32 @@ class TestColdReviewRegressions:
         assert compose_for(app, source=sid).unattributed_connected == 1
         may_only = compose_for(app, source=sid, **{"from": "2026-05-01", "to": "2026-05-31"})
         assert may_only.unattributed_connected == 0
+
+
+class TestBareAudits:
+    """system-tester f.1: audits with findings but no aggregate rows."""
+
+    def test_20_bare_audit_findings_are_never_silently_dropped(self, app: FastAPI) -> None:
+        seed_audit(
+            app,
+            when=D1,
+            buckets=[],
+            findings=[("D2-001", "d2_missing_cache", "claude-sonnet-5", "high", 90.0)],
+        )
+        view = compose_for(app)
+        assert view.audits_in_view == 1
+        assert view.findings_total == 1
+        assert view.no_breakdown_in_view == 1
+        assert view.spend_usd == 0.0  # no invented money
+
+    def test_21_bare_audit_respects_date_window_and_model_slice(self, app: FastAPI) -> None:
+        seed_audit(
+            app,
+            when=D1,  # 2026-03-10
+            buckets=[],
+            findings=[("D2-001", "d2_missing_cache", "claude-sonnet-5", "high", 90.0)],
+        )
+        # outside the window -> honestly excluded
+        assert compose_for(app, **{"from": "2026-05-01"}).audits_in_view == 0
+        # a model slice can only be answered by aggregate rows -> excluded
+        assert compose_for(app, model="gpt-4o-mini").audits_in_view == 0
