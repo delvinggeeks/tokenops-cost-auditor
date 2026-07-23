@@ -188,6 +188,60 @@ class TestFetch:
         assert not verdict.can_save
 
 
+class TestChunkAndPagination:
+    def test_04b_chunk_boundary_and_next_token_accumulate_once(self) -> None:
+        """cold-review f.3: 101 models x 5 metrics = 505 queries forces the
+        500-query chunk split, and every GetMetricData page is served in two
+        halves via NextToken — each count must land EXACTLY once."""
+        models = [f"vendor.model-{i:03d}-v1:0" for i in range(101)]
+
+        class PagingCloudWatch:
+            def __init__(self) -> None:
+                self.get_metric_calls = 0
+
+            def post(self, url: str, *, content: bytes, headers: dict[str, str]) -> FakeResp:
+                target = headers["X-Amz-Target"]
+                payload = json.loads(content)
+                if target.endswith("ListMetrics"):
+                    return FakeResp(
+                        {
+                            "Metrics": [
+                                {"Dimensions": [{"Name": "ModelId", "Value": m}]} for m in models
+                            ]
+                        }
+                    )
+                assert target.endswith("GetMetricData")
+                self.get_metric_calls += 1
+                queries = payload["MetricDataQueries"]
+                assert len(queries) <= 500  # the chunk contract itself
+                continuation = "NextToken" in payload
+                results = []
+                for i, q in enumerate(queries):
+                    # first page serves even-index queries, the NextToken
+                    # continuation serves the odd — together exactly once
+                    if (i % 2 == 0) != continuation:
+                        results.append({"Id": q["Id"], "Timestamps": [DAY1], "Values": [10.0]})
+                out: dict[str, Any] = {"MetricDataResults": results}
+                if not continuation:
+                    out["NextToken"] = "page-2"
+                return FakeResp(out)
+
+        http = PagingCloudWatch()
+        buckets, _pages = bedrock_usage.fetch_usage(
+            CRED_BLOB, date(2026, 7, 20), date(2026, 7, 20), http
+        )
+        assert http.get_metric_calls == 4  # 2 chunks x 2 pages
+        assert len(buckets) == 101
+        for b in buckets:
+            # 10 per metric, once: prompt = input + cache_read + cache_write
+            assert (b["calls"], b["prompt_tokens"], b["completion_tokens"], b["cached_tokens"]) == (
+                10,
+                30,
+                10,
+                10,
+            )
+
+
 class TestRegistryPull:
     def test_06_run_pull_upserts_bedrock_buckets(
         self, session: Session, bare_settings: Settings

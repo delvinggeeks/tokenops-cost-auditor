@@ -19,8 +19,9 @@ Credential: three fields (access_key_id, secret_access_key, region) packed
 to canonical JSON by the wizard, encrypted whole on the existing Fernet
 path. The IAM grant is read-only (cloudwatch:GetMetricData + ListMetrics)
 — enforced by AWS IAM, not by our promise. Requests are SigV4-signed with
-stdlib hmac/hashlib; the secret's plaintext lifetime is one signing pass
-and it is never logged (T-KEY-03 law).
+stdlib hmac/hashlib; the decrypted secret is held in memory only for the
+pull's duration and is never logged (T-KEY-03 law; cold-review f.1 made
+this claim honest — it signs every page of the pull, not one pass).
 
 ModelId normalization: region-routing prefixes (us./eu./apac./global.),
 ARN tails, and trailing -vN:M version suffixes are stripped, so
@@ -55,6 +56,15 @@ METRIC_FIELDS = {
 }
 _REQUIRED_FIELDS = ("access_key_id", "secret_access_key", "region")
 _REGION_RE = re.compile(r"^[a-z]{2}(-[a-z]+)+-\d$")
+
+
+def is_valid_region(region: str) -> bool:
+    """Public pre-check for callers (routes) — the private regex stays
+    private (cold-review f.2: reaching past the underscore turns a future
+    rename into a 500 where a 400 belongs)."""
+    return bool(_REGION_RE.match(region))
+
+
 # credential faults vs permission gaps — AWS answers both as HTTP 4xx with a
 # typed body; the distinction drives which fix the wizard suggests.
 _BAD_CREDENTIAL_TYPES = ("InvalidClientTokenId", "SignatureDoesNotMatch", "UnrecognizedClient")

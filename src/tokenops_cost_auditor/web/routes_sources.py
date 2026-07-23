@@ -201,7 +201,7 @@ def wizard_validate(
             raise HTTPException(status_code=400, detail="all three AWS values are required")
         from tokenops_cost_auditor.services.connectors import bedrock_usage
 
-        if not bedrock_usage._REGION_RE.match(aws_fields["region"]):
+        if not bedrock_usage.is_valid_region(aws_fields["region"]):
             raise HTTPException(
                 status_code=400,
                 detail="that doesn't look like an AWS region — e.g. us-east-1",
