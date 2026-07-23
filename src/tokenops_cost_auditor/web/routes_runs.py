@@ -151,11 +151,15 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
                 rejected = _as_int(dict(ev.detail or {}).get("rejected"))
         detectors_raw = detect_detail.get("detectors")
         detector_lines: list[dict[str, object]] = []
+        findings_usd = 0.0
+        findings_n = 0
         if isinstance(detectors_raw, dict):
             per_run_impact = impact.get(a.id, {})
             for name, count in detectors_raw.items():
                 usd = per_run_impact.get(name, (0, 0.0))[1]
                 detector_lines.append({"detector": name, "count": int(count), "monthly_usd": usd})
+                findings_usd += usd
+                findings_n += int(count)
         runs.append(
             {
                 "audit": a,
@@ -163,6 +167,13 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
                 "duration": f"{duration:.1f}s" if duration is not None else None,
                 "stages": _ribbon_stages(evs),
                 "detectors": detector_lines,
+                # Summed BEFORE rounding (system-tester f.6): the per-line
+                # figures round to the cent, so their naive sum can drift a
+                # cent from any headline. The drawer states its own total the
+                # same way the dashboard computes its figure — never invented
+                # by adding rounded parts.
+                "findings_usd": findings_usd,
+                "findings_n": findings_n,
                 "rejected": rejected,
                 "purged": a.purged_at is not None,
                 "has_upload": bool(a.upload_path),

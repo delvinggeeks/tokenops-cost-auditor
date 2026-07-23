@@ -95,8 +95,13 @@ def tick(
             log.warning("connector.pull_failed", source_id=source.id, error=str(exc)[:200])
             try:
                 record_pull_failure(session, source.id, exc)
-            except Exception:  # the ledger row is best-effort; never re-raise
-                session.rollback()
+            except Exception as ledger_exc:  # best-effort; never re-raise —
+                session.rollback()  # but never silent either (cold-review f.5)
+                log.warning(
+                    "connector.pull_ledger_failed",
+                    source_id=source.id,
+                    error=str(ledger_exc)[:200],
+                )
     for source in due_audits(session, now, settings):
         try:
             run_source_audit(session, settings, table, source)

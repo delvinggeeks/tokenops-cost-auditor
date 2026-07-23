@@ -127,6 +127,33 @@ class TestSourceAuditStageEvents:
         ).scalar_one()
         assert set(detect.detail["detectors"]) == set(ACTIVE_ON_AGGREGATE)
 
+    def test_03b_redriven_precreated_row_replaces_stage_events(
+        self, session: Session, bare_settings: Settings
+    ) -> None:
+        """cold-review f.1: a pre-created row re-driven after a partial
+        failure must replace its stage events, never accumulate them."""
+        src = make_source(session, bare_settings, "openai")
+        session.add(
+            SourceUsage(
+                source_id=src.id,
+                day=datetime.now(UTC).date() - timedelta(days=1),
+                model="gpt-4o-mini",
+                calls=10,
+                prompt_tokens=5_000,
+                completion_tokens=500,
+                cached_tokens=0,
+            )
+        )
+        pre = Audit(user_id=src.user_id, status="queued")
+        session.add(pre)
+        session.commit()
+        table = PricingTable.load()
+        run_source_audit(session, bare_settings, table, src, audit=pre)
+        session.commit()
+        run_source_audit(session, bare_settings, table, src, audit=pre)
+        session.commit()
+        assert len(stage_names(session, pre.id)) == 4
+
 
 class TestPullLedger:
     def test_04_success_row_rides_the_pull(self, session: Session, bare_settings: Settings) -> None:
@@ -253,6 +280,31 @@ class TestRunsPage:
         app.state.runner.run(audit_id)
         page = TestClient(app).get("/runs", headers=HDR)
         assert 'hx-get="/runs/partial"' not in page.text
+
+    def test_14_drawer_total_reconciles_with_dashboard_headline(self, app: FastAPI) -> None:
+        """system-tester f.6: per-detector lines round independently, so their
+        naive sum can drift a cent from the dashboard's "identified" headline.
+        The drawer therefore states its own total summed BEFORE rounding — and
+        for a fresh audit (no feedback) that figure must equal the dashboard's
+        to the character."""
+        from tokenops_cost_auditor.persistence.models import FindingRow
+
+        audit_id = seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        with app.state.session_factory() as session:
+            total = sum(
+                float(r.monthly_impact_usd)
+                for r in session.execute(
+                    select(FindingRow).where(FindingRow.audit_id == audit_id)
+                ).scalars()
+            )
+        assert total > 0
+        figure = f"${total:,.2f}/mo"
+        client = TestClient(app)
+        dash = re.sub(r"\s+", " ", client.get("/dashboard", headers=HDR).text)
+        runs = re.sub(r"\s+", " ", client.get("/runs", headers=HDR).text)
+        assert f"{figure} identified — latest audit" in dash
+        assert f"{figure} across" in runs  # the drawer's summed-before-rounding total
 
     def test_13_pull_and_check_ledgers_render(self, app: FastAPI) -> None:
         client = TestClient(app)

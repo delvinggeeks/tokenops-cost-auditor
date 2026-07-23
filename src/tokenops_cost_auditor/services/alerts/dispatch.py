@@ -55,7 +55,10 @@ def run_for_user(
     # WP-PIPELINE-UI: "checked — nothing crossed" is evidence too. One row per
     # enabled rule per tick, committed BEFORE any mail so the silence ledger
     # survives a delivery failure. Fired rules are stamped crossed here; the
-    # matching AlertEvent below stays the delivery record.
+    # matching AlertEvent below stays the delivery record. CONTRACT (cold-
+    # review f.3): this commit flushes the WHOLE session — callers must hold
+    # no uncommitted staged work across this call (the schedule tick commits
+    # every prior stage before alerts run; keep it that way).
     stamp = now or datetime.now(UTC)
     fired_rules = {f.rule for f in firings}
     enabled_rules = (

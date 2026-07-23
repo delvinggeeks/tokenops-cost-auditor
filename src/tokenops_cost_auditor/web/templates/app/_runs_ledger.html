@@ -51,6 +51,12 @@
               {%- endif -%}
             </dd>
             {% endfor %}
+            {% if run.detectors %}
+            <dt>Identified</dt>
+            <dd>${{ "{:,.2f}".format(run.findings_usd) }}/mo across
+              {{ run.findings_n }} finding(s), as this run found them — summed
+              before rounding; the lines above each round to the cent</dd>
+            {% endif %}
             {% if run.purged %}
             <dt>Raw upload</dt>
             <dd>purged on schedule (FR-21) — stage timings, counts, findings

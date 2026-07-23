@@ -24,7 +24,7 @@ from typing import cast
 
 import pandas as pd
 import structlog
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
@@ -116,12 +116,14 @@ def run_source_audit(
 
     # As-billed spend per bucket at the verified rate card; unpriced listed.
     unpriced: set[str] = set()
-    costs: list[float] = []
+    unpriced_rows = 0  # per-ROW honesty: a model unpriced one day still counts
+    costs: list[float] = []  # its priced days (cold-review f.4)
     for r in rows:
         try:
             rate = table.rate(source.provider, r.model, cast(date, r.day))
         except PricingGapError:
             unpriced.add(r.model)
+            unpriced_rows += 1
             costs.append(0.0)
             continue
         uncached = max(0, r.prompt_tokens - r.cached_tokens)
@@ -244,6 +246,9 @@ def run_source_audit(
         report = dataclasses.replace(report, benchmark=block)
     render_json(report, settings.report_dir / audit.id / "report.json")
     t_report = datetime.now(UTC)
+    # A pre-created row can be re-driven after a partial failure (cold-review
+    # f.1): replace, never accumulate — same FR-19 discipline as the runner.
+    session.execute(delete(StageEvent).where(StageEvent.audit_id == audit.id))
     # Stage order here is the honest execution order for bucket audits:
     # detectors run on the frame BEFORE the rate-card pass (unlike the
     # upload pipeline). The /runs drawer renders by started_at, so the strip
@@ -265,10 +270,7 @@ def run_source_audit(
             "price",
             t_detect,
             t_price,
-            {
-                "priced_rows": len(rows) - sum(1 for r in rows if r.model in unpriced),
-                "unpriced_models": sorted(unpriced),
-            },
+            {"priced_rows": len(rows) - unpriced_rows, "unpriced_models": sorted(unpriced)},
         ),
         ("report", t_price, t_report, {"artifacts": ["json"]}),
     ):
