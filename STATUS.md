@@ -15,6 +15,27 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+### system-tester gate rounds 1-3 (2026-07-23) — FAIL → FAIL → PASS; the loop works
+
+Sweep 1 FAIL: explorer denied history the dashboard claimed (bare audits —
+findings, no aggregate rows) → fixed a228ad7 + cross-surface journey law.
+Sweep 2 FAIL: (a) Act stage printed the VERIFIED count labeled "applied"
+("0 applied" on an account with 1 applied fix) → now applied = verified +
+still-measuring; customer-reported $ rendered separately per R-Q9. The
+sweep's expectation that realized-$ join the verified figure was DECLINED
+as contradicting the ruled R-Q9 law — recorded so future gates don't
+relitigate. (b) "0 findings — clean" was an unscoped account-wide claim →
+now "0 new findings — latest audit clean · N earlier findings in your
+history — see Explore". (c) its open question confirmed REAL: the explorer
+empty-state chooser ignored model/date/detector/severity/status filters →
+every active filter now routes to "Nothing matches this slice". Fixed
+21fde3d, tests pinned same commit. Sweep 3 PASS — all repro walks confirm
+exact wording; one non-blocking observation parked: waste_trend widget
+renders no $ figure on 1 day of data (plausibly the honest not-enough-days
+state; outside this diff — pin with a targeted widget test on next touch
+of that surface). Role ledger since creation: 3 sweeps, 6 findings, 5
+real bugs fixed + test-pinned, 1 lawful decline, 0 found by the founder.
+
 ## R-SYSTEM-TEST + R-LIVE-DASH (2026-07-23) — the testing role exists now; first sweep found 3 real bugs
 
 Founder order: "who is doing the system testing? why am I the one finding
