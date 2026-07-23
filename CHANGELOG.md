@@ -5,6 +5,19 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.4 · CONSOLE-LINK TRUST (founder report: the Anthropic
+  admin-keys deep-link showed 'Page not found' and read as phishing). The
+  URL is CORRECT per Anthropic's current docs, verified live —
+  platform.claude.com IS Anthropic's domain (console moved there from
+  console.anthropic.com); the 404 is the console's own render for
+  signed-out / non-admin / chat-only accounts. Fix is honesty, not the
+  URL: each wizard names its real destination host and teaches the
+  failure mode ('sign in first; needs a Console org with the Admin role;
+  manual path: Settings → Admin keys'). Laws pinned: console URLs
+  allowlisted to official provider domains only; the visible note must
+  NAME the linked host, so a domain move forces the copy to move. SMOKE
+  PASS: HTTPS healthz ok; both wizards render the note (auth-gated).
+
 - 2026-07-23 · v1.6.3 · R-REACHABILITY. New CI law: everything the product
   DECLARES (wizards, guide pages, destinations) must be CLICK-reachable
   from /dashboard — the oracle that would have caught the unlinked
