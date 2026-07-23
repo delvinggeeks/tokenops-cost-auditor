@@ -142,8 +142,11 @@ def validate_key(provider: str, api_key: str, client: SupportsGet | None = None)
         # save it. Tell the truth about WHICH refusal: 401 = the key itself is
         # bad/revoked; 403 = the key is valid but lacks admin permission.
         # Azure's token endpoint answers 400 for bad ids/secrets — same
-        # meaning as 401 here: the credential itself is not accepted.
-        status = BAD_KEY if exc.status in (400, 401) else NO_SCOPE
+        # meaning as 401 here: the credential itself is not accepted. Status
+        # 0 (typed errors with no HTTP code: malformed blob, token-less
+        # response) is ALSO a credential fault — the role-gap diagnosis
+        # would be a wrong fix for it (cold-review f.2).
+        status = BAD_KEY if exc.status in (0, 400, 401) else NO_SCOPE
         if provider == "azure-openai":
             return AZURE_OVERRIDES[status]
         return VERDICTS[status]

@@ -312,6 +312,84 @@ class TestWizardJourney:
         dup = client.post("/sources/connect/azure-openai/validate", data=CRED, headers=HDR)
         assert dup.status_code == 409
 
+    def test_13_real_outage_saves_through_the_live_route(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """R-WIZ-DEGRADE end to end (system-tester f.3): a REAL network fault
+        during validation — the HTTP client itself failing, not a stubbed
+        verdict — must drive the live route to UNREACHABLE, SAVE the
+        credential, and say so in the rendered words."""
+        import re as _re
+
+        class Down:
+            def __init__(self, *a: Any, **k: Any) -> None: ...
+
+            def post(self, url: str, *, data: Any) -> Any:
+                raise OSError("network down")
+
+            def get(self, url: str, *, params: Any, headers: Any) -> Any:
+                raise OSError("network down")
+
+            def close(self) -> None: ...
+
+        monkeypatch.setattr(validate.httpx, "Client", Down)
+        email = "azure-outage@example.com"
+        hdr = {"X-User-Email": email}
+        client = TestClient(app)
+        client.get("/dashboard", headers=hdr)
+        resp = client.post("/sources/connect/azure-openai/validate", data=CRED, headers=hdr)
+        assert resp.status_code == 200
+        squashed = _re.sub(r"\s+", " ", resp.text)
+        assert "saved" in squashed.lower()  # the promise, in the rendered words
+        with app.state.session_factory() as s:
+            user = s.execute(select(User).where(User.email == email)).scalar_one()
+            src = s.execute(
+                select(Source).where(Source.user_id == user.id, Source.provider == "azure-openai")
+            ).scalar_one()  # exactly one row saved despite the outage
+            assert src.status == "active"
+        assert "azure-openai usage" in client.get("/sources", headers=hdr).text
+
+    def test_14_token_less_response_is_a_credential_fault(self) -> None:
+        """cold-review f.2: a 200 token response with no access_token must
+        surface as the bad-credential verdict, never the role-gap one."""
+
+        class NoToken(FakeAzure):
+            def post(self, url: str, *, data: Any) -> FakeResp:
+                return FakeResp({"unexpected": "shape"})
+
+        verdict = validate.validate_key("azure-openai", CRED_BLOB, NoToken())
+        assert verdict.status == validate.BAD_KEY
+        assert "Monitoring Reader" not in verdict.detail
+
+    def test_15_metric_floats_round_never_truncate(self) -> None:
+        """cold-review f.1: Azure Sum aggregation returns floats; 12345.9999
+        must land as 12346, not 12345."""
+        payload = {
+            "value": [
+                {
+                    "name": {"value": "ProcessedPromptTokens"},
+                    "timeseries": [_series("gpt-5.4", [("2026-07-20T00:00:00Z", 12345.9999)])],
+                },
+                {"name": {"value": "SomethingElse"}, "timeseries": []},  # ignored
+                {
+                    "name": {"value": "GeneratedTokens"},
+                    "timeseries": [
+                        {
+                            "metadatavalues": [],  # no modelname -> "unknown"
+                            "data": [
+                                {"timeStamp": "2026-07-20T00:00:00Z", "total": None},
+                                {"timeStamp": "2026-07-21T00:00:00Z", "total": 10.4},
+                            ],
+                        }
+                    ],
+                },
+            ]
+        }
+        buckets = azure_usage.parse_metrics(payload)
+        by_key = {(b["day"].isoformat(), b["model"]): b for b in buckets}
+        assert by_key[("2026-07-20", "gpt-5.4")]["prompt_tokens"] == 12346
+        assert by_key[("2026-07-21", "unknown")]["completion_tokens"] == 10
+
     def test_12_partial_or_malformed_fields_refused(self, app: FastAPI) -> None:
         client = TestClient(app)
         client.get("/dashboard", headers=HDR)

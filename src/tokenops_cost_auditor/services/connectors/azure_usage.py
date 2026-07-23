@@ -122,7 +122,10 @@ def parse_metrics(payload: dict[str, Any]) -> list[dict[str, Any]]:
                         "cached_tokens": 0,  # not exposed by Azure (module docstring)
                     },
                 )
-                bucket[field] = int(bucket[field]) + int(total)
+                # round, never truncate: Azure's Sum aggregation returns
+                # floats (12345.9999…); int() would undercount every bucket
+                # (cold-review f.1 — rule 4 reaches connectors too).
+                bucket[field] = round(bucket[field] + float(total))
     return [acc[k] for k in sorted(acc, key=lambda k: (k[0].isoformat(), k[1]))]
 
 

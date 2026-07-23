@@ -42,7 +42,7 @@ def run_pull(
     session: Session,
     settings: Settings,
     source: Source,
-    http_client: SupportsGet | None = None,
+    http_client: SupportsGet | azure_usage.SupportsHttp | None = None,
 ) -> PullStats:
     if source.provider not in _CLIENTS:
         raise ValueError(f"unknown provider: {source.provider}")
