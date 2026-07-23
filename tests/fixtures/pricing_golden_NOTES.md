@@ -270,3 +270,12 @@ summed (a summed 1,125.00 is asserted absent).
   verification request ('approved to deploy and proceed next'); recorded
   per the R-Q3 ritual.
   | Lokesh Prasanna Kumar S
+- 2026-07-23 | M-FLY-1 gate-round pins (cold f.1/f.4): (a) TIES share the
+  higher rank — cohort (10,20,20): v=10 → p=round(100*1/3)=33, each v=20 →
+  p=round(100*3/3)=100; an all-equal cohort ranks everyone p=100 (no spread
+  = no leaner member; stated and accepted). (b) SELF-INCLUSION POLICY: n
+  counts the requester on EVERY ingestion path — an in-flight audit injects
+  its own savings_pct (own_value), authoritative over any stale row, so the
+  upload and connector paths can never disagree on a rank.
+  Pinned by tests/test_flywheel.py::TestBenchmarks tests 19-21.
+  | Lokesh Prasanna Kumar S

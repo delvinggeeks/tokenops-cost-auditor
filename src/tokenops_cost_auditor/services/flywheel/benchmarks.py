@@ -23,6 +23,8 @@ company's value, never the distribution, never a cohort statistic.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,24 +41,44 @@ class Benchmark:
     reason: str  # honest why-not when not live (internal, never rendered)
 
 
+def _aware(dt: datetime) -> datetime:
+    # legacy/naive rows normalize at read (cold-review M-FLY-1 f.3) — never a
+    # suppressed comparison that could TypeError in prod
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
+
+
 def _cohort(session: Session) -> dict[str, float]:
-    """Latest done audit's savings_pct per INCLUDED customer."""
+    """Latest done audit's savings_pct per INCLUDED customer. Deterministic:
+    candidates sort on (when, id) and later entries overwrite — identical
+    timestamps resolve by id, never by DB return order (cold f.2)."""
     included = {
         u.id for u in session.execute(select(User)).scalars() if u.benchmark_sharing is not False
     }
-    latest: dict[str, tuple[object, float]] = {}
-    for a in session.execute(select(Audit).where(Audit.status == "done")).scalars():
-        if a.user_id not in included or a.savings_pct is None:
-            continue
-        when = a.report_ready_at or a.created_at
-        held = latest.get(a.user_id)
-        if held is None or when > held[0]:  # type: ignore[operator]
-            latest[a.user_id] = (when, float(a.savings_pct))
-    return {uid: val for uid, (_, val) in latest.items()}
+    candidates = [
+        a
+        for a in session.execute(select(Audit).where(Audit.status == "done")).scalars()
+        if a.user_id in included and a.savings_pct is not None
+    ]
+    candidates.sort(key=lambda a: (_aware(a.report_ready_at or a.created_at), a.id))
+    cohort: dict[str, float] = {}
+    for a in candidates:
+        cohort[a.user_id] = float(cast(float, a.savings_pct))
+    return cohort
 
 
-def waste_percentile(session: Session, settings: Settings, user_id: str) -> Benchmark:
+def waste_percentile(
+    session: Session, settings: Settings, user_id: str, own_value: float | None = None
+) -> Benchmark:
+    """POLICY (cold f.1, both ingestion paths identical): n counts the
+    requester — self-INCLUSIVE, as the NOTES derivation states. Callers
+    reporting an in-flight audit pass own_value (the audit's own
+    savings_pct) explicitly; it is authoritative over any stale DB row, so
+    neither flush timing nor finalization order can change a rank."""
     cohort = _cohort(session)
+    if own_value is not None and user_id in {
+        u.id for u in session.execute(select(User)).scalars() if u.benchmark_sharing is not False
+    }:
+        cohort[user_id] = float(own_value)
     mine = cohort.get(user_id)
     if mine is None:
         # own toggle off, or no audited waste share yet — either way, no rank
@@ -81,12 +103,14 @@ def ordinal(n: int) -> str:
 REPORT_BLOCK_KEYS = frozenset({"percentile", "label", "based_on_companies", "method"})
 
 
-def report_block(session: Session, settings: Settings, user_id: str) -> dict[str, object] | None:
+def report_block(
+    session: Session, settings: Settings, user_id: str, own_value: float | None = None
+) -> dict[str, object] | None:
     """M-FLY-1 B1b: the report's benchmark block, or None (dormant = the key
     never exists — absent fixtures stay byte-identical, zero-state law).
     LEAKAGE LAW: REPORT_BLOCK_KEYS is exhaustive and test-pinned — nothing
     else can ride into a customer-visible report from the cohort."""
-    b = waste_percentile(session, settings, user_id)
+    b = waste_percentile(session, settings, user_id, own_value=own_value)
     if not b.live or b.percentile is None:
         return None
     return {

@@ -351,3 +351,55 @@ class TestBenchmarks:
         with_block = dc.replace(report, benchmark=block)
         rendered = report_to_dict(with_block)
         assert rendered["benchmark"] == block
+
+    def test_19_ties_share_the_higher_rank(self, app: FastAPI) -> None:
+        """cold f.4: the tie rule is a golden fact (NOTES 2026-07-23)."""
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        ids = self._seed_cohort(app, (10, 20, 20))
+        tiny = Settings(
+            app_env="test",
+            secret_key=SECRET,
+            database_url="sqlite://",
+            flywheel_l1_min_customers=3,
+            _env_file=None,
+        )
+        with app.state.session_factory() as session:
+            assert bench.waste_percentile(session, tiny, ids[0]).percentile == 33
+            for uid in ids[1:]:
+                assert bench.waste_percentile(session, tiny, uid).percentile == 100
+
+    def test_20_own_value_makes_every_path_self_inclusive(self, app: FastAPI) -> None:
+        """cold f.1: an in-flight audit ranks via its OWN value — live even
+        before any DB row is finalized, identical on both ingestion paths
+        (source-pinned below)."""
+        from pathlib import Path as P
+
+        from tokenops_cost_auditor.services.flywheel import benchmarks as bench
+
+        self._seed_cohort(app, self.GOLDEN[:9])  # 9 others in the pool
+        with app.state.session_factory() as session:
+            newcomer = User(email="new@x.com")
+            session.add(newcomer)
+            session.commit()
+            new_id = newcomer.id
+        with app.state.session_factory() as session:
+            b = bench.waste_percentile(session, app.state.settings, new_id, own_value=12.0)
+        assert b.live and b.n == 10  # self makes the tenth
+        assert b.percentile == 50  # (2,5,8,11,12) at-or-below → 5 of 10
+        for caller in (
+            "src/tokenops_cost_auditor/services/runner.py",
+            "src/tokenops_cost_auditor/services/connectors/source_audit.py",
+        ):
+            assert "own_value=report.savings_pct" in P(caller).read_text(), caller
+
+    def test_21_widget_data_keys_are_exhaustive(self, app: FastAPI) -> None:
+        """vv f.3.4: the widget-side leakage allowlist, set-equal like the
+        report block's."""
+        from tokenops_cost_auditor.services.dashboard import metrics
+
+        ids = self._seed_cohort(app, self.GOLDEN)
+        with app.state.session_factory() as session:
+            w = metrics.benchmark(session, app.state.settings, ids[4])
+        assert set(w.data) == {"percentile", "label", "leaner_than", "n"}

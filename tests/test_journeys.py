@@ -253,3 +253,44 @@ class TestCrossSurfaceConsistency:
         exp = re.sub(r"\s+", " ", client.get("/explore", headers=HDR).text)
         assert "$115.00/mo" in exp  # the slice's sum ($100 + $15)
         assert "findings in this slice" in exp  # scoped
+
+    def test_peer_opt_out_updates_every_rendered_rank(self, app: FastAPI) -> None:
+        """system-tester M-FLY-1 f.5: one customer opting out must reshape
+        every OTHER customer's rendered rank — through the real settings
+        endpoint, asserted on rendered HTML, so the stale-widget class dies."""
+        values = (2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35)
+        with app.state.session_factory() as session:
+            for i, v in enumerate(values):
+                user = User(email=f"c{i}@x.com")
+                session.add(user)
+                session.flush()
+                session.add(
+                    Audit(
+                        user_id=user.id,
+                        status="done",
+                        row_count=100,
+                        observed_days=10,
+                        total_spend_usd=10.0,
+                        savings_pct=float(v),
+                        created_at=datetime.now(UTC),
+                        report_ready_at=datetime.now(UTC),
+                    )
+                )
+            session.commit()
+        client = TestClient(app)
+        v14 = {"X-User-Email": "c4@x.com"}
+        before = re.sub(r"\s+", " ", client.get("/dashboard", headers=v14).text)
+        assert "42nd percentile" in before and "based on 12 companies" in before
+        # the v=2 customer opts out through the REAL endpoint
+        resp = client.post(
+            "/settings/benchmarks",
+            headers={"X-User-Email": "c0@x.com"},
+            data={},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        gone = client.get("/dashboard", headers={"X-User-Email": "c0@x.com"}).text
+        assert "How you compare" not in gone  # their own widget vanishes
+        after = re.sub(r"\s+", " ", client.get("/dashboard", headers=v14).text)
+        assert "based on 11 companies" in after  # the pool shrank for everyone
+        assert "36th percentile" in after and "leaner than 64%" in after

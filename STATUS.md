@@ -52,6 +52,29 @@ order), f.2 FIXED: a flywheel exception can never 500 the admin panel
 history", f.4 FIXED: unknown row_count/observed_days pass through as
 None, never fake zeros (schema types widened; allowlist unchanged).
 
+## M-FLY-1 (2026-07-23) — L1 peer benchmarks, both surfaces; gate round FAIL→fixed
+
+Widget (mockup ux-gated first, all notes actioned) + report block; dormant
+= ABSENT below n≥10; ranks the engine's OWN savings_pct (no new money
+math); percentile golden FOUNDER-VERIFIED. GATE ROUND: spec-guard PWN
+(all laws hold; deviation recorded: shipped live-compute vs the plan's
+nightly precompute — correct at today's scale; precompute = a scale
+trigger); vv PWN (golden recomputed independently — exact; caught the
+traceability row committed late (rule 5 slip — row rides this gate-round
+commit) + demanded the widget-side key allowlist, added test_21);
+system-tester PWN (live walk exact incl. opt-out arithmetic 4-of-11→36th
+through the real endpoint; demanded the standing cross-customer opt-out
+journey — added); cold-reviewer FAIL, all four fixed: f.1 SELF-INCLUSION
+POLICY unified — every path injects the in-flight audit's own
+savings_pct (own_value, authoritative over stale rows), so upload and
+connector paths can never disagree on a rank (test_20 + source pins);
+f.2 cohort candidates sort (when,id) — DB return order can never pick a
+winner; f.3 naive rows normalize to aware UTC at read (no suppressed
+comparison); f.4 tie rule golden-pinned (ties share the higher rank;
+all-equal cohorts rank everyone p=100 — stated, accepted; NOTES row).
+Re-gate (cold) on the fixed diff follows; then v1.6.1 deploy per the
+founder's standing approval this session.
+
 ## M-FLY-0 (2026-07-23) — the flywheel's data spine: training frame (A1) + cohort ledger (A2)
 
 First flywheel milestone, built the day its blocker lifted. A1:

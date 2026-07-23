@@ -228,7 +228,9 @@ def run_source_audit(
     source.last_audit_at = utcnow()
 
     # M-FLY-1 B1b: benchmark block when the cohort is honest (else absent)
-    block = flywheel_benchmarks.report_block(session, settings, source.user_id)
+    block = flywheel_benchmarks.report_block(
+        session, settings, source.user_id, own_value=report.savings_pct
+    )
     if block is not None:
         report = dataclasses.replace(report, benchmark=block)
     render_json(report, settings.report_dir / audit.id / "report.json")

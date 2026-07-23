@@ -155,7 +155,9 @@ class AuditRunner:
         # M-FLY-1 B1b: attach the peer-benchmark block when the cohort is
         # honest (dormant = the key never exists). DB-backed path only.
         with factory() as session:
-            block = flywheel_benchmarks.report_block(session, self.settings, audit_user_id)
+            block = flywheel_benchmarks.report_block(
+                session, self.settings, audit_user_id, own_value=report.savings_pct
+            )
         if block is not None:
             report = dataclasses.replace(report, benchmark=block)
         report_dir = Path(self.settings.report_dir) / audit_id
