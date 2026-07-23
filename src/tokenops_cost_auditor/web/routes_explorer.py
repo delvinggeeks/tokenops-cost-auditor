@@ -11,15 +11,21 @@ phrasing; detector ids stay in form values and drawers (R-PERSONA).
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from urllib.parse import parse_qsl
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
+from tokenops_cost_auditor.persistence.models import SavedView
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.dashboard import explorer
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
+
+MAX_SAVED_VIEWS = 20
 
 router = APIRouter(tags=["explorer"])
 
@@ -47,6 +53,13 @@ def explore_page(request: Request, user_email: str = Depends(current_user)) -> H
             str(item["detector"]) for item in view.findings
         }
         detector_labels = {key: help_registry.detector_plain(key) for key in detector_keys}
+        saved = (
+            session.execute(
+                select(SavedView).where(SavedView.user_id == user.id).order_by(SavedView.name)
+            )
+            .scalars()
+            .all()
+        )
         ctx = _shell_ctx(session, request, user, "explore")
         return _render(
             request,
@@ -57,6 +70,60 @@ def explore_page(request: Request, user_email: str = Depends(current_user)) -> H
             severity_labels=SEVERITY_LABELS,
             status_labels=STATUS_LABELS,
             equiv_line=EQUIV_SPEND_LINE,
+            saved_views=saved,
+            current_query=explorer.serialize_filters(filters),
             show_tour=False,
             **ctx,
         )
+
+
+@router.post("/explore/views", response_model=None)
+def save_view(
+    request: Request,
+    name: str = Form(...),
+    params: str = Form(""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """FR-32 C3: save the current slice under a name. The stored params are
+    parse_filters -> serialize_filters round-tripped, so only whitelisted
+    filter keys can ever persist. Same name = replace (a view is a bookmark,
+    not a ledger). Export stays HELD on the registered data-export trigger."""
+    label = name.strip()[:80]
+    if not label:
+        raise HTTPException(status_code=400, detail="name required")
+    canonical = explorer.serialize_filters(explorer.parse_filters(dict(parse_qsl(params))))
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        existing = session.execute(
+            select(SavedView).where(SavedView.user_id == user.id, SavedView.name == label)
+        ).scalar_one_or_none()
+        if existing is not None:
+            existing.params = canonical
+        else:
+            count = len(
+                session.execute(select(SavedView).where(SavedView.user_id == user.id))
+                .scalars()
+                .all()
+            )
+            if count >= MAX_SAVED_VIEWS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{MAX_SAVED_VIEWS} saved views is the limit — delete one first",
+                )
+            session.add(SavedView(user_id=user.id, name=label, params=canonical))
+        session.commit()
+    return RedirectResponse(f"/explore?{canonical}", status_code=303)
+
+
+@router.post("/explore/views/{view_id}/delete", response_model=None)
+def delete_view(
+    request: Request, view_id: int, user_email: str = Depends(current_user)
+) -> RedirectResponse:
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        row = session.get(SavedView, view_id)
+        if row is None or row.user_id != user.id:
+            raise HTTPException(status_code=404, detail="saved view not found")
+        session.delete(row)
+        session.commit()
+    return RedirectResponse("/explore", status_code=303)

@@ -1,7 +1,9 @@
 # PLAN-TAAS.md — "LLM tokenomics as a service, in any environment" (founder order 2026-07-23)
 
-Status: **DRAFT — AWAITING FOUNDER APPROVAL. No application code before
-approval** (PRD §10; PLAN-V15/PLAN-FLYWHEEL precedent).
+Status: **APPROVED — R-PROCEED (founder, 2026-07-23), recorded in docs/00
+Amendments.** §4 answers: Q1 yes (Azure→Bedrock→Gemini order), Q2 yes
+(spec now, endpoint later), Q3 yes, Q4 yes (next landing touch), Q5 keep
+the trigger. Sequencing per §3 unchanged.
 Order source (founder, 2026-07-23, verbatim in substance): "most
 enterprises use cloud AI services deployed in cloud infra — how can our
 platform sit there? where are other accounts — lovable, cursor, copilot?

@@ -37,7 +37,9 @@
    TE-4 STATUS.md IS SHARED MEMORY. One paragraph per milestone: decisions,
         open questions, file map delta. Agents read it INSTEAD of exploring.
    TE-5 MODEL TIERING. Gate agents run Sonnet (set in agent frontmatter).
-        Opus is reserved for the main build thread and PLAN.md authoring.
+        Opus runs the main build thread and implementation milestones;
+        PRD/design breakdowns and PLAN authoring run on Fable
+        [amendment 2026-07-23, R-PROCEED].
    TE-6 TURN BUDGET. Each gate agent: max 15 tool calls per invocation.
         If it cannot conclude, it returns PARTIAL + a numbered question
         list; it does NOT keep digging.

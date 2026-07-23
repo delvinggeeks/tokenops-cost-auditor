@@ -21,6 +21,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import cast
+from urllib.parse import urlencode
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -94,6 +95,32 @@ def parse_filters(params: Mapping[str, str]) -> Filters:
         severity=severity if severity in SEVERITIES else "any",
         status=status if status in STATUSES else "any",
     )
+
+
+def serialize_filters(f: Filters) -> str:
+    """Canonical querystring of the NON-DEFAULT filters — what a saved view
+    stores (FR-32 C3). Round-trips through parse_filters, so a stored view
+    can only ever contain whitelisted keys and values."""
+    parts: list[tuple[str, str]] = []
+    if f.date_from:
+        parts.append(("from", f.date_from.isoformat()))
+    if f.date_to:
+        parts.append(("to", f.date_to.isoformat()))
+    if f.group != "auto":
+        parts.append(("group", f.group))
+    if f.source_id:
+        parts.append(("source", f.source_id))
+    elif f.tier != "all":
+        parts.append(("source", f.tier))
+    if f.model:
+        parts.append(("model", f.model))
+    if f.detector:
+        parts.append(("detector", f.detector))
+    if f.severity != "any":
+        parts.append(("severity", f.severity))
+    if f.status != "any":
+        parts.append(("status", f.status))
+    return urlencode(parts)
 
 
 @dataclass

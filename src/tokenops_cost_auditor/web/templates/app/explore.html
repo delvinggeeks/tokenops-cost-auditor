@@ -67,6 +67,28 @@
   <a class="btn btn-quiet" href="/explore">Reset</a>
 </form>
 
+{# FR-32 C3 (R-PROCEED): saved views — the slice as a bookmark. One row:
+   your named views as chips, and a save control for the current slice.
+   Export is deliberately absent (held on the registered data-export
+   trigger). #}
+<div class="filter-bar" style="border-bottom: 0; padding-bottom: 0;">
+  {% for v in saved_views %}
+    <span style="white-space: nowrap;">
+      <a class="btn btn-quiet" href="/explore?{{ v.params }}">{{ v.name }}</a>
+      <form method="post" action="/explore/views/{{ v.id }}/delete" class="inline-form">
+        {{ kit.icon_action("Delete saved view “" ~ v.name ~ "”", "trash") }}
+      </form>
+    </span>
+  {% endfor %}
+  <form method="post" action="/explore/views" class="inline-form"
+        style="display: inline-flex; gap: 6px; align-items: center;">
+    <input type="hidden" name="params" value="{{ current_query }}">
+    <input name="name" maxlength="80" required placeholder="Name this view"
+           aria-label="Name this view">
+    {{ kit.button("Save view") }}
+  </form>
+</div>
+
 {% if view.audits_in_view == 0 %}
   {# ANY active filter means "your filters matched nothing", never "you have
      no history" (system-tester sweep 2 f.2: a model filter on an account

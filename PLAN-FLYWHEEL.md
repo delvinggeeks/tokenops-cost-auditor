@@ -1,7 +1,9 @@
 # PLAN-FLYWHEEL.md — R-FLYWHEEL-TRAIN order breakdown (history → training → client intelligence → filterable reports)
 
-Status: **DRAFT — AWAITING FOUNDER APPROVAL. No application code before
-approval** (PRD §10 change control; PLAN-V15 precedent).
+Status: **PARTIALLY RULED — R-EXPLORER (Q3) + R-PROCEED (Q4/Q5/Q6/Q7 and
+R-F1 option A in principle), recorded in docs/00 Amendments. The exact
+R-F1 promise sentences await a separate founder sign-off; M-FLY-0 A1+A2
+may build ahead of it.**
 Order source: founder, 2026-07-23 — "entire history of usage data to train
 our own model · front gate for usage · preventive measures intelligently ·
 customized solutions per client · client selects reports over all history

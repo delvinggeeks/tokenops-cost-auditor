@@ -151,3 +151,10 @@ First sweep ran the day of the order and found: /upload escaping the app
 shell under the non-prod shim, seven dead /guide/* links on the dashboard,
 and the docs-site offering no way back to the app. All three fixed with
 journey tests pinned the same day.
+
+## Amendment 2026-07-23 — R-PROCEED model tiering (TE-5 updated)
+
+TE-5 as amended: PRD/design breakdowns are authored on Fable; implementation
+milestones run on Opus; gate agents stay Sonnet (set in agent frontmatter).
+Opus remains the main build thread's tier; PLAN authoring moves to Fable.
+CLAUDE.md rule 7 carries the same sentence.

@@ -15,6 +15,27 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-PROCEED (2026-07-23) — rulings recorded; C3 saved views + T4 spec shipped
+
+Founder ruled "proceed" on the standing question lists; recorded as the
+R-PROCEED PRD amendment (TAAS Q1-Q5 as proposed; FLYWHEEL Q4/Q5/Q6/Q7;
+R-F1 OPTION A IN PRINCIPLE — exact promise sentences still need separate
+founder sign-off before any copy/test change; TE-5 amended in docs/10 +
+CLAUDE.md: Fable authors PRD/design, Opus implements, Sonnet gates).
+BUILT THIS ROUND: (1) FR-32 C3 saved views — migration 014, whitelist-
+sanitized params (parse→serialize round-trip: hostile keys cannot
+persist), replace-on-same-name, 20-view stated limit, per-user scoping,
+chips + save control on /explore; EXPORT deliberately absent (data-export
+trigger stands). (2) docs/13-T4-OTLP-SPEC.md — the WP-T4-SPEC mapping
+contract (gen_ai.* dual-version → CallRecordFrame, content DROPPED at the
+door, agent/RAG/k8s dimensions as tags, honest per-detector T4 coverage
+table, build estimate 3-5 days as its own future approval). QUEUE
+UNCHANGED per PLAN-TAAS §3: launch → WP-CC-LINK → WP-PIPELINE-UI →
+WP-CLOUD-T2 (C-A Azure → C-B Bedrock → C-C Gemini) → WP-COPILOT-AGG;
+M-FLY-0 (A1+A2) may interleave. AWAITING FOUNDER: deploy (one command,
+founder-observed) and the R-F1 sentence sign-off (drafts delivered in
+the session log).
+
 ### system-tester gate rounds 1-3 (2026-07-23) — FAIL → FAIL → PASS; the loop works
 
 Sweep 1 FAIL: explorer denied history the dashboard claimed (bare audits —

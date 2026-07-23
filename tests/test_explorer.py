@@ -500,3 +500,106 @@ class TestBareAudits:
         page = TestClient(app).get("/explore", headers=HDR, params={"model": "gpt-4o-mini"})
         assert "Nothing matches this slice" in page.text
         assert "No history to explore yet" not in page.text
+
+
+class TestSavedViews:
+    """FR-32 C3 (R-PROCEED 2026-07-23): named filter sets. Export is
+    deliberately absent — the registered data-export trigger stands."""
+
+    def _seed_data(self, app: FastAPI) -> None:
+        seed_audit(
+            app,
+            when=D1,
+            buckets=[
+                (date(2026, 3, 1), "gpt-4o-mini", 10, 100, 10, 0, 1.00),
+                (date(2026, 5, 1), "claude-sonnet-5", 20, 200, 20, 0, 2.00),
+            ],
+        )
+
+    def test_30_save_load_and_narrow(self, app: FastAPI) -> None:
+        self._seed_data(app)
+        client = TestClient(app)
+        resp = client.post(
+            "/explore/views",
+            headers=HDR,
+            data={
+                "name": "March mini",
+                "params": "from=2026-03-01&to=2026-03-31&model=gpt-4o-mini",
+            },
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        page = client.get("/explore", headers=HDR)
+        assert "March mini" in page.text
+        via_view = compose_for(
+            app, **{"from": "2026-03-01", "to": "2026-03-31", "model": "gpt-4o-mini"}
+        )
+        assert via_view.spend_usd == pytest.approx(1.00)
+
+    def test_31_params_are_whitelist_sanitized(self, app: FastAPI) -> None:
+        """A hostile params field stores ONLY whitelisted filter keys."""
+        client = TestClient(app)
+        client.post(
+            "/explore/views",
+            headers=HDR,
+            data={"name": "sneaky", "params": "model=gpt-4o-mini&evil=<script>&tier=hax"},
+            follow_redirects=False,
+        )
+        from tokenops_cost_auditor.persistence.models import SavedView
+
+        with app.state.session_factory() as session:
+            row = session.execute(select(SavedView)).scalars().one()
+            assert row.params == "model=gpt-4o-mini"  # evil + invalid tier dropped
+
+    def test_32_same_name_replaces_and_scoping_holds(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.post(
+            "/explore/views",
+            headers=HDR,
+            data={"name": "mine", "params": "model=a"},
+            follow_redirects=False,
+        )
+        client.post(
+            "/explore/views",
+            headers=HDR,
+            data={"name": "mine", "params": "model=b"},
+            follow_redirects=False,
+        )
+        from tokenops_cost_auditor.persistence.models import SavedView
+
+        with app.state.session_factory() as session:
+            rows = session.execute(select(SavedView)).scalars().all()
+            assert len(rows) == 1 and rows[0].params == "model=b"
+            view_id = rows[0].id
+        other = {"X-User-Email": "other@example.com"}
+        assert "mine" not in client.get("/explore", headers=other).text
+        assert (
+            client.post(
+                f"/explore/views/{view_id}/delete", headers=other, follow_redirects=False
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                f"/explore/views/{view_id}/delete", headers=HDR, follow_redirects=False
+            ).status_code
+            == 303
+        )
+
+    def test_33_limit_is_stated_plainly(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        for i in range(20):
+            client.post(
+                "/explore/views",
+                headers=HDR,
+                data={"name": f"v{i}", "params": ""},
+                follow_redirects=False,
+            )
+        over = client.post(
+            "/explore/views",
+            headers=HDR,
+            data={"name": "one more", "params": ""},
+            follow_redirects=False,
+        )
+        assert over.status_code == 400
+        assert "delete one first" in over.json()["detail"]

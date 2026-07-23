@@ -266,6 +266,22 @@ class SourceUsage(Base):
     __table_args__ = (UniqueConstraint("source_id", "day", "model", name="uq_source_usage_bucket"),)
 
 
+class SavedView(Base):
+    __tablename__ = "saved_views"  # FR-32 C3 (R-PROCEED 2026-07-23): named filter sets
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Canonical re-serialization of parse_filters output — NEVER the raw
+    # querystring, so a stored view can only contain whitelisted filter keys.
+    params: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_saved_view_user_name"),)
+
+
 class FindingFeedback(Base):
     __tablename__ = "finding_feedback"  # L0 labeling pipeline (docs/12 Stage 3)
 

@@ -164,6 +164,26 @@ under "Amendments" with date + reason.
   recorded in the golden NOTES sheet: overlapping audit coverage de-duplicates
   as "latest audit wins per (day, model) bucket" — stored costs are summed,
   no estimator changes.
+- 2026-07-23 R-PROCEED (founder single-word ruling "proceed" on the standing
+  question lists; recorded per §10): (1) PLAN-TAAS §4 approved as proposed —
+  WP-CLOUD-T2 promoted (Azure OpenAI → Bedrock → Gemini/Vertex, each a gated
+  milestone with founder-verified golden pricing rows before merge),
+  WP-COPILOT-AGG promoted (export-upload path), WP-T4-SPEC authored now
+  (supersedes the first-3-conversations gate; the ENDPOINT build remains a
+  separate approval), landing "Works with" honesty rider approved (built at
+  the next landing touch under the figure-inventory law), Helm keeps its
+  registered trigger. Sequencing per PLAN-TAAS §3 — nothing already ruled
+  moves. (2) PLAN-FLYWHEEL Q6 ruled: FR-32 C3 saved views ship WITHOUT
+  export; the registered data-export trigger stands. Q4 adopted (L2
+  per-customer floor ≥10 labels/detector; cross-customer priors n≥25). Q5
+  adopted: TE-5 amended — PRD/design authored on Fable, implementation on
+  Opus, gate agents Sonnet (docs/10 + CLAUDE.md updated). Q7 adopted in
+  principle (benchmark toggle default ON with disclosure) — ships only with
+  the R-F1 copy sign-off. (3) R-F1 ruled OPTION A IN PRINCIPLE: training
+  strictly on counts/aggregates/labels; the EXACT amended FR-23/Terms/
+  Privacy sentences require a separate founder sign-off before any copy or
+  test change; M-FLY-0 (A1 training-frame contract + A2 cohort ledger — no
+  customer-facing surface, no copy) may build ahead of that sign-off.
 - 2026-07-23 R-MULTI-SOURCE (founder, same-day follow-up to R-EXPLORER:
   "only one source can be connected at a time, no option to select multiple
   llm accounts and switching it to that details"): (1) the connect flow's
