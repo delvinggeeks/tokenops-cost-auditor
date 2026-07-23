@@ -31,6 +31,19 @@ from tokenops_cost_auditor.services.report.render_json import render_json
 from tokenops_cost_auditor.services.report.render_pdf import render_pdf, render_report_html
 from tokenops_cost_auditor.services.rules.findings import Finding
 
+SEAT_METHODOLOGY = (
+    "This is seat governance, not a token audit. The seat COUNTS and each "
+    "seat's last-activity date are read deterministically from your uploaded "
+    "export by code with no AI model calls (NFR-01); usernames and any content "
+    "are never read (FR-22). A seat is counted idle when it has no activity in "
+    "the window you chose. The recoverable figure is idle seats times the "
+    "per-seat rate YOU entered (defaulting to GitHub's public list price) — a "
+    "stated input, not a machine-verified rate, because SaaS seat prices are "
+    "outside our token-price feed by design. This is a point-in-time snapshot "
+    "of the export, not a scaled monthly projection. Reclaiming seats is your "
+    "action in GitHub; we only surface the idle ones."
+)
+
 _COVERAGE: tuple[dict[str, object], ...] = (
     {
         "detector": "d7_idle_seats",
@@ -92,6 +105,7 @@ def run_seat_audit(
         row_count=summary.total,
         generated_at=generated_at,
         equiv_spend=True,  # subscription, not metered — the honest FR-30 framing
+        methodology=SEAT_METHODOLOGY,
         tier="seat-governance",
         coverage=_COVERAGE,
     )

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 from datetime import UTC, datetime, timedelta
 
 from fastapi import FastAPI
@@ -120,6 +121,18 @@ class TestJourney:
         # the report page renders and shows the seat finding, not token waste
         report = client.get(resp.headers["location"])
         assert report.status_code == 200
+        # HONESTY (cold f.1-3 / system-tester f.4): the seat report must NOT
+        # claim the rate was machine-verified, and must NOT call a snapshot a
+        # scaled window or seats "calls"
+        page = re.sub(r"\s+", " ", report.text)
+        # the misleading TOKEN provenance/methodology must be gone...
+        assert "machine-verified date unavailable" not in page
+        assert "Rates from pricing table version" not in page
+        assert "scaled to 30 days" not in page  # it's a snapshot, not a projection
+        assert "normalize the observed window to 30 days" not in page  # token methodology
+        # ...replaced by the honest seat framing
+        assert "not a machine-verified rate" in page
+        assert "seats reviewed" in page  # not "N calls"
         with app.state.session_factory() as session:
             audit = session.execute(
                 select(Audit).where(Audit.provider_mix == "github-copilot")

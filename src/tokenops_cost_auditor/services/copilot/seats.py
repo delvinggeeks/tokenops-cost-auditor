@@ -95,7 +95,8 @@ def parse_seats(blob: str) -> list[SeatRecord]:
             SeatRecord(
                 last_activity_at=_parse_dt(r.get("last_activity_at")),
                 created_at=_parse_dt(r.get("created_at")),
-                pending_cancellation=bool(pc) and str(pc).lower() not in ("", "false", "none"),
+                pending_cancellation=bool(pc)
+                and str(pc).strip().lower() not in ("", "false", "none", "0"),
             )
         )
     if not out:

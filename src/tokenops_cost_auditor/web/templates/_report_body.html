@@ -6,10 +6,20 @@
   <div class="meta">
     Audit <code>{{ report.audit_id }}</code>
     {% if report.generated_at %} · generated {{ report.generated_at[:10] }}{% endif %}
+    {% if report.tier == "seat-governance" %}
+    · {{ "{:,}".format(report.row_count) }} seats reviewed
+    {% else %}
     · {{ report.observed_days }} day{{ "s" if report.observed_days != 1 }} of traffic
     · {{ "{:,}".format(report.row_count) }} calls
+    {% endif %}
   </div>
-  {% if report.equiv_spend %}
+  {% if report.tier == "seat-governance" %}
+  {# R-COPILOT: the dollars use the customer's STATED per-seat rate, not a
+     verified token price — say so, don't reuse the token-equivalent note. #}
+  <div class="meta equiv-note">Seat counts and last-activity are measured from your
+    export; the dollar figure uses the per-seat rate you entered (GitHub plan
+    price), not a verified rate.</div>
+  {% elif report.equiv_spend %}
   {# FR-30 verbatim (R-EQUIV-SPEND) — subscription-plan traffic, e.g. Claude Code #}
   <div class="meta equiv-note">Figures are API-equivalent token value; actual billing depends on your plan.</div>
   {% endif %}
@@ -24,7 +34,11 @@
   <div class="summary-cards">
     <div class="card">
       <div class="card-label">Current monthly spend
-        <span class="muted">(your {{ report.observed_days }}-day window scaled to 30 days)</span></div>
+        {% if report.tier == "seat-governance" %}
+        <span class="muted">({{ "{:,}".format(report.row_count) }} seats at your per-seat rate)</span>
+        {% else %}
+        <span class="muted">(your {{ report.observed_days }}-day window scaled to 30 days)</span>
+        {% endif %}</div>
       <div class="card-value">${{ "%.2f"|format(report.monthly_spend_usd) }}</div>
     </div>
     <div class="card">
@@ -32,7 +46,9 @@
       <div class="card-value">${{ "%.2f"|format(report.monthly_optimized_usd) }}</div>
     </div>
     <div class="card">
-      <div class="card-label">Observed spend ({{ report.observed_days }}d window)</div>
+      <div class="card-label">
+        {%- if report.tier == "seat-governance" %}Total seat spend
+        {%- else %}Observed spend ({{ report.observed_days }}d window){% endif %}</div>
       <div class="card-value">${{ "%.2f"|format(report.total_spend_usd) }}</div>
     </div>
     <div class="card">
@@ -152,11 +168,22 @@
 
 <section class="section provenance">
   <h2>Pricing data provenance</h2>
+  {% if report.tier == "seat-governance" %}
+  <p>
+    Seat governance, not a token audit. The seat COUNTS and each seat's
+    last-activity date are measured from your export. The per-seat dollar
+    rate is the one you entered (defaulting to GitHub's public list price) —
+    a stated input, <strong>not</strong> a machine-verified rate, because SaaS
+    seat prices are outside our token-price feed by design. Confirm it against
+    your GitHub plan.
+  </p>
+  {% else %}
   <p>
     Rates from pricing table version <strong>{{ report.pricing_version }}</strong>,
     machine-verified {{ report.pricing_last_verified or "date unavailable" }}.
     Each call is priced at the rate in effect at its timestamp.
   </p>
+  {% endif %}
   {% if report.unpriced_models %}
   <p class="unpriced"><strong>{{ report.unpriced_models|length }} unpriced model(s)</strong>
     excluded from totals rather than guessed: {{ report.unpriced_models|join(", ") }}.</p>

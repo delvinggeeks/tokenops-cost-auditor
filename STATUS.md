@@ -35,6 +35,30 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## WP-COPILOT-AGG gate round (2026-07-24) — spec PWN · cold PWN · system-tester FAIL→fixed
+
+The report-template mismatch I flagged was real and both cold + system-
+tester caught it. system-tester FAIL: the seat report rendered "machine-
+verified date unavailable" (asserting a verification that never ran).
+cold PWN corroborated: f.1 equiv banner "API-equivalent token value"
+wrong for seats, f.2 "N-day window scaled to 30 days" false (seat report
+is a snapshot, observed_days=1, no scaling), f.3 the provenance line, f.4
+CSV pending "0" truthy. ALL FIXED: _report_body.html now branches on
+tier=="seat-governance" for the header (seats reviewed, not calls), the
+equiv banner (stated-rate wording), the "current monthly spend" caption
+(seats × rate, no scaling claim), and the provenance section (the rate is
+a stated input, NOT machine-verified — SaaS seat prices outside the token
+feed by design). report.py passes a SEAT_METHODOLOGY (the token
+methodology mentioned the verified rate card + 30-day scaling — none
+apply). f.4: "0" added to the pending exclusion set. Landing "on the way"
+→ "ships now" (system-tester f.6). Journey test now ASSERTS the seat
+report carries no "machine-verified"/scaled-window/token-methodology copy
+and shows the honest input-rate line — the class can't regress. spec PASS-
+WITH-NOTES (R-COPILOT recorded, X-02/FR-22/NFR-01 clean; its note was the
+same headline-field concern, resolved by the tier-aware framing). Full
+chain green. Re-gate system-tester on the fix diff, then COPILOT closes →
+SDK queue (S-6, O-0).
+
 ## WP-COPILOT-AGG (2026-07-24) — Copilot seat governance; the tool-layer answer, built
 
 R-COPILOT ruled A/P1; built end to end (R-VERTICAL). The FIRST non-token
