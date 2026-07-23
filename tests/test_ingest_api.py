@@ -159,9 +159,41 @@ class TestFR22Door:
             json={"records": [{"ts": "2026-07-23T00:00:00Z"}]},
             headers=h,
         )
-        assert resp.status_code == 422 and "missing required" in err(resp)
+        assert resp.status_code == 422 and "missing" in err(resp)
         resp = client.post("/api/v1/ingest", json={"records": []}, headers=h)
         assert resp.status_code == 422
+
+    def test_06b_empty_required_and_huge_counts_refused(self, app: FastAPI) -> None:
+        """cold-review f.1/f.2: an empty required field would 201 at the door
+        then fail every row downstream; an absurd count would distort totals.
+        Both must be refused BEFORE anything is stored."""
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        h = {"Authorization": f"Bearer {token}"}
+        empty = dict(RECORDS[0], provider="")  # present but empty
+        resp = client.post("/api/v1/ingest", json={"records": [empty]}, headers=h)
+        assert resp.status_code == 422 and "provider" in err(resp)
+        huge = dict(RECORDS[0], prompt_tokens=10**18)
+        resp = client.post("/api/v1/ingest", json={"records": [huge]}, headers=h)
+        assert resp.status_code == 422 and "prompt_tokens" in err(resp)
+        with app.state.session_factory() as session:
+            assert session.execute(select(Audit)).scalar_one_or_none() is None  # nothing stored
+
+    def test_06c_key_cap_enforced(self, app: FastAPI) -> None:
+        """cold-review f.3: the row-locked mint cap holds. Seed keys via ORM
+        (the 5/min mint limit is a separate control), then the next mint 403s."""
+        from tokenops_cost_auditor.web.routes_ingest import MAX_KEYS_PER_USER
+
+        uid = grant(app)
+        with app.state.session_factory() as session:
+            for i in range(MAX_KEYS_PER_USER):
+                session.add(IngestKey(user_id=uid, label=f"k{i}", key_hash=f"hash-{i}"))
+            session.commit()
+        over = TestClient(app).post(
+            "/sources/sdk/key", data={"label": "one too many"}, headers=HDR
+        )
+        assert over.status_code == 403 and "limit" in over.json()["detail"]
 
 
 class TestAuthority:

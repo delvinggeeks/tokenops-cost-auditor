@@ -25,6 +25,7 @@ context), shown once at mint, revoke DELETES the hash (authority law).
 from __future__ import annotations
 
 import csv
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -32,12 +33,13 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
-from tokenops_cost_auditor.persistence.models import IdempotencyKey, IngestKey, utcnow
+from tokenops_cost_auditor.persistence.models import IdempotencyKey, IngestKey, User, utcnow
 from tokenops_cost_auditor.persistence.repo import create_audit as repo_create_audit
 from tokenops_cost_auditor.persistence.repo import find_idempotent_audit, get_or_create_user
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
@@ -50,6 +52,24 @@ router = APIRouter(tags=["ingest"])
 
 MAX_RECORDS_PER_BATCH = 5_000  # stated in the 422, never silent
 MAX_KEYS_PER_USER = 10
+# per-field ceiling (cold-review f.2): a day's tokens/latency for one call
+# cannot plausibly exceed this; anything larger is malformed, not real.
+_MAX_COUNT = 1_000_000_000_000
+
+
+def _ingest_rate_key(request: Request) -> str:
+    """Rate-limit per ingest key (cold-review f.5): the bearer-auth route
+    never populates request.state.user_email, so the global user-or-ip key
+    would bucket every key's traffic — and every bad-token 401 — under one
+    shared IP. Key on a HASH of the bearer token (never the plaintext);
+    unauthenticated calls fall to IP so they can't drain a real key's
+    budget."""
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer ik_"):
+        digest = hashlib.sha256(auth.encode()).hexdigest()[:32]
+        return f"ingest:{digest}"
+    return f"ip:{get_remote_address(request)}"
+
 
 # The documented generic contract, as a strict allowlist. Field -> (kind,
 # max_len for strings). Anything else is refused BY NAME.
@@ -92,11 +112,14 @@ def _validate_record(idx: int, record: object) -> dict[str, Any]:
                 f"client-side if you want cache detection."
             ),
         )
-    missing = [f for f in _REQUIRED if f not in record]
+    # cold-review f.1: presence is not enough — a required field that is
+    # empty ("") passes the door then fails EVERY row downstream, so the
+    # batch 201s while the pipeline silently rejects it. Reject empties here.
+    missing = [f for f in _REQUIRED if not str(record.get(f, "")).strip()]
     if missing:
         raise HTTPException(
             status_code=422,
-            detail=f"records[{idx}] is missing required fields: {', '.join(missing)}",
+            detail=f"records[{idx}] is missing or empty required fields: {', '.join(missing)}",
         )
     out: dict[str, Any] = {}
     for name, value in record.items():
@@ -110,15 +133,25 @@ def _validate_record(idx: int, record: object) -> dict[str, Any]:
                     ),
                 )
         elif kind == "int":
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            # cold-review f.2: a ceiling too — an absurd token count would
+            # distort cost totals and detector thresholds downstream.
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or not 0 <= value <= _MAX_COUNT
+            ):
                 raise HTTPException(
                     status_code=422,
-                    detail=f"records[{idx}].{name} must be a non-negative integer",
+                    detail=f"records[{idx}].{name} must be an integer in [0, {_MAX_COUNT:,}]",
                 )
-        elif isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+        elif (
+            isinstance(value, bool)
+            or not isinstance(value, int | float)
+            or not 0 <= value <= _MAX_COUNT
+        ):
             raise HTTPException(
                 status_code=422,
-                detail=f"records[{idx}].{name} must be a non-negative number",
+                detail=f"records[{idx}].{name} must be a number in [0, {_MAX_COUNT:,}]",
             )
         out[name] = value
     return out
@@ -144,7 +177,7 @@ def _key_from_bearer(request: Request, session: Session, authorization: str | No
 
 
 @router.post("/api/v1/ingest")
-@limiter.limit("60/minute")
+@limiter.limit("60/minute", key_func=_ingest_rate_key)
 def ingest(
     request: Request,
     background: BackgroundTasks,
@@ -220,6 +253,10 @@ def mint_key(
     settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # Lock the user row so concurrent mints serialize on the count
+        # (cold-review f.3 — the saved-views/link-code race class, caught
+        # again). Row lock on Postgres; no-op on SQLite.
+        session.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
         plan = user_plan(session, user.id)
         if plan not in ("pro", "team"):
             raise HTTPException(
@@ -243,7 +280,13 @@ def mint_key(
         session.add(row)
         auditlog.append(session, user_email, "ingest.key_minted", row.label)
         session.commit()
-    host = settings.app_base_url or str(request.base_url).rstrip("/")
+    host = (settings.app_base_url or str(request.base_url)).rstrip("/")
+    # cold-review f.4: the DSN embeds the token as https://<token>@<host>.
+    # If a misconfigured host carries no scheme, prepend one HERE rather
+    # than let the template's .replace() silently drop the token — a DSN
+    # without its credential is unrecoverable, shown-once.
+    if not host.startswith(("http://", "https://")):
+        host = f"https://{host}"
     tpl = request.app.state.jinja.get_template("app/_ingest_key.html")
     return HTMLResponse(tpl.render(token=token, host=host))
 
