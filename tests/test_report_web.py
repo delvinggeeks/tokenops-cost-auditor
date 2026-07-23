@@ -77,6 +77,16 @@ class TestTREP04Methodology:
         assert f"machine-verified {waste_report.pricing_last_verified}" in html
         assert "0 unpriced models" in html
 
+    def test_trep08b_token_report_keeps_its_own_copy(self, waste_report: ReportModel) -> None:
+        """Symmetric guard (WP-COPILOT-AGG re-gate): the seat-tier branch must
+        NOT strip the TOKEN report's own provenance — pin it present so a
+        future seat edit can't silently regress the token path."""
+        html = render_report_html(waste_report, template="report.html")
+        assert waste_report.tier != "seat-governance"  # this fixture is a token audit
+        assert "scaled to 30 days" in html  # the token scaling caption stays
+        assert "machine-verified" in html  # the token provenance stays
+        assert "not a machine-verified rate" not in html  # no seat copy bleed
+
 
 class TestTREP0506SignedUrls:
     SECRET = "test-secret"

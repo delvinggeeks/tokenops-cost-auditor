@@ -35,6 +35,24 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## WP-COPILOT-AGG CLOSED (2026-07-24) — re-gate PASS; "proceed on connectors" COMPLETE
+
+system-tester re-gate PASS-WITH-NOTES: live render confirms the seat report
+carries none of the misleading token copy, the honest replacements are
+present, FR-22 holds, and the TOKEN report path did not regress (else-
+branches byte-identical, test_report_web still green). Its symmetric-
+coverage note actioned: test_trep08b pins that a token report KEEPS
+"scaled to 30 days" + "machine-verified" and shows no seat-copy bleed — so
+a future seat-branch edit can't silently regress the token path either
+direction. WP-COPILOT-AGG closed.
+
+"proceed on connectors" is now COMPLETE: five model-cloud connectors
+(OpenAI/Anthropic/Azure/Bedrock/Vertex, agent-verified pricing), the
+SDK+API (S-0/S-1), Copilot seat governance (the first non-token analysis,
+honest per-seat-rate framing), and the visible Works-with coverage map.
+NEXT per "and then sdk queue": S-6 (read API tokens + OAuth apps +
+developer settings), then O-0 (the workspace tenancy spine, R-ORG).
+
 ## WP-COPILOT-AGG gate round (2026-07-24) — spec PWN · cold PWN · system-tester FAIL→fixed
 
 The report-template mismatch I flagged was real and both cold + system-
