@@ -29,19 +29,21 @@ Model keys match exactly, or as dated snapshots (`model-key-2...`), longest
 key first — `gpt-5.4-nano` can never silently take `gpt-5.4`'s card.
 <!-- src: table.py boundary rule -->
 
-## Human-verified, on the record
+## Strictly verified, on the record
 
-The table carries a `last_verified` date. Our CI warns loudly when it exceeds
-14 days; the founder's daily ops digest carries the age; and the verification
-itself is logged with the verifier's name and the corrections made.
-<!-- src: NFR-15; pricing_golden_NOTES.md founder verification log -->
+The table carries a `last_verified` date — the last time our strict
+verification gate ran green. On every release, an automated verifier
+compares every current rate row against independent published price data;
+one mismatched or uncorroborated row and the release does not ship. There
+is no override and no human bypass. Our CI warns loudly when the date
+exceeds 14 days; the founder's daily ops digest carries the age.
+<!-- src: NFR-15; R-AUTO-PRICING; scripts/pricing_verify.py -->
 
-A weekly read-only refresh script fetches the documented source pages and
-prints a drift diff — new model ids, candidate rate mismatches, unreachable
-pages. It **cannot write the pricing table**; by design there is no code path
-from a scraped page to a rate used in money math. A human reads the diff,
-verifies against the provider's page, and edits the table by hand.
-<!-- src: FR-29; scripts/pricing_refresh.py -->
+A daily sync additionally tracks routine rate updates from the same
+independent data, and large swings are held and surfaced rather than
+silently applied. Both paths log what they compared and what changed —
+the record is the machine's, checkable by anyone.
+<!-- src: FR-29; R-LIVE-PRICING; scripts/pricing_sync.py -->
 
 !!! note "Why we refuse live pricing"
     Scraped or API-fetched rates change without audit trail and break
