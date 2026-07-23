@@ -72,6 +72,19 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         )
         plan = user_plan(session, user.id) if user else "free"
         active_count = sum(1 for s in sources if s.status == "active")
+        from tokenops_cost_auditor.persistence.models import Device
+
+        devices = (
+            session.execute(
+                select(Device)
+                .where(Device.user_id == user.id, Device.revoked_at.is_(None))
+                .order_by(Device.created_at)
+            )
+            .scalars()
+            .all()
+            if user
+            else []
+        )
         # Rendered in the APP shell now, not base.html: the designed sidebar
         # links here, so rendering the old shell navigated users out of the
         # product's own design (v4 unify).
@@ -80,6 +93,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             tpl.render(
                 help=help_registry,
                 sources=sources,
+                devices=devices,
                 plan=plan,
                 plan_name=plans.get(settings, plan).name,
                 limit=settings.plan_source_limits.get(plan, 0),

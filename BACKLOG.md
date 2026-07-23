@@ -247,6 +247,13 @@ Layers b (policy-threshold recommendations mapped to the provider's NATIVE
 enforcement levers — X-02 stands, we never enforce) and c (governance
 retainer) remain Phase-2, unpromoted.
 
+## WP-CC-LINK — CORE JOURNEY SHIPPED 2026-07-23 (see STATUS); residue below
+
+SHIPPED: device-link + consent floor + ship→audit + machines UI + revoke +
+cron helper. RESIDUE (packaging, this milestone's slice 2): `tokenops`
+short name on PyPI (founder-lane publish), Claude Code skill auto-install,
+pipx self-update path.
+
 ## WP-CC-LINK — one command, one consent (R-CC-LINK 2026-07-23)
 
 CONSOLIDATES WP-SKILL and WP-COLLECTOR into a single subscriber deliverable.

@@ -112,6 +112,45 @@
     Revoking deletes the stored key immediately.
   </p>
 {{ kit.surface_close() }}
+
+{# WP-CC-LINK: Claude Code machines — the T3 collector fleet. #}
+{{ kit.surface_open(title="Claude Code machines", icon="upload") }}
+  <p class="tells">Link a machine once; it ships token counts from your Claude
+    Code transcripts on your schedule. Never a prompt, never a completion.</p>
+  {% if devices %}
+  {{ kit.table_open([
+       {"label": "Machine"}, {"label": "Linked"}, {"label": "Last ship"},
+       {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+     ]) }}
+    {% for d in devices %}
+    <tr>
+      <td><b>{{ d.hostname }}</b></td>
+      <td>{{ d.created_at.strftime("%Y-%m-%d") }}</td>
+      <td>{{ d.last_ship_at.strftime("%Y-%m-%d %H:%M UTC") if d.last_ship_at else "never" }}</td>
+      <td class="row-actions">
+        {{ kit.icon_action("View usage", "eye", href="/explore?source=" ~ d.id) }}
+        <form method="post" action="/sources/devices/{{ d.id }}/revoke" class="inline-form"
+              data-confirm="Unlink this machine? We delete its device key immediately — ships stop; your past audits stay.">
+          {{ kit.icon_action("Unlink this machine", "trash", danger=True) }}
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  {{ kit.table_close() }}
+  {% endif %}
+  {% if plan in ("pro", "team") %}
+    <p style="margin-top: var(--s2);">
+      <button class="btn btn-primary" hx-post="/sources/claude-code/code"
+              hx-target="#link-code" hx-swap="innerHTML">Link a machine</button>
+    </p>
+    <div id="link-code" aria-live="polite"></div>
+  {% else %}
+    <p class="muted">The collector is part of Pro — <a href="/billing">see plans</a>.
+      The <a href="/upload">upload path</a> works on every plan.</p>
+  {% endif %}
+  <p class="counts-note">You'll see the exact consent text before anything links —
+    counts only, on your schedule, revocable here in one click.</p>
+{{ kit.surface_close() }}
 {% endblock %}
 
 {% block scripts %}

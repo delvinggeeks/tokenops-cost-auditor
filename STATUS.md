@@ -52,6 +52,24 @@ order), f.2 FIXED: a flywheel exception can never 500 the admin panel
 history", f.4 FIXED: unknown row_count/observed_days pass through as
 None, never fake zeros (schema types widened; allowlist unchanged).
 
+## WP-CC-LINK core (2026-07-23) — one command, one consent; the T3 journey is live end to end
+
+Vertical per rule 9: dashboard mints a one-shot hashed code (10min, Pro+)
+→ CLI `link` prints the consent text and REFUSES without a person typing
+'I agree' at a TTY (no bypass flag exists — R-CC-LINK 2, both halves
+tested: server rejects consent!=true, CLI refuses non-TTY and wrong
+words, network provably untouched before consent) → device token minted,
+HASHED at rest, consent_at NOT NULL by schema, audit-logged → `ship`
+exports counts via the lifted transcripts core (scripts exporter now a
+thin wrapper, contract unchanged) and lands a REAL audit through the T1
+pipeline (FR-26 idempotent — cron re-ships replay; paid_via=collector;
+device-grade source_id attribution) → Sources shows the machine with
+last-ship + eye/unlink actions → revoke refuses the next ship in plain
+words while history stays. Plan lapse pauses ships honestly (402 'ships
+pause until it resumes'). Migration 016 rehearsed. RESIDUE (slice 2,
+recorded in BACKLOG): PyPI short-name publish (founder-lane), skill
+auto-install, self-update. Gate round next.
+
 ## R-REACHABILITY (2026-07-23) — why the validator missed it, and the laws that close it
 
 Founder question after the unlinked-Anthropic escape: "why is this not

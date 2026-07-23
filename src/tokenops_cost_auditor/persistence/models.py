@@ -286,6 +286,39 @@ class SavedView(Base):
     __table_args__ = (UniqueConstraint("user_id", "name", name="uq_saved_view_user_name"),)
 
 
+class LinkCode(Base):
+    __tablename__ = "link_codes"  # WP-CC-LINK: short-lived, one-shot, hashed
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Device(Base):
+    __tablename__ = "devices"  # WP-CC-LINK: linked Claude Code machines
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    hostname: Mapped[str] = mapped_column(String(120), nullable=False)
+    # Keyed one-way HMAC of the device token (crypto.credential_fingerprint
+    # context) — the plaintext exists only in the customer's config file.
+    # NULL after revoke: the key material is DELETED, the row keeps its
+    # identity for audit attribution (authority-law parity with sources).
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    # R-CC-LINK 2: the recorded moment a human read the consent text and agreed.
+    consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_ship_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class FindingFeedback(Base):
     __tablename__ = "finding_feedback"  # L0 labeling pipeline (docs/12 Stage 3)
 

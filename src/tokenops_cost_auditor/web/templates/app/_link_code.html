@@ -1,0 +1,11 @@
+{# WP-CC-LINK: the one-shot link code, shown ONCE (htmx swap target). #}
+<div class="card" style="margin-top: var(--s2);">
+  <p><strong>Run this on the machine</strong> (code expires in {{ ttl }} minutes,
+    works once):</p>
+  <pre style="overflow-x:auto; padding: var(--s2); background: var(--surface-tint);
+    border: 1px solid var(--rule); border-radius: var(--radius-sm);"><code>pipx install tokenops-cost-auditor
+tokenops-cost-auditor link {{ code }} --server {{ base }}</code></pre>
+  <p class="muted" style="font-size: 13px;">The command shows exactly what is
+    collected — token counts only, never text — and links ONLY after you agree
+    at the prompt. Same command on every machine you want linked.</p>
+</div>
