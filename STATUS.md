@@ -35,6 +35,29 @@ findings in this slice") + two-audit journey pin → final re-gate PASS
 Role ledger to date: 6 sweeps, 8 findings, 7 real fixes test-pinned,
 1 lawful R-Q9 decline, 0 found by the founder.
 
+## R-F1-SIGNOFF (2026-07-23) — the promise amended and shipped; Tracks A/B unblocked
+
+Founder signed off the option-A sentences; applied verbatim the same day
+on every surface that carried the old promise (footer/landing, legal
+web+docs-site mirrors, report DATA_HANDLING — one constant feeds HTML and
+JSON, so the report cannot drift). Benchmark toggle shipped: users.
+benchmark_sharing (migration 015, chain 001→015 rehearsed), default ON
+per R-PROCEED Q7 and STATED in words ("Included by default — uncheck to
+opt out", ux f.5), one-checkbox opt-out, audit-logged both directions.
+GATE ROUND — three gates, no FAIL, no bug: spec-guard PWN (notes
+actioned: disclosure added to BOTH Terms surfaces per the amendment's
+letter; UAT2-KIT + launch-assets drafts brought in line; stale STATUS
+"still the blocker" line reconciled; settings paraphrase RECORDED as
+accepted page-relative deviation from the ruled disclosure — the signed
+sentences stand verbatim on privacy/terms); ux PWN (f.5 default stated,
+f.6 "cohort"→"benchmark group"); system-tester PWN (live walk: promise
+verbatim on all five surfaces, opt-out round trip + audit-log sequence
+confirmed; its K-1 overrun disclosed with cause — discovery cost, no
+open questions). v4 design mockups keep the old phrase as historical
+artifacts (spec f.9, accepted). PLAN-FLYWHEEL Tracks A/B UNBLOCKED;
+M-FLY-0 (A1 training frame + A2 cohort ledger) is next in queue order —
+both MUST honor benchmark_sharing by the column contract.
+
 ## R-PROCEED (2026-07-23) — rulings recorded; C3 saved views + T4 spec shipped
 
 Founder ruled "proceed" on the standing question lists; recorded as the
@@ -150,8 +173,8 @@ FILE MAP DELTA: +services/dashboard/explorer.py, +web/routes_explorer.py,
 +migrations/013_source_attribution, +tests/test_explorer.py;
 crypto.credential_fingerprint, pull backfill, source_audit/routes_sources
 attribution+dedup, sources.html links, help_registry explore key, _shell
-nav. OPEN: PLAN-FLYWHEEL §6 rulings R-F1 (training vs promise — still the
-blocker for Tracks A/B), Q6 (C3 saved views + export), Q4/Q5/Q7/Q8.
+nav. OPEN AT THE TIME: PLAN-FLYWHEEL §6 rulings — since RESOLVED same day
+by R-PROCEED and R-F1-SIGNOFF (see entries above); kept for the record.
 
 ### M-EXPLORER gate round (2026-07-23) — four gates, no FAIL
 

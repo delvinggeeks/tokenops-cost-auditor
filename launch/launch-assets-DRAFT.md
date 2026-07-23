@@ -81,7 +81,7 @@ file.
 watching for $99/mo (₹8,999) — connect your provider read-only and it audits
 on a schedule, alerts on spend moves, and posts you a monthly savings
 statement. One-off audit for enterprises: $500 (₹45,000). Your data:
-"analyzed then deleted; nothing retained beyond 7 days; never used for training." Docs — including our full methodology, our defect log, and the
+"analyzed then deleted; nothing retained beyond 7 days; your logs and prompts are never used to train any model." Docs — including our full methodology, our defect log, and the
 audit of ourselves — at <docs URL>. DM or <site URL> to start.
 
 ---

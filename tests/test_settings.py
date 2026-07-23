@@ -377,6 +377,7 @@ class TestBenchmarkSharing:
         squashed = re.sub(r"\s+", " ", page.text)
         assert "Include my account in peer benchmarks" in squashed
         assert "never your content" in squashed
+        assert "Included by default" in squashed
         assert "never used to train any model" in squashed
         checkbox = re.search(r'name="benchmark_sharing"[^>]*', page.text)
         assert checkbox is not None and "checked" in checkbox.group(0)  # default ON

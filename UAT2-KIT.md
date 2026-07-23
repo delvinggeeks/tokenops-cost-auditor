@@ -27,7 +27,7 @@ finding.
 >    by monthly dollar impact.
 >
 > Data policy, verbatim from our terms: uploaded logs are
-> "analyzed then deleted; nothing retained beyond 7 days; never used for training."
+> "analyzed then deleted; nothing retained beyond 7 days; your logs and prompts are never used to train any model."
 > No prompt text is ever stored — the engine keeps token counts only, and
 > that's enforced by automated tests, not just policy.
 >
