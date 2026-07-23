@@ -4,7 +4,9 @@ The standing law behind every card: a card is DONE only when the uniform
 DoD held — tests per docs/05 pattern + traceability same commit + golden
 NOTES for money math + FR-22 tier tests + honesty-law rendering + gate
 verdicts (TE-8) + ux mockup-before-wiring on new surfaces + STATUS
-paragraph + conventional commits + ≤3-day slices. Sources of truth:
+paragraph + conventional commits + ≤3-day slices + R-VERTICAL: the slice
+contains its UI, click path, journey test and ux gate — a user finishes
+the job inside the one milestone, never a layer at a time. Sources of truth:
 docs/00-07/11/12/13, PLAN.md, PLAN-V15.md, PLAN-FLYWHEEL.md, PLAN-TAAS.md,
 BACKLOG.md, STATUS.md, CHANGELOG.md. This board is the MAP; those are the
 territory.

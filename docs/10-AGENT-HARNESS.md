@@ -178,3 +178,11 @@ Three laws close the three blind spots:
 3. Plans are real in walks: at least one flow per run as Free AND as a
    granted plan; the admin grant endpoint (runbook §9) exists so this never
    needs SQL.
+
+## Amendment 2026-07-23c — R-VERTICAL (founder: "vertical slices not horizontal")
+
+CLAUDE.md rule 9, restated for gates: reviewers treat a layer shipped
+without its reachable UI, journey test and ux gate as a FAIL condition,
+not a note. The day's own evidence: the Anthropic connector (backend
+complete, zero inbound links, invisible for weeks) and the M-FLY-1
+widget/report split were horizontal thinking wearing green suites.

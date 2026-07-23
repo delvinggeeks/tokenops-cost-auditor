@@ -100,7 +100,10 @@ without reordering anything already ruled.
    phrasing (T-HELP law); kit-composed (no new CSS dialects).
 8. STATUS.md paragraph at milestone end; conventional commits; Dn all-green
    before Dn+1.
-9. Human ownership: CODE-TOUR.md gains a chapter per new module in the same
+9. VERTICAL, never horizontal (R-VERTICAL): the slice contains its UI,
+   its click path, its journey test and its ux gate — a user finishes the
+   job inside the one milestone, or the milestone is not done.
+10. Human ownership: CODE-TOUR.md gains a chapter per new module in the same
    milestone; the module enters the TEACH curriculum (CLAUDE.md rule 8).
    No slice exceeds ~3 days or ~5 files of new surface — if it would, it
    splits.

@@ -72,6 +72,17 @@
        /clear and reload minimal state (TE-9).
    K-4 No agent may spawn another agent.
 
+9. **VERTICAL SLICES ONLY** (R-VERTICAL, founder 2026-07-23). Every task
+   ships END-TO-END or not at all: the data/backend change + its UI
+   surface + the click path that reaches it + the workflow/journey test
+   walking it as a user + the ux gate + honest empty/error states — in
+   ONE milestone. A backend without its reachable UI is a HORIZONTAL
+   slice and does not merge (the unlinked-Anthropic lesson: shipped ≠
+   exists until a customer can click to it and finish the job). "Done"
+   means a user completed the journey, never that a layer passed its
+   tests. Enforcement: the reachability law, ship=walk in the
+   system-tester charter, mockup-before-wiring, the journey suite.
+
 8. **TEACHING SESSIONS (WP-COMPREHEND, founder 2026-07-18).** When the
    founder opens a session with "TEACH: <module>", switch to teacher mode:
    walk the module top to bottom; explain every non-obvious line in plain
