@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — SDK &amp; API keys card on Sources (S-0) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (ONE per flow): the freshly minted DSN panel slides in with
+     the kit's swap-in (150ms fade + 4px rise). The Copy button's "Copied"
+     flip is standard utility feedback, not a delight. No money here. -->
+<!-- Grammar: the machines-list ledger (WP-CC-LINK) reused whole — table,
+     icon_action revoke, provenance line. The mint-reveal reuses the
+     _link_code shown-once pattern. No new dialect. -->
+</head>
+<body class="app-body">
+<main class="wrap" style="padding: var(--s4) 0; max-width: 900px;">
+
+  <section class="widget w-12">
+    <div class="widget-head">
+      <svg class="i i-lg" aria-hidden="true"><use href="#i-source"/></svg>
+      <h2>SDK &amp; API</h2>
+      <details class="help"><summary aria-label="What is this?">?</summary>
+        <div class="help-body"><dl>
+          <dt>What this is</dt><dd>Ingest keys for sending usage from your
+            own code — the SDK, a script, or CI — straight into your audits.</dd>
+          <dt>What a key can do</dt><dd>Write usage counts to your account.
+            Nothing else — it can read nothing, so a leaked key cannot see
+            a single number of yours.</dd>
+          <dt>What we accept</dt><dd>Token counts, timestamps, model names.
+            Requests carrying prompt or completion text are rejected at the
+            door — we refuse the data we promise never to hold.</dd>
+        </dl></div>
+      </details>
+    </div>
+    <p class="tells">One environment variable in your stack; your usage
+      shows up here. Counts only — the endpoint refuses text.</p>
+
+    <!-- Shown-once mint reveal (the _link_code grammar) -->
+    <div class="key-truth">
+      <p style="margin-top:0"><strong>Your new ingest key — shown once,
+        stored hashed.</strong> Put it in your environment now:</p>
+      <pre style="overflow-x:auto"><code>TOKENOPS_COST_AUDITOR_DSN=https://ik_9f2Xw7pLmR4tYv8cQbN1zKjH6dSaU3eWx0oGiFn5@tokenops-cost-auditor.com</code></pre>
+      <p style="margin:var(--s2) 0 0">
+        <button class="btn btn-primary" type="button">Copy DSN</button>
+        <span class="muted" style="font-size:13px">Send usage with one POST —
+          or `tokenops_cost_auditor.init()` once the SDK lands:</span>
+      </p>
+      <pre style="overflow-x:auto; font-size:12.5px"><code>curl -X POST https://tokenops-cost-auditor.com/api/v1/ingest \
+  -H "Authorization: Bearer ik_9f2Xw7pLmR4tYv8cQbN1zKjH6dSaU3eWx0oGiFn5" \
+  -H "Idempotency-Key: batch-2026-07-23-a" \
+  -d '{"records":[{"ts":"2026-07-23T10:00:00Z","provider":"openai",
+       "model":"gpt-5.4","prompt_tokens":3084,"completion_tokens":47,
+       "cached_tokens":0}]}'</code></pre>
+      <div class="provenance">counts only, per our data promise — a record
+        carrying prompt text is rejected, never stored</div>
+    </div>
+
+    <table class="ledger">
+      <thead><tr>
+        <th>Key</th><th>Label</th><th>Created</th><th>Last used</th><th></th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><code>ik_9f2X…</code></td>
+          <td>prod api service</td>
+          <td>2026-07-23</td>
+          <td>2 minutes ago</td>
+          <td><form class="inline-form"
+              data-confirm="Revoke this key? Ingest stops immediately and our copy is deleted; your past audits stay.">
+            <button class="icon-btn icon-btn-danger" aria-label="Revoke this key"
+                title="Revoke this key"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></form></td>
+        </tr>
+        <tr>
+          <td><code>ik_b41C…</code></td>
+          <td>ci nightly</td>
+          <td>2026-07-20</td>
+          <td class="muted">never — nothing shipped yet</td>
+          <td><form class="inline-form"
+              data-confirm="Revoke this key? Ingest stops immediately and our copy is deleted; your past audits stay.">
+            <button class="icon-btn icon-btn-danger" aria-label="Revoke this key"
+                title="Revoke this key"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></form></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top: var(--s2)">
+      <button class="btn btn-quiet" type="button">
+        <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+        Mint an ingest key</button>
+      <span class="muted addbar-note">Shown once; revoking deletes our copy
+        the moment you click.</span>
+    </p>
+    <div class="provenance">2 keys · every mint and revoke is in your
+      activity log · full contract in the docs</div>
+  </section>
+
+  <p class="muted" style="margin-top:var(--s4); font-size:13px;">MOCKUP v2 (ux notes honored: key-truth frame, full uncut credential, uniform data-confirm revoke, one delight) —
+    SAMPLE DATA. Card lives ON the Sources page below the machines list
+    (same page, same ledger grammar). Honest states: "never — nothing
+    shipped yet" instead of a blank; the FR-22 refusal stated where the
+    key is minted, not buried in docs; revoke names its consequence in
+    the aria-label. Empty state (no keys yet): the mint button + one line
+    "No ingest keys yet — mint one and your code can ship usage in a
+    minute." Plan-gated like the collector (Pro+): free accounts see the
+    card with the honest gate line and a /billing link, never a hidden
+    feature.</p>
+
+</main>
+</body>
+</html>

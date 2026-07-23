@@ -15,6 +15,29 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-SDK-PLATFORM + S-0 (2026-07-23) — the Sentry adoption model ruled; the ingest DSN shipped
+
+Founder ruling R-SDK-PLATFORM ("we need like Sentry platform where people
+can configure and use our platform") recorded in PRD Amendments;
+PLAN-SDK.md RULED — build order S-0 → S-1 → C-C. S-0 built end to end
+(R-VERTICAL): IngestKey model + migration 018 (rehearsed); mint on
+Sources (Pro+, shown once in the key-truth frame with the FULL DSN
+TOKENOPS_COST_AUDITOR_DSN=https://ik_…@host, stored hashed, 10-key cap
+stated); revoke DELETES the hash (authority law); POST /api/v1/ingest —
+the documented generic-CSV contract IS the wire format so records drive
+the existing T1 pipeline with ZERO new parser code (full six-detector
+coverage); FR-22 AT THE DOOR as a strict allowlist: unknown fields
+rejected 422 NAMING the offender, strings bounded (text can't smuggle
+through tag), refusal-not-silent-drop by design; FR-26 idempotency;
+60/min limit; plan-gated both halves (mint 403→/billing, lapse 402
+"pauses"). Attribution end to end: paid_via="sdk", audit.source_id=key
+→ /runs shows "SDK ingest", /explore lists "label (SDK)" (revoked stay
+listed). ux mockup gate PASS-WITH-NOTES, all four notes honored in the
+wiring (key-truth not an invented .panel; full uncut credential — the
+shown-once law; uniform data-confirm revoke; one delight). Tests: 9,
+including the DoD journey and envelope-aware (NFR-14) refusal pins.
+Gate round next; then S-1 (Python SDK) on the standing order.
+
 ## WP-DEVOPS-OBS gate round (2026-07-23) — ops PASS · spec PWN · cold FAIL→fixed→PASS · system-tester PARTIAL→closed
 
 ops-engineer PASS 11/11 (pipeline blocks on gate, concurrency, rollback

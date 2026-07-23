@@ -1,0 +1,212 @@
+"""S-0 tests (R-SDK-PLATFORM) — the ingest DSN, end to end.
+
+Pins: the mint→POST→audit→report journey (the S-0 DoD), the FR-22 door
+(strict allowlist, offenders NAMED, oversized strings refused), FR-26
+idempotency, plan gating both halves, revoke-deletes-the-hash (authority
+law), write-only trust boundary, explorer/runs attribution, R-NAMING in
+the shown-once reveal.
+"""
+
+from __future__ import annotations
+
+import re
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from tokenops_cost_auditor.persistence.models import Audit, IngestKey, Subscription, User
+
+EMAIL = "sdk-owner@example.com"
+
+
+def err(resp) -> str:
+    """NFR-14: /api/v1 errors arrive in the {error:{message}} envelope."""
+    return str(resp.json()["error"]["message"])
+
+
+HDR = {"X-User-Email": EMAIL}
+
+RECORDS = [
+    {
+        "ts": f"2026-07-{10 + i:02d}T10:00:00Z",
+        "provider": "openai",
+        "model": "gpt-5.4",
+        "prompt_tokens": 3000 + i,
+        "completion_tokens": 50,
+        "cached_tokens": 0,
+        "latency_ms": 812.5,
+        "tag": "summarizer",
+    }
+    for i in range(8)
+]
+
+
+def grant(app: FastAPI, plan: str = "pro") -> str:
+    with app.state.session_factory() as session:
+        user = session.execute(select(User).where(User.email == EMAIL)).scalar_one_or_none()
+        if user is None:
+            user = User(email=EMAIL)
+            session.add(user)
+            session.flush()
+        session.add(Subscription(user_id=user.id, provider="stripe", plan=plan))
+        session.commit()
+        return user.id
+
+
+def mint(client: TestClient, label: str = "prod api") -> str:
+    resp = client.post("/sources/sdk/key", data={"label": label}, headers=HDR)
+    assert resp.status_code == 200
+    m = re.search(r"Bearer (ik_[A-Za-z0-9_\-]+)", resp.text)
+    assert m, "full token not rendered in the reveal"
+    return m.group(1)
+
+
+class TestMint:
+    def test_01_free_plan_gated_with_billing_pointer(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.get("/dashboard", headers=HDR)
+        resp = client.post("/sources/sdk/key", data={"label": "x"}, headers=HDR)
+        assert resp.status_code == 403 and "/billing" in resp.json()["detail"]
+
+    def test_02_reveal_carries_full_dsn_once_and_stores_hash_only(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        resp = client.post("/sources/sdk/key", data={"label": "prod api"}, headers=HDR)
+        assert resp.status_code == 200
+        squashed = re.sub(r"\s+", " ", resp.text)
+        # R-NAMING: the full env var name, and the DSN carries key@host uncut
+        assert "TOKENOPS_COST_AUDITOR_DSN=" in squashed
+        token = re.search(r"Bearer (ik_[A-Za-z0-9_\-]+)", resp.text).group(1)  # type: ignore[union-attr]
+        assert f"{token}@" in squashed  # DSN form https://<key>@<host>
+        with app.state.session_factory() as session:
+            row = session.execute(select(IngestKey)).scalar_one()
+            assert row.key_hash is not None and token not in row.key_hash
+            assert row.label == "prod api"
+
+
+class TestJourney:
+    def test_03_mint_post_audit_report(self, app: FastAPI) -> None:
+        """The S-0 DoD: mint → POST a batch → audit lands → report reachable."""
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        resp = client.post(
+            "/api/v1/ingest",
+            json={"records": RECORDS},
+            headers={"Authorization": f"Bearer {token}", "Idempotency-Key": "batch-1"},
+        )
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["records"] == len(RECORDS) and body["replayed"] is False
+        with app.state.session_factory() as session:
+            audit = session.get(Audit, body["audit_id"])
+            assert audit is not None
+            assert audit.status == "done"  # background ran in-line under TestClient
+            assert audit.paid_via == "sdk"
+            assert audit.source_id is not None  # attributed to the key
+        # the run is on the ledger with its honest trigger
+        runs = client.get("/runs", headers=HDR)
+        assert "SDK ingest" in runs.text
+        # the key appears in the explorer's source selector
+        explore = client.get("/explore", headers=HDR)
+        assert "prod api (SDK)" in explore.text
+        # last_used stamped on Sources
+        sources = client.get("/sources", headers=HDR)
+        assert "never — nothing shipped yet" not in sources.text
+
+    def test_04_idempotent_replay(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        h = {"Authorization": f"Bearer {token}", "Idempotency-Key": "batch-dup"}
+        first = client.post("/api/v1/ingest", json={"records": RECORDS}, headers=h)
+        second = client.post("/api/v1/ingest", json={"records": RECORDS}, headers=h)
+        assert first.status_code == 201 and second.status_code == 200
+        assert second.json() == {"audit_id": first.json()["audit_id"], "replayed": True}
+
+
+class TestFR22Door:
+    def test_05_text_fields_rejected_by_name(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        bad = dict(RECORDS[0])
+        bad["prompt"] = "the actual prompt text"
+        bad["messages"] = [{"role": "user", "content": "hi"}]
+        resp = client.post(
+            "/api/v1/ingest",
+            json={"records": [bad]},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 422
+        detail = err(resp)
+        assert "messages" in detail and "prompt" in detail  # offenders NAMED
+        assert "FR-22" in detail or "counts-only" in detail
+        with app.state.session_factory() as session:
+            assert session.execute(select(Audit)).scalar_one_or_none() is None  # nothing stored
+
+    def test_06_oversized_strings_and_missing_fields_refused(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        h = {"Authorization": f"Bearer {token}"}
+        smuggle = dict(RECORDS[0], tag="x" * 4000)  # text smuggled into a bounded field
+        resp = client.post("/api/v1/ingest", json={"records": [smuggle]}, headers=h)
+        assert resp.status_code == 422 and "tag" in err(resp)
+        resp = client.post(
+            "/api/v1/ingest",
+            json={"records": [{"ts": "2026-07-23T00:00:00Z"}]},
+            headers=h,
+        )
+        assert resp.status_code == 422 and "missing required" in err(resp)
+        resp = client.post("/api/v1/ingest", json={"records": []}, headers=h)
+        assert resp.status_code == 422
+
+
+class TestAuthority:
+    def test_07_revoke_deletes_hash_and_stops_ingest(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        with app.state.session_factory() as session:
+            key_id = session.execute(select(IngestKey)).scalar_one().id
+        resp = client.post(f"/sources/sdk/{key_id}/revoke", headers=HDR, follow_redirects=False)
+        assert resp.status_code == 303
+        with app.state.session_factory() as session:
+            row = session.get(IngestKey, key_id)
+            assert row is not None and row.key_hash is None  # key material GONE
+            assert row.revoked_at is not None
+        after = client.post(
+            "/api/v1/ingest",
+            json={"records": RECORDS},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert after.status_code == 401
+
+    def test_08_bad_or_missing_auth_refused(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        assert client.post("/api/v1/ingest", json={"records": RECORDS}).status_code == 401
+        assert (
+            client.post(
+                "/api/v1/ingest",
+                json={"records": RECORDS},
+                headers={"Authorization": "Bearer ik_never-minted"},
+            ).status_code
+            == 401
+        )
+
+    def test_09_lapsed_plan_pauses_ingest_honestly(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        with app.state.session_factory() as session:
+            sub = session.execute(select(Subscription)).scalars().one()
+            sub.status = "cancelled"
+            session.commit()
+        resp = client.post(
+            "/api/v1/ingest",
+            json={"records": RECORDS},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 402 and "pause" in err(resp)

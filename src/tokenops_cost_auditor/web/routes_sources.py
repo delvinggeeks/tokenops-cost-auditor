@@ -73,13 +73,24 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         )
         plan = user_plan(session, user.id) if user else "free"
         active_count = sum(1 for s in sources if s.status == "active")
-        from tokenops_cost_auditor.persistence.models import Device
+        from tokenops_cost_auditor.persistence.models import Device, IngestKey
 
         devices = (
             session.execute(
                 select(Device)
                 .where(Device.user_id == user.id, Device.revoked_at.is_(None))
                 .order_by(Device.created_at)
+            )
+            .scalars()
+            .all()
+            if user
+            else []
+        )
+        ingest_keys = (
+            session.execute(
+                select(IngestKey)
+                .where(IngestKey.user_id == user.id, IngestKey.revoked_at.is_(None))
+                .order_by(IngestKey.created_at)
             )
             .scalars()
             .all()
@@ -95,6 +106,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
                 help=help_registry,
                 sources=sources,
                 devices=devices,
+                ingest_keys=ingest_keys,
                 plan=plan,
                 plan_name=plans.get(settings, plan).name,
                 limit=settings.plan_source_limits.get(plan, 0),

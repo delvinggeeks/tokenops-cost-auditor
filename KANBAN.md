@@ -69,6 +69,9 @@ territory.
 1. **WP-CLOUD-T2** — C-A Azure + C-B Bedrock DEPLOYED v1.7.0
    2026-07-23 (agent-verified pricing, R-AUTO-PRICING);
    C-C Gemini/Vertex next →
+1a. **R-SDK-PLATFORM (PLAN-SDK)** — S-0 ingest DSN BUILT 2026-07-23
+   (gate round open); S-1 Python SDK next, then C-C; S-2 OTLP / S-3 MCP /
+   S-4 JS / S-5 integrations queued →
 1b. **WP-DEVOPS-OBS** — built 2026-07-23 (Sentry FR-22-scrubbed +
    release-mapped, PR template, deploy pipeline w/ auto-rollback,
    runbook §10 lifecycle); ACTIVATION = founder checklist (repo push,

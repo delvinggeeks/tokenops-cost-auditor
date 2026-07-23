@@ -1,6 +1,10 @@
 # PLAN-SDK — the Sentry adoption model for TokenOps Cost Auditor
 
-**Status: AWAITING FOUNDER RULING (like PLAN-TAAS before its "proceed").**
+**Status: RULED (founder 2026-07-23, R-SDK-PLATFORM): "this platform
+should be used by many development platforms and cloud configurations so
+designs have to be made — we need like Sentry platform where people can
+configure and use our platform." Build order: S-0 → S-1 first (the
+adoption wedge), C-C Gemini/Vertex after.**
 Order source (founder, 2026-07-23, verbatim in substance): "I want this
 platform to be built and used like Sentry in all the dev platforms and
 enterprises — check their workflows: configurations sitting in clients'

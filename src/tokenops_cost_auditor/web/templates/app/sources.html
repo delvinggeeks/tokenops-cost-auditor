@@ -151,6 +151,54 @@
   <p class="counts-note">You'll see the exact consent text before anything links —
     counts only, on your schedule, revocable here in one click.</p>
 {{ kit.surface_close() }}
+
+{# S-0 (R-SDK-PLATFORM): ingest keys — the paste-able DSN for SDKs, scripts, CI. #}
+{{ kit.surface_open(title="SDK & API", icon="source") }}
+  <p class="tells">One environment variable in your stack; your usage shows up
+    here. Counts only — the endpoint refuses text.</p>
+  {% if ingest_keys %}
+  {{ kit.table_open([
+       {"label": "Key"}, {"label": "Label"}, {"label": "Created"},
+       {"label": "Last used"},
+       {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+     ]) }}
+    {% for k in ingest_keys %}
+    <tr>
+      <td><code>ik_{{ k.id[:6] }}…</code></td>
+      <td><b>{{ k.label }}</b></td>
+      <td>{{ k.created_at.strftime("%Y-%m-%d") }}</td>
+      <td>{{ k.last_used_at.strftime("%Y-%m-%d %H:%M UTC") if k.last_used_at else "never — nothing shipped yet" }}</td>
+      <td class="row-actions">
+        {{ kit.icon_action("View usage", "eye", href="/explore?source=" ~ k.id) }}
+        <form method="post" action="/sources/sdk/{{ k.id }}/revoke" class="inline-form"
+              data-confirm="Revoke this key? Ingest stops immediately and our copy is deleted; your past audits stay.">
+          {{ kit.icon_action("Revoke this key", "trash", danger=True) }}
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  {{ kit.table_close() }}
+  {% else %}
+  <p class="muted">No ingest keys yet — mint one and your code can ship usage
+    in a minute.</p>
+  {% endif %}
+  {% if plan in ("pro", "team") %}
+    <form hx-post="/sources/sdk/key" hx-target="#ingest-key" hx-swap="innerHTML"
+          style="margin-top: var(--s2); display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap;">
+      <input name="label" placeholder="what will use this key? e.g. prod api"
+             maxlength="80" style="max-width: 20em" aria-label="Key label">
+      <button class="btn btn-primary" type="submit">Mint an ingest key</button>
+      <span class="muted addbar-note">Shown once; revoking deletes our copy
+        the moment you click.</span>
+    </form>
+    <div id="ingest-key" aria-live="polite"></div>
+  {% else %}
+    <p class="muted">SDK ingest is part of Pro — <a href="/billing">see plans</a>.
+      The <a href="/upload">upload path</a> works on every plan.</p>
+  {% endif %}
+  <p class="counts-note">A key can write usage counts and read nothing —
+    records carrying prompt or completion text are rejected at the door.</p>
+{{ kit.surface_close() }}
 {% endblock %}
 
 {% block scripts %}

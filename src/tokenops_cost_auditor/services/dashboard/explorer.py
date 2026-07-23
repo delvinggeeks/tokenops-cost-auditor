@@ -32,6 +32,7 @@ from tokenops_cost_auditor.persistence.models import (
     Device,
     FindingFeedback,
     FindingRow,
+    IngestKey,
     Source,
 )
 
@@ -242,6 +243,13 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
         (d.id, f"{d.hostname} (Claude Code)", "revoked" if d.revoked_at else "active")
         for d in session.execute(
             select(Device).where(Device.user_id == user_id).order_by(Device.created_at)
+        ).scalars()
+    ]
+    # S-0: ingest keys are sources too — same revoked-stay-listed law.
+    view.source_options += [
+        (k.id, f"{k.label} (SDK)", "revoked" if k.revoked_at else "active")
+        for k in session.execute(
+            select(IngestKey).where(IngestKey.user_id == user_id).order_by(IngestKey.created_at)
         ).scalars()
     ]
     if f.source_id:

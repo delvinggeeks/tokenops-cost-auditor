@@ -114,6 +114,18 @@ under "Amendments" with date + reason.
 
 ## Amendments
 
+- **R-SDK-PLATFORM (founder, 2026-07-23).** "This platform should be used
+  by many development platforms and cloud configurations... we need like
+  Sentry platform where people can configure and use our platform."
+  PLAN-SDK.md is the ruled design: a paste-able ingest DSN in the
+  client's environment (TOKENOPS_COST_AUDITOR_DSN), config-file
+  convention, init-and-done SDKs (counts-only BY CONSTRUCTION — FR-22
+  provable in the SDK's own tests), the T4 OTLP endpoint, an MCP server,
+  integrations. Observe-only stands: no SDK ever sits in the request
+  path (X-01/X-02 unbreached). Slices S-0..S-5, each vertical and gated;
+  S-0 (ingest DSN + endpoint) and S-1 (Python SDK) lead the queue,
+  C-C Gemini/Vertex follows.
+
 - **R-AUTO-PRICING (founder, 2026-07-23).** "All prices have to be automated
   and no human gate — it has to be done by the agent strictly verifying."
   Amends R-Q3: the founder hand-verification of pricing rows is abolished.

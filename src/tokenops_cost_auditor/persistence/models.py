@@ -342,6 +342,24 @@ class LinkCode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class IngestKey(Base):
+    __tablename__ = "ingest_keys"  # S-0 (R-SDK-PLATFORM): the paste-able DSN
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Keyed one-way HMAC of the ingest key (credential_fingerprint context).
+    # The plaintext lives only in the customer's environment. NULL after
+    # revoke: key material DELETED, row kept for audit attribution
+    # (authority-law parity with devices and sources).
+    key_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Device(Base):
     __tablename__ = "devices"  # WP-CC-LINK: linked Claude Code machines
 

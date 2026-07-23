@@ -31,7 +31,7 @@ from tokenops_cost_auditor.web.routes_dashboard import _shell_ctx
 
 router = APIRouter(tags=["runs"])
 
-TRIGGERS = {"subscription": "scheduled pull", "collector": "collector ship"}
+TRIGGERS = {"subscription": "scheduled pull", "collector": "collector ship", "sdk": "SDK ingest"}
 STAGE_LABELS = {"ingest": "Ingest", "price": "Price", "detect": "Detect", "report": "Report"}
 ARTIFACT_NAMES = {"json": "JSON", "html": "web", "pdf": "PDF"}
 LEDGER_CAP = 50  # pulls/alert-checks shown; the cap is STATED, never silent
