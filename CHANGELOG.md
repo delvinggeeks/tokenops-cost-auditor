@@ -5,6 +5,16 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.5 · THE ORG-ONLY WALL (founder report: "only api keys
+  present no admin keys with claude"). Per Anthropic's docs, Admin keys —
+  and the usage/cost reports the connector reads — exist only for Console
+  ORGANIZATIONS; individual accounts see 'API keys' alone. Both wizards
+  now teach their missing-page wall (Anthropic: create your org in
+  Settings → Organization, you become Admin, the page appears; OpenAI:
+  needs the Owner role) with the upload tier offered right there as the
+  zero-key fallback. Pinned: every wizard has a missing_note AND links
+  /upload. SMOKE PASS: HTTPS healthz ok.
+
 - 2026-07-23 · v1.6.4 · CONSOLE-LINK TRUST (founder report: the Anthropic
   admin-keys deep-link showed 'Page not found' and read as phishing). The
   URL is CORRECT per Anthropic's current docs, verified live —
