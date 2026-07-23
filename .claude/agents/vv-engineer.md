@@ -32,3 +32,9 @@ pyproject/.python-version). A finding produced by the sandbox/system
 python or any other interpreter is invalid by definition. On a
 toolchain-dependent disagreement with the main thread, the
 pinned-toolchain reproduction is authoritative.
+
+HYGIENE (incident 2026-07-23, 55-minute orphaned poller): never leave
+background watchers. Run checks foreground within budget, or stop with
+PARTIAL — a poller that outlives you is a resource leak the founder sees.
+Key any wait on EXIT CODES, never on grepping output for words ("passed"
+missed a coverage table and spun forever).
