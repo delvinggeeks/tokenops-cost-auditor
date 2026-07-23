@@ -55,13 +55,14 @@
       <td>{{ s.last_pull_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_pull_at else "—" }}</td>
       <td>{{ s.last_audit_at.strftime("%Y-%m-%d %H:%M UTC") if s.last_audit_at else "—" }}</td>
       <td class="row-actions">
-        {# R-MULTI-SOURCE: jump to this account's slice of the explorer —
-           "switch to that account's details" is a filter, not a new page. #}
-        {{ kit.button("View usage", href="/explore?source=" ~ s.id) }}
-        {{ kit.drawer_toggle("src-" ~ s.id) }}
+        {# R-ICON-ACTIONS: the account-handling cluster, compact. Every icon
+           carries its verb as aria-label + hover title — icon-only on
+           screen, never unnamed. #}
+        {{ kit.icon_action("View usage", "eye", href="/explore?source=" ~ s.id) }}
+        {{ kit.drawer_toggle("src-" ~ s.id, label="Connection details", icon="chevron-down") }}
         <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
               data-confirm="{{ t('app.confirm.revoke') }}">
-          {{ kit.button("Revoke") }}
+          {{ kit.icon_action("Revoke this connection", "trash", danger=True) }}
         </form>
       </td>
     </tr>

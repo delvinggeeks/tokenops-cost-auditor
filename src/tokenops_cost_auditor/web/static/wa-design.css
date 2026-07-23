@@ -564,6 +564,19 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .dot-warn { background: var(--estimate); }
 .row-actions { text-align: right; white-space: nowrap; }
 
+/* ---- Icon action: compact row-level control (R-ICON-ACTIONS 2026-07-23).
+   Icon-only on screen, full verb to assistive tech (aria-label) and on
+   hover (title). Destructive variant warms to --waste on hover only —
+   quiet until pointed at, per the familiarity principle. ---- */
+.icon-btn { display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0; margin-left: 6px;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink-soft); cursor: pointer; }
+.icon-btn:hover, .icon-btn:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+.icon-btn .i { width: 15px; height: 15px; }
+.icon-btn-danger:hover, .icon-btn-danger:focus-visible {
+  color: var(--waste); border-color: var(--waste); }
+
 .drawer { background: var(--surface-tint); }
 .drawer td { padding: var(--s3); }
 .dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px var(--s3); font-size: 13px; margin: 0; }
@@ -760,10 +773,13 @@ input.field-inline { width: 8em; border: 1px solid var(--rule); border-radius: v
   color: var(--ink); box-shadow: var(--control-depth); }
 input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* F10 — mobile tap targets >= 44px (WCAG 2.5.8 / audit i). */
+/* F10 — mobile tap targets >= 44px (WCAG 2.5.8 / audit i). .icon-btn rides
+   the same rule (ux gate note, R-ICON-ACTIONS): compact is a desktop
+   affordance, not a mobile tap-target exception. */
 @media (max-width: 720px) {
   .nav-group a, .btn, .tour-tab { min-height: 44px; display: inline-flex;
     align-items: center; }
+  .icon-btn { width: 44px; height: 44px; }
   .nav-group a { display: flex; }
 }
 

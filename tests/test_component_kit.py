@@ -38,6 +38,7 @@ class TestTheKitIsComplete:
         "table_close",
         "drawer",
         "drawer_toggle",
+        "icon_action",
         "finding_row",
         "finding_detail",
         "finding_summary",

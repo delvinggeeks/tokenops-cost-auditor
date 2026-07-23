@@ -87,3 +87,36 @@ class TestSourcesRoutes:
             follow_redirects=False,
         )
         assert again.status_code == 303
+
+
+class TestIconActions:
+    """R-ICON-ACTIONS (founder, 2026-07-23): the account row's handling
+    cluster is compact icons — but icon-only NEVER means unnamed. Every
+    control carries its verb for assistive tech, and the revoke consequence
+    (data-confirm, §5c law) survives the compaction."""
+
+    def test_row_cluster_is_compact_and_named(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        assert (
+            client.post(
+                "/sources",
+                headers=HDR,
+                data={"provider": "openai", "label": "org", "api_key": "sk-x"},
+                follow_redirects=False,
+            ).status_code
+            == 303
+        )
+        page = client.get("/sources", headers=HDR)
+        assert page.status_code == 200
+        assert 'aria-label="View usage"' in page.text
+        assert 'aria-label="Connection details"' in page.text
+        assert 'aria-label="Revoke this connection"' in page.text
+        assert "#i-eye" in page.text and "#i-trash" in page.text
+        assert "icon-btn-danger" in page.text  # destructive variant on revoke
+        assert "data-confirm=" in page.text  # consequence-in-words preserved
+
+    def test_sprite_carries_the_new_symbols(self, app: FastAPI) -> None:
+        from pathlib import Path
+
+        sprite = Path("src/tokenops_cost_auditor/web/templates/app/_sprite.html").read_text()
+        assert 'id="i-eye"' in sprite and 'id="i-trash"' in sprite

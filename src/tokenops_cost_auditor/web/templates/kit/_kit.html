@@ -132,9 +132,35 @@
     <td colspan="{{ colspan }}">{{ caller() }}</td>
   </tr>
 {% endmacro %}
-{% macro drawer_toggle(id, label=None) %}
+{% macro drawer_toggle(id, label=None, icon=None) %}
+  {%- if icon %}
+  {# Compact variant (R-ICON-ACTIONS): icon-only on screen, the verb stays
+     on the button for assistive tech and hover. #}
+  <button class="icon-btn" type="button" aria-expanded="false" aria-controls="{{ id }}"
+          data-drawer="{{ id }}" aria-label="{{ label or t("kit.drawer.details") }}"
+          title="{{ label or t("kit.drawer.details") }}">
+    <svg class="i" aria-hidden="true"><use href="#i-{{ icon }}"/></svg></button>
+  {%- else %}
   <button class="btn btn-quiet" type="button" aria-expanded="false"
           aria-controls="{{ id }}" data-drawer="{{ id }}">{{ label or t("kit.drawer.details") }}</button>
+  {%- endif %}
+{% endmacro %}
+
+{% macro icon_action(label, icon, href=None, type="submit", confirm=None, danger=False) %}
+  {# R-ICON-ACTIONS: a compact single-purpose control for table rows and
+     widget corners. `label` is REQUIRED — it becomes aria-label + title, so
+     compact never means unnamed. Destructive actions pass danger=True and,
+     when money/data is at stake, a confirm consequence in words (§5c law —
+     the confirm may also live on the enclosing form). #}
+  {%- set cls = "icon-btn" + (" icon-btn-danger" if danger else "") %}
+  {%- if href %}
+    <a class="{{ cls }}" href="{{ href }}" aria-label="{{ label }}" title="{{ label }}">
+      <svg class="i" aria-hidden="true"><use href="#i-{{ icon }}"/></svg></a>
+  {%- else %}
+    <button class="{{ cls }}" type="{{ type }}" aria-label="{{ label }}" title="{{ label }}"
+            {% if confirm %}data-confirm="{{ confirm }}"{% endif %}>
+      <svg class="i" aria-hidden="true"><use href="#i-{{ icon }}"/></svg></button>
+  {%- endif %}
 {% endmacro %}
 
 {# ----------------------------------------------------------- FindingCard #}
