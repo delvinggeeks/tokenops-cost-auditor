@@ -1,6 +1,6 @@
 # PLAN-COPILOT — GitHub Copilot seat governance (WP-COPILOT-AGG)
 
-**Status: AWAITING FOUNDER RULING (two real decisions below).** Scoped one
+**Status: RULED (founder 2026-07-24, R-COPILOT — "proceed with [the] recommendation and then copilot"): Decision 1 = Option A (a labeled seat finding in the existing report); Decision 2 = Option P1 (measured seat counts + last-activity are the hard fact; the per-seat $ is a stated, customer-confirmable rate defaulting to GitHub public); Q3 = upload-first now, GitHub-API connector later. Building now.** Scoped one
 line in PLAN-TAAS §2 ("admin seat/usage export, T1-style upload first,
 seat-waste findings"); this breaks it down and surfaces where it collides
 with your own laws so you can rule before code.

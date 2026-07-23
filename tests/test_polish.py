@@ -82,11 +82,12 @@ class TestGetYourLogsTabs:
             "Claude Code",
             "OpenAI request logs",
             "Anthropic request logs",
+            "GitHub Copilot seats",
             "Anything else (CSV)",
         ):
             assert tab in page, tab
         # one "what we receive" line per tab, not a single footer note
-        assert page.count("What we receive") == 5
+        assert page.count("What we receive") == 6  # + GitHub Copilot seats (WP-COPILOT-AGG)
         for promise in (
             "does not contain them",
             "never copies a prompt",

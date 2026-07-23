@@ -35,6 +35,30 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## WP-COPILOT-AGG (2026-07-24) — Copilot seat governance; the tool-layer answer, built
+
+R-COPILOT ruled A/P1; built end to end (R-VERTICAL). The FIRST non-token
+analysis on the platform: Copilot bills per SEAT, so the waste is IDLE
+SEATS. services/copilot/seats parses the admin seats export (the
+/copilot/billing/seats JSON or a CSV) reading DATES ONLY — the SeatRecord
+type has no login field, so a username in the export CANNOT survive into a
+record (FR-22 by the type itself; test feeds "SECRET-USERNAME" and proves
+it's gone). analyze() → idle/never-used/pending counts; build_finding() →
+d7_idle_seats, LABELED seat governance (not a token detector), monthly $ =
+idle × the STATED rate (default GitHub Business list, customer-confirmable
+— R-COPILOT P1, sits outside R-AUTO-PRICING by construction since SaaS seat
+prices aren't in the per-token feed; the finding's confidence=ESTIMATED and
+detail.rate_is_input=True say so). services/copilot/report assembles the
+seat finding into the EXISTING report shell (Option A), tier=
+"seat-governance", equiv_spend=True (the honest "billing depends on your
+plan" framing, same as Claude Code). Route POST /copilot/seats → signed
+report; reachable via a REAL upload form in the get-logs Copilot tab (knobs
+bounded; UTF-8/size guarded). X-02 intact: we surface idle seats, the
+customer reclaims. Fixed in-slice: get-logs tab count pin 5→6, no inline
+price literal (config-only law). 8 tests, full chain green. Gate round
+next. This completes "proceed on connectors": 5 model clouds + SDK/API +
+seat governance + the honest Works-with map. Then the SDK queue (S-6, O-0).
+
 ## Works-with rider CLOSED (2026-07-24) — ux PWN fixed, spec + system-tester PASS
 
 ux PASS-WITH-NOTES → both fixed: the .connect-cards-4 grid variant (ux's own

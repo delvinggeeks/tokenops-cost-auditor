@@ -114,6 +114,17 @@ under "Amendments" with date + reason.
 
 ## Amendments
 
+- **R-COPILOT (founder, 2026-07-24, "proceed with recommendation and then
+  copilot").** WP-COPILOT-AGG builds per PLAN-COPILOT with the recommended
+  options: seat governance is a LABELED seat finding (d7_idle_seats) inside
+  the existing report, NOT a token detector and never presented as one;
+  the seat COUNTS and last-activity are measured facts, the per-seat dollar
+  rate is a stated, customer-confirmable input (default GitHub public
+  $19/$39) — it sits outside R-AUTO-PRICING by construction because SaaS
+  seat prices are not in the per-token feed, and the honesty is that the
+  rate is labeled an input, not a verified figure. Upload-first (no GitHub
+  API dependency); X-02 intact (observe idle seats, never reclaim).
+
 - **R-ORG (founder, 2026-07-23, "proceed with both").** X-03 (multi-org
   RBAC/SSO) is RELAXED to permit enterprise org-management as PRODUCT
   governance: workspaces owning resources, members + invites, RBAC over

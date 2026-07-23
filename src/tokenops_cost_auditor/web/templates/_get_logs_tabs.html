@@ -29,6 +29,14 @@
      "Export usage from the Anthropic console, or upload your own request log.",
      "Same at the door: counts in, content dropped, nothing about your prompts stored.",
      docs_url ~ "/quickstart/", "Export instructions"),
+    ("copilot", "GitHub Copilot seats", "Seat governance",
+     "Different from token audits: Copilot bills per seat, so the waste is
+      idle licenses. Download your seats export (org Settings → Copilot, or the
+      billing/seats API) and upload it — we find seats nobody's using.",
+     "We read each seat's last-activity date and the pending-cancellation flag —
+      never a username, never content. The dollar figure uses your plan's
+      per-seat rate, which you confirm.",
+     "/upload#copilot", "Upload a seats export"),
     ("csv", "Anything else (CSV)", "Bring your own",
      "Any per-call CSV with a timestamp, model, and token counts works. Column names are
       flexible; we tell you what we matched.",
@@ -42,11 +50,35 @@
       <summary><strong>{{ title }}</strong> — <span class="muted">{{ speed }}</span></summary>
       <p>{{ what }}</p>
       <p class="policy"><strong>What we receive:</strong> {{ counts_only }}</p>
+      {% if key == "copilot" %}
+      {# The seat upload is a real form (R-VERTICAL: the click path reaches it).
+         Counts-only by construction — the file is parsed for dates, never
+         content; the rate is your stated input. #}
+      <form method="post" action="/copilot/seats" enctype="multipart/form-data"
+            class="seat-form" style="display:flex; gap:var(--s2); flex-wrap:wrap; align-items:flex-end;">
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+          Seats export (JSON or CSV)
+          <input type="file" name="file" accept=".json,.csv,application/json,text/csv" required>
+        </label>
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+          Idle after (days)
+          <input type="number" name="idle_days" value="30" min="1" max="365" style="width:6em;">
+        </label>
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+          Your per-seat rate ($/mo)
+          <input type="number" name="rate_usd" value="19" min="0" max="1000" step="1" style="width:6em;">
+        </label>
+        <button class="cta" type="submit">Find idle seats</button>
+      </form>
+      <p class="muted" style="font-size:13px; margin:6px 0 0;">Seat pricing is your
+        plan's rate — the default shown is GitHub Business list; change it if yours differs.</p>
+      {% else %}
       <p><a class="cta" href="{{ href }}">{{ cta }}</a>{% if key == "connect" %}
         <span class="muted"> · or
         {%- for other in help.wizard_providers() if other != "openai" %}
         <a href="/sources/connect/{{ other }}">connect {{ help.wizard(other).provider_name }} →</a>{{ " ·" if not loop.last }}
         {%- endfor %}</span>{% endif %}</p>
+      {% endif %}
     </details>
   {% endfor %}
 </section>
