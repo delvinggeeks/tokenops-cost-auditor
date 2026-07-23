@@ -172,3 +172,44 @@ class TestCrossSurfaceConsistency:
         assert "No history to explore yet" not in exp
         assert "Findings in this slice — 1" in exp  # ...is the explorer's claim
         assert "no per-day usage" in re.sub(r"\s+", " ", exp)  # honesty about missing data
+
+    def test_clean_latest_audit_never_denies_history(self, app: FastAPI) -> None:
+        """system-tester sweep 2 f.1: a clean audit landing AFTER one with
+        findings made the dashboard claim 'clean / 0 applied' while the
+        explorer showed the finding. The Report stage now scopes its claim,
+        and Act counts APPLIED fixes (verified dollars stay R-Q9-pure)."""
+        from tokenops_cost_auditor.persistence.models import FindingFeedback
+
+        seed(app)  # older audit: 1 finding
+        client = TestClient(app)
+        with app.state.session_factory() as session:
+            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
+            older = session.execute(select(Audit)).scalars().one()
+            session.add(
+                FindingFeedback(
+                    audit_id=older.id,
+                    finding_id="D2-001",
+                    verdict="applied",
+                    savings_realized_usd=80.0,
+                    actor=EMAIL,
+                )
+            )
+            session.add(  # a newer, clean audit (ran, priced, zero findings)
+                Audit(
+                    user_id=user.id,
+                    status="done",
+                    row_count=500,
+                    observed_days=8,
+                    total_spend_usd=20.0,
+                    created_at=datetime.now(UTC),
+                    report_ready_at=datetime.now(UTC),
+                )
+            )
+            session.commit()
+        dash = re.sub(r"\s+", " ", client.get("/dashboard", headers=HDR).text)
+        assert "latest audit clean" in dash  # scoped claim, not account-wide
+        assert "earlier finding in your history — see Explore" in dash
+        assert "1 applied" in dash  # applied count, not the verified subset
+        assert "customer-reported" in dash  # R-Q9: shown separately, never verified
+        exp = client.get("/explore", headers=HDR).text
+        assert "Findings in this slice — 1" in exp  # surfaces agree

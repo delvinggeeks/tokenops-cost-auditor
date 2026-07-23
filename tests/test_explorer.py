@@ -486,3 +486,17 @@ class TestBareAudits:
         assert compose_for(app, **{"from": "2026-05-01"}).audits_in_view == 0
         # a model slice can only be answered by aggregate rows -> excluded
         assert compose_for(app, model="gpt-4o-mini").audits_in_view == 0
+
+    def test_22_filter_miss_on_bare_account_says_nothing_matches(self, app: FastAPI) -> None:
+        """system-tester sweep 2 f.2: an active filter that matches nothing
+        must say so — never 'No history to explore yet' to an account WITH
+        history, even when its audits carry no aggregate rows."""
+        seed_audit(
+            app,
+            when=D1,
+            buckets=[],
+            findings=[("D2-001", "d2_missing_cache", "claude-sonnet-5", "high", 90.0)],
+        )
+        page = TestClient(app).get("/explore", headers=HDR, params={"model": "gpt-4o-mini"})
+        assert "Nothing matches this slice" in page.text
+        assert "No history to explore yet" not in page.text

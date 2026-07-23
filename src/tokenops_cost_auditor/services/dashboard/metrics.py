@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import (
@@ -572,20 +572,34 @@ def pipeline(
             report["note"] = "refreshing — a new run is in progress"
     elif latest is not None:
         # An audit RAN — zero findings is a result, never "Waiting" (ux gate
-        # f.1: same state-from-emptiness bug class the Analyze fix targeted).
+        # f.1). And the claim is scoped OUT LOUD (system-tester sweep 2 f.1):
+        # "clean" here means the LATEST audit; if history holds findings the
+        # explorer will show, this stage says so instead of contradicting it.
+        earlier = int(
+            session.execute(
+                select(func.count(FindingRow.id))
+                .join(Audit, FindingRow.audit_id == Audit.id)
+                .where(Audit.user_id == user_id)
+            ).scalar_one()
+        )
+        history_note = (
+            f"{earlier} earlier finding{'s' if earlier != 1 else ''} in your history — see Explore"
+            if earlier
+            else ""
+        )
         if clarity.get("state") == "clean":
             report = {
                 "label": "Report",
                 "state": "active",
-                "value": "0 findings — clean",
-                "note": "no avoidable waste found; we keep watching",
+                "value": "0 new findings — latest audit clean" if earlier else "0 findings — clean",
+                "note": history_note or "no avoidable waste found; we keep watching",
             }
         else:  # unpriced: no findings COULD land until the models are priced
             report = {
                 "label": "Report",
                 "state": "active",
                 "value": "0 findings — pricing pending",
-                "note": "findings land once the models are on the rate card",
+                "note": history_note or "findings land once the models are on the rate card",
             }
         if in_flight is not None:
             report["note"] = "refreshing — a new run is in progress"
@@ -604,15 +618,28 @@ def pipeline(
             "note": "Findings ranked by dollars",
         }
 
+    # "N applied" counts APPLIED fixes (verified + still-measuring), not the
+    # verified subset it mislabeled before (system-tester sweep 2 f.1: an
+    # account with 1 applied finding read "0 applied"). The verified DOLLAR
+    # stays R-Q9-pure; customer-reported money appears separately, labeled,
+    # never in the verified figure.
+    applied_n = int(cast(int, sav.data.get("verified_count", 0))) + int(
+        cast(int, sav.data.get("pending_count", 0))
+    )
+    act_note = (
+        "${:,.2f}/mo verified".format(cast(float, sav.data["verified"]))
+        if not sav.empty
+        else "Apply a fix, we verify the saving"
+    )
+    if not sav.empty and cast(float, sav.data.get("customer_reported", 0.0)):
+        act_note += " · ${:,.2f}/mo customer-reported".format(
+            cast(float, sav.data["customer_reported"])
+        )
     act = {
         "label": "Act",
-        "state": "active" if sav.data.get("verified_count") else "waiting",
-        "value": f"{sav.data.get('verified_count', 0)} applied",
-        "note": (
-            "${:,.2f}/mo verified".format(cast(float, sav.data["verified"]))
-            if not sav.empty
-            else "Apply a fix, we verify the saving"
-        ),
+        "state": "active" if applied_n else "waiting",
+        "value": f"{applied_n} applied",
+        "note": act_note,
     }
 
     prevent = {
