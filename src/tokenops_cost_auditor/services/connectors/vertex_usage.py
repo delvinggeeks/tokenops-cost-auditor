@@ -45,6 +45,7 @@ BASE_URL = "https://monitoring.googleapis.com"
 SCOPE = "https://www.googleapis.com/auth/monitoring.read"
 METRIC_TYPE = "aiplatform.googleapis.com/publisher/online_serving/token_count"
 _REQUIRED_FIELDS = ("client_email", "private_key", "token_uri", "project_id")
+_MAX_PAGES = 1000  # hard backstop against an endless nextPageToken loop
 
 
 class SupportsHttp(Protocol):
@@ -195,11 +196,17 @@ def _fetch(
     headers = {"Authorization": f"Bearer {token}"}
     # Follow nextPageToken (cold-review f.1): Cloud Monitoring pages a busy
     # project's series, and returning only page 1 would silently drop the rest
-    # while reporting a full read — the Bedrock chunk-truncation lesson.
+    # while reporting a full read — the Bedrock chunk-truncation lesson. The
+    # loop is BOUNDED (re-gate f.1): a misbehaving server that returns the
+    # same token forever must not hang the pull or double-count — a repeated
+    # token breaks (before re-fetching), and _MAX_PAGES is the hard backstop.
     buckets: list[dict[str, Any]] = []
     pages = 0
     page_token: str | None = None
-    while True:
+    requested: set[str] = set()
+    while pages < _MAX_PAGES:
+        if page_token is not None:
+            requested.add(page_token)
         page_params = dict(params, **({"pageToken": page_token} if page_token else {}))
         resp = http.get(url, params=page_params, headers=headers)
         if resp.status_code in (401, 403):
@@ -211,7 +218,7 @@ def _fetch(
         buckets.extend(parse_series(payload))
         pages += 1
         page_token = payload.get("nextPageToken")
-        if not page_token:
+        if not page_token or page_token in requested:
             break
     return _merge(buckets), pages
 

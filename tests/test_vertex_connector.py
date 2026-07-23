@@ -215,6 +215,30 @@ class TestParseAndFetch:
         pro = next(b for b in buckets if b["model"] == "gemini-2.5-pro")
         assert pro["prompt_tokens"] == 50000  # 30000 + 20000 merged across pages
 
+    def test_04d_repeated_page_token_terminates(self) -> None:
+        """re-gate f.1: a server echoing the same nextPageToken forever must
+        NOT hang the pull or double-count — the loop breaks on repeat."""
+
+        class LoopingGoogle(FakeGoogle):
+            def get(self, url: str, *, params: Any, headers: Any) -> FakeResp:
+                self.gets.append({})
+                return FakeResp(
+                    {
+                        "timeSeries": [
+                            _series("gemini-2.5-pro", "input", [("2026-07-20T00:00:00Z", 10)])
+                        ],
+                        "nextPageToken": "STUCK",  # same token every time
+                    }
+                )
+
+        http = LoopingGoogle()
+        buckets, pages = vertex_usage.fetch_usage(
+            cred_blob(), date(2026, 7, 20), date(2026, 7, 20), http
+        )
+        assert pages == 2  # page 1 (token None) + page "STUCK" once, then the repeat breaks
+        assert len(http.gets) == 2  # never re-fetched the repeated token
+        assert buckets[0]["prompt_tokens"] == 20  # 10 + 10, not an unbounded pile
+
     def test_04c_int64_string_precision(self) -> None:
         """cold-review f.3: int64Value is a string precisely to avoid float
         rounding on large counts — parse it as an int, not through float."""

@@ -35,6 +35,16 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## C-C re-gate note (2026-07-24) — bounded the pagination loop I introduced
+
+cold re-gate PASS-WITH-NOTES confirmed the three fixes closed, but flagged
+that my nextPageToken loop had no cap/repeat-guard — a server echoing the
+same token forever would hang the pull and pile buckets. Fixed: the loop
+now breaks on a repeated token (before re-fetching, so no double-count) and
+_MAX_PAGES=1000 is the hard backstop. test_04d proves a stuck-token server
+terminates at 2 fetches with prompt_tokens=20, not an unbounded pile.
+C-C CLOSED. Full chain green.
+
 ## WP-CLOUD-T2 C-C gate round (2026-07-24) — spec PASS · vv PASS · system-tester PARTIAL-clean · cold PWN fixed
 
 spec PASS 7/7 (incl. R-AUTO-PRICING: vertex rows agent-verified 35/35, no
