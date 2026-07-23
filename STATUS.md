@@ -15,6 +15,32 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## WP-DEVOPS-OBS (2026-07-23) — error tracking, PR/CI-CD, the lifecycle codified; v1.7.0 DEPLOYED first
+
+Founder question ("why not sentry / proper PR + CI/CD / bug lifecycle /
+observability?") → assessment → "proceed". v1.7.0 (both cloud connectors
++ R-AUTO-PRICING) DEPLOYED the proven way first: backup, runbook-4b
+strict verify LIVE (31/31 — and its first ride caught its own same-day
+restamp bug, fixed b867fde), provision, external smoke PASS (healthz,
+both wizards auth-gated, head unchanged). Then the package: (A) Sentry
+ACTIVATED in code — sdk as optional `obs` extra (customer in-VPC stays
+zero-egress by not setting a DSN), FR-22 before_send scrubber (request
+payloads/headers/cookies/query/env, breadcrumbs, user — stripped; stack +
+route + release survive), release = deployed tag via provision.sh
+RELEASE_TAG upsert (the only .env line it ever touches), tests. (B) main
+fast-forwarded to the branch (177 commits); PR template carrying REV-X +
+the standing laws. DISCOVERY: the repo had NO git remote — ci.yml has
+never run on GitHub; repo creation was PERMISSION-BLOCKED for the agent
+(publishing a repo needs the founder's own hand) — commands in the
+runbook §10 activation checklist. (C) deploy.yml: workflow_dispatch(tag)
+IS the approval ritual; gate job re-runs the chain + strict verify on the
+exact tag; deploy job does backup → provision → external smoke →
+AUTO-ROLLBACK to the prior RELEASE_TAG on failed smoke; §2 manual path
+kept as fallback. (D) runbook §10: the detect→triage→fix→gate→deploy→
+verify loop with named owners per step; log rotation audited (5x50MB
+json-file per container — adequate); activation checklist (founder-lane:
+create+push repo, secrets, branch protection, Sentry DSN, UptimeRobot).
+
 ## R-AUTO-PRICING gate round (2026-07-23) — spec FAIL→fixed→PASS · cold PWN all fixed · vv PARTIAL closed · system-tester PWN
 
 spec-guard FAIL round 1: docs-site/concepts/pricing-data.md still carried

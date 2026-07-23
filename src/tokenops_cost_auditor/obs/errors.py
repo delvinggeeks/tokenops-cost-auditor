@@ -15,7 +15,7 @@ the deployed git tag (RELEASE_TAG stamped by provision.sh), so every event
 maps to the exact deploy that produced it.
 """
 
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -49,7 +49,9 @@ def init_errors(sentry_dsn: str, app_env: str, release: str = "") -> None:
             environment=app_env,
             release=release or None,
             send_default_pii=False,
-            before_send=_scrub,
+            # the SDK types events as its own TypedDict; the scrubber is
+            # deliberately plain-dict so tests need no sdk installed
+            before_send=cast("Any", _scrub),
         )
         _sentry_enabled = True
     except ImportError:

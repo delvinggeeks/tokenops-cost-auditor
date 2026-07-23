@@ -66,10 +66,13 @@ territory.
 
 ## 🔜 NEXT — ruled order, nothing moves without a new ruling
 
-1. **WP-CLOUD-T2** — C-A Azure OpenAI + C-B Bedrock BOTH BUILT+GATED
-   2026-07-23; pricing sections G16-G23 AGENT-VERIFIED 31/31 per
-   R-AUTO-PRICING (no human gate) — v1.7.0 ready on deploy approval;
-   C-C Gemini/Vertex next → (4-6d total, one slice each) — C-A Azure OpenAI →
+1. **WP-CLOUD-T2** — C-A Azure + C-B Bedrock DEPLOYED v1.7.0
+   2026-07-23 (agent-verified pricing, R-AUTO-PRICING);
+   C-C Gemini/Vertex next →
+1b. **WP-DEVOPS-OBS** — built 2026-07-23 (Sentry FR-22-scrubbed +
+   release-mapped, PR template, deploy pipeline w/ auto-rollback,
+   runbook §10 lifecycle); ACTIVATION = founder checklist (repo push,
+   secrets, branch protection, DSN, UptimeRobot) → (4-6d total, one slice each) — C-A Azure OpenAI →
    C-B Bedrock → C-C Gemini/Vertex. DoD per slice: fixture-driven adapter,
    founder-verified golden pricing rows BEFORE merge, FR-22 tier tests,
    wizard + illustration, journey additions.

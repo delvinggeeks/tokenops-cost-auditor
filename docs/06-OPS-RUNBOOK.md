@@ -251,3 +251,40 @@ must not need it). The paths:
   `uv run pytest` covers the laws; the journey suite + system-tester walks
   are the product-level sweep. Prod dogfood is for the last mile: real
   provider APIs, real TLS, real cron.
+
+## 10. DevOps lifecycle (WP-DEVOPS-OBS, founder "proceed" 2026-07-23)
+
+The loop, with the tool that owns each step:
+
+1. DETECT — Sentry (obs/errors hook, FR-22-scrubbed, release-mapped to the
+   deployed tag; DSN in .env — log-only until set), the daily ops digest,
+   the external uptime probe (UptimeRobot — founder-lane, §3b), the
+   system-tester's walk after every deploy, and the journey suite in CI.
+2. TRIAGE — K-2 rules apply: two failed fix attempts on the same test =
+   stop, write the failing state to STATUS.md, ask the founder. A Sentry
+   event maps to its release tag; `git log <prev>..<tag>` is the suspect
+   list.
+3. FIX — milestone branch; the standing gate agents ARE the review
+   (vv / cold / spec / system-tester, + ux for surfaces); TE-10 on FAIL.
+4. GATE MECHANICALLY — CI on every push (ruff, mypy, suite, coverage
+   gate, pricing age, STRICT pricing verification). Merges to main
+   require CI green (branch protection).
+5. DEPLOY — the `deploy` workflow (workflow_dispatch(tag) — pressing the
+   button IS the founder's "approved to deploy"): re-runs the full chain
+   on the exact tag, strict pricing verify, pre-deploy backup, provision,
+   external smoke, and AUTO-ROLLBACK to the previously deployed tag
+   (read from RELEASE_TAG in .env) when smoke fails. §2's manual path
+   remains the documented fallback when GitHub is unreachable.
+6. VERIFY + RECORD — external healthz, CHANGELOG entry with the smoke
+   result (§2 step 7), STATUS paragraph at the milestone gate.
+
+Log rotation audit (2026-07-23): containers cap at 5 x 50MB json-file
+(compose logging options) — adequate; no daemon.json needed.
+
+ACTIVATION CHECKLIST (founder-lane, one-time):
+- [ ] Create the private GitHub repository and push (commands in STATUS —
+      the agent is permission-blocked from publishing repos itself)
+- [ ] Add repo secrets DEPLOY_SSH_KEY / DEPLOY_HOST / DEPLOY_DOMAIN
+- [ ] Protect main: require the CI "test" check before merge
+- [ ] Create the Sentry project; set SENTRY_DSN in the VPS .env; restart
+- [ ] UptimeRobot probe + status CNAME (§3b — pre-launch requirement)
