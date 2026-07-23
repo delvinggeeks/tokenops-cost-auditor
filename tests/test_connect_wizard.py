@@ -474,7 +474,7 @@ class TestConsoleLinks:
     building); every wizard names its destination host in the visible note
     and teaches the not-signed-in failure mode."""
 
-    OFFICIAL = {"platform.claude.com", "console.anthropic.com", "platform.openai.com"}
+    OFFICIAL = frozenset({"platform.claude.com", "console.anthropic.com", "platform.openai.com"})
 
     def test_console_urls_are_official_domains_only(self) -> None:
         from urllib.parse import urlparse
@@ -503,3 +503,22 @@ class TestConsoleLinks:
             host = help_registry.wizard(prov)["console_url"].split("/")[2]
             assert host in squashed  # the destination is named on the page
             assert "Page not found" in squashed or "an error" in squashed  # failure mode taught
+
+    def test_the_no_admin_keys_wall_is_taught_with_a_fallback(self, app: FastAPI) -> None:
+        """Founder report 2026-07-23 ('only api keys present no admin keys'):
+        individual Console accounts have NO Admin-keys page — organizations
+        only. Every wizard must teach its missing-page wall AND offer the
+        upload tier as the honest fallback."""
+        import re as _re
+
+        from tokenops_cost_auditor.web import help as help_registry
+
+        client = TestClient(app)
+        for prov in help_registry.wizard_providers():
+            copy = help_registry.wizard(prov)
+            assert copy["missing_note"], f"{prov}: no missing_note"
+            page = _re.sub(r"\s+", " ", client.get(f"/sources/connect/{prov}", headers=HDR).text)
+            assert "Admin keys" in page or "Admin-keys" in page
+            assert 'href="/upload"' in page, f"{prov}: no upload fallback offered"
+        anthropic = help_registry.wizard("anthropic")["missing_note"]
+        assert "ORGANIZATIONS" in anthropic and "Settings → Organization" in anthropic

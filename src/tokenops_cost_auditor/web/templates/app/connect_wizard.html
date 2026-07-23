@@ -66,6 +66,12 @@
          console 404s for non-admin/wrong-account sign-ins, which reads as
          phishing): name the real destination and teach the failure mode. #}
       <p class="muted" style="font-size: 13px;">{{ copy.console_note }}</p>
+      {# The next wall (founder, same day): individual accounts have NO
+         Admin-keys page at all — orgs only. Teach it, and offer the honest
+         fallback: the upload tier exists for exactly this. #}
+      <p class="muted" style="font-size: 13px;">{{ copy.missing_note }}
+        Rather not deal with any of that today?
+        <a href="/upload">The upload path works right now →</a></p>
 
       <h2>{{ copy.step2_title }}</h2>
       <p>{{ copy.step2_body }}</p>
