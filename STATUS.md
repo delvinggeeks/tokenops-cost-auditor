@@ -15,6 +15,41 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## WP-CLOUD-T2 C-A (2026-07-23) — Azure OpenAI connector built + gated; DEPLOY BLOCKED on founder golden verification
+
+Queue card WP-CLOUD-T2, slice C-A, end to end (R-VERTICAL). Adapter
+connectors/azure_usage.py reads Azure Monitor platform metrics on the
+Cognitive Services resource (ProcessedPromptTokens / GeneratedTokens /
+AzureOpenAIRequests, Sum, split by ModelName; api-version 2023-10-01;
+VERIFIED against Microsoft's monitoring reference 2026-07-23 — Azure has
+no OpenAI-style usage endpoint). Auth = Entra ID client-credentials; the
+credential is FOUR fields packed to canonical sorted JSON (fingerprint
+dedup works), encrypted whole on the existing Fernet path. Honesty bound:
+Azure exposes NO cached-token count for standard deployments →
+cached_tokens=0 by construction, d2 NEVER runs on azure-openai
+(CACHE_BLIND_PROVIDERS), coverage says "not observable on Azure", wizard
+step-3 discloses it BEFORE connect. Wizard: cred-grid (promoted to
+wa-design.css both copies), five portal steps, Monitoring-Reader RBAC
+trust copy ("Azure enforces it, not our promise"), Azure-worded refusal
+verdicts (secret vs role-gap). R-CONNECT-VISIBLE: sources buttons,
+get-logs tab, wizard switch links, account-paths guide all list Azure
+from day one (routes_pages._render now injects help for the tabs).
+MONEY: prices.yaml azure-openai Global-Standard rows mirror the openai
+list (gpt-5.5/5.4/5.4-mini/5.4-nano/5.3-codex; 5.6 family deliberately
+NOT mirrored — FR-28 unpriced, never guessed); goldens G16-G19
+independent-Decimal, count pin 15→19; NOTES derivation + FOUNDER-VERIFY
+flag. Gate round (commit bc1b6ae): ux mockup PASS-WITH-NOTES (notes
+honored) · spec PWN (its note: the verify flag is textual — the
+structural block is that deploys happen only on founder approval) · vv
+PWN (goldens hand-recomputed, all match; azure_usage 92.3%) · cold PWN →
+f.1 round-not-truncate on float Sums, f.2 status-0 → bad-credential
+verdict, f.3 registry annotation widened · system-tester PWN → R-WIZ-
+DEGRADE now proven end to end with the HTTP client itself failing
+(test_13; saves + says "saved"). Fixes commit 14a7de1; full chain green.
+NEXT: founder verifies azure pricing rows against the Azure pricing page
+("azure goldens verified" or corrections) → deploy v1.7.0. Queue after:
+C-B Bedrock.
+
 ## WP-PIPELINE-UI (2026-07-23) — runs observatory shipped; FR-31 closed; five gates run
 
 The queue's card 2, end to end as one slice (R-VERTICAL). /runs (nav:

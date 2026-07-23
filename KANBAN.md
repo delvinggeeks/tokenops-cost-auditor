@@ -66,7 +66,8 @@ territory.
 
 ## 🔜 NEXT — ruled order, nothing moves without a new ruling
 
-1. **WP-CLOUD-T2** (4-6d total, one slice each) — C-A Azure OpenAI →
+1. **WP-CLOUD-T2** — C-A Azure OpenAI BUILT+GATED 2026-07-23 (awaiting
+   founder golden verification, then deploys v1.7.0); C-B Bedrock next → (4-6d total, one slice each) — C-A Azure OpenAI →
    C-B Bedrock → C-C Gemini/Vertex. DoD per slice: fixture-driven adapter,
    founder-verified golden pricing rows BEFORE merge, FR-22 tier tests,
    wizard + illustration, journey additions.
