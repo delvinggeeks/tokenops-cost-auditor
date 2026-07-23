@@ -35,6 +35,23 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## "Works with" landing rider (2026-07-24) — the coverage is now visible + two honesty gaps closed
+
+Founder connectors question → after completing the 5-provider model-cloud
+set, made the coverage VISIBLE on the landing (R-SDK-PLATFORM §5 rider).
+Reuses the connect-card grammar (no new CSS, 300KB budget honored): a
+four-tier map — model providers (all five named), your own code (SDK/API),
+upload (anything), and seat tools stated HONESTLY (Copilot governance
+coming; Cursor/Lovable already counted via provider keys; Figma AI has no
+token data to audit — said, not pretended). IMPROVISED honesty fixes
+(R-IMPROVISE): the hero-sub "No SDK" claim and the og:description "No SDK"
+were both FALSE after S-1 shipped an SDK — reworded to "No proxy, nothing
+in your request path" (the observe-only SDK is still never in the path, so
+the claim stays true); connect-tools now names the five providers. Tests:
+five providers named, SDK+API+upload paths present, seat-tools honest +
+"No SDK" gone. Full chain green. Gate: ux (landing is its charter) + spec
++ system-tester. Then WP-COPILOT-AGG, then the SDK queue (S-6, O-0).
+
 ## C-C re-gate note (2026-07-24) — bounded the pagination loop I introduced
 
 cold re-gate PASS-WITH-NOTES confirmed the three fixes closed, but flagged

@@ -75,3 +75,27 @@ class TestTheBudgetsHold:
         for alt in re.findall(r'<img[^>]+alt="([^"]+)"', html):
             assert "sample data" in alt.lower(), f"screenshot alt without the label: {alt!r}"
         assert "labeled sample data" in html
+
+
+class TestWorksWithRider:
+    """The honest coverage map (founder connectors question, 2026-07-24):
+    the landing must name every path in and never overclaim the seat tools."""
+
+    def test_names_five_model_providers(self, app: FastAPI) -> None:
+        html, _ = landing_assets(app)
+        for provider in ("OpenAI", "Anthropic", "Azure OpenAI", "AWS Bedrock", "Google Vertex AI"):
+            assert provider in html, f"landing does not name {provider}"
+
+    def test_sdk_and_upload_paths_present(self, app: FastAPI) -> None:
+        html = re.sub(r"\s+", " ", landing_assets(app)[0])  # template wraps lines
+        assert "tokenops_cost_auditor.init()" in html  # the SDK path
+        assert "POST from any language" in html  # the API path
+        assert "Export a usage file" in html  # the upload path
+
+    def test_seat_tools_stated_honestly_not_overclaimed(self, app: FastAPI) -> None:
+        html = re.sub(r"\s+", " ", landing_assets(app)[0])
+        # the tool layer is named with the honest truth, not a fake "supported"
+        assert "Copilot" in html and "Cursor" in html and "Figma" in html
+        assert "no token data to audit" in html  # Figma truth, stated
+        # the now-false "No SDK" hero claim must be gone (S-1 shipped one)
+        assert "No SDK" not in html

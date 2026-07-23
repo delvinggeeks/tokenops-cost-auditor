@@ -10,7 +10,7 @@
 {% block head %}
   <meta name="description" content="The governance layer for your AI spend. Upload logs or connect your provider account with one key — used read-only on our side — and get a dollar-ranked audit of the waste. Deterministic math, counts-only, verified savings.">
   <meta property="og:title" content="TokenOps Cost Auditor — by WitAura">
-  <meta property="og:description" content="See what your AI spend is costing you, and what you already saved. No SDK, no proxy — a dollar-ranked audit from the logs you already have.">
+  <meta property="og:description" content="See what your AI spend is costing you, and what you already saved. No proxy, nothing in your request path — a dollar-ranked audit from the logs you already have.">
   <meta property="og:image" content="{{ base_url }}{{ asset('/static/land/hero-dashboard-sample.webp') }}">
   <meta property="og:url" content="{{ base_url }}/">
   <meta property="og:type" content="website">
@@ -29,11 +29,11 @@
       {% else %}
       <h1>Take control of your AI spend.</h1>
       {% endif %}
-      <p class="hero-sub">Connect your OpenAI or Anthropic account and the
+      <p class="hero-sub">Connect any of five model providers and the
         platform does everything else — pulls your usage daily, audits it
         weekly, watches between audits and mails the statement. The audit is
-        step one of taking control. No SDK, no proxy, nothing in your
-        request path.</p>
+        step one of taking control. No proxy, nothing in your request path —
+        connect read-only, or drop in the observe-only SDK for per-call detail.</p>
       <p class="hero-ctas">
         <a class="cta" href="/signup">Start free — 1 audit, no card</a>
         <a class="btn hero-alt" href="/#how-it-works">See how it connects</a>
@@ -148,10 +148,10 @@
       {# connectors: the platform's primary motion — one key, we do the rest #}
       <div class="connect-row" data-reveal>
         <h3 class="finds-h">Connect once — the heavy lifting happens on our side</h3>
-        <p class="connect-tools">Claude Code, Codex, Cursor, LangChain agents —
-          any tool running on your API keys shows up automatically in your
-          provider's usage, so one connection covers all of them. No per-tool
-          setup, ever.</p>
+        <p class="connect-tools">OpenAI, Anthropic, Azure OpenAI, AWS Bedrock,
+          Google Vertex AI — connect any of the five. Claude Code, Codex, Cursor,
+          LangChain agents: any tool running on your keys shows up automatically
+          in your provider's usage, so one connection covers all of them.</p>
         <div class="connect-cards">
           <div class="connect-card">
             <span class="cc-name">OpenAI</span>
@@ -285,6 +285,43 @@
           <tr class="compare-us"><th scope="row">TokenOps</th><td>Audits the logs you already have</td><td>Nothing in your path — read-only, deletable</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  {# Works with — the honest coverage map (founder connectors question,
+     2026-07-24). Reuses the connect-card grammar; states every tier plainly,
+     including the seat-tool truth, so we never overclaim. #}
+  <section class="land-strip" data-reveal>
+    <div class="wrap">
+      <p class="sched">Works with your whole AI stack</p>
+      <h2>Every path in, counts only on all of them</h2>
+      <div class="connect-cards">
+        <div class="connect-card">
+          <span class="cc-name">Model providers — connect</span>
+          <p>OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex AI.
+            One read-only credential each; we pull usage daily. Any tool on your
+            keys — Cursor, Claude Code, LangChain — is counted automatically.</p>
+        </div>
+        <div class="connect-card">
+          <span class="cc-name">Your own code — SDK or API</span>
+          <p><code>tokenops_cost_auditor.init()</code> and every OpenAI and
+            Anthropic call is counted — observe-only, never in your request
+            path, token counts only, never your prompts. Or POST from any
+            language.</p>
+        </div>
+        <div class="connect-card">
+          <span class="cc-name">Anything else — upload</span>
+          <p>Export a usage file and get the same six-detector audit. Zero keys,
+            nothing to provision.</p>
+        </div>
+        <div class="connect-card connect-card-alt">
+          <span class="cc-name">Seat tools, honestly</span>
+          <p>Copilot seat governance is on the way. Cursor and Lovable usage on
+            your own keys is already counted above. Figma AI bundles into a
+            subscription with no token data to audit — we say so rather than
+            pretend.</p>
+        </div>
+      </div>
     </div>
   </section>
 
