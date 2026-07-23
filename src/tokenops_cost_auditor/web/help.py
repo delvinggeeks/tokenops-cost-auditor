@@ -109,9 +109,18 @@ def wizard_providers() -> list[str]:
 
 def guide_page(slug: str) -> dict[str, str]:
     entry = _raw()["guide_pages"].get(slug)
-    if entry is None:
-        raise KeyError(f"help registry has no guide page '{slug}'")
-    return dict(entry)
+    if entry is not None:
+        return dict(entry)
+    # R-SYSTEM-TEST journey fix (2026-07-23): widget "learn more" links can
+    # name slugs with no hand-written guide page — seven shipped as 404s on
+    # the dashboard. Those slugs now render FROM the widget's own registry
+    # entry (V-D4g single-source law: popovers and pages cannot drift), so a
+    # link the app emits is a page the app serves, by construction.
+    for w in _raw()["widgets"].values():
+        if str(w.get("link", "")).rstrip("/").endswith("/" + slug):
+            body = " ".join(str(w[k]) for k in ("what", "where", "do") if w.get(k))
+            return {"title": str(w["title"]), "audience": "Both", "body": body}
+    raise KeyError(f"help registry has no guide page '{slug}'")
 
 
 def guide_index() -> list[dict[str, str]]:

@@ -1,5 +1,7 @@
 {% from "app/_widget_head.html" import widget_head %}
-<section class="widget w-4" id="w-sources">
+<section class="widget w-4" id="w-sources"
+         hx-get="/dashboard/w/sources" hx-trigger="audit-landed from:body"
+         hx-swap="outerHTML">
   {{ widget_head("i-source", "sources", help) }}
   {% if w.empty %}
     <div class="empty">

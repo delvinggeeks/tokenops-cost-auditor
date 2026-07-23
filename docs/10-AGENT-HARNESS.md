@@ -126,3 +126,28 @@ K-3 Session token sanity: at each milestone boundary, note context size;
     if a single Dn session exceeds ~200K tokens of accumulated context,
     /clear and reload minimal state (TE-9).
 K-4 No agent may spawn another agent.
+
+## Amendment 2026-07-23 — R-SYSTEM-TEST (founder order: "who is doing the system testing?")
+
+The diff-scoped gates (vv/cold/spec/ux/ops/architect) share a blind spot BY
+DESIGN: none owns the assembled product, so integration bugs — dead links,
+stale widgets, pages that strand a signed-in user off-app — reached the
+founder, who was acting as the de-facto system tester. Two standing pieces
+close that:
+
+1. tests/test_journeys.py — the in-CI half. Signs in, renders every app
+   destination, follows every link the pages actually emit, asserts the
+   shell never drops a signed-in user onto the public landing, and pins the
+   live-dashboard laws (audit-landed refresh; no idle polling). Runs with
+   the suite on every commit; a broken link is a red build, not a founder
+   report.
+2. .claude/agents/system-tester agent — the judgment half. Runs at every
+   milestone gate ALONGSIDE the diff gates and after every deploy; walks
+   the journeys the milestone touched and checks the WORDS on the pages
+   (rendering 200 while stating something false is a FAIL). TE-6/TE-8/
+   TE-11 and K-1..K-4 apply unchanged.
+
+First sweep ran the day of the order and found: /upload escaping the app
+shell under the non-prod shim, seven dead /guide/* links on the dashboard,
+and the docs-site offering no way back to the app. All three fixed with
+journey tests pinned the same day.

@@ -72,6 +72,9 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  # R-LIVE-DASH (founder 2026-07-23): docs must always offer the way BACK —
+  # a signed-in reader clicking "home" was stranded on the public landing.
+  - "↩ Your dashboard": "https://tokenops-cost-auditor.com/dashboard"
   - Quickstart: quickstart.md
   - Concepts:
       - How it works: concepts/how-it-works.md

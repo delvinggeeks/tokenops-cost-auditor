@@ -1,5 +1,7 @@
 {% from "app/_widget_head.html" import widget_head %}
-<section class="widget w-6" id="w-waste_trend">
+<section class="widget w-6" id="w-waste_trend"
+         hx-get="/dashboard/w/waste_trend" hx-trigger="audit-landed from:body"
+         hx-swap="outerHTML">
   {{ widget_head("i-trend-down", "waste_share", help) }}
   {% if w.empty %}
     <div class="empty">

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from tokenops_cost_auditor.api.routes_upload import EMAIL_RE
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
@@ -187,6 +188,16 @@ def signup_page(request: Request) -> HTMLResponse:
 @router.get("/upload", response_class=HTMLResponse)
 def upload_page(request: Request) -> HTMLResponse:
     email = session_email(request)
+    if not email:
+        # Mirror current_user's NON-PROD shim (R-SYSTEM-TEST journey fix):
+        # /upload was the one page resolving auth by cookie alone, so the
+        # journey suite — and anything else using the shim — saw the public
+        # variant where a signed-in user gets the app shell. Same condition,
+        # same refusal in prod.
+        settings = request.app.state.settings
+        shim = request.headers.get("X-User-Email")
+        if settings.app_env != "prod" and shim and EMAIL_RE.match(shim):
+            email = shim.lower()
     if not email:
         # No session means no app nav to render, so the signed-out state is the
         # public shell rather than an app page with an empty sidebar. THIS

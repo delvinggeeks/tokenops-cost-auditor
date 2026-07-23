@@ -15,6 +15,31 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## R-SYSTEM-TEST + R-LIVE-DASH (2026-07-23) — the testing role exists now; first sweep found 3 real bugs
+
+Founder order: "who is doing the system testing? why am I the one finding
+mistakes?" Honest answer recorded in docs/10 amendment R-SYSTEM-TEST: the
+diff-scoped gates share a product-level blind spot by design. Closed with
+(1) tests/test_journeys.py — signs in, renders every app destination,
+follows every emitted link, pins the no-landing-escape and live-dashboard
+laws, runs on every commit; (2) .claude/agents/system-tester charter —
+walks the milestone's journeys at every gate + post-deploy, judges the
+WORDS on pages, not just status codes. FIRST SWEEP FOUND: (a) /upload
+escaped the app shell (cookie-only auth resolution vs the app-wide shim —
+aligned); (b) SEVEN dead /guide/* links live on the dashboard since V-D4g
+(help-registry links to pages never written — guide_page() now synthesizes
+them from the widget's own registry copy, single-source law, no dead links
+by construction); (c) docs-site offered no way back to the app (founder
+report — mkdocs nav gains "↩ Your dashboard"; in-app Documentation opens a
+new tab). R-LIVE-DASH: no stale dashboard — the pipeline poll's landing
+render emits HX-Trigger: audit-landed; all 9 widgets listen and refresh
+once; idle = zero polling (tests pin listener count + header semantics).
+PLAN-TAAS.md DRAFTED (awaiting approval): the "tokenomics as a service in
+any environment" order mapped to the record — T4 OTel ingest, deployment
+contract, R-AGNOSTIC cloud connectors (Azure OpenAI/Bedrock/Gemini),
+Copilot AGG, Cursor/Lovable blocked-by-no-API truth; 5 questions incl.
+promoting WP-CLOUD-T2. OPEN: PLAN-TAAS §4, PLAN-FLYWHEEL §6 rulings.
+
 ## R-ICON-ACTIONS + R-PIPELINE-LIVE (2026-07-23) — same-branch follow-up orders, both shipped + gated
 
 Two founder orders after the M-EXPLORER gate round, on wp-report-explorer:

@@ -3,11 +3,14 @@
    (founder 2026-07-23). Deliberately NOT a .widget: full-bleed strip with
    its own chrome. While an audit runs, the active seg carries the A6
    status pulse and this section polls itself every 2.5s; the outerHTML
-   swap drops the trigger the moment the run lands, so an idle dashboard
-   makes zero polling requests. MONEY NEVER SHIMMERS — figures re-render
+   swap drops the trigger the moment the run lands — and that landing
+   render (live=1, no longer in flight) carries an HX-Trigger:
+   audit-landed header, so every other widget refreshes ONCE with the
+   new numbers (R-LIVE-DASH: no stale figures after a run). Idle
+   dashboards make zero polling requests. MONEY NEVER SHIMMERS — figures re-render
    settled; only stage names pulse. #}
 <section class="w-12" id="w-pipeline"
-         {% if w.in_flight %}hx-get="/dashboard/w/pipeline"
+         {% if w.in_flight %}hx-get="/dashboard/w/pipeline?live=1"
          hx-trigger="every 2.5s" hx-swap="outerHTML"{% endif %}>
   {% set h = help.widget("pipeline") %}
   <div class="widget-head">

@@ -192,9 +192,16 @@ def widget_partial(
             watching = alerts_dispatch.plan_watches(
                 request.app.state.settings, user_plan(session, user.id)
             )
-            widget = metrics.pipeline(
+            live = metrics.pipeline(
                 session, request.app.state.pricing_table, user.id, watching=watching
             )
+            resp = _render(request, "app/widgets/_pipeline.html", w=live, standalone=True)
+            if request.query_params.get("live") and not live["in_flight"]:
+                # The polled render that catches the landing (R-LIVE-DASH):
+                # announce it so every other widget refreshes once with the
+                # run's numbers — no stale figures, no idle polling.
+                resp.headers["HX-Trigger"] = "audit-landed"
+            return resp
         else:
             fn = {"sources": "sources_health"}.get(key, key)
             widget = getattr(metrics, fn)(session, user.id)

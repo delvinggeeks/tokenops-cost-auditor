@@ -1,6 +1,8 @@
 {% from "app/_widget_head.html" import widget_head %}
 {% import "kit/_kit.html" as kit %}
-<section class="widget w-12" id="w-savings">
+<section class="widget w-12" id="w-savings"
+         hx-get="/dashboard/w/savings" hx-trigger="audit-landed from:body"
+         hx-swap="outerHTML">
   {{ widget_head("i-savings", "verified_savings", help) }}
   {% if w.empty %}
     {{ kit.empty_state(
