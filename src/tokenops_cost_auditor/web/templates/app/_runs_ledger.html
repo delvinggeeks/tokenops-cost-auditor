@@ -1,0 +1,82 @@
+{% import "kit/_kit.html" as kit %}
+{# The runs ledger (WP-PIPELINE-UI). Renders standalone for the in-flight
+   self-poll; the outerHTML swap drops the trigger the moment nothing is in
+   flight (same law as the pipeline widget — idle pages never poll). Stage
+   strips are the kit ribbon's rich form, one implementation (F4). #}
+<section class="widget w-12" id="runs-ledger"
+         {% if view.in_flight %}hx-get="/runs/partial"
+         hx-trigger="every 2.5s" hx-swap="outerHTML"{% endif %}>
+  <table class="ledger">
+    <thead><tr>
+      <th>When</th><th>Run</th><th>Trigger</th><th>Status</th>
+      <th class="r">Duration</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for run in view.runs %}
+      {% set a = run.audit %}
+      <tr>
+        <td>{{ a.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+        <td><code>{{ a.id[:4] }}…{{ a.id[-3:] }}</code>
+          {%- if run.purged %} <span class="muted">· raw logs purged (kept: counts, findings, report)</span>{% endif %}</td>
+        <td><span class="badge badge-neutral">{{ run.trigger }}</span></td>
+        <td>
+          {%- if a.status == "done" %}<span class="badge badge-verified">done</span>
+          {%- elif a.status == "failed" %}<span class="badge badge-waste">failed</span>
+          {%- else %}<span class="badge badge-neutral">{{ a.status }}</span>{% endif %}
+        </td>
+        <td class="r"><code>{{ run.duration or "—" }}</code></td>
+        <td>{{ kit.drawer_toggle("run-" ~ a.id) }}</td>
+      </tr>
+      {% call kit.drawer("run-" ~ a.id, 6) %}
+        {% if run.stages %}
+          {{ kit.pipeline_ribbon(run.stages, cls="ribbon-4") }}
+          <dl class="drill">
+            <dt>Rejected rows</dt>
+            <dd>
+              {%- if run.rejected and run.has_upload -%}
+                {{ "{:,}".format(run.rejected) }} — <a href="/audits/{{ a.id }}/row-errors">download row-errors.csv</a>
+              {%- elif run.rejected -%}
+                {{ "{:,}".format(run.rejected) }} — row-errors file purged with the upload
+              {%- else -%}
+                0 — every row parsed
+              {%- endif -%}
+            </dd>
+            {% for d in run.detectors %}
+            <dt>{{ d.detector }}</dt>
+            <dd>
+              {%- if d.count -%}
+                {{ d.count }} finding(s) · ${{ "%.2f"|format(d.monthly_usd) }}/mo
+              {%- else -%}
+                ran, found nothing — an honest zero, not a skip
+              {%- endif -%}
+            </dd>
+            {% endfor %}
+            {% if run.purged %}
+            <dt>Raw upload</dt>
+            <dd>purged on schedule (FR-21) — stage timings, counts, findings
+              and the report itself are retained</dd>
+            {% endif %}
+          </dl>
+          <div class="provenance">run {{ a.id[:8] }} · stage timings recorded
+            at run time, never estimated</div>
+        {% elif a.status in ("queued", "processing") %}
+          <p class="tells">In flight — <a href="/audits/{{ a.id }}/progress">watch
+            it live in the pipeline theater</a>. Stage timings land here with
+            the run.</p>
+        {% elif a.status == "failed" %}
+          <p class="tells">{{ a.error or "This run failed before any stage completed." }}</p>
+        {% else %}
+          <p class="tells">This run predates per-stage timing — its report and
+            findings are complete; only the stage clock is missing.</p>
+        {% endif %}
+      {% endcall %}
+    {% else %}
+      <tr><td colspan="6" class="muted">No runs yet — your first upload or
+        connected account starts this ledger.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="provenance">{{ view.runs|length }} run(s), every one this
+    account ever made (FR-31) · purged runs stay listed with counts and
+    findings — only raw uploads age out</div>
+</section>

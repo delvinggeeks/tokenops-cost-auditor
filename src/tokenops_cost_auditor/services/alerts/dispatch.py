@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
-from tokenops_cost_auditor.persistence.models import AlertEvent, User
+from tokenops_cost_auditor.persistence.models import AlertCheck, AlertEvent, AlertRule, User
 from tokenops_cost_auditor.services.alerts.rules import Firing, evaluate
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 
@@ -52,6 +52,29 @@ def run_for_user(
     now: datetime | None = None,
 ) -> list[Firing]:
     firings = evaluate(session, settings, user, now=now)
+    # WP-PIPELINE-UI: "checked — nothing crossed" is evidence too. One row per
+    # enabled rule per tick, committed BEFORE any mail so the silence ledger
+    # survives a delivery failure. Fired rules are stamped crossed here; the
+    # matching AlertEvent below stays the delivery record.
+    stamp = now or datetime.now(UTC)
+    fired_rules = {f.rule for f in firings}
+    enabled_rules = (
+        session.execute(select(AlertRule).where(AlertRule.user_id == user.id, AlertRule.enabled))
+        .scalars()
+        .all()
+    )
+    for rule_row in enabled_rules:
+        crossed = rule_row.rule in fired_rules
+        session.add(
+            AlertCheck(
+                user_id=user.id,
+                rule=rule_row.rule,
+                ts=stamp,
+                crossed=crossed,
+                note="fired — emailed" if crossed else "checked — nothing crossed",
+            )
+        )
+    session.commit()
     sent: list[Firing] = []
     for f in firings:
         session.add(

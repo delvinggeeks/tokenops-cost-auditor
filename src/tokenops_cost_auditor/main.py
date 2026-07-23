@@ -42,6 +42,7 @@ from tokenops_cost_auditor.web.routes_devices import router as devices_router
 from tokenops_cost_auditor.web.routes_explorer import router as explorer_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
+from tokenops_cost_auditor.web.routes_runs import router as runs_router
 from tokenops_cost_auditor.web.routes_settings import router as settings_router
 from tokenops_cost_auditor.web.routes_sources import router as sources_router
 from tokenops_cost_auditor.web.routes_statements import router as statements_router
@@ -192,6 +193,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sources_router)  # T2 connect/revoke (v1.5 WP-1)
     app.include_router(dashboard_router)  # owner dashboard + guide + tour (v1.5 WP-2)
     app.include_router(explorer_router)  # FR-32 report explorer (R-EXPLORER)
+    app.include_router(runs_router)  # runs observatory (WP-PIPELINE-UI)
     app.include_router(devices_router)  # WP-CC-LINK collector link/ship (T3)
     app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)
     app.include_router(statements_router)  # monthly owner artifact (v1.5 WP-4)

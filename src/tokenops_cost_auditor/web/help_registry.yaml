@@ -20,6 +20,8 @@ destinations:
     purpose: "Open or download any past audit, including its full report PDF."
   explore:
     purpose: "Slice your entire history — by time, model, source or finding — and read it as one report."
+  runs:
+    purpose: "Every audit run end to end — what triggered it, how long each stage took, and what each stage did."
   sources:
     purpose: "Connect a provider so we pull your usage automatically, or revoke one."
   get_logs:

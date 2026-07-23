@@ -346,10 +346,11 @@ def _process_first_pull(
     pre-created 'queued' Audit row through processing → done, or to 'failed' on
     any error / vanished source, so the theater always reaches a terminal state
     (R-LIVE-AUDIT, cold-review f.2)."""
-    from tokenops_cost_auditor.services.connectors.pull import run_pull
+    from tokenops_cost_auditor.services.connectors.pull import record_pull_failure, run_pull
     from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
     from tokenops_cost_auditor.services.payments.base import claim_credit
 
+    pull_ok = False  # only a failure BEFORE this flips is a pull failure
     try:
         with factory() as session:
             source = session.get(Source, source_id)
@@ -366,6 +367,7 @@ def _process_first_pull(
             session.commit()
             run_pull(session, settings, source)
             session.commit()
+            pull_ok = True
             run_source_audit(session, settings, table, source, audit=row)
             if claim_for_user is not None:
                 claimed = claim_credit(session, claim_for_user, audit_id)
@@ -381,6 +383,8 @@ def _process_first_pull(
                     audit_id,
                     "We couldn't finish this first audit. We'll retry automatically.",
                 )
+                if not pull_ok:  # audit-step failures are not pull failures
+                    record_pull_failure(session, source_id, exc)
         except Exception:  # failure-marking is best-effort; never re-raise
             pass
 

@@ -29,6 +29,7 @@ APP_PAGES = (
     "/dashboard",
     "/findings",
     "/explore",
+    "/runs",
     "/sources",
     "/upload",
     "/alerts",

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Runs (WP-PIPELINE-UI) — SAMPLE DATA</title>
+<link rel="stylesheet" href="../wa-design.css">
+<!-- Delight (one per flow): an in-flight run's stage carries the A6 status
+     pulse the theater already ships — the observatory and the theater are
+     one grammar. Money never shimmers; timings are mono, settled. -->
+<style>
+  /* mockup-local LAYOUT only — the stage strip below is the kit's own
+     .ribbon/.seg grammar (one-ribbon law, F4). A run has 4 stages, the
+     kit grid pins 5; this narrows the track count, nothing else. */
+  .ribbon-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 860px) { .ribbon-4 { grid-template-columns: 1fr; } }
+  .drawer .ribbon { margin: var(--s2) 0; }
+  .drill { display:grid; grid-template-columns:max-content 1fr; gap:4px var(--s3);
+    font-size:13px; margin: var(--s2) 0 0; }
+  .drill dt { color:var(--ink-soft); }
+  .drill dd { margin:0; font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body class="app-body">
+<main class="wrap" style="padding: var(--s4) 0;">
+  <h1>Runs</h1>
+  <p class="tells">Every audit this account has ever run — what triggered it,
+    how long each stage took, and exactly what each stage did. Zeros are
+    stated, never hidden.</p>
+
+  <section class="widget w-12">
+    <table class="ledger">
+      <thead><tr>
+        <th class="sortable" aria-sort="descending">When <svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></th>
+        <th>Run</th><th>Trigger</th><th>Status</th>
+        <th class="r">Duration</th><th></th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>2026-07-23 09:14 UTC</td>
+          <td><code>a4f2…9c1</code></td>
+          <td><span class="badge badge-neutral">scheduled pull</span></td>
+          <td><span class="badge badge-verified">done</span></td>
+          <td class="r"><code>4.9s</code></td>
+          <td><button class="btn btn-quiet" aria-expanded="true" aria-controls="drawer-1">Details</button></td>
+        </tr>
+        <tr class="drawer" id="drawer-1"><td colspan="6">
+          <nav class="ribbon ribbon-4" aria-label="Run stages">
+            <div class="seg active"><div class="stage-name">Ingest</div>
+              <div class="stage-state">2.1s</div>
+              <div class="stage-note">5,000 rows · 12 rejected</div></div>
+            <div class="seg active"><div class="stage-name">Price</div>
+              <div class="stage-state">0.8s</div>
+              <div class="stage-note">4,988 priced · 12 unpriced (2 models)</div></div>
+            <div class="seg active"><div class="stage-name">Detect</div>
+              <div class="stage-state">1.4s</div>
+              <div class="stage-note">6 detectors ran</div></div>
+            <div class="seg active"><div class="stage-name">Report</div>
+              <div class="stage-state">0.6s</div>
+              <div class="stage-note">JSON + PDF + web</div></div>
+          </nav>
+          <dl class="drill">
+            <dt>Rejected rows</dt><dd>12 — <a href="#">download row-errors.csv</a></dd>
+            <dt>Uncached repeated prompts</dt><dd>3 findings · $412.00/mo</dd>
+            <dt>Retry storms</dt><dd>ran, found nothing — an honest zero, not a skip</dd>
+            <dt>Oversized model</dt><dd>ran, found nothing</dd>
+            <dt>Prompt bloat · Unbounded max_tokens · Chatty loops</dt><dd>ran, found nothing</dd>
+          </dl>
+          <div class="provenance">run a4f2…9c1 · triggered by the weekly schedule ·
+            stage timings recorded at run time, never estimated</div>
+        </td></tr>
+        <tr>
+          <td>2026-07-23 06:00 UTC</td>
+          <td><code>77b0…e42</code></td>
+          <td><span class="badge badge-neutral">collector ship</span></td>
+          <td><span class="badge badge-neutral">processing</span></td>
+          <td class="r"><code>—</code></td>
+          <td><button class="btn btn-quiet" aria-expanded="true" aria-controls="drawer-2">Details</button></td>
+        </tr>
+        <tr class="drawer" id="drawer-2"><td colspan="6">
+          <!-- Delight, SHOWN: the in-flight stage is the kit's .seg.live —
+               the theater's own A6 pulse (reduced-motion safe via the
+               global kill rule). Timings settle to mono the moment a
+               stage finishes; money never shimmers. -->
+          <nav class="ribbon ribbon-4" aria-label="Run stages">
+            <div class="seg active"><div class="stage-name">Ingest</div>
+              <div class="stage-state">1.9s</div>
+              <div class="stage-note">3,214 rows · 0 rejected</div></div>
+            <div class="seg live"><div class="stage-name">Price</div>
+              <div class="stage-state">running</div>
+              <div class="stage-note">pricing 3,214 rows…</div></div>
+            <div class="seg waiting"><div class="stage-name">Detect</div>
+              <div class="stage-state">waiting</div></div>
+            <div class="seg waiting"><div class="stage-name">Report</div>
+              <div class="stage-state">waiting</div></div>
+          </nav>
+          <div class="provenance">in flight — this page updates when the run
+            lands, same event the dashboard listens for</div>
+        </td></tr>
+        <tr>
+          <td>2026-07-19 18:22 UTC</td>
+          <td><code>3696…0b5</code></td>
+          <td><span class="badge badge-neutral">file upload</span></td>
+          <td><span class="badge badge-verified">done</span></td>
+          <td class="r"><code>11.2s</code></td>
+          <td><button class="btn btn-quiet" aria-expanded="false" aria-controls="drawer-3">Details</button></td>
+        </tr>
+        <tr class="drawer" id="drawer-3" hidden><td colspan="6">
+          <nav class="ribbon ribbon-4" aria-label="Run stages">
+            <div class="seg active"><div class="stage-name">Ingest</div>
+              <div class="stage-state">6.0s</div>
+              <div class="stage-note">61,882 rows · 0 rejected</div></div>
+            <div class="seg active"><div class="stage-name">Price</div>
+              <div class="stage-state">2.4s</div>
+              <div class="stage-note">61,882 priced · 0 unpriced</div></div>
+            <div class="seg active"><div class="stage-name">Detect</div>
+              <div class="stage-state">2.1s</div>
+              <div class="stage-note">6 detectors ran</div></div>
+            <div class="seg active"><div class="stage-name">Report</div>
+              <div class="stage-state">0.7s</div>
+              <div class="stage-note">JSON + PDF + web</div></div>
+          </nav>
+        </td></tr>
+        <tr>
+          <td>2026-07-18 02:31 UTC</td>
+          <td><code>ff01…773</code> <span class="muted">· raw logs purged (kept: counts, findings, report)</span></td>
+          <td><span class="badge badge-neutral">file upload</span></td>
+          <td><span class="badge badge-verified">done</span></td>
+          <td class="r"><code>9.8s</code></td>
+          <td><button class="btn btn-quiet" aria-expanded="false" aria-controls="drawer-4">Details</button></td>
+        </tr>
+        <tr class="drawer" id="drawer-4" hidden><td colspan="6">
+          <nav class="ribbon ribbon-4" aria-label="Run stages">
+            <div class="seg active"><div class="stage-name">Ingest</div>
+              <div class="stage-state">5.1s</div>
+              <div class="stage-note">48,300 rows · 41 rejected</div></div>
+            <div class="seg active"><div class="stage-name">Price</div>
+              <div class="stage-state">2.2s</div>
+              <div class="stage-note">48,259 priced · 0 unpriced</div></div>
+            <div class="seg active"><div class="stage-name">Detect</div>
+              <div class="stage-state">1.8s</div>
+              <div class="stage-note">6 detectors ran</div></div>
+            <div class="seg active"><div class="stage-name">Report</div>
+              <div class="stage-state">0.7s</div>
+              <div class="stage-note">JSON + PDF + web</div></div>
+          </nav>
+          <dl class="drill">
+            <dt>Raw upload</dt><dd>purged on schedule (FR-31) — stage timings,
+              counts, findings and the report itself are retained</dd>
+            <dt>Rejected rows</dt><dd>41 — row-errors file purged with the upload</dd>
+          </dl>
+        </td></tr>
+      </tbody>
+    </table>
+    <div class="provenance">4 runs, every one this account ever made (FR-31) ·
+      purged runs stay listed with counts and findings — only raw uploads age out</div>
+  </section>
+
+  <section class="widget w-6">
+    <div class="widget-head"><h2>Connector pulls</h2></div>
+    <p class="tells">Every pull, not just the last one — including the failures.</p>
+    <table class="ledger">
+      <thead><tr><th>When</th><th>Source</th><th class="r">Buckets</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>09:12 UTC</td><td>openai usage</td><td class="r">31 in · 2 new</td>
+          <td><span class="badge badge-verified">ok</span></td></tr>
+        <tr><td>08:00 UTC</td><td>anthropic usage</td><td class="r">—</td>
+          <td><span class="badge badge-waste">failed — key revoked upstream</span></td></tr>
+        <tr><td>Jul 22 09:12</td><td>openai usage</td><td class="r">30 in · 30 new</td>
+          <td><span class="badge badge-verified">ok</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="widget w-6">
+    <div class="widget-head"><h2>Alert checks</h2></div>
+    <p class="tells">"Checked, nothing crossed" is evidence too — silence you can verify.</p>
+    <table class="ledger">
+      <thead><tr><th>When</th><th>Rule</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>09:00 UTC</td><td>Spend spike day-over-day</td>
+          <td class="muted">checked — nothing crossed</td></tr>
+        <tr><td>09:00 UTC</td><td>Soft budget</td>
+          <td class="muted">checked — 61% of budget, below the 80% stage</td></tr>
+        <tr><td>Jul 22 09:00</td><td>New high-impact finding</td>
+          <td><span class="badge badge-verified">fired — emailed</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <p class="muted" style="margin-top:var(--s4); font-size:13px;">MOCKUP v2 —
+    SAMPLE DATA. Stage strips are the kit's own ribbon rich form (one-ribbon
+    law); the in-flight run's drawer is open, its live stage carrying the
+    theater's A6 pulse — shown, not asserted. Honest states everywhere:
+    rejected counts with the download, unpriced named, detectors that found
+    nothing say so, purged runs stay listed with what remains.</p>
+</main>
+</body>
+</html>

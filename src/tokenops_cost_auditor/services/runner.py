@@ -21,7 +21,13 @@ from sqlalchemy import Engine, delete
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.obs import errors as obs_errors
-from tokenops_cost_auditor.persistence.models import Audit, CallAggregate, FindingRow, User
+from tokenops_cost_auditor.persistence.models import (
+    Audit,
+    CallAggregate,
+    FindingRow,
+    StageEvent,
+    User,
+)
 from tokenops_cost_auditor.persistence.repo import make_session_factory, processing_count
 from tokenops_cost_auditor.services import ingest
 from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
@@ -37,7 +43,7 @@ from tokenops_cost_auditor.services.report.render_pdf import render_pdf, render_
 from tokenops_cost_auditor.services.report.signer import sign_report_url
 from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import Finding, observed_days
-from tokenops_cost_auditor.services.rules.registry import run_all
+from tokenops_cost_auditor.services.rules.registry import DETECTORS, run_all
 
 log = structlog.get_logger("tokenops_cost_auditor.runner")
 
@@ -119,6 +125,10 @@ class AuditRunner:
             assert user is not None
             user_email = user.email
 
+        # WP-PIPELINE-UI: wall-clock stamps at stage boundaries, persisted as
+        # StageEvent rows in the final session — recorded at run time, never
+        # estimated. Counts only in detail (FR-22).
+        t_start = datetime.now(UTC)
         frame, vr = ingest.load(
             upload_path,
             max_upload_mb=self.settings.max_upload_mb,
@@ -135,14 +145,21 @@ class AuditRunner:
             audit.valid_pct = vr.valid_pct
             session.commit()
         enforce(vr, error_file)  # FR-03: aborts <95% via IngestError
+        t_ingest = datetime.now(UTC)
 
         priced, unpriced = coster.apply(self.table, frame)
         total = coster.total_spend(priced)
         coster.reconcile(priced, total)  # NFR-07
+        t_price = datetime.now(UTC)
         ctx = DetectorContext(
             settings=self.settings, table=self.table, observed_days=observed_days(priced)
         )
         findings: list[Finding] = run_all(priced, ctx)
+        # Honest zeros: every detector appears, "ran, found nothing" included.
+        by_detector: dict[str, int] = {d.name: 0 for d in DETECTORS}
+        for f in findings:
+            by_detector[f.detector] = by_detector.get(f.detector, 0) + 1
+        t_detect = datetime.now(UTC)
         aggregates = aggregate(priced)
         report = ReportModel.build(
             audit_id=audit_id,
@@ -167,6 +184,28 @@ class AuditRunner:
             render_report_html(report, template="report.html"), encoding="utf-8"
         )
         render_pdf(report, report_dir / "report.pdf")
+        t_report = datetime.now(UTC)
+        stage_rows = (
+            (
+                "ingest",
+                t_start,
+                t_ingest,
+                {"rows": vr.total_rows, "rejected": vr.total_rows - vr.valid_rows},
+            ),
+            (
+                "price",
+                t_ingest,
+                t_price,
+                {"priced_rows": len(priced), "unpriced_models": sorted(unpriced)},
+            ),
+            (
+                "detect",
+                t_price,
+                t_detect,
+                {"detectors": by_detector, "findings": len(findings)},
+            ),
+            ("report", t_detect, t_report, {"artifacts": ["json", "html", "pdf"]}),
+        )
 
         with factory() as session:
             audit = session.get(Audit, audit_id)
@@ -174,6 +213,17 @@ class AuditRunner:
             # idempotent re-run (FR-19): replace previous derived rows
             session.execute(delete(FindingRow).where(FindingRow.audit_id == audit_id))
             session.execute(delete(CallAggregate).where(CallAggregate.audit_id == audit_id))
+            session.execute(delete(StageEvent).where(StageEvent.audit_id == audit_id))
+            for stage_name, started, finished, detail in stage_rows:
+                session.add(
+                    StageEvent(
+                        audit_id=audit_id,
+                        stage=stage_name,
+                        started_at=started,
+                        finished_at=finished,
+                        detail=detail,
+                    )
+                )
             for f in findings:
                 if len(f.evidence) > 20:  # defense in depth; enforced upstream too
                     raise ValueError("evidence sample exceeds 20 items")

@@ -237,10 +237,10 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .sidebar { background: var(--surface-tint); border-right: 1px solid var(--rule);
   padding: var(--s3) 0; }
 .sidebar .brand { font-weight: 700; padding: 0 var(--s3) var(--s3); }
-.nav-group { margin-bottom: var(--s3); }
+.nav-group { margin-bottom: var(--s2); }
 .nav-group > .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--ink-soft); padding: 0 var(--s3) 6px; }
-.nav-group a { display: block; padding: 7px var(--s3); color: var(--ink);
+.nav-group a { display: flex; align-items: center; padding: 6px var(--s3); color: var(--ink);
   text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
 .nav-group a:hover { background: rgba(28, 26, 23, 0.04); }
 .nav-group a[aria-current="page"] { font-weight: 600; color: var(--accent-ink);
@@ -316,6 +316,11 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
   .ribbon .seg::after { display: none; }
 }
 
+/* Four-stage variant (WP-PIPELINE-UI runs drawers): track count only —
+   classes, states and the seam are the one ribbon grammar above. */
+.ribbon-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 860px) { .ribbon-4 { grid-template-columns: 1fr; } }
+
 /* ---- ICON SYSTEM (R-DESIGN-V3 §1a): one self-hosted stroke sprite ---- */
 .i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none;
   stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
@@ -331,8 +336,8 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .widget-head h2 { margin: 0; flex: 1; }
 .sidebar { padding: var(--s2) 0; }
 .sidebar .brand { padding: 0 var(--s3) var(--s2); font-size: 15px; }
-.nav-group { margin-bottom: var(--s2); }
-.nav-group a { padding: 6px var(--s3); display: flex; align-items: center; }
+/* (F14 fix: .nav-group/.nav-group a density values folded into the base
+   declarations above — one selector, one truth) */
 .topbar { padding: 10px var(--s4); box-shadow: var(--lift-1); }
 .provenance, .freshness, .meta { font-size: 12px; }
 

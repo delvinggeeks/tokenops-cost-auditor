@@ -286,6 +286,49 @@ class SavedView(Base):
     __table_args__ = (UniqueConstraint("user_id", "name", name="uq_saved_view_user_name"),)
 
 
+class StageEvent(Base):
+    __tablename__ = "stage_events"  # WP-PIPELINE-UI: real per-stage timings
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    audit_id: Mapped[str] = mapped_column(
+        ForeignKey("audits.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    stage: Mapped[str] = mapped_column(String(24), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # counts/ids only (FR-22): rows, rejected, priced, unpriced models,
+    # per-detector finding counts INCLUDING honest zeros
+    detail: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+
+class PullEvent(Base):
+    __tablename__ = "pull_events"  # WP-PIPELINE-UI: every pull, incl. failures
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("sources.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    ok: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    buckets_in: Mapped[int] = mapped_column(Integer, default=0)
+    upserted: Mapped[int] = mapped_column(Integer, default=0)  # new rows
+    updated: Mapped[int] = mapped_column(Integer, default=0)  # latest-wins rewrites
+    error: Mapped[str | None] = mapped_column(String(300))  # user-safe words only
+
+
+class AlertCheck(Base):
+    __tablename__ = "alert_checks"  # WP-PIPELINE-UI: silence you can verify
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    rule: Mapped[str] = mapped_column(String(32), nullable=False)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    crossed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    note: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+
+
 class LinkCode(Base):
     __tablename__ = "link_codes"  # WP-CC-LINK: short-lived, one-shot, hashed
 

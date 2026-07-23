@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
-from tokenops_cost_auditor.persistence.models import Source, SourceUsage, utcnow
+from tokenops_cost_auditor.persistence.models import PullEvent, Source, SourceUsage, utcnow
 from tokenops_cost_auditor.services.connectors import anthropic_usage, openai_usage
 from tokenops_cost_auditor.services.connectors.base import PullStats, SupportsGet
 from tokenops_cost_auditor.services.connectors.crypto import (
@@ -99,5 +99,30 @@ def run_pull(
             existing.provenance = provenance
             stats.updated_existing += 1
     source.last_pull_at = utcnow()
+    # WP-PIPELINE-UI: every pull leaves a ledger row (rides the caller's
+    # commit, same transaction as the usage upserts it describes).
+    session.add(
+        PullEvent(
+            source_id=source.id,
+            ok=True,
+            buckets_in=stats.buckets_in,
+            upserted=stats.upserted,
+            updated=stats.updated_existing,
+        )
+    )
     log.info("connector.pull", summary=stats.summary(), source_id=source.id)
     return stats
+
+
+def record_pull_failure(session: Session, source_id: str, exc: Exception) -> None:
+    """The failure half of the pull ledger ("every pull, including the
+    failures"). USER-SAFE words only: the typed auth error keeps its message;
+    anything else collapses to a generic line — internals stay in logs.
+    Commits in its own transaction; callers invoke it AFTER rollback."""
+    text = (
+        "provider rejected the stored key"
+        if isinstance(exc, openai_usage.ConnectorAuthError)
+        else "pull failed — provider or network error"
+    )
+    session.add(PullEvent(source_id=source_id, ok=False, error=text))
+    session.commit()

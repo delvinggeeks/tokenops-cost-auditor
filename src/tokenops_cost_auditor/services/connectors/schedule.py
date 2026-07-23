@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Source
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
-from tokenops_cost_auditor.services.connectors.pull import run_pull
+from tokenops_cost_auditor.services.connectors.pull import record_pull_failure, run_pull
 from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.pricing.table import PricingTable
@@ -93,6 +93,10 @@ def tick(
             session.rollback()
             stats["pull_errors"] += 1
             log.warning("connector.pull_failed", source_id=source.id, error=str(exc)[:200])
+            try:
+                record_pull_failure(session, source.id, exc)
+            except Exception:  # the ledger row is best-effort; never re-raise
+                session.rollback()
     for source in due_audits(session, now, settings):
         try:
             run_source_audit(session, settings, table, source)

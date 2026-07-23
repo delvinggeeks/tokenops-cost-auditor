@@ -34,6 +34,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingRow,
     Source,
     SourceUsage,
+    StageEvent,
     utcnow,
 )
 from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
@@ -76,6 +77,7 @@ def run_source_audit(
     If `audit` is given (a row pre-created as 'queued' so a live progress page
     can be watched — R-LIVE-AUDIT), it is finalized to 'done' in place; else a
     fresh 'done' row is created as before (scheduled/re-audit callers)."""
+    t_start = datetime.now(UTC)  # WP-PIPELINE-UI: stage stamps, same law as runner
     window_start = (datetime.now(UTC) - timedelta(days=settings.connect_backfill_days)).date()
     rows = (
         session.execute(
@@ -100,11 +102,17 @@ def run_source_audit(
         ]
     )
     observed = max(int(frame["day"].nunique()), 1) if len(frame) else 1
+    t_ingest = datetime.now(UTC)
     findings = (
         run_aggregate_detectors(frame, source.provider, table, settings, observed)
         if len(frame)
         else []
     )
+    # Honest zeros over the detectors that actually run on aggregates.
+    by_detector: dict[str, int] = {d: 0 for d in ACTIVE_ON_AGGREGATE}
+    for f in findings:
+        by_detector[f.detector] = by_detector.get(f.detector, 0) + 1
+    t_detect = datetime.now(UTC)
 
     # As-billed spend per bucket at the verified rate card; unpriced listed.
     unpriced: set[str] = set()
@@ -126,6 +134,7 @@ def run_source_audit(
             / 1e6
         )
     total = float(sum(costs))
+    t_price = datetime.now(UTC)
     monthly_spend = total * 30.0 / observed
     monthly_savings = min(sum(f.monthly_cost_impact_usd for f in findings), monthly_spend)
     total_calls = int(frame["calls"].sum()) if len(frame) else 0
@@ -234,6 +243,44 @@ def run_source_audit(
     if block is not None:
         report = dataclasses.replace(report, benchmark=block)
     render_json(report, settings.report_dir / audit.id / "report.json")
+    t_report = datetime.now(UTC)
+    # Stage order here is the honest execution order for bucket audits:
+    # detectors run on the frame BEFORE the rate-card pass (unlike the
+    # upload pipeline). The /runs drawer renders by started_at, so the strip
+    # tells it exactly as it ran. Counts only (FR-22).
+    for stage_name, started, finished, detail in (
+        (
+            "ingest",
+            t_start,
+            t_ingest,
+            {"rows": len(rows), "days": observed},
+        ),
+        (
+            "detect",
+            t_ingest,
+            t_detect,
+            {"detectors": by_detector, "findings": len(findings)},
+        ),
+        (
+            "price",
+            t_detect,
+            t_price,
+            {
+                "priced_rows": len(rows) - sum(1 for r in rows if r.model in unpriced),
+                "unpriced_models": sorted(unpriced),
+            },
+        ),
+        ("report", t_price, t_report, {"artifacts": ["json"]}),
+    ):
+        session.add(
+            StageEvent(
+                audit_id=audit.id,
+                stage=stage_name,
+                started_at=started,
+                finished_at=finished,
+                detail=detail,
+            )
+        )
     log.info(
         "connector.source_audit",
         source_id=source.id,

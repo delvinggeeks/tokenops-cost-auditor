@@ -38,7 +38,7 @@ publicly ("—" = internal-only, no public page needed).
 | FR-28  | C5  | report/model, render_json, render_pdf      | T-REP-08 | concepts/pricing-data |
 | FR-29  | Ops | scripts/pricing_refresh.py                 | T-OPS-04 | concepts/pricing-data |
 | FR-30  | C5  | report/model (equiv-spend flag), _report_body | T-REP-09 | quickstart |
-| FR-31  | v1.5 | DEFERRED BY RULING: R-PIPELINE-UI-SEQ (founder Option A, 2026-07-27) moved the runs/audits list into WP-PIPELINE-UI, FIRST post-launch gated milestone (purged rows metadata-only travels with it); pre-launch carve-out (live theater + row-errors download) shipped v1.5.2 | assigned at WP-PIPELINE-UI | — |
+| FR-31  | C1,C6 | SHIPPED at WP-PIPELINE-UI: web/routes_runs + app/runs.html (full runs ledger, purged rows metadata-only, FR-31 count line); migration 017 stage_events/pull_events/alert_checks; runner + connectors/source_audit stage recording (honest zeros incl. every detector); connectors/pull PullEvent success + record_pull_failure; alerts/dispatch AlertCheck rows | tests/test_runs.py (stage order both pipelines, FR-19 replace, pull ledger user-safe failures, alert silence rows, /runs journey: kit ribbon, purged listing, pre-history honesty, in-flight poll) | — |
 | V15 R-Q1 | C4,C5 | rules/aggregate (d1/d2/d3 aggregate estimators; INACTIVE law), connectors/source_audit (tier+coverage) | T-AGG-01..05, T-SA-01..03, T-REP-03 | engineering/performance (tier note pending WP-7) |
 | V15 R-CONNECT | C6 | connectors/{openai,anthropic}_usage, pull (idempotent upsert + stats), schedule (tick), crypto (HKDF/Fernet) | T-CON-01..06, T-SCH-01..03, T-KEY-01..03, T-V15-MIG-01 | — |
 | V15 R-Q5/Q6 | C6 | web/routes_sources (plan gating, revoke deletes ciphertext) | tests/test_sources_routes.py | — |

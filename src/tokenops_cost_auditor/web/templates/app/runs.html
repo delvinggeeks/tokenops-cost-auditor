@@ -1,0 +1,99 @@
+{% extends "app/_shell.html" %}
+{% block title %}Runs — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+{# Delight (one per flow): an in-flight run's stage carries the theater's own
+   A6 pulse via the live progress page it links to — the observatory and the
+   theater are one grammar. Money never shimmers; timings are mono, settled. #}
+<style>
+  .drawer .ribbon { margin: var(--s2) 0; }
+  .drill { display: grid; grid-template-columns: max-content 1fr; gap: 4px var(--s3);
+    font-size: 13px; margin: var(--s2) 0 0; }
+  .drill dt { color: var(--ink-soft); }
+  .drill dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>
+
+<h1>Runs</h1>
+
+{% include "app/_runs_ledger.html" %}
+
+<div class="grid-2" style="margin-top: var(--s3);">
+  <section class="widget">
+    <div class="widget-head"><h2>Connector pulls</h2></div>
+    <p class="tells">Every pull, not just the last one — including the failures.</p>
+    <table class="ledger">
+      <thead><tr><th>When</th><th>Source</th><th class="r">Buckets</th><th>Result</th></tr></thead>
+      <tbody>
+      {% for p in view.pulls %}
+        <tr>
+          <td>{{ p.event.ts.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+          <td>{{ p.source.label }} <span class="muted">({{ p.source.provider }})</span></td>
+          <td class="r">
+            {%- if p.event.ok -%}
+              {{ "{:,}".format(p.event.buckets_in) }} in · {{ "{:,}".format(p.event.upserted) }} new · {{ "{:,}".format(p.event.updated) }} updated
+            {%- else -%}—{%- endif -%}
+          </td>
+          <td>
+            {%- if p.event.ok %}<span class="badge badge-verified">ok</span>
+            {%- else %}<span class="badge badge-waste">{{ p.event.error or "failed" }}</span>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">No pulls recorded yet — the pull
+          ledger starts with this release; earlier pulls were logged only.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if view.pull_total > view.cap %}
+    <div class="provenance">latest {{ view.cap }} of {{ "{:,}".format(view.pull_total) }} pulls</div>
+    {% endif %}
+  </section>
+
+  <section class="widget">
+    <div class="widget-head"><h2>Alert checks</h2></div>
+    <p class="tells">"Checked, nothing crossed" is evidence too — silence you can verify.</p>
+    <table class="ledger">
+      <thead><tr><th>When</th><th>Rule</th><th>Outcome</th></tr></thead>
+      <tbody>
+      {% for c in view.checks %}
+        <tr>
+          <td>{{ c.ts.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+          <td>{{ view.rule_labels.get(c.rule, c.rule) }}</td>
+          <td>
+            {%- if c.crossed %}<span class="badge badge-verified">{{ c.note }}</span>
+            {%- else %}<span class="muted">{{ c.note }}</span>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="muted">No checks recorded yet — the check
+          ledger starts with this release; alerts themselves have always been
+          recorded under Activity.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if view.check_total > view.cap %}
+    <div class="provenance">latest {{ view.cap }} of {{ "{:,}".format(view.check_total) }} checks</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Row -> drawer expansion, the grammar users already know (R-CLARITY §2).
+   Progressive: without JS the drawers stay hidden; every status, trigger and
+   duration above is still on the page. Delegated so re-polled ledger swaps
+   keep working without rebinding. */
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest ? e.target.closest("[data-drawer]") : null;
+  if (!btn) return;
+  var row = document.getElementById(btn.getAttribute("data-drawer"));
+  if (!row) return;
+  var open = !row.hidden;
+  row.hidden = open;
+  btn.setAttribute("aria-expanded", String(!open));
+});
+</script>
+{% endblock %}
