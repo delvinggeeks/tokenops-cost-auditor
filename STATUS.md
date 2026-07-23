@@ -35,6 +35,19 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## Works-with rider CLOSED (2026-07-24) — ux PWN fixed, spec + system-tester PASS
+
+ux PASS-WITH-NOTES → both fixed: the .connect-cards-4 grid variant (ux's own
+suggestion — 4-up desktop → 2 at 1100px → 1 at 620px, clean quad not a 3+1
+wrap) and the tighter h2. spec PASS (no overclaim; seat tools future/
+attribution/no-data framing verified against BACKLOG). system-tester PASS
+zero findings (all five landing-named providers actually reachable at
+/sources/connect/*; 300KB budget ~39% headroom; no dead links; no stale
+"two providers" copy anywhere). "proceed on connectors" has now delivered:
+C-C Vertex (5-provider model-cloud set COMPLETE) + the coverage made
+visible on the landing. Remaining connector: WP-COPILOT-AGG (seat
+governance — a DIFFERENT analysis kind). Then SDK queue (S-6, O-0).
+
 ## "Works with" landing rider (2026-07-24) — the coverage is now visible + two honesty gaps closed
 
 Founder connectors question → after completing the 5-provider model-cloud
