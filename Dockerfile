@@ -41,4 +41,11 @@ EXPOSE 8000
 # miss the ping and the kill orphans in-flight audits (D13 re-validation,
 # 2026-07-19, "Child process died" ×2 with zero OOM). Single worker = no
 # supervisor; audit concurrency is governed by MAX_CONCURRENT_AUDITS (NFR-13).
-CMD ["uvicorn", "tokenops_cost_auditor.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# --proxy-headers + --forwarded-allow-ips="*" (WP-DEVOPS-OBS follow-on,
+# surfaced by the S-0 rate-limit verify): the app is `expose`-only — only
+# Caddy on the internal network can reach it — so it's safe to trust the
+# X-Forwarded-For Caddy sets. Without this, request.client.host is Caddy's
+# container IP for EVERY request, collapsing all IP-based rate limits (the
+# ingest abuse ceiling AND the pre-existing magic-link/unauth limits) into
+# one global bucket. With it, get_remote_address sees the real client IP.
+CMD ["uvicorn", "tokenops_cost_auditor.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]

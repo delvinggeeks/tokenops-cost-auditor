@@ -15,6 +15,26 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## PROXY-HEADERS FIX (2026-07-23) — the S-0 verify surfaced a pre-existing prod rate-limit gap
+
+The final S-0 security verify (PASS, no bypass) flagged an operational
+caveat that turned out to be LIVE in our own prod: uvicorn ran without
+--proxy-headers, and the app is `expose`-only behind Caddy, so
+request.client.host was Caddy's container IP for EVERY request — ALL
+IP-based rate limits (the new ingest 300/min ceiling AND the pre-existing
+magic-link / unauthenticated limits) collapsed into ONE global bucket.
+Not an S-0 regression — a latent issue since first deploy that the ingest
+work surfaced. Fixed in the Dockerfile CMD: --proxy-headers
+--forwarded-allow-ips="*" (safe because the app port is never published —
+only Caddy on the internal network can reach it, so only Caddy can set
+X-Forwarded-For, which Caddy sets by default). get_remote_address now
+sees the real client IP. Not exercised by pytest (server-layer flag;
+TestClient is unaffected) — takes effect on the NEXT deploy. HONEST
+DISCLOSURE: live v1.7.0 still has the global-bucket behaviour until then;
+impact is bounded (per-key ingest fairness is unaffected — it keys on the
+bearer token, not IP; token entropy defeats guessing regardless), so this
+rides the next scheduled deploy rather than forcing an emergency one.
+
 ## S-0 gate round (2026-07-23) — spec PASS · vv PARTIAL-clean · system-tester PASS · cold FAIL→fixed→PASS-WITH-NOTES→hardened
 
 spec PASS 7/7. system-tester PASS zero product findings (full journey +
