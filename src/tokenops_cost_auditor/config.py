@@ -210,6 +210,12 @@ class Settings(BaseSettings):
     # above the trailing-quarter average fires the before-the-invoice anomaly
     # alert (observe-only, X-02 intact).
     forecast_overspend_pct: float = 30.0
+    # M-FLY-0 A2 (docs/12 Stage 3 Honesty Law): no rung ships below its
+    # data threshold; thresholds live HERE, never hard-coded in a rung.
+    flywheel_l1_min_customers: int = 10
+    flywheel_l2_min_customers: int = 25
+    flywheel_l3_min_customers: int = 50
+    flywheel_l3_min_history_months: int = 6
     # Alerts (WP-3, observe-and-alert only; accepted defaults Q10 — see STATUS M1)
     alert_spend_spike_dod_pct: float = 30.0
     alert_waste_target_pct: float = 25.0

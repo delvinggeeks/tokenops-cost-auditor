@@ -35,6 +35,27 @@ findings in this slice") + two-audit journey pin → final re-gate PASS
 Role ledger to date: 6 sweeps, 8 findings, 7 real fixes test-pinned,
 1 lawful R-Q9 decline, 0 found by the founder.
 
+## M-FLY-0 (2026-07-23) — the flywheel's data spine: training frame (A1) + cohort ledger (A2)
+
+First flywheel milestone, built the day its blocker lifted. A1:
+services/flywheel/frame.py — FRAME_COLUMNS is the executable schema
+(ENUM_OR_ID law: a free-text column cannot ship, T-FLY-02 names the
+offender), keyed one-way cohort_pseudonym (HKDF context distinct from
+credential crypto), deterministic extract, benchmark_sharing=False
+excluded from the FIRST BYTE (R-F1 column contract, T-FLY-04);
+scripts/flywheel_extract.py ops CLI (JSONL to stdout, zero network). A2:
+services/flywheel/cohort.py — rung ledger (L1 n≥10 audited / L2 n≥25
+labeled / L3 n≥50 + 6mo, all thresholds config), exact-boundary tests
+(9≠10), surfaces = founder ops digest line + admin row ONLY — customers
+never see a countdown (zero-state law, template grep enforced,
+T-FLY-08). Package posture pinned: flywheel imports no network/rules/
+pricing/connectors (T-FLY-09, R-F4 — the guard never meets an ML lib; no
+ML lib exists to meet). DECISIONS: L1 keys on audited customers, L2 on
+labeled customers, L3 on audited + platform history span — recorded here
+for the rung builds to inherit. NEXT (queue order): founder deploy, then
+WP-CC-LINK → WP-PIPELINE-UI → WP-CLOUD-T2; M-FLY-1 (L1 benchmarks,
+dormant-until-10) may interleave after its ux mockup gate.
+
 ## R-F1-SIGNOFF (2026-07-23) — the promise amended and shipped; Tracks A/B unblocked
 
 Founder signed off the option-A sentences; applied verbatim the same day

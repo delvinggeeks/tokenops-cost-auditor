@@ -109,7 +109,7 @@ without reordering anything already ruled.
 
 ### Track A — training-data spine (prerequisite for all of Track B)
 
-**A1 — TRAINING FRAME CONTRACT (1 day).**
+**A1 — TRAINING FRAME CONTRACT (1 day). SHIPPED 2026-07-23 (M-FLY-0).**
 WHAT: `services/flywheel/frame.py` — deterministic extract of per-finding
 training rows: {detector, bucket features (counts/timing/model only),
 baseline_impact, L0 verdict, savings_realized, tier, provenance,
@@ -123,7 +123,7 @@ column outside the allowlist and on any text-typed column by construction
 (4) import guard clean.
 Tests: T-FLY-01..04. Traceability: new row "docs/12 L-frame".
 
-**A2 — COHORT LEDGER (0.5-1 day).**
+**A2 — COHORT LEDGER (0.5-1 day). SHIPPED 2026-07-23 (M-FLY-0).**
 WHAT: honesty-law plumbing — distinct customers with ≥1 completed audit /
 with L0 labels / months of history; rung status vs thresholds (L1 n≥10,
 L2 n≥25, L3 n≥50+6mo, from config). Surfaces: one daily-digest line

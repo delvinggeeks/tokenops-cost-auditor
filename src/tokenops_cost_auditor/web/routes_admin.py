@@ -56,8 +56,13 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
             f"<td>{'purged' if a.purged_at else '-'}</td></tr>"
             for a, email in audits
         )
+    with _session(request) as session:
+        from tokenops_cost_auditor.services.flywheel import cohort
+
+        flywheel_line = cohort.status(session, request.app.state.settings).digest_line()
     return HTMLResponse(
         "<h1>TokenOps Cost Auditor — admin</h1>"
+        f"<p>{flywheel_line}</p>"
         "<p>Actions: POST /admin/audits/{id}/rerun · POST /admin/audits/{id}/purge · "
         "GET /admin/audits/{id}/report · "
         "POST /admin/payments/mark-paid (email, amount, currency, provider)</p>"

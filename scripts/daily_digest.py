@@ -168,6 +168,12 @@ def build_digest(session: Session, settings: Settings, now: datetime | None = No
     ]
     lines.append(f"Control-plane early-access signups (7d): {len(signups)}")
 
+    # M-FLY-0 A2: the founder watches rung readiness here, customers never
+    # see a countdown (zero-state law).
+    from tokenops_cost_auditor.services.flywheel import cohort
+
+    lines.append(cohort.status(session, settings).digest_line())
+
     # alerts
     alerts: list[str] = []
     backup_age = _last_backup_age_h(Path(settings.backup_dir), now)
