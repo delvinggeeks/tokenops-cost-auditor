@@ -5,6 +5,20 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-23 · v1.6.7 · WP-CC-LINK COLLECTOR (queue card 1) — one command,
+  one consent, live for Claude Code fleets. Sources mints a one-shot
+  hashed code (Pro+); the CLI refuses to link without a person typing
+  agreement at a TTY (no bypass exists; the server records the ASSERTION,
+  trust boundary stated honestly); ship lands real audits through the T1
+  pipeline (FR-26 idempotent, device-attributed); machines listed with
+  unlink that DELETES the key; lapse pauses ships in plain words; the
+  explorer's selector names linked machines. Gate round: spec PASS, cold
+  PWN all fixed (atomic one-shot claim — the check-then-set class caught
+  a third time today; 0600-from-birth config; rate limits), system-tester
+  PARTIAL→answered as standing journey tests. Migration 016 applied.
+  SMOKE PASS: HTTPS healthz ok, head e8f31a5c92d7. Residue in BACKLOG:
+  PyPI short name (founder-lane), skill auto-install, self-update.
+
 - 2026-07-23 · v1.6.6 · ACCOUNT-SHAPES GUIDE (founder: "lot of
   combinations — how to handle?"). /guide/account-paths routes every
   account shape to its path: OpenAI Owner vs member, Anthropic individual
