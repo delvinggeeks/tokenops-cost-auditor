@@ -174,6 +174,67 @@ class TestParseAndFetch:
         assert "monitoring.googleapis.com" in http.gets[0]["url"]
         assert http.gets[0]["headers"]["Authorization"] == "Bearer ya29.fake"
 
+    def test_04b_follows_next_page_token(self) -> None:
+        """cold-review f.1: a paged response must be fully read, not
+        truncated at page 1 (the Bedrock chunk lesson)."""
+
+        class PagingGoogle(FakeGoogle):
+            def __init__(self) -> None:
+                super().__init__()
+                self.page = 0
+
+            def get(self, url: str, *, params: Any, headers: Any) -> FakeResp:
+                self.gets.append({"params": params})
+                self.page += 1
+                if self.page == 1:
+                    return FakeResp(
+                        {
+                            "timeSeries": [
+                                _series(
+                                    "gemini-2.5-pro", "input", [("2026-07-20T00:00:00Z", 30000)]
+                                )
+                            ],
+                            "nextPageToken": "pg2",
+                        }
+                    )
+                # page 2: MORE input tokens for the same (day, model) — must merge
+                return FakeResp(
+                    {
+                        "timeSeries": [
+                            _series("gemini-2.5-pro", "input", [("2026-07-20T00:00:00Z", 20000)])
+                        ]
+                    }
+                )
+
+        http = PagingGoogle()
+        buckets, pages = vertex_usage.fetch_usage(
+            cred_blob(), date(2026, 7, 20), date(2026, 7, 20), http
+        )
+        assert pages == 2  # both pages read
+        assert http.gets[1]["params"]["pageToken"] == "pg2"  # token followed
+        pro = next(b for b in buckets if b["model"] == "gemini-2.5-pro")
+        assert pro["prompt_tokens"] == 50000  # 30000 + 20000 merged across pages
+
+    def test_04c_int64_string_precision(self) -> None:
+        """cold-review f.3: int64Value is a string precisely to avoid float
+        rounding on large counts — parse it as an int, not through float."""
+        payload = {
+            "timeSeries": [
+                {
+                    "metric": {"labels": {"type": "input"}},
+                    "resource": {"labels": {"model_user_id": "gemini-2.5-pro"}},
+                    "points": [
+                        {
+                            "interval": {"endTime": "2026-07-20T00:00:00Z"},
+                            "value": {"int64Value": "9007199254740993"},
+                        }
+                    ],
+                }
+            ]
+        }
+        b = vertex_usage.parse_series(payload)[0]
+        assert b["prompt_tokens"] == 9007199254740993  # exact, not float-mangled
+
     def test_05_auth_refusals_typed(self) -> None:
         with pytest.raises(ConnectorAuthError) as e:
             vertex_usage.fetch_usage(
@@ -208,6 +269,36 @@ class TestRegistryPull:
         rows = session.execute(select(SourceUsage)).scalars().all()
         assert {r.model for r in rows} == {"gemini-2.5-pro", "gemini-1.5-flash"}
         assert all(r.cached_tokens == 0 for r in rows)
+
+    def test_06b_source_audit_prices_gemini_end_to_end(
+        self, session: Any, bare_settings: Settings
+    ) -> None:
+        """system-tester suggestion: money-math honesty end to end — a fresh
+        Vertex source must PRICE gemini-2.5-pro (a priced row), not list it
+        unpriced, and produce a nonzero as-billed spend."""
+        from tokenops_cost_auditor.services.connectors.source_audit import run_source_audit
+        from tokenops_cost_auditor.services.pricing.table import PricingTable
+
+        user = User(email="vertex-price@example.com")
+        session.add(user)
+        session.flush()
+        src = Source(
+            user_id=user.id,
+            provider="vertex-ai",
+            label="vertex-ai usage",
+            credentials_encrypted=encrypt_credential(bare_settings.secret_key, cred_blob()),
+        )
+        session.add(src)
+        session.commit()
+        run_pull(session, bare_settings, src, FakeGoogle())
+        session.commit()
+        audit_id = run_source_audit(session, bare_settings, PricingTable.load(), src)
+        session.commit()
+        from tokenops_cost_auditor.persistence.models import Audit
+
+        audit = session.get(Audit, audit_id)
+        assert audit is not None
+        assert float(audit.total_spend_usd or 0) > 0  # gemini-2.5-pro priced, not unpriced
 
 
 class TestCacheBlindHonesty:

@@ -35,6 +35,26 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## WP-CLOUD-T2 C-C gate round (2026-07-24) — spec PASS · vv PASS · system-tester PARTIAL-clean · cold PWN fixed
+
+spec PASS 7/7 (incl. R-AUTO-PRICING: vertex rows agent-verified 35/35, no
+FOUNDER-VERIFY flag). vv PASS (suite green, coverage 95.2%, vertex_usage
+91.6%, all four goldens hand-recomputed). system-tester PARTIAL by budget
+but every surface reached PASSED (five providers, textarea, no wizard
+regressions, no dead links); its incomplete items crashed on ITS OWN
+harness bug (imported a nonexistent RuleResult), not a product defect —
+run_pull upserted=3 as expected. cold PASS-WITH-NOTES, all three fixed:
+f.1 _fetch now follows nextPageToken and MERGES paged (day,model) buckets
+(the Bedrock chunk-truncation lesson — a busy project's series can't be
+silently dropped while pages=1 lies); f.2 docstring corrected (the key
+lives for the pull's duration, not "one signing pass"); f.3 int64Value
+parsed as int directly (Google sends it as a string to avoid float
+rounding — test proves 9007199254740993 survives exact). Adopted
+system-tester's suggestion: test_06b proves a fresh Vertex source PRICES
+gemini-2.5-pro end to end with nonzero spend (money-math honesty, not just
+unit coverage). Full chain green. Re-gate cold on the fix diff, then C-C
+closes → WP-COPILOT-AGG, Works-with rider, SDK queue.
+
 ## WP-CLOUD-T2 C-C (2026-07-24) — Google Vertex AI connector; the model-cloud set is complete
 
 Built end to end (R-VERTICAL) on the founder's "proceed on connectors".

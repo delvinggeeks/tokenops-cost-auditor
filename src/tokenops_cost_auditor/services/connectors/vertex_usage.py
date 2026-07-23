@@ -20,8 +20,9 @@ Credential: the downloaded service-account JSON key, stored whole on the
 existing Fernet path. HONESTY BOUND: this metric splits input/output only,
 not cached tokens, so cached_tokens is 0 by construction and the cache
 detector is "not observable on Vertex" (R-Q1) — the same honest treatment
-as Azure. Counts only leave this module (FR-22); the private key's
-plaintext lifetime is one signing pass and it is never logged (T-KEY-03).
+as Azure. Counts only leave this module (FR-22); the decrypted key material
+is held in memory for the pull's duration (the token exchange, then the
+paged metric reads) and is never logged (T-KEY-03).
 """
 
 from __future__ import annotations
@@ -128,9 +129,13 @@ def _point_day(point: dict[str, Any]) -> date:
 
 def _point_value(point: dict[str, Any]) -> int:
     val = point.get("value") or {}
-    raw = val.get("int64Value", val.get("doubleValue", 0))
+    # int64Value is a STRING per Google's JSON convention, precisely to avoid
+    # float rounding on large token counts (cold-review f.3) — parse it as an
+    # int directly; only doubleValue goes through float().
     try:
-        return int(float(raw))
+        if "int64Value" in val:
+            return int(val["int64Value"])
+        return int(float(val.get("doubleValue", 0)))
     except TypeError, ValueError:
         return 0
 
@@ -187,11 +192,42 @@ def _fetch(
         "aggregation.perSeriesAligner": "ALIGN_SUM",
     }
     url = f"{BASE_URL}/v3/projects/{urllib.parse.quote(cred['project_id'])}/timeSeries"
-    resp = http.get(url, params=params, headers={"Authorization": f"Bearer {token}"})
-    if resp.status_code in (401, 403):
-        raise ConnectorAuthError("provider rejected the stored credential", status=resp.status_code)
-    resp.raise_for_status()
-    return parse_series(resp.json()), 1
+    headers = {"Authorization": f"Bearer {token}"}
+    # Follow nextPageToken (cold-review f.1): Cloud Monitoring pages a busy
+    # project's series, and returning only page 1 would silently drop the rest
+    # while reporting a full read — the Bedrock chunk-truncation lesson.
+    buckets: list[dict[str, Any]] = []
+    pages = 0
+    page_token: str | None = None
+    while True:
+        page_params = dict(params, **({"pageToken": page_token} if page_token else {}))
+        resp = http.get(url, params=page_params, headers=headers)
+        if resp.status_code in (401, 403):
+            raise ConnectorAuthError(
+                "provider rejected the stored credential", status=resp.status_code
+            )
+        resp.raise_for_status()
+        payload = resp.json()
+        buckets.extend(parse_series(payload))
+        pages += 1
+        page_token = payload.get("nextPageToken")
+        if not page_token:
+            break
+    return _merge(buckets), pages
+
+
+def _merge(buckets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Re-combine (day, model) buckets that split across pages."""
+    acc: dict[tuple[Any, str], dict[str, Any]] = {}
+    for b in buckets:
+        key = (b["day"], b["model"])
+        cur = acc.get(key)
+        if cur is None:
+            acc[key] = dict(b)
+        else:
+            for f in ("calls", "prompt_tokens", "completion_tokens", "cached_tokens"):
+                cur[f] = int(cur[f]) + int(b[f])
+    return [acc[k] for k in sorted(acc, key=lambda k: (k[0].isoformat(), k[1]))]
 
 
 def fetch_usage(
