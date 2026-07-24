@@ -35,6 +35,25 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-6 GATE ROUND CLOSED (2026-07-24) — spec PASS · ux PWN · cold PWN · system-tester PWN; all notes applied
+
+Four gates, none FAIL. spec-guard PASS (FR-22 counts-only, X-01/X-02 hold,
+engine tenant-blind, traceability accurate). cold-reviewer PWN, 3 findings all
+fixed: (f.1) `with_for_update` is a no-op on SQLite so single-use could degrade
+under concurrency → replaced with an ATOMIC conditional UPDATE (`WHERE
+consumed_at IS NULL` + rowcount==1), correct on both backends; (f.2) `_pkce_ok`
+raised UnicodeEncodeError on a non-ASCII verifier → guarded, now a clean
+invalid_grant; (f.3) dead `OAuthAccessToken.revoked_at` implying an unbuilt
+per-token revoke → removed from model + migration (app-revoke is the complete,
+tested mechanism). ux PWN, both applied: OAuth panel icon settings→method (gear
+collided with Settings nav), delight-declaration comments added to the two
+reveals. system-tester PWN: reachability + plan-gating + API-token journey
+walked green; its note that the OAuth test hand-constructed `decision=approve`
+→ closed by scraping the real consent form (`name="decision" value="approve"`
+asserted) + a dedicated consent-form-fields test. New regression tests: non-ASCII
+verifier, consent-form DOM. test_developer_platform.py now 26 green; ruff+mypy
+clean. Fixes committed on the same branch; milestone closed. Next: O-0.
+
 ## S-6 READ PLATFORM (2026-07-24) — read tokens + read API + OAuth server; founder "full S-6 incl OAuth apps"
 
 Founder picked the FULL S-6 slice (AskUserQuestion): read-scoped API tokens,

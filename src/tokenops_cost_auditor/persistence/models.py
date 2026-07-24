@@ -435,13 +435,15 @@ class OAuthAccessToken(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    # Keyed HMAC of the at_… token. NULL after revoke.
+    # Keyed HMAC of the at_… token. Revocation is at the APP level
+    # (OAuthApp.revoked_at kills every token it issued); there is no per-token
+    # revoke, so no revoked_at column here — the resolver rejects tokens of a
+    # revoked app. The nullable/unique hash mirrors the other credential tables.
     token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Device(Base):

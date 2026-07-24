@@ -15,8 +15,9 @@ Security invariants (each is adversarially checked at the gate):
 - PKCE S256 is REQUIRED for every app; the token exchange proves the verifier.
 - The client_secret is ALSO required and compared as a keyed HMAC (confidential
   client). Both PKCE and secret must pass.
-- Authorization codes are single-use (consumed under a row lock) and short-TTL;
-  a redeemed or expired code is invalid_grant.
+- Authorization codes are single-use (burned via an atomic conditional UPDATE,
+  correct on both backends) and short-TTL; a redeemed or expired code is
+  invalid_grant.
 - The issued access token is read-scoped, tenant-bound to the owner, and dies
   when the app is revoked.
 """
@@ -33,7 +34,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import (
@@ -66,10 +67,17 @@ def _registered_uris(app: OAuthApp) -> list[str]:
 
 
 def _pkce_ok(verifier: str, challenge: str) -> bool:
-    """RFC 7636 S256: base64url(sha256(verifier)) == challenge, constant-time."""
+    """RFC 7636 S256: base64url(sha256(verifier)) == challenge, constant-time.
+
+    The verifier is ASCII by spec ([A-Za-z0-9-._~]); a non-ASCII one is simply an
+    invalid verifier, so encode failure returns False (→ opaque invalid_grant)
+    rather than raising an uncaught 500 (cold-reviewer f.2)."""
     if not verifier or not challenge:
         return False
-    digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    try:
+        digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    except UnicodeEncodeError:
+        return False
     computed = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
     return hmac.compare_digest(computed, challenge)
 
@@ -278,10 +286,9 @@ def token(
         ):
             return _oauth_error("invalid_client", status=401)
 
+        code_fp = credential_fingerprint(secret, code)
         row = session.execute(
-            select(OAuthAuthCode)
-            .where(OAuthAuthCode.code_hash == credential_fingerprint(secret, code))
-            .with_for_update()
+            select(OAuthAuthCode).where(OAuthAuthCode.code_hash == code_fp)
         ).scalar_one_or_none()
         now = utcnow()
         if (
@@ -296,7 +303,18 @@ def token(
             # PKCE — all collapse to one opaque invalid_grant (no oracle).
             return _oauth_error("invalid_grant")
 
-        row.consumed_at = now  # burn it before issuing (single-use)
+        # Burn the code atomically: a conditional UPDATE that only ONE concurrent
+        # redemption can win (rowcount == 1). This is correct on BOTH backends —
+        # `FOR UPDATE` is a no-op on SQLite, so single-use must not depend on it
+        # (cold-reviewer f.1). The loser of the race sees rowcount 0 here.
+        burned = session.execute(
+            update(OAuthAuthCode)
+            .where(OAuthAuthCode.code_hash == code_fp, OAuthAuthCode.consumed_at.is_(None))
+            .values(consumed_at=now)
+        )
+        if burned.rowcount != 1:
+            return _oauth_error("invalid_grant")
+
         access = f"at_{secrets.token_urlsafe(32)}"
         session.add(
             OAuthAccessToken(

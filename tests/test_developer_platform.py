@@ -271,6 +271,11 @@ class TestOAuthFlow:
         }
         page = client.get("/oauth/authorize", params=params, headers=HDR)
         assert page.status_code == 200 and "wants" in page.text
+        # system-tester note (2026-07-24): drive the REAL rendered form, not
+        # hand-constructed field names — a template typo in the hidden field or
+        # the approve button must fail the test, not silently break users.
+        squashed = re.sub(r"\s+", " ", page.text)
+        assert 'name="decision" value="approve"' in squashed
         blob = re.search(r'name="auth_request" value="([^"]+)"', page.text).group(1)
         post = client.post(
             "/oauth/authorize",
@@ -395,6 +400,59 @@ class TestOAuthFlow:
             },
         )
         assert r.status_code == 400 and r.json()["error"] == "invalid_grant"
+
+    def test_non_ascii_verifier_is_invalid_grant_not_500(self, app: FastAPI) -> None:
+        """cold-reviewer f.2 (2026-07-24): a non-ASCII code_verifier must be a
+        clean invalid_grant, never an uncaught 500 that leaks a distinguishable
+        error (the opaque-error invariant)."""
+        grant(app)
+        client = TestClient(app)
+        cid, csec = register_app(client)
+        _, challenge = pkce()
+        redirect = "https://acme.example/callback"
+        code = self._authorize_to_code(
+            client, cid, challenge, redirect=redirect, scope="read:audits"
+        )
+        r = client.post(
+            "/oauth/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect,
+                "client_id": cid,
+                "client_secret": csec,
+                "code_verifier": "café-not-ascii-ñ-☃",
+            },
+        )
+        assert r.status_code == 400 and r.json()["error"] == "invalid_grant"
+
+    def test_consent_form_exposes_real_fields(self, app: FastAPI) -> None:
+        """system-tester note (2026-07-24): the rendered consent form must carry
+        the exact hidden field and approve button the route reads, so a template
+        rename fails the test instead of silently breaking real users."""
+        grant(app)
+        client = TestClient(app)
+        cid, _ = register_app(client, scopes=["read:audits", "read:findings"])
+        _, challenge = pkce()
+        page = client.get(
+            "/oauth/authorize",
+            params={
+                "response_type": "code",
+                "client_id": cid,
+                "redirect_uri": "https://acme.example/callback",
+                "scope": "read:audits read:findings",
+                "state": "s",
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+            },
+            headers=HDR,
+        )
+        squashed = re.sub(r"\s+", " ", page.text)
+        assert 'name="auth_request"' in squashed  # the hidden blob the route loads
+        assert 'name="decision" value="approve"' in squashed  # the button the route checks
+        assert 'name="decision" value="deny"' in squashed
+        # the consented scopes are shown to the user in plain language
+        assert "read:audits" in squashed and "read:findings" in squashed
 
     def test_wrong_client_secret_rejected(self, app: FastAPI) -> None:
         grant(app)
