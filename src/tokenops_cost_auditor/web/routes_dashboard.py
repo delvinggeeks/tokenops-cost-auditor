@@ -460,8 +460,7 @@ def _verdict_for_route(session: Session, user_id: str, row: FindingRow) -> Findi
     key = (row.detector, row.route or row.finding_id)
     ws = active_workspace_id(session, user_id)
     audit_ids = [
-        a.id
-        for a in session.execute(select(Audit).where(Audit.workspace_id == ws)).scalars().all()
+        a.id for a in session.execute(select(Audit).where(Audit.workspace_id == ws)).scalars().all()
     ]
     rows = (
         session.execute(select(FindingRow).where(FindingRow.audit_id.in_(audit_ids)))
