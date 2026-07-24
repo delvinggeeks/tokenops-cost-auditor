@@ -88,6 +88,17 @@ def workspace_id_for(session: Session, user_id: str) -> str | None:
     )
 
 
+def active_workspace_id(session: Session, user_id: str) -> str | None:
+    """O-1: the workspace the user is currently acting in — the READ scope for
+    every owned resource. In O-1a this is the user's personal workspace, so
+    re-scoping reads from user_id to this workspace_id is behavior-preserving
+    while 1 user = 1 workspace. O-1b makes it the *switchable* active workspace
+    (validated against the caller's memberships) so a member can view a shared
+    workspace. EVERY read of an owned resource must scope to THIS, never to
+    user_id — that is what makes a workspace's members see the same data."""
+    return workspace_id_for(session, user_id)
+
+
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:
     """FR-26: an existing (user, key) pair returns the original audit."""
     row = session.scalar(

@@ -35,6 +35,56 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-1 STARTED — FOUNDATION ONLY (2026-07-24) — founder "proceed with O-1" → "Fresh session" for the sweep
+
+O-1 (members + invites + the read re-scope). Measured the first task precisely:
+the read re-scope is **89 `user_id`/`owner_user_id` filter sites** (plan said
+"40+"), atomic (can't ship half — a member would see an inconsistent mix), and
+the highest-blast-radius change in the codebase (a MISSED site = cross-tenant
+leak once a workspace has 2+ members). Founder chose (AskUserQuestion) to do the
+sweep in a FRESH session (K-3/TE-9). This commit ships ONLY the foundation —
+NOTHING is re-scoped yet, so the tree is behavior-preserving and safe.
+
+SHIPPED: `repo.active_workspace_id(session, user_id)` — the single READ-scope
+chokepoint. O-1a returns the user's PERSONAL workspace (== workspace_id_for), so
+flipping a read from `X.user_id == user_id` to `X.workspace_id ==
+active_workspace_id(...)` is behavior-preserving while 1 user = 1 workspace.
+O-1b makes it the SWITCHABLE active workspace (validated vs the caller's
+memberships) — recommend storing the active workspace as `User.active_workspace_id`
+(server-side, simplest; migration 021) or a signed cookie. Test pins the O-1a
+contract (test_workspace_spine.py TestActiveWorkspaceResolver, 12 green).
+
+EXECUTION DECISION (internal-resolution, LOWEST RISK): keep every read
+function's `(session, user_id, ...)` SIGNATURE unchanged (zero caller churn), and
+INSIDE each read resolve `ws = active_workspace_id(session, user_id)` + change the
+filter COLUMN user_id→workspace_id. Delegates (metrics→compute/daily/forecast)
+each resolve the same ws from the same user_id → consistent. Do NOT use a global
+SQLAlchemy query filter (magic, hard to review, engine must stay tenant-blind).
+
+THE 89-SITE INVENTORY (grep `\.user_id ==|\.owner_user_id ==`), by file — the
+fresh session's work-list. TRIAGE each: most are READS to re-scope; some are
+WRITES (already stamp workspace_id, leave) or legit per-USER lookups (e.g. a
+user's own membership, magic-link) that STAY user_id:
+  services/dashboard/metrics.py:13, web/routes_sources.py:9,
+  services/dashboard/activity.py:8, web/routes_runs.py:7, web/routes_settings.py:6,
+  services/dashboard/explorer.py:5, web/routes_developer.py:4,
+  services/statements/build.py:4, web/routes_statements.py:3,
+  web/routes_explorer.py:3, web/routes_alerts.py:3, services/connectors/daily.py:3,
+  services/alerts/rules.py:3, web/routes_admin.py:2, services/payments/subscriptions.py:2,
+  services/payments/base.py:2, web/routes_ingest.py:1, web/routes_dashboard.py:1,
+  web/routes_api_read.py:1, services/payments/plans.py:1, services/forecast.py:1,
+  services/dashboard/savings.py:1, services/alerts/dispatch.py:1.
+
+SAFETY NET for the sweep: (1) run the FULL regression suite after each subsystem
+— under 1:1 it is a complete equivalence oracle, so any WRONG re-scope breaks a
+journey; (2) after the sweep, grep for remaining `user_id ==` in read paths —
+each survivor must be justified (write/dedup/per-user), this catches MISSED
+sites (invisible under 1:1); (3) a dedicated cold-reviewer gate hunting misses.
+MEMBERS (O-1b: invite by email one-shot hashed code = link-code grammar, member
+joins, Members page, workspace switch, revoke) does NOT ship until the sweep is
+COMPLETE + grep-audited + cold-gated. NOTE the S-6 read tokens (rt_/at_ in
+web/routes_api_read.py + api_auth) also flip to active-workspace scope here.
+
 ## O-0 DEPLOYED — v1.9.0 LIVE (2026-07-24) — founder "Deploy O-0 (v1.9.0), then O-1"
 
 Pre-deploy backup OK. provision.sh --tag v1.9.0: migration 020 applied

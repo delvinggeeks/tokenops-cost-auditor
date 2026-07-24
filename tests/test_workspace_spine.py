@@ -84,6 +84,20 @@ class TestWorkspaceCreation:
                 s.commit()
 
 
+class TestActiveWorkspaceResolver:
+    def test_active_workspace_is_the_personal_one_in_o1a(self, app: FastAPI) -> None:
+        """O-1a: active_workspace_id resolves to the user's personal workspace,
+        so re-scoping reads from user_id to it is behavior-preserving under 1:1.
+        (O-1b makes it the switchable active workspace.)"""
+        from tokenops_cost_auditor.persistence.repo import active_workspace_id
+
+        with app.state.session_factory() as s:
+            user = get_or_create_user(s, EMAIL)
+            s.commit()
+            assert active_workspace_id(s, user.id) == workspace_id_for(s, user.id)
+            assert active_workspace_id(s, user.id) is not None
+
+
 class TestWritePathStamps:
     def test_audit_stamped_with_owner_workspace(self, app: FastAPI) -> None:
         with app.state.session_factory() as s:
