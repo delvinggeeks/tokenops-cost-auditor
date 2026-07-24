@@ -35,7 +35,7 @@ from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_sources import user_plan
-from tokenops_cost_auditor.web.shell import workspace_bar
+from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 router = APIRouter(tags=["dashboard"])
 
@@ -76,12 +76,6 @@ def _render(request: Request, template: str, **ctx: object) -> HTMLResponse:
 def _shell_ctx(
     session: Session, request: Request, user: User, page: str, count_activity: bool = True
 ) -> dict[str, object]:
-    latest = metrics.latest_audit(session, user.id)
-    freshness = (
-        f"Data as of {(latest.report_ready_at or latest.created_at):%Y-%m-%d %H:%M} UTC"
-        if latest
-        else "No data yet — connect a source or upload a log file"
-    )
     plan_key = user_plan(session, user.id)
     from tokenops_cost_auditor.services.dashboard import activity
 
@@ -89,11 +83,13 @@ def _shell_ctx(
         "page": page,
         # O-1b-1 (R-ORG): the workspace bar on EVERY app page (reachability law).
         **workspace_bar(session, user.id),
+        # Data-coherence (founder 2026-07-24): freshness + the 'nothing connected'
+        # banner state, so historical figures never read as live.
+        **data_freshness(session, user.id),
         "plan": plan_key,
         # Display name from THE catalogue — `plan|title` on the internal key
         # would resurrect "Team" after the R-SAAS-BASICS rename.
         "plan_name": plans.get(request.app.state.settings, plan_key).name,
-        "freshness": freshness,
         "user_email": user.email,
         "purpose": help_registry.purpose(page),
         # Wave B: the topbar bell's "what's new since you last looked" count.
@@ -298,7 +294,12 @@ def audit_progress(
             page="upload",
             plan=plan_key,
             plan_name=plans.get(request.app.state.settings, plan_key).name,
-            freshness="",
+            # This shell page bypasses _shell_ctx (see above) — it must still carry
+            # the workspace bar (O-1b-1 reachability law) AND freshness/coherence
+            # (data-coherence fix) itself, or it silently disagrees with every
+            # other page (system-tester O-COH gap).
+            **workspace_bar(session, user.id),
+            **data_freshness(session, user.id),
             user_email=user.email,
             purpose="Watch this audit move through the pipeline; the report link lands here.",
             show_tour=False,
