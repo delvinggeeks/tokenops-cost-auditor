@@ -34,7 +34,7 @@ from tokenops_cost_auditor.services.connectors.crypto import credential_fingerpr
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.web.api_scopes import READ_SCOPES, parse_scopes, scopes_are_known, to_csv
 from tokenops_cost_auditor.web.routes_sources import user_plan
-from tokenops_cost_auditor.web.shell import workspace_bar
+from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 router = APIRouter(prefix="/settings/developer", tags=["developer"])
 
@@ -119,6 +119,7 @@ def developer_home(request: Request, user_email: str = Depends(current_user)) ->
             for a in apps
         ]
         ws_bar = workspace_bar(session, user.id)  # O-1b-1 bar (built inside the session)
+        fresh = data_freshness(session, user.id)  # freshness + coherence state
     tpl = request.app.state.jinja.get_template("app/developer.html")
     return HTMLResponse(
         tpl.render(
@@ -129,9 +130,9 @@ def developer_home(request: Request, user_email: str = Depends(current_user)) ->
             all_scopes=READ_SCOPES,
             page="developer",
             **ws_bar,
+            **fresh,
             plan_name="Pro" if is_pro else "",
             purpose="Read your audits from your own code, or let an app you trust read them.",
-            freshness="",
         )
     )
 

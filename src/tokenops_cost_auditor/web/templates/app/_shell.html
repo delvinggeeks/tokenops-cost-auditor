@@ -120,6 +120,23 @@
     <main class="main">
       {# Section purpose line (R-CLARITY §3): what you do here, in one sentence #}
       <p class="tells" style="margin-top:0">{{ purpose }}</p>
+      {# Data-coherence banner (founder 2026-07-24 walkthrough): when a past audit
+         exists but NOTHING is currently connected, the figures are HISTORY — say
+         so, so "no sources connected" (Sources) can never sit next to numbers that
+         read as live. Shown ONLY on pages that render last-audit FIGURES (ux O-COH
+         f.4 — a settings/billing reader shouldn't be told about numbers not on
+         their screen); the terse "· nothing connected" topbar freshness marker
+         carries the honesty everywhere else. #}
+      {% set _figure_pages = ["overview", "runs", "statements", "explore", "findings", "alerts", "activity"] %}
+      {% if sources_disconnected and page in _figure_pages %}
+      <div class="since-here" role="status" style="border-color: var(--estimate); margin-bottom: var(--s3);">
+        <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+        <span>Nothing is connected to bring in new usage right now — the figures here are from your
+          last audit on <strong>{{ data_as_of }}</strong> and won't change until you connect a
+          source or upload a new log.</span>
+        <a class="btn btn-sm btn-primary" href="/sources">Connect a source</a>
+      </div>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </div>

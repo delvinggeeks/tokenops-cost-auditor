@@ -37,7 +37,7 @@ from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.payments.base import unconsumed_credit
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.web import help as help_registry
-from tokenops_cost_auditor.web.shell import workspace_bar
+from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
@@ -129,10 +129,19 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
                 providers=PROVIDERS,
                 page="sources",
                 purpose=help_registry.purpose("sources"),
-                freshness="",
                 user_email=user_email,
-                # O-1b-1: the workspace bar on this manual-render page too.
+                # O-1b-1 + data-coherence: the workspace bar AND the freshness /
+                # 'nothing connected' state on this manual-render page too, so the
+                # Sources page and the dashboard tell the SAME story.
                 **(workspace_bar(session, user.id) if user else {}),
+                # Explicit defaults on the no-user path (cold O-COH f.3): the shell
+                # references these unconditionally — don't lean on Jinja's silent
+                # Undefined falsiness to hide the banner.
+                **(
+                    data_freshness(session, user.id)
+                    if user
+                    else {"freshness": "", "sources_disconnected": False, "data_as_of": ""}
+                ),
                 show_tour=False,
             )
         )
@@ -170,9 +179,9 @@ def wizard_page(
                 plan=plan,
                 plan_name=plans.get(settings, plan).name,
                 purpose=help_registry.purpose("sources"),
-                freshness="",
                 user_email=user.email,
                 **workspace_bar(session, user.id),  # O-1b-1 workspace bar
+                **data_freshness(session, user.id),  # freshness + coherence state
                 at_limit=len(active) >= limit,
                 limit=limit,
                 show_tour=False,

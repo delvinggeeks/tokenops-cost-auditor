@@ -31,3 +31,31 @@ def workspace_bar(session: Session, user_id: str) -> dict[str, object]:
     ]
     active_ws_name = next((w["name"] for w in workspaces if w["active"]), "")
     return {"workspaces": workspaces, "active_workspace_name": active_ws_name}
+
+
+def data_freshness(session: Session, user_id: str) -> dict[str, object]:
+    """The topbar 'Data as of …' string PLUS the honest 'nothing is connected'
+    state — shared by `_shell_ctx` AND the manual-render pages (the workspace_bar
+    pattern) so every page agrees on how fresh the figures are.
+
+    The load-bearing case (founder 2026-07-24 walkthrough): a workspace with a
+    past audit but NO live feed. The Sources page shows 'nothing connected' while
+    Overview/Findings keep rendering the last audit's real numbers — which reads
+    as stale/live. Here `sources_disconnected` turns True so the shell banner and
+    the freshness line both say the figures are HISTORY until something reconnects.
+    Cheap: the feed check runs only when an audit exists (the common empty path
+    returns immediately)."""
+    from tokenops_cost_auditor.services.dashboard import metrics
+
+    latest = metrics.latest_audit(session, user_id)
+    if latest is None:
+        return {
+            "freshness": "No data yet — connect a source or upload a log file",
+            "sources_disconnected": False,
+            "data_as_of": "",
+        }
+    when = latest.report_ready_at or latest.created_at
+    as_of = f"{when:%Y-%m-%d %H:%M} UTC"
+    disconnected = not metrics.has_live_feed(session, user_id)
+    freshness = f"Data as of {as_of}" + (" · nothing connected" if disconnected else "")
+    return {"freshness": freshness, "sources_disconnected": disconnected, "data_as_of": as_of}

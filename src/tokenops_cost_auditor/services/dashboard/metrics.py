@@ -20,8 +20,10 @@ from tokenops_cost_auditor.persistence.models import (
     AlertRule,
     Audit,
     CallAggregate,
+    Device,
     FindingFeedback,
     FindingRow,
+    IngestKey,
     Source,
 )
 from tokenops_cost_auditor.persistence.repo import active_workspace_id
@@ -58,6 +60,30 @@ def latest_audit(session: Session, user_id: str) -> Audit | None:
         .order_by(Audit.created_at.desc())
         .limit(1)
     ).scalar_one_or_none()
+
+
+def has_live_feed(session: Session, user_id: str) -> bool:
+    """True when the active workspace has something CURRENTLY connected that can
+    bring in new usage — an active source, an unrevoked ingest key, or a linked
+    machine. When this is False but a past audit exists, the dashboard's figures
+    are HISTORY (they cannot move until something reconnects), so the shell says
+    so rather than let old numbers read as live/stale — the founder's 2026-07-24
+    walkthrough finding: 'no sources connected but overview shows old data'.
+
+    Only status=='active' counts — a 'paused' source (R-Q6 downgrade) is not
+    bringing in usage, so it is correctly NOT a live feed. FORWARD NOTE (cold
+    O-COH f.4): 'paused' is not assigned anywhere yet; when R-Q6 ships, revisit
+    the banner's 'connect a source' CTA for the paused-but-listed case — the right
+    instruction there is resume/upgrade, not connect. Tracked in BACKLOG."""
+    ws = active_workspace_id(session, user_id)
+    for stmt in (
+        select(Source.id).where(Source.workspace_id == ws, Source.status == "active"),
+        select(IngestKey.id).where(IngestKey.workspace_id == ws, IngestKey.revoked_at.is_(None)),
+        select(Device.id).where(Device.workspace_id == ws, Device.revoked_at.is_(None)),
+    ):
+        if session.scalar(stmt.limit(1)) is not None:
+            return True
+    return False
 
 
 def _stamp(audit: Audit | None) -> str:

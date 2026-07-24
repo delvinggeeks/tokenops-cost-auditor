@@ -18,7 +18,7 @@ from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 from tokenops_cost_auditor.web.auth import resolve_session
-from tokenops_cost_auditor.web.shell import workspace_bar
+from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 log = structlog.get_logger("tokenops_cost_auditor.web")
 
@@ -217,16 +217,17 @@ def upload_page(request: Request) -> HTMLResponse:
     with request.app.state.session_factory() as session:
         user = get_or_create_user(session, email)
         ws_bar = workspace_bar(session, user.id)
+        fresh = data_freshness(session, user.id)  # freshness + coherence state
     return _render(
         request,
         "app/upload.html",
         user_email=email,
         **ws_bar,
+        **fresh,
         max_upload_mb=request.app.state.settings.max_upload_mb,
         page="upload",
         plan=None,
         purpose="",
-        freshness="",
         show_tour=False,
     )
 
