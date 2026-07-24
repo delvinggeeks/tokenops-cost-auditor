@@ -1,16 +1,12 @@
-# The deploy pipeline. LE-2 (Loop Engineering, founder 2026-07-24): CONTINUOUS
-# DEPLOYMENT — every merge to `main` auto-deploys to production, no human gate.
-# `workflow_dispatch` stays as the manual escape hatch (deploy an arbitrary tag,
-# or re-deploy). Either trigger runs the SAME mechanical safety the runbook once
-# asked of humans: full CI chain re-run on the exact ref, strict pricing
-# verification (R-AUTO-PRICING), pre-deploy backup, provision, external smoke —
-# and AUTO-ROLLBACK to the previously deployed tag if smoke fails. So prod
-# self-heals even with nobody watching (PLAN-LOOP-ENGINEERING §3 containment).
+# The deploy pipeline. LE-2 + staging tier (founder 2026-07-24): build → STAGING
+# → smoke → PRODUCTION. Every merge to main auto-promotes through staging first;
+# prod only ever ships what staging just proved. No human gate — staging IS the
+# gate. workflow_dispatch stays as the manual escape hatch.
 #
-# Required repository secrets (founder-lane, one-time):
-#   DEPLOY_SSH_KEY   private key authorized for root@<host>
-#   DEPLOY_HOST      169.58.44.80
-#   DEPLOY_DOMAIN    tokenops-cost-auditor.com
+# Environments (repo Settings → Environments), each with its OWN secrets:
+#   staging     DEPLOY_HOST=169.58.69.81   DEPLOY_DOMAIN=staging.tokenops-cost-auditor.com
+#   production  DEPLOY_HOST=169.58.44.80   DEPLOY_DOMAIN=tokenops-cost-auditor.com
+#   (DEPLOY_SSH_KEY set in BOTH environments — same key, authorized on both hosts)
 
 name: deploy
 
@@ -18,18 +14,14 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Git tag to deploy (e.g. v1.7.0)"
+        description: "Git tag/ref to deploy (e.g. v1.7.0 or main)"
         required: true
   push:
     branches: [main]
 
-concurrency: production-deploy # one deploy at a time, ever
+concurrency: production-deploy # one promotion at a time, ever
 
 jobs:
-  # Resolve what to ship for BOTH triggers into one (ref, tag) pair, so the gate
-  # and deploy jobs stay trigger-agnostic. Manual → the given tag; a merge to
-  # main → the merged commit SHA (a valid `git archive` ref AND a clean Sentry
-  # release id; provision stamps it as RELEASE_TAG and rollback checks it out).
   resolve:
     runs-on: ubuntu-latest
     outputs:
@@ -45,7 +37,7 @@ jobs:
           fi
           echo "ref=$REF" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "deploying ref=$REF tag=$TAG (event=${{ github.event_name }})"
+          echo "promoting ref=$REF tag=$TAG (event=${{ github.event_name }})"
 
   gate:
     needs: resolve
@@ -65,14 +57,40 @@ jobs:
       - name: strict pricing verification (R-AUTO-PRICING)
         run: uv run python scripts/pricing_verify.py
 
-  deploy:
+  deploy-staging:
     needs: [resolve, gate]
     runs-on: ubuntu-latest
+    environment: staging
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.resolve.outputs.ref }}
-          fetch-depth: 0 # provision ships the ref via git archive
+          fetch-depth: 0
+      - name: ssh setup
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+      - name: provision staging
+        run: |
+          bash scripts/provision.sh \
+            --host "${{ secrets.DEPLOY_HOST }}" \
+            --domain "${{ secrets.DEPLOY_DOMAIN }}" \
+            --tag "${{ needs.resolve.outputs.tag }}"
+      - name: smoke staging (a failure here BLOCKS production)
+        run: |
+          curl -sSf -m 20 "https://${{ secrets.DEPLOY_DOMAIN }}/healthz" | grep -q '"ok":true'
+
+  deploy-production:
+    needs: [resolve, gate, deploy-staging] # prod only runs if staging is green
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0
       - name: ssh setup
         run: |
           mkdir -p ~/.ssh
@@ -90,7 +108,7 @@ jobs:
         run: |
           ssh "root@${{ secrets.DEPLOY_HOST }}" \
             'docker exec tokenops-cost-auditor-postgres /bin/bash /scripts/backup.sh'
-      - name: provision ${{ needs.resolve.outputs.tag }}
+      - name: provision production
         run: |
           bash scripts/provision.sh \
             --host "${{ secrets.DEPLOY_HOST }}" \
