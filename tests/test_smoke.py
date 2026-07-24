@@ -81,3 +81,15 @@ def test_env_example_complete() -> None:
     }
     missing = {name.upper() for name in Settings.model_fields} - declared
     assert not missing, f".env.example is missing: {sorted(missing)}"
+
+
+def test_env_example_boots_a_fresh_deploy() -> None:
+    """A FRESH deploy loads its config from .env.example, which ships every
+    optional key BLANK (e.g. ONE_SHOT_USD=). Settings must treat blank as unset
+    and boot on defaults — regression pin for the staging-caught crash-loop
+    (2026-07-24): pydantic rejected "" as a float, so a fresh box crash-looped
+    while prod survived on its populated .env. Booting here means it won't."""
+    s = Settings(_env_file=".env.example")
+    # a representative optional pricing float that was blank in .env.example
+    assert s.one_shot_usd == 500.0
+    assert s.plan_pro_spend_gate_usd == 25000.0
