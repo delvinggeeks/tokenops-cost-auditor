@@ -13,10 +13,12 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.api.routes_upload import EMAIL_RE
 from tokenops_cost_auditor.obs.ratelimit import limiter
+from tokenops_cost_auditor.persistence.repo import get_or_create_user
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 from tokenops_cost_auditor.web.auth import resolve_session
+from tokenops_cost_auditor.web.shell import workspace_bar
 
 log = structlog.get_logger("tokenops_cost_auditor.web")
 
@@ -209,10 +211,17 @@ def upload_page(request: Request) -> HTMLResponse:
         # variant teaches how to get logs (T-POL-01: the counts-only promise
         # travels before the ask), unlike the plain /signup.
         return _signin_page(request, "signup", show_get_logs=True)
+    # O-1b-1: the workspace bar shows here too (reachability). This signed-in
+    # page had no DB session; open a short READ-ONLY one just for the bar (no
+    # commit — rendering a page must not write; the user already exists).
+    with request.app.state.session_factory() as session:
+        user = get_or_create_user(session, email)
+        ws_bar = workspace_bar(session, user.id)
     return _render(
         request,
         "app/upload.html",
         user_email=email,
+        **ws_bar,
         max_upload_mb=request.app.state.settings.max_upload_mb,
         page="upload",
         plan=None,
