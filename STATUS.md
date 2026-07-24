@@ -35,6 +35,27 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## DEVOPS CYCLE ACTIVATED (2026-07-24) — founder "why no PR ... proper devops cycle?"
+
+Root cause: the repo was LOCAL-ONLY (no git remote) — `gh pr`/GitHub Actions had
+nothing to run against, so O-1 accumulated on one branch (wp-report-explorer) with
+gate AGENTS as the local CI equivalent. gh is now authed (delvinggeeks, repo+
+workflow). Founder decisions (AskUserQuestion): (a) **founder** does the publish
+(create+push repo) — agent prepped branches/PR bodies/commands (scratchpad
+activate-github.sh); (b) split the done O-1 work into **separate stacked PRs**.
+Branches cut per concern off main: `o1a-read-rescope` (d7a5c43+f547d33, fully
+gated) → `o1b-members-backend` (d52960e; automated-green, agent gate round
+RECOMMENDED before merge) → `o1b-slice-plan` (docs). Merge order PR1→PR2→PR3.
+Deploy secrets for deploy.yml: DEPLOY_HOST/DEPLOY_DOMAIN/DEPLOY_SSH_KEY (ci.yml
+needs none).
+
+GO-FORWARD (every session from O-1b-1 on): work on a branch OFF MAIN → push (ci.yml
+runs ruff/mypy/pytest+coverage+pricing-verify/docs-drift) → open a PR (template) →
+run the agent gate round + paste TE-8 verdicts in the PR → squash-merge to main
+(branch protection: green PR only) → tag → deploy.yml (workflow_dispatch = the
+founder's "approved to deploy") → smoke + auto-rollback. No more long-lived
+catch-all branches; one slice = one branch = one PR.
+
 ## O-1b BACKEND FOUNDATION (2026-07-24) — founder "Approved go with the recommendations"
 
 Founder RULED PLAN-ORG Q3: **one subscription per workspace, members INHERIT the
