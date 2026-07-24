@@ -35,6 +35,20 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-6 DEPLOYED — v1.8.0 LIVE (2026-07-24) — founder "deploy S-6, then O-0"
+
+Founder chose (AskUserQuestion) deploy-first. Pre-deploy backup OK
+(/backups/tokenops_2026-07-24.dump). `scripts/provision.sh --tag v1.8.0`:
+image rebuilt, migrations 018 (ingest_keys — prod DB was still at 017, so S-0's
+table was created NOW) AND 019 (developer platform) both applied transactionally
+→ head b7d34e9a1c60. Smoke: healthz ok, landing ok, docs 200. LIVE-VERIFIED from
+outside: GET /api/v1/audits no-token → 401 NFR-14 envelope; unknown OAuth client
+→ on-site 400 with empty redirect (open-redirect guard); /oauth/token garbage →
+invalid_client; all 4 S-6 tables present in prod. CHANGELOG v1.8.0 recorded.
+FIXED in-slice (R-IMPROVISE): the deploy smoke probed /auth/magic-link (dead
+→ 405) so its "magic link issued" check never fired — corrected to the real
+/auth/signin-link in provision.sh; validates on the next deploy. Next: O-0.
+
 ## S-6 GATE ROUND CLOSED (2026-07-24) — spec PASS · ux PWN · cold PWN · system-tester PWN; all notes applied
 
 Four gates, none FAIL. spec-guard PASS (FR-22 counts-only, X-01/X-02 hold,

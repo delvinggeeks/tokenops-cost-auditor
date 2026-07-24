@@ -135,7 +135,7 @@ echo "- healthz:"
 curl -sk --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/healthz"; echo
 curl -sk --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q "Take control of your AI spend." \
     && echo "- landing: OK (control narrative served)"
-curl -sk --resolve "$DOMAIN:443:127.0.0.1" -X POST "https://$DOMAIN/auth/magic-link" -d "email=deploy-smoke@example.com" -o /dev/null -w "- magic-link request: %{http_code}\n"
+curl -sk --resolve "$DOMAIN:443:127.0.0.1" -X POST "https://$DOMAIN/auth/signin-link" -d "email=deploy-smoke@example.com" -o /dev/null -w "- magic-link request: %{http_code}\n"
 sleep 1
 docker compose logs app 2>&1 | grep -q "/auth/verify?token=" \
     && echo "- magic link issued (log adapter; arrives by email once SMTP_* is set)"

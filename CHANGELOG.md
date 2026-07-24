@@ -5,6 +5,27 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-24 · v1.8.0 · S-6 READ PLATFORM (read tokens, read API, OAuth 2.0).
+  The READ half of the platform (R-SDK-PLATFORM), founder "full S-6 incl OAuth
+  apps": personal read-scoped API tokens (rt_) and OAuth access tokens (at_)
+  both authenticate GET /api/v1/audits + /audits/{id}/findings — counts/dollars
+  only (FR-22), tenant-isolated (cross-tenant = 404), scope-enforced (read:audits
+  / read:findings; no write scope exists). Full OAuth 2.0 authorization-code +
+  PKCE S256 server: consent bound to the logged-in owner (CSRF-safe), byte-exact
+  redirect_uri (open-redirect guard), single-use codes via atomic conditional
+  UPDATE (correct on both backends), app-revoke kills issued tokens. Developer
+  Settings page (sidebar-reachable) mints/revokes tokens + registers/revokes
+  apps, shown-once reveals, hash-only at rest. Ingest key stays WRITE-ONLY (a
+  separate credential class). Four gates all PASS/PASS-WITH-NOTES; cold f.1/f.2/
+  f.3 + ux + system-tester notes all fixed and pinned. MIGRATIONS: 018 ingest
+  keys AND 019 developer platform both applied cleanly (transactional) — prod DB
+  was at 017 (f2a94b6d81c3) before this deploy, so 018 caught up too; head now
+  b7d34e9a1c60. SMOKE PASS: healthz {"ok":true,"db":true}, landing OK, docs 200
+  (read+OAuth sections live). S-6 LIVE-VERIFIED from outside: /api/v1/audits no
+  token → 401 NFR-14 envelope; unknown OAuth client → on-site 400, empty
+  redirect; /oauth/token garbage → invalid_client; all 4 tables present in prod.
+  Pre-deploy backup OK (/backups/tokenops_2026-07-24.dump, 4.1M).
+
 - 2026-07-23 · v1.7.0 · CLOUD CONNECTORS + THE AGENT PRICING GATE.
   Azure OpenAI connects via a Monitoring-Reader service principal (read-
   only by Azure RBAC; cache counts honestly "not observable on Azure" —
