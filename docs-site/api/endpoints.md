@@ -727,6 +727,18 @@ in O-0 every user owns their workspace-of-one. Audit-logged.
 
 Responses: `200`, `422`
 
+## `POST /settings/workspace/switch`
+
+Switch Workspace.
+
+O-1b-1 (R-ORG): move the user into another workspace they belong to.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /signup`
 
 Signup Page.

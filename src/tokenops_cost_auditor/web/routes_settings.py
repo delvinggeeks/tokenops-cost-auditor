@@ -18,6 +18,7 @@ from tokenops_cost_auditor.persistence.repo import (
     active_workspace_id,
     get_or_create_user,
     get_or_create_workspace,
+    set_active_workspace,
 )
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments import subscriptions
@@ -142,6 +143,37 @@ def rename_workspace(
         auditlog.append(session, user.email, "workspace.renamed", new_name)
         session.commit()
     return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/workspace/switch", response_model=None)
+def switch_workspace(
+    request: Request,
+    workspace_id: str = Form(""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """O-1b-1 (R-ORG): move the user into another workspace they belong to.
+
+    `set_active_workspace` refuses and changes nothing unless the user is a live
+    member of the target (the switch can NEVER become a privilege grant, and a
+    forged/foreign workspace_id silently no-ops — the switcher only ever lists
+    workspaces the user belongs to). Every owned read then re-scopes to the new
+    active workspace via `active_workspace_id`. Audit-logged when it takes."""
+    target = workspace_id.strip()
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # Only switch (and audit) on a REAL change to a workspace the user
+        # belongs to — a self-switch or empty/foreign target writes nothing and
+        # logs nothing, keeping the audit trail to genuine moves.
+        if (
+            target
+            and target != active_workspace_id(session, user.id)
+            and set_active_workspace(session, user.id, target)
+        ):
+            auditlog.append(session, user.email, "workspace.switched", target)
+        session.commit()
+    # land on the dashboard so the switch is immediately visible (every widget
+    # now reads the new workspace's data) — the journey's proof, in one hop.
+    return RedirectResponse("/dashboard", status_code=303)
 
 
 @router.post("/email", response_model=None)

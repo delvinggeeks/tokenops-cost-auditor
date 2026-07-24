@@ -2653,3 +2653,27 @@ Lighthouse is installed in this environment; a headless Chromium exists in the
 playwright cache but the CLI does not. Gating on evidence that cannot currently
 be produced would make the gate unfalsifiable, so this needs either an install
 or a substitute measurable criterion.
+
+---
+
+O-1b-1 (workspace switcher) — 2026-07-24, founder "proceed as recommended". The
+workspace spine gains its UI: the topbar shows the active workspace on EVERY app
+page ("acting in <name>"), and a user in more than one workspace switches between
+them in one click (details/summary, reuses the ux-approved account-menu pattern;
+a solo user gets an honest plain indicator, NO dead control — respects the shell's
+no-coming-soon rule). The reachability law is held by ONE helper,
+web/shell.py::workspace_bar, called by both the _shell_ctx pages AND the
+manual-render ones (sources, connect_wizard, developer, upload) — so the indicator
+can never be present on some pages and missing on others. POST
+/settings/workspace/switch → repo.set_active_workspace (membership-validated; a
+forged/foreign workspace_id is a silent no-op; audit-logged; lands on /dashboard so
+the flip is visible). Switching flips every owned read through the existing
+active_workspace_id chokepoint — no per-read change — proven by
+tests/test_workspace_spine.py::TestWorkspaceSwitcherJourney (shell shows active +
+switcher; A→B flips the dashboard incl. its zero-state and freshness; non-member
+switch refused and changes nothing; solo honest indicator; indicator reachable on
+every app page incl. the manual-render ones). Mockup:
+docs/design/mockups/workspace-switcher.html. File-map delta: +web/shell.py; +POST
+/settings/workspace/switch; _shell_ctx and the 4 manual-render pages now call
+workspace_bar. DEPENDS-DONE: O-1b backend. Next: O-1b-2 (invite & accept) uses this
+switcher spine to drop an invitee into the shared workspace on accept.

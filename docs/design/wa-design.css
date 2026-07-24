@@ -246,7 +246,7 @@ details.evidence[open] > div { animation: spring-open var(--t-med) var(--ease); 
 .nav-group a[aria-current="page"] { font-weight: 600; color: var(--accent-ink);
   background: var(--surface); border-left-color: var(--accent); }
 
-.topbar { display: flex; align-items: center; gap: var(--s2);
+.topbar { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
   padding: var(--s2) var(--s4); border-bottom: 1px solid var(--rule);
   background: var(--surface); }
 .topbar .spacer { flex: 1; }

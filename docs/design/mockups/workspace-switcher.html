@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — workspace switcher (O-1b-1)</title>
+<style>
+  :root { --ink:#1a1a1a; --ink-soft:#5b5b5b; --muted:#8a8a8a; --rule:#e3e0da;
+    --surface:#fff; --wash:#f6f4ef; --accent:#c96442; --on-accent:#fff; --radius:8px; }
+  body { font: 14px/1.5 system-ui, sans-serif; color:var(--ink); background:var(--wash);
+    margin:0; padding:32px; }
+  h1 { font-size:18px; } h2 { font-size:14px; color:var(--ink-soft); margin-top:32px; }
+  .note { color:var(--muted); max-width:60ch; }
+  /* topbar, faithful to wa-design.css .topbar / .account-menu / .account-pop */
+  .topbar { display:flex; align-items:center; gap:12px; background:var(--surface);
+    border:1px solid var(--rule); border-radius:var(--radius); padding:8px 14px; }
+  .spacer { flex:1; }
+  .muted { color:var(--muted); font-size:13px; }
+  .menu { position:relative; }
+  .menu > summary { list-style:none; cursor:pointer; color:var(--ink-soft); font-size:13px;
+    padding:4px 10px; border:1px solid var(--rule); border-radius:var(--radius); }
+  .menu > summary::-webkit-details-marker { display:none; }
+  .menu > summary::after { content:" ▾"; font-size:10px; }
+  .menu[open] > summary { color:var(--on-accent); background:var(--accent); border-color:var(--accent); }
+  .pop { position:absolute; left:0; top:34px; z-index:30; min-width:220px; background:var(--surface);
+    border:1px solid var(--rule); border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.12);
+    padding:8px; display:grid; gap:2px; }
+  .pop .head { padding:4px 10px; font-size:12px; color:var(--muted); }
+  .pop .active { padding:8px 10px; font-weight:600; }
+  .pop button { width:100%; text-align:left; background:none; border:0; padding:8px 10px;
+    border-radius:var(--radius); font:inherit; color:var(--ink); cursor:pointer;
+    border-top:1px solid var(--rule); }
+  .pop button:hover { background:var(--wash); }
+  .frame { background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:16px; margin:10px 0 24px; }
+</style>
+</head>
+<body>
+  <h1>Workspace switcher — O-1b-1 (R-ORG)</h1>
+  <p class="note">The topbar always answers "which workspace am I acting in?", and — for a
+  user who belongs to more than one — offers a one-click switch. It reuses the existing,
+  ux-approved <code>account-menu</code> pattern (details/summary, no JS). Every read on the
+  page is already scoped to the active workspace, so switching flips the whole product.</p>
+
+  <h2>A · Member of more than one workspace — the switcher (menu open)</h2>
+  <div class="frame">
+    <div class="topbar">
+      <strong>TokenOps Cost Auditor</strong><span class="muted">Overview</span>
+      <span class="spacer"></span>
+      <details class="menu" open>
+        <summary>Acme Corp</summary>
+        <div class="pop">
+          <div class="head">Acting in</div>
+          <div class="active">Acme Corp <span class="muted">· owner</span> ✓</div>
+          <button type="submit">Shared Team <span class="muted">· member</span></button>
+        </div>
+      </details>
+      <details class="menu"><summary>you@acme.com</summary></details>
+    </div>
+  </div>
+  <p class="note">The active workspace is named in the summary and marked ✓ inside; every other
+  workspace the user belongs to is a switch button showing its role. Switching to one the user
+  is not a member of is impossible from here (never listed) and refused server-side if forged.</p>
+
+  <h2>B · A workspace of one — honest indicator, no dead control</h2>
+  <div class="frame">
+    <div class="topbar">
+      <strong>TokenOps Cost Auditor</strong><span class="muted">Overview</span>
+      <span class="spacer"></span>
+      <span class="muted" title="You are the only member — this is just your workspace">Your workspace</span>
+      <details class="menu"><summary>you@solo.com</summary></details>
+    </div>
+  </div>
+  <p class="note">A solo user sees a plain indicator, not a switcher — no dropdown, no button that
+  does nothing (the shell's "only shipped modules, no coming-soon" rule). When they gain a second
+  workspace (O-1b-2 invites), the same slot becomes the menu in A — no new surface to learn.</p>
+</body>
+</html>

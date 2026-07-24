@@ -35,6 +35,7 @@ from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_sources import user_plan
+from tokenops_cost_auditor.web.shell import workspace_bar
 
 router = APIRouter(tags=["dashboard"])
 
@@ -86,6 +87,8 @@ def _shell_ctx(
 
     return {
         "page": page,
+        # O-1b-1 (R-ORG): the workspace bar on EVERY app page (reachability law).
+        **workspace_bar(session, user.id),
         "plan": plan_key,
         # Display name from THE catalogue — `plan|title` on the internal key
         # would resurrect "Team" after the R-SAAS-BASICS rename.

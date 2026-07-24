@@ -37,6 +37,7 @@ from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.payments.base import unconsumed_credit
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.web import help as help_registry
+from tokenops_cost_auditor.web.shell import workspace_bar
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
@@ -130,6 +131,8 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
                 purpose=help_registry.purpose("sources"),
                 freshness="",
                 user_email=user_email,
+                # O-1b-1: the workspace bar on this manual-render page too.
+                **(workspace_bar(session, user.id) if user else {}),
                 show_tour=False,
             )
         )
@@ -169,6 +172,7 @@ def wizard_page(
                 purpose=help_registry.purpose("sources"),
                 freshness="",
                 user_email=user.email,
+                **workspace_bar(session, user.id),  # O-1b-1 workspace bar
                 at_limit=len(active) >= limit,
                 limit=limit,
                 show_tour=False,
