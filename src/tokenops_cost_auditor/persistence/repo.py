@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Engine, create_engine, func, select
+from sqlalchemy import Engine, case, create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -181,6 +181,31 @@ def list_workspace_invites(session: Session, workspace_id: str) -> list[Workspac
             .order_by(WorkspaceInvite.created_at.desc())
         ).all()
     )
+
+
+def list_workspace_members(
+    session: Session, workspace_id: str
+) -> list[tuple[WorkspaceMember, User]]:
+    """O-1b-3: every member OF a workspace paired with their user (for the email),
+    the OWNER first then by join time — the Members-page roster. This is the
+    inverse of `list_memberships` (workspaces a user belongs to); here we list the
+    users who belong to ONE workspace.
+
+    The INNER join pairs a member row with its user; that pairing is a given today
+    (no account-deletion path exists, so a membership always resolves). If one is
+    ever added, revisit this — an INNER join would drop such a member from the
+    roster SILENTLY rather than surface the dangling row (cold O-1b-3 f.3)."""
+    # Owner first by an EXPLICIT key, not a lexical role sort — a plain ascending
+    # order_by(role) lists "member" before "owner" ('m' < 'o'), and O-2 will add
+    # admin/viewer whose names sort arbitrarily. This pins the owner to the top.
+    owner_first = case((WorkspaceMember.role == "owner", 0), else_=1)
+    rows = session.execute(
+        select(WorkspaceMember, User)
+        .join(User, User.id == WorkspaceMember.user_id)
+        .where(WorkspaceMember.workspace_id == workspace_id)
+        .order_by(owner_first, WorkspaceMember.created_at)
+    ).all()
+    return [(m, u) for m, u in rows]
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:
