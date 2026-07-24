@@ -4,12 +4,21 @@
 name: ci
 
 on:
-  push:
-    branches: ["**"]
   pull_request:
   schedule:
     - cron: "30 1 * * *" # nightly perf run (T-PERF-01)
   workflow_dispatch:
+
+# Cost control (founder 2026-07-24): CI used to run on BOTH push:["**"] and
+# pull_request, doubling Action-minutes on every branch push; and on merge to
+# main it re-ran the full suite that deploy.yml's `gate` job already runs. Now
+# CI fires ONCE, on pull_request — feature branches validate via their PR, and
+# main is validated by deploy.yml's `gate` before it promotes. Nightly perf
+# (schedule) and manual (workflow_dispatch) are unchanged. cancel-in-progress
+# drops superseded runs when a PR branch is re-pushed.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Clean-authorship law (CLAUDE.md rule 6; founder 2026-07-24). A HARD gate so
