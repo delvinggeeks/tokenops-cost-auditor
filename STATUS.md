@@ -73,9 +73,14 @@ wa-design.css `.fr-*` (estimate-palette fence, role-tokens only). HONESTY is
 load-bearing (the data-coherence lesson): the preview is fenced "SAMPLE — NOT YOUR
 DATA / nothing on this card is yours", uses the estimate palette NEVER verified-green,
 and VANISHES the moment a real audit completes so it never sits beside a user's own
-figures. **Real app figures**: $2.24/mo · 29.5% · 6 findings on the committed sample
-(they track the pinned rate card; the preview + public /sample read the same
-engine+table so they can never disagree). PROCESS NOTES (mine): the ux gate on the
+figures. **Real app figures** (the AUTHORITATIVE reproduction via the app's own
+construction — `get_settings()` reading .env + `PricingTable.load()`, per R-TOOLCHAIN):
+$0.89/mo · 11.7% · 5 findings on the committed sample (top-4 shown: d3 $0.50, d2 $0.25,
+d6 $0.10, d4 $0.05; d5 is $0.00). They are CONFIG- and rate-card-dependent — a hermetic
+test env (`_env_file=None`) computes different numbers ($2.24/29.5%/6), which is why the
+journey suite asserts the rendered page against `first_run_preview` LIVE, never a
+hardcoded literal. The preview + public /sample read the same settings+table so in any
+one deployment they can never disagree. PROCESS NOTES (mine): the ux gate on the
 mockup (BEFORE wiring, R-DESIGN) returned PASS-WITH-NOTES — all 4 actioned (5-vs-4
 findings coherence made explicit; money promoted to the display HERO; the one delight
 named; ribbon flex-wrap). Wiring then tripped THREE shipped laws the mockup's bespoke

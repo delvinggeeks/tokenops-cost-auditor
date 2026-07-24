@@ -74,9 +74,11 @@
           {% endfor %}
         {{ kit.table_close() }}
         {% if preview.findings | length < preview.n_findings %}
+        {# Honest: the shown rows are the top by dollars; we do NOT claim the
+           omitted ones are all $0 (the sample could carry more positive findings
+           than we show) — the full list is one click away (cold gate). #}
         <p class="muted fr-pv-more">Top {{ preview.findings | length }} by dollar impact ·
-          {{ preview.n_findings }} findings in total — the rest have no dollar impact on this
-          sample. Full list in the sample report.</p>
+          {{ preview.n_findings }} findings in the sample. Full list in the sample report.</p>
         {% endif %}
       </div>
     </div>

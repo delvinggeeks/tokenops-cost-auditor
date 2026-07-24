@@ -197,9 +197,9 @@
           <div class="grid" style="gap:var(--s2)">
             <div class="w-6">
               <div class="pv-card pv-stat">
-                <div class="n">$2.24<span class="per">/mo</span></div>
-                <div class="chip">29.5% of sample spend</div>
-                <div class="l">recoverable across 6 findings, from $7.61/mo of sample spend
+                <div class="n">$0.89<span class="per">/mo</span></div>
+                <div class="chip">11.7% of sample spend</div>
+                <div class="l">recoverable across 5 findings, from $7.61/mo of sample spend
                   (164 calls, 3 days).</div>
                 <div class="scale">On the sample the dollars are small; on your real traffic the same
                   detectors scale with your spend.</div>
@@ -210,18 +210,18 @@
                 <table class="pv" aria-label="Sample findings">
                   <thead><tr><th>Finding (sample)</th><th>Severity</th><th class="money">Monthly</th></tr></thead>
                   <tbody>
-                    <tr><td>You're using a top-tier model for work a cheaper one handles</td>
-                        <td><span class="sev sev-low">Low</span></td><td class="money">$1.35</td></tr>
                     <tr><td>One route's prompts are far larger than the rest</td>
                         <td><span class="sev sev-low">Low</span></td><td class="money">$0.50</td></tr>
                     <tr><td>You're paying full price for prompts you send again and again</td>
                         <td><span class="sev sev-low">Low</span></td><td class="money">$0.25</td></tr>
                     <tr><td>An agent loop is making many tiny calls where fewer would do</td>
                         <td><span class="sev sev-low">Low</span></td><td class="money">$0.10</td></tr>
+                    <tr><td>The same request is being sent over and over in bursts</td>
+                        <td><span class="sev sev-med">Medium</span></td><td class="money">$0.05</td></tr>
                   </tbody>
                 </table>
-                <p class="muted" style="margin-top:8px">Top 4 by dollar impact &middot; 6 findings in
-                  total &mdash; the rest have no dollar impact on this sample. Full list in the sample report.</p>
+                <p class="muted" style="margin-top:8px">Top 4 by dollar impact &middot; 5 findings in
+                  the sample. Full list in the sample report.</p>
               </div>
             </div>
           </div>
@@ -261,14 +261,15 @@
       standalone getting-started checklist is suppressed in this pure first-run state (the hero IS the
       guided path) and reappears afterward for the review→apply→verify steps that only make sense once
       data exists.</li>
-    <li><b>Honest framing.</b> The committed sample is small ($2.24/mo); the preview pairs the dollar
+    <li><b>Honest framing.</b> The committed sample is small ($0.89/mo); the preview pairs the dollar
       hero with %-of-spend and the ranked plain-English findings — the parts that communicate value and
       scale — and says plainly the dollars scale with real traffic.</li>
     <li><b>No dead controls (shell rule).</b> Steps 2 and 3 are "what happens next," not buttons; only
       step 1 is actionable.</li>
     <li><b>Money is the most-weighted figure (R-DESIGN money law).</b> The $0.89/mo dollar is the 34px
-      serif display numeral; the 11.7% reads as a supporting chip; the findings table's Monthly column
-      renders in serif money type. Dollars lead wherever they appear.</li>
+      heavy-sans display numeral (serif is retired, R-LOOK-FINAL); the 11.7% reads as a supporting
+      chip; the findings table composes the real <code>.ledger</code> so its Monthly column matches the
+      shipped findings table. Dollars lead as the hero.</li>
     <li><b>The one designed delight.</b> The <b>"YOU ARE HERE" marker on step 1</b> of the guided path:
       the whole four-stage journey is laid out, and exactly one step is lit as the user's current
       position — the same "you can see the whole loop, and where you are in it" grammar as the pipeline
@@ -279,11 +280,12 @@
   </ul>
 
   <p class="note" style="margin-top:24px"><b>Mockup only — SAMPLE DATA.</b> The figures shown are the
-    real output of <code>services/report/sample.py</code> at time of writing ($2.24/mo · 29.5% · 6
-    findings); they depend on the pinned rate card and shift as it is re-verified. The wired surface
-    renders them LIVE from <code>metrics.first_run_preview()</code> — the same engine + table
-    <code>/sample</code> uses — so the preview and the public sample report can never disagree, and
-    neither can drift from the engine.</p>
+    real output of <code>services/report/sample.py</code> under the app's own construction
+    (<code>get_settings()</code> + <code>PricingTable.load()</code>): $0.89/mo · 11.7% · 5 findings.
+    They are config- and rate-card-dependent (a hermetic test env computes different numbers), so the
+    wired surface renders them LIVE from <code>metrics.first_run_preview()</code> — the same
+    settings+table <code>/sample</code> uses — and the journey tests assert the page against that
+    function rather than any literal, so neither can drift from the engine.</p>
 </div>
 </body>
 </html>

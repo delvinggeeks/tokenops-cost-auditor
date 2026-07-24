@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import structlog
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
@@ -38,6 +39,7 @@ from tokenops_cost_auditor.web.routes_sources import user_plan
 from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 router = APIRouter(tags=["dashboard"])
+log = structlog.get_logger("tokenops_cost_auditor.web")
 
 VERDICTS = ("applied", "dismissed", "not_relevant")
 # Server-side sort keys for the findings table. SSR links, not JS —
@@ -115,9 +117,13 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
                 preview = metrics.first_run_preview(
                     request.app.state.settings, request.app.state.pricing_table
                 )
-            except FileNotFoundError:
-                # Sample fixtures absent from the build → the guided hero still
-                # shows; only the preview card is omitted. Never a 500.
+            except Exception as exc:
+                # The sample preview is NON-CRITICAL: any failure building it —
+                # missing fixtures, a fixture model off the rate card, a detector
+                # raising — must degrade to the guided hero ALONE, never 500 the
+                # whole first-run dashboard (cold/vv gate). Logged so the gap is
+                # visible rather than silent.
+                log.warning("first_run.preview_failed", error=str(exc))
                 preview = None
         ctx = _shell_ctx(session, request, user, "overview")
         watching = alerts_dispatch.plan_watches(request.app.state.settings, str(ctx["plan"]))

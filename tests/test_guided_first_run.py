@@ -117,3 +117,28 @@ class TestGuidedFirstRun:
         # the live widget grid is back, showing the user's OWN finding
         assert 'id="w-savings"' in page
         assert _rendered(help_registry.detector_plain("d2_missing_cache")) in page
+
+    def test_preview_failure_degrades_to_the_hero_never_500(
+        self, app: FastAPI, monkeypatch
+    ) -> None:
+        # The sample preview is non-critical: ANY failure building it (missing
+        # fixtures, a fixture model off the rate card, a detector raising) must
+        # degrade to the guided hero alone, never 500 the first-run dashboard
+        # (cold/vv gate — the "never a 500" claim, now verified).
+        def _boom(*_a: object, **_k: object) -> dict[str, object]:
+            raise RuntimeError("sample engine exploded")
+
+        monkeypatch.setattr(metrics, "first_run_preview", _boom)
+        resp = TestClient(app).get("/dashboard", headers=HDR)
+        assert resp.status_code == 200  # NOT a 500
+        assert "money hiding in your LLM spend" in resp.text  # the guided hero still shows
+        assert "SAMPLE — NOT YOUR DATA" not in resp.text  # only the preview card is dropped
+
+    def test_sample_model_is_memoised(self, app: FastAPI) -> None:
+        # One build per process — the same committed fixtures, deterministic; the
+        # in-app preview must not re-run ingest→price→detect per first-run visit.
+        from tokenops_cost_auditor.services.report import sample
+
+        a = sample.sample_model(app.state.settings, app.state.pricing_table)
+        b = sample.sample_model(app.state.settings, app.state.pricing_table)
+        assert a is b
