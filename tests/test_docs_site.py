@@ -180,3 +180,56 @@ class TestApiReferenceAccuracy:
     def test_05_in_nav(self) -> None:
         mk = (REPO / "mkdocs.yml").read_text(encoding="utf-8")
         assert "api/reference.md" in mk
+
+    def test_06_every_documented_route_is_really_registered(self, app) -> None:
+        """spec-guard coverage note (2026-07-24): the reference documents the
+        ingest, status, report-retrieval and webhook surfaces. Pin each one
+        against the REAL app route table so a doc can't outlive its route.
+        Routers are lazily wrapped as _IncludedRouter — walk into their
+        original_router so nested paths are counted, not just the top level."""
+
+        def walk(routes):
+            for r in routes:
+                orig = getattr(r, "original_router", None)
+                if orig is not None:
+                    yield from walk(orig.routes)
+                    continue
+                p = getattr(r, "path", None)
+                if p:
+                    yield p
+
+        paths = set(walk(app.routes))
+        for documented in (
+            "/api/v1/ingest",
+            "/api/v1/audits/{audit_id}/status",
+            "/r/{token}",
+            "/r/{token}/pdf",
+            "/api/v1/webhooks/stripe",
+            "/api/v1/webhooks/razorpay",
+        ):
+            assert documented in paths, f"reference.md documents a dead route: {documented}"
+            # and the doc actually names the surface (guards silent doc drift)
+            assert documented.split("{")[0].rstrip("/") in self.REF or documented in self.REF
+
+    def test_07_status_body_documents_optional_keys(self) -> None:
+        """cold-reviewer f.2 (2026-07-24): valid_pct/queue_position/error are
+        conditional in routes_upload.py — the doc must mark them optional so an
+        integrator never KeyErrors coding to a fixed shape."""
+        body = re.sub(r"\s+", " ", self.REF)
+        assert "absent while the audit is still" in body  # valid_pct optionality
+        assert "queue_position" in body and "only" in body
+        assert "Code to the presence of each key" in body
+
+    def test_08_documents_the_integer_range_bound(self) -> None:
+        """cold-reviewer f.3 (2026-07-24): the [0, _MAX_COUNT] ceiling was
+        undocumented. Pin the real bound so the field table can't drop it."""
+        from tokenops_cost_auditor.web.routes_ingest import _MAX_COUNT
+
+        assert f"{_MAX_COUNT:,}" in self.REF  # 1,000,000,000,000 stated verbatim
+
+    def test_09_sdk_tag_precedence_is_honest(self) -> None:
+        """cold-reviewer f.1 (2026-07-24): init() folds environment/tag into one
+        tag (tag wins); the doc must not imply both are captured."""
+        body = re.sub(r"\s+", " ", self.REF)
+        assert "fold into the" in body and "single" in body
+        assert "tag" in body and "wins" in body

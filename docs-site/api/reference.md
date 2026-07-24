@@ -84,7 +84,9 @@ dashboard. Idempotent: safe to retry.
 | `prefix_hash` | string | | SHA-256 hex over the first 4096 prompt chars, computed **client-side** — enables the cache and duplicate detectors without any text leaving your process |
 
 Up to **5,000 records** per batch. Send an `Idempotency-Key` header to make
-retries safe.
+retries safe. Every token/count integer must fall in the range
+`0`–`1,000,000,000,000`; a value outside it (or of the wrong type) is rejected
+with a `422` naming the field.
 
 ### Examples
 
@@ -176,7 +178,7 @@ retries safe.
 | `401` | [error envelope](#errors) | missing or revoked ingest key |
 | `402` | error envelope | subscription lapsed — ingest pauses until it resumes |
 | `413` | error envelope | batch exceeds 5,000 records |
-| `422` | error envelope | a record broke the counts-only contract (offender named) |
+| `422` | error envelope | a record broke the counts-only contract, is missing a required field, carries an out-of-range or wrong-typed value, or the body isn't a non-empty `records` array — the message names the offender |
 | `429` | error envelope | rate limit exceeded |
 
 ---
@@ -189,11 +191,20 @@ Poll an audit created by an upload. Authenticated by your **session** (this
 is a dashboard-side endpoint), not the ingest key.
 
 ```json
-{ "audit_id": "…", "status": "processing", "valid_pct": 100.0 }
+{ "audit_id": "…", "status": "queued", "queue_position": 3 }
 ```
 
-`status` is one of `queued`, `processing`, `done`, `failed`. Ingest-created
-audits also appear in your dashboard's **Runs** ledger the moment they land.
+`status` is one of `queued`, `processing`, `done`, `failed`. **Code to the
+presence of each key, not to a fixed shape** — the body grows as the audit
+advances:
+
+- `valid_pct` (0–100) appears once validation has run; it is **absent while
+  the audit is still `queued`**.
+- `queue_position` is present **only** while `queued`.
+- `error` is present **only** on a `failed` audit.
+
+Ingest-created audits also appear in your dashboard's **Runs** ledger the
+moment they land.
 
 ---
 
@@ -234,10 +245,12 @@ guarantees:
 - **Inert without a DSN.** No `TOKENOPS_COST_AUDITOR_DSN` set = the SDK does
   nothing, exactly like Sentry.
 
-Optional configuration:
+Optional labeling — `environment` and `tag` both fold into the **single**
+`tag` field the counts-only contract carries (truncated to 120 characters).
+If you pass both, `tag` wins and `environment` is dropped — pass one:
 
 ```python
-toca.init(environment="prod", tag="checkout-service")
+toca.init(tag="checkout-service")   # or: toca.init(environment="prod")
 ```
 
 ---

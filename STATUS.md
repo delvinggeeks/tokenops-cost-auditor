@@ -35,6 +35,23 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## API reference docs — GATE ROUND CLOSED (2026-07-24) — spec PWN · cold PWN, both notes applied
+
+Both gates PASS-WITH-NOTES; every note applied (doc edits + new pins), full
+chain green (17/17 docs tests, whole suite exit 0). cold-reviewer's three
+accuracy fixes, each verified against the real handler before editing:
+(f.1) SDK `init(environment, tag)` folds both into ONE 120-char `tag` and
+`tag` wins — the doc no longer implies both are captured; (f.2) status body
+keys `valid_pct`/`queue_position`/`error` are each CONDITIONAL in
+routes_upload.py — the example now shows a `queued` body and the prose says
+"code to the presence of each key," so an integrator can't KeyError on an
+early poll; (f.3) the `[0, 1_000_000_000_000]` integer ceiling
+(`_MAX_COUNT`) was undocumented — now in the field table and the broadened
+422 row. spec-guard's coverage note closed by test_06: it walks the app's
+lazily-wrapped route table (`_IncludedRouter.original_router`) and pins all
+six documented routes as really registered; test_07-09 pin each cold fix to
+code (`_MAX_COUNT` imported directly). Next: the SDK queue (S-6, O-0).
+
 ## API reference docs (2026-07-24) — Anthropic-style, multi-language, tied to the code
 
 Founder: "proper API documentation very similar to claude documentations,
