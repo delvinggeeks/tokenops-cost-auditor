@@ -35,6 +35,20 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## SHIPPED TO MAIN (2026-07-25) — founder "open PRs + merge both to main"
+
+Both slices merged via the GO-FORWARD PR flow (full CI: authorship·lint·type·
+docs·test·build all green). **PR #15 O-1b-3** (ce1a673) — CLOSES O-1. CI caught
+two real gate failures a locally exit-masked `pytest | tail` had hidden — a
+`{{ m.email }}` in a data-confirm (test_authority_laws) and a stale endpoints.md
+(MP-3 drift, the 3 new routes) — both fixed, re-verified with pytest's OWN exit
+code, re-gated green (LESSON reinforced in [[never-mask-pytest-exit]]: never trust
+a piped pytest's exit; capture `$?` un-piped). **PR #16 coherence** (a5424c8) —
+rebased onto O-1b-3, STATUS+traceability conflicts resolved keeping both. main is
+now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the prod
+deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
+(founder-chosen): guided first-run + output preview (punch-list #4/#5).
+
 ## DATA COHERENCE + HONEST FRESHNESS (2026-07-24) — founder walkthrough: "no sources connected but overview/findings show old cache data, not real-time"
 
 Founder prod walkthrough (v1.9.0 = O-0) surfaced an HONESTY gap, not a cache bug:
