@@ -35,6 +35,27 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-0 GATE ROUND CLOSED (2026-07-24) — architect PWN · spec PASS · cold PWN · system-tester PWN · ux PWN
+
+Five gates, none FAIL. spec PASS (R-ORG bounds, engine tenant-blind, deferral
+documented). architect PWN (boundary/additivity/no-cycles confirmed; the note —
+routes construct ORM directly — is PRE-EXISTING codebase debt, not O-0). cold
+PWN → FIXED: (f.1) the workspace-of-one 1:1 invariant was not DB-enforced
+(get_or_create_workspace was select-then-insert; uq_workspace_member covers
+(workspace_id,user_id) not one-owner-per-user) → added a PARTIAL UNIQUE INDEX
+uq_owner_membership_per_user (user_id WHERE role='owner', portable both backends)
++ made the helper race-safe (savepoint + catch IntegrityError + re-read winner);
+(f.2) workspace_id_for docstring corrected. Migration 020 (UNSHIPPED — prod still
+at 019, verified) edited in place to add the index; re-verified upgrade+backfill+
+downgrade. ux PWN → FIXED: Workspace icon source→overview (was dup of Connected
+sources), Rename button → kit.button. system-tester PWN: all O-0 journeys live-
+green (rename A-changed/B-untouched, ingest isolation intact, no regression); its
+finding 6 (no in-app link to /r/{token} — reports email-only, unlinked-Anthropic
+class) is PRE-EXISTING + a separate surface → parked in BACKLOG as its own
+reachability slice. New test: second owner membership rejected by the DB (proves
+the 1:1 is now a fact). test_workspace_spine.py 11 green; ruff+mypy clean.
+Next: DEPLOY O-0 (v1.9.0), then O-1.
+
 ## O-0 WORKSPACE SPINE (2026-07-24) — founder "proceed with O-0" + "Spine now, read-scope in O-1"
 
 The tenancy root, R-ORG. Precisely scoped first: 17 owned tables, 40+ user_id

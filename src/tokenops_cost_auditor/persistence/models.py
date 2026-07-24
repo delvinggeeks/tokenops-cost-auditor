@@ -117,7 +117,22 @@ class WorkspaceMember(Base):
     role: Mapped[str] = mapped_column(String(16), nullable=False, default="owner")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    __table_args__ = (UniqueConstraint("workspace_id", "user_id", name="uq_workspace_member"),)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "user_id", name="uq_workspace_member"),
+        # O-0 (R-ORG): make the workspace-of-one 1:1 invariant a DB FACT, not an
+        # incidental one — at most ONE owner membership per user. A partial
+        # unique index (portable: Postgres + SQLite ≥3.8 both honor the WHERE),
+        # so the racy self-heal path in get_or_create_workspace can't mint a
+        # second personal workspace (cold-reviewer O-0 f.1). O-1 revisits when a
+        # user may own more than one workspace.
+        Index(
+            "uq_owner_membership_per_user",
+            "user_id",
+            unique=True,
+            sqlite_where=text("role = 'owner'"),
+            postgresql_where=text("role = 'owner'"),
+        ),
+    )
 
 
 class Audit(Base):

@@ -68,6 +68,16 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("workspace_id", "user_id", name="uq_workspace_member"),
     )
+    # At most ONE owner membership per user — the workspace-of-one 1:1 invariant
+    # enforced in the DB (partial unique index, portable to both backends).
+    op.create_index(
+        "uq_owner_membership_per_user",
+        "workspace_members",
+        ["user_id"],
+        unique=True,
+        postgresql_where=sa.text("role = 'owner'"),
+        sqlite_where=sa.text("role = 'owner'"),
+    )
 
     for table, _owner in OWNED:
         op.add_column(table, sa.Column("workspace_id", sa.String(32), nullable=True))
@@ -110,5 +120,6 @@ def downgrade() -> None:
     for table, _owner in OWNED:
         op.drop_index(f"ix_{table}_workspace_id", table_name=table)
         op.drop_column(table, "workspace_id")
+    op.drop_index("uq_owner_membership_per_user", table_name="workspace_members")
     op.drop_table("workspace_members")
     op.drop_table("workspaces")

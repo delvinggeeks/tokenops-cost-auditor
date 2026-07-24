@@ -65,6 +65,24 @@ class TestWorkspaceCreation:
             assert w1.id == w2.id
             assert s.scalar(select(func.count()).select_from(Workspace)) == 1
 
+    def test_second_owner_membership_rejected_by_db(self, app: FastAPI) -> None:
+        """cold-reviewer O-0 f.1: the workspace-of-one 1:1 invariant is a DB FACT.
+        A second owner membership for the same user — the shape a racy self-heal
+        would produce — is rejected by uq_owner_membership_per_user, so the user
+        can never end up with two personal workspaces."""
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with app.state.session_factory() as s:
+            user = get_or_create_user(s, EMAIL)
+            s.commit()
+            second = Workspace(name="sneaky second", personal=True)
+            s.add(second)
+            s.flush()
+            s.add(WorkspaceMember(workspace_id=second.id, user_id=user.id, role="owner"))
+            with pytest.raises(IntegrityError):
+                s.commit()
+
 
 class TestWritePathStamps:
     def test_audit_stamped_with_owner_workspace(self, app: FastAPI) -> None:

@@ -19,7 +19,7 @@
   {# Workspace (O-0, R-ORG) — the tenancy root. Everything you create belongs to
      this workspace. Today it's yours alone (a workspace of one); members and
      roles arrive later. Renaming it is the one owner control O-0 ships. #}
-  {{ kit.surface_open(title="Workspace", icon="source", span=6) }}
+  {{ kit.surface_open(title="Workspace", icon="overview", span=6) }}
     <form method="post" action="/settings/workspace/rename"
           style="display:flex; gap:var(--s2); align-items:flex-end; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:16em;">
@@ -27,7 +27,7 @@
         <input type="text" name="name" id="ws-name" value="{{ workspace_name }}"
                maxlength="80" required>
       </div>
-      <button class="btn btn-primary" type="submit">Rename</button>
+      {{ kit.button("Rename", variant="primary") }}
     </form>
     <div class="provenance">Everything you audit, every key and connection, belongs
       to this workspace. Right now it's just you{% if workspace_personal %} — a

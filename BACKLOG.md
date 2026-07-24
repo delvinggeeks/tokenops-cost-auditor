@@ -408,6 +408,18 @@ it under R-PIPELINE-UI-SEQ.
   thousands of times retains that many small callbacks (object retention,
   not a thread/socket leak). One-line fix in `close()` when touched next.
 
+- In-app "View report" link missing (system-tester O-0 gate, 2026-07-24,
+  REACHABILITY — high value): no template anywhere links to /r/{token}
+  (routes_report.py) — a signed-in user has no in-app click path to their own
+  completed HTML/PDF report; delivery is email-only (the emailed signed URL).
+  Same class as the unlinked-Anthropic bug (R-VERTICAL rule 9): shipped ≠
+  reachable. The standing reachability law can't catch it because report pages
+  aren't in tests/test_journeys.py APP_PAGES. Fix as a vertical slice: a "View
+  report" affordance on completed audits (dashboard/runs/explore) → the signed
+  URL, + a journey test walking to it, + add the report surface to the
+  reachability inventory. NOT O-0-caused (pre-existing); surfaced by the
+  whole-product gate. This is a distinct surface from tenancy, hence parked.
+
 - OAuth authorize deep-link return (S-6 scope note, 2026-07-24): a
   logged-OUT user hitting /oauth/authorize sees a "sign in to authorize"
   interstitial linking to /login, but after login lands on /dashboard —
