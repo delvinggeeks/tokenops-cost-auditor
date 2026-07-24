@@ -35,6 +35,65 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## DATA COHERENCE + HONEST FRESHNESS (2026-07-24) — founder walkthrough: "no sources connected but overview/findings show old cache data, not real-time"
+
+Founder prod walkthrough (v1.9.0 = O-0) surfaced an HONESTY gap, not a cache bug:
+there is NO server cache — the mechanism is that the Sources page hides revoked
+sources (`status != 'revoked'`) while audits + their findings PERSIST, and
+Overview/Findings scope to the same workspace and keep rendering the last audit's
+real numbers. So "nothing connected" sits next to live-looking figures with no
+signal they are HISTORY. (X-01 means we're batch-audit, never a live proxy — data
+is legitimately as-of-last-audit; the fix is to SAY so, coherently.) Founder chose
+(AskUserQuestion) this fix FIRST, seen on prod → the revoked/absent-sources case.
+
+SHIPPED (vertical, R-VERTICAL): **metrics.has_live_feed(session, user_id)** — True
+iff the active workspace has an active Source OR an unrevoked IngestKey OR an
+unrevoked Device (mirrors exactly what "connected" means on the Sources page).
+**shell.data_freshness(session, user_id)** — the shared seam (the workspace_bar
+pattern): returns `freshness`, `sources_disconnected`, `data_as_of`; when a past
+audit exists but has_live_feed is False, `sources_disconnected` flips True and the
+freshness line gains "· nothing connected". Wired into BOTH `_shell_ctx` (the 8
+pages: dashboard/runs/settings/alerts/statements/explore/billing/members) AND the
+4 manual-render full pages (sources, connect wizard, developer, upload) — the same
+5 sites workspace_bar uses, so coverage is every shell page (the `_`-prefixed
+htmx partials don't render the shell). **Shell banner** (_shell.html, after the
+purpose line → on EVERY app page): when `sources_disconnected`, an honest
+`.since-here` notice — "Nothing is connected to bring in new usage right now — the
+figures here are from your last audit on <date> and won't change until you
+reconnect" + a "Connect a source" CTA. So "no sources connected" (Sources) can
+never again sit beside numbers that read as live. tests/test_data_coherence.py: 4
+green (healthy → no banner + live freshness; revoked-all → banner on dashboard +
+sources + runs, both _shell_ctx and manual paths, freshness flags it; new user no
+audit → honest "No data yet", no banner; a live ingest key counts as connected).
+ruff+mypy clean; dashboard/sources/spine/developer suites green.
+
+GATE ROUND CLOSED — cold PASS-WITH-NOTES · ux PASS-WITH-NOTES · system-tester
+PASS-WITH-NOTES; none FAIL, no live bug. ALL notes applied: **ux f.4** — the
+banner fired on account pages (settings/billing/members) with no figures to
+contextualize → SCOPED to figure pages only (overview/runs/statements/explore/
+findings/alerts/activity) via a template allowlist; the terse "· nothing
+connected" topbar marker still carries the honesty on every page. **ux f.5** —
+`.since-here` had no flex-wrap and the coherence copy is the longest such banner →
+added flex-wrap + `min-width:0` on the span (both CSS copies kept in lockstep per
+the design-asset parity test). **system-tester f.4** (the real catch) — the
+`/audits/{id}/progress` theater is a shell page that bypassed _shell_ctx AND the
+manual seam, so it hardcoded `freshness=""` and silently disagreed (it also lacked
+the O-1b-1 workspace bar) → wired BOTH `workspace_bar` + `data_freshness` into it,
++ a test that pins the freshness marker there (banner stays off — single-audit
+view). **cold f.1** — the Device OR-arm of has_live_feed was untested → added a
+live-Device test. **cold f.3** — the anonymous sources path relied on Jinja's
+silent Undefined → explicit `{sources_disconnected:False,…}` defaults. **cold
+f.4** — 'paused' source status is forward debt (never assigned today) → design
+comment + BACKLOG line for R-Q6. Banner copy also broadened to "connect a source
+or upload a new log" (upload-only users have no source to reconnect).
+tests/test_data_coherence.py now 6 green (healthy→none; disconnected→banner on
+figure pages + marker everywhere + ABSENT on settings/sources; audit_progress
+carries the marker; live Device/IngestKey→connected; new user→No data yet).
+ruff+mypy clean. system-tester RE-GATE PASS (both fixes confirmed live, 78 passed,
+no regression, no new issue). Slice DONE — ready for PR.
+(Broader founder punch-list #3–#7 — Claude-style docs, step-by-step client & dev
+onboarding, Developer-surface clarity, "feel like magic" + more functionalities —
+captured as the next themes, founder to sequence.)
 ## O-1b-3 MEMBERS PAGE & REVOKE (2026-07-24) — founder "proceed O-1b-3"
 
 The governance slice that CLOSES O-1b, built end-to-end (R-VERTICAL) on a branch

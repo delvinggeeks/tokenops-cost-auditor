@@ -442,7 +442,10 @@ h1 { font-size: 22px; letter-spacing: -0.01em; }
 .feed-time { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
 .since-here { display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border: 1px solid var(--accent); border-radius: var(--radius);
-  background: var(--wash); font-size: 14px; }
+  background: var(--wash); font-size: 14px; flex-wrap: wrap; }
+/* min-width:0 lets the text span shrink+wrap instead of forcing overflow — the
+   coherence banner's copy is the longest .since-here yet (ux O-COH f.5). */
+.since-here > span { min-width: 0; flex: 1; }
 .since-here a { margin-left: auto; }
 
 /* ---- ONBOARDING CHECKLIST (Wave A — activation, 2026-07-22) ---- */

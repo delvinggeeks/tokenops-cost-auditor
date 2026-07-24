@@ -427,3 +427,11 @@ it under R-PIPELINE-UI-SEQ.
   URL through login (a `next=` on /login honored by the verify redirect)
   so the consent screen returns automatically. Bounded out of S-6 to avoid
   auth-core surgery; the interstitial is honest in the meantime.
+
+- [O-COH / R-Q6] Paused-source banner CTA. `metrics.has_live_feed` counts only
+  `status=='active'`, so once R-Q6 downgrade-pause starts assigning `status=='paused'`,
+  a workspace whose only source is paused (still LISTED on the Sources page,
+  `!= 'revoked'`) will trip the data-coherence banner with a "Connect a source" CTA
+  that's the wrong instruction — the right one is resume/upgrade. `paused` is not
+  assigned anywhere in code today, so this is forward debt, not a live bug (cold
+  O-COH f.4). When R-Q6 ships: branch the banner CTA on a paused-but-listed source.
