@@ -35,6 +35,30 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-1 SWEEP GATE ROUND CLOSED (2026-07-24) — cold PWN · spec PASS · vv PWN; sweep clear for O-1b
+
+Three gates, none FAIL. cold-reviewer PASS-WITH-NOTES: **found NO missed site and
+NO wrong flip** across the whole re-scoped set (the load-bearing result — misses
+are invisible under 1:1, so this is the check the equivalence oracle cannot make);
+confirmed the None/IS-NULL leak-safety and that the conftest hook is None-only
+(cannot mask a production stamp). f.4 (create-source mutate reads lacked a LOCAL
+justification comment — only user_plan's docstring covered them) FIXED: one-line
+O-1 comments added at routes_sources.py create-gates (153/267/531 clusters). f.5
+(metrics.pipeline re-resolves active_workspace_id per delegate) ACCEPTED with
+reason — a deliberate consequence of the "signatures unchanged, resolve
+internally" execution decision; deterministic, same session/user, indexed scalar;
+threading ws through delegate signatures is the thing that decision avoided.
+spec-guard PASS: engine stays tenant-blind (services/rules+pricing untouched,
+T-NFR-01 holds), X-01/X-02 intact (no proxy/enforcement), FR-22 clean (no text),
+every deferral has a named home (not a silent drop), traceability O-1 row
+accurate. vv-engineer PASS-WITH-NOTES: money-math untouched (pricing/rules diff
+empty, _rate_cost byte-identical, no goldens needed), new isolation tests assert
+real cross-tenant isolation, conftest hook doesn't neuter TestWritePathStamps;
+its one open item — it couldn't reproduce the green suite inside its own tool
+budget — is closed by the main thread's independently-confirmed run (uv run
+pytest exit 0, all green). SWEEP is COMPLETE + grep-audited + cold-gated → the
+STATUS bar for starting O-1b MEMBERS is met.
+
 ## O-1 SWEEP DONE — reads re-scoped to workspace_id (2026-07-24) — founder "proceed with O-1"
 
 The read re-scope, done in a fresh session (K-3/TE-9) as chosen. Measured live:

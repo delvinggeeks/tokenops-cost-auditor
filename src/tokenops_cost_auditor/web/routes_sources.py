@@ -148,6 +148,8 @@ def wizard_page(
         session.commit()
         plan = user_plan(session, user.id)
         limit = settings.plan_source_limits.get(plan, 0)
+        # O-1: owner-only create-gate — counts the CALLER's active sources against
+        # their per-user plan limit (billing stays user-scoped; see user_plan).
         active = (
             session.execute(
                 select(Source).where(Source.user_id == user.id, Source.status == "active")
@@ -262,6 +264,9 @@ def wizard_validate(
         user_id = user.id
         plan = user_plan(session, user_id)
         limit = settings.plan_source_limits.get(plan, 0)
+        # O-1: connecting a source is an owner-only MUTATE — the plan-limit count,
+        # the key-dedup, and the label numbering below all stay user-scoped (per-
+        # user cap + billing; workspace-wide source admin is O-1b/O-2 RBAC).
         active = (
             session.execute(
                 select(Source).where(Source.user_id == user_id, Source.status == "active")
@@ -526,6 +531,8 @@ def connect_source(
         # (G-V1 cold-reviewer f.1: read-then-insert raced past the plan cap).
         # Row lock on Postgres; no-op on SQLite.
         session.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
+        # O-1: owner-only create-gate — per-user active-source count vs the
+        # caller's plan limit (billing user-scoped; workspace admin is O-2 RBAC).
         active = (
             session.execute(
                 select(Source).where(Source.user_id == user.id, Source.status == "active")
