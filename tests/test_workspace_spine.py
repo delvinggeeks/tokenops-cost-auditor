@@ -23,8 +23,10 @@ from tokenops_cost_auditor.persistence.models import (
     User,
     Workspace,
     WorkspaceMember,
+    utcnow,
 )
 from tokenops_cost_auditor.persistence.repo import (
+    active_workspace_id,
     create_audit,
     get_or_create_user,
     get_or_create_workspace,
@@ -305,3 +307,115 @@ class TestRegression:
             wsid = workspace_id_for(s, user.id)
             audit = s.scalar(select(Audit).where(Audit.user_id == user.id))
             assert audit is not None and audit.workspace_id == wsid
+
+
+class TestWorkspaceSwitcherJourney:
+    """O-1b-1 (R-ORG) — the workspace switcher, walked as a user. Seeds a user
+    into TWO workspaces (membership rows directly) and pins the acceptance
+    criteria: the active workspace is shown on the shell; switching flips what
+    every read returns; a non-member switch is refused and changes nothing; a
+    solo user gets an honest indicator with no dead control; and the indicator
+    is reachable on EVERY app page (both _shell_ctx and manual-render)."""
+
+    A_NAME = "Acme-A-Workspace"
+    B_NAME = "Shared-Team-B"
+
+    def _seed_two_workspaces(self, app: FastAPI) -> tuple[str, str]:
+        """EMAIL owns personal workspace A (renamed, holding a done audit) and is
+        a MEMBER of a second workspace B (empty). EMAIL cannot OWN B — they
+        already own A and uq_owner_membership_per_user is per user — so B carries
+        a member row, exactly the shape O-1b-2 invites will create. Returns
+        (a_id, b_id)."""
+        with app.state.session_factory() as s:
+            user = get_or_create_user(s, EMAIL)
+            a = get_or_create_workspace(s, user)
+            a.name = self.A_NAME
+            s.flush()
+            a_id = a.id
+            # a done audit lands in A (the caller's active workspace) → the
+            # workspace-scoped freshness read says "Data as of ..." for A only.
+            audit = create_audit(s, user.id)
+            audit.status = "done"
+            audit.report_ready_at = utcnow()
+            b = Workspace(name=self.B_NAME, personal=False)
+            s.add(b)
+            s.flush()
+            b_id = b.id
+            s.add(WorkspaceMember(workspace_id=b_id, user_id=user.id, role="member"))
+            s.commit()
+            return a_id, b_id
+
+    def test_shell_shows_active_workspace_and_switcher(self, app: FastAPI) -> None:
+        self._seed_two_workspaces(app)
+        html = re.sub(r"\s+", " ", TestClient(app).get("/dashboard", headers=HDR).text)
+        assert self.A_NAME in html  # (1) active-workspace name visible on the shell
+        assert "workspace-menu" in html  # (5) switch control is one click away
+        assert 'action="/settings/workspace/switch"' in html
+        assert self.B_NAME in html  # the other workspace is offered
+
+    def test_switching_flips_every_read(self, app: FastAPI) -> None:
+        _a_id, b_id = self._seed_two_workspaces(app)
+        client = TestClient(app)
+        # active = A: the dashboard reads A's data (a done audit → dated freshness)
+        before = client.get("/dashboard", headers=HDR).text
+        assert "Data as of" in before and self.A_NAME in before
+        # switch to B
+        r = client.post(
+            "/settings/workspace/switch",
+            data={"workspace_id": b_id},
+            headers=HDR,
+            follow_redirects=False,
+        )
+        assert r.status_code == 303
+        # active = B: EVERY read now scopes to B — the dashboard flips to B's
+        # (empty) zero state and the indicator names B; A's data no longer shows.
+        after = client.get("/dashboard", headers=HDR).text
+        assert self.B_NAME in after
+        assert "No data yet" in after
+        assert "Data as of" not in after
+        with app.state.session_factory() as s:
+            user = s.scalar(select(User).where(User.email == EMAIL))
+            assert active_workspace_id(s, user.id) == b_id
+
+    def test_switch_to_non_member_refused_and_changes_nothing(self, app: FastAPI) -> None:
+        a_id, _b_id = self._seed_two_workspaces(app)
+        with app.state.session_factory() as s:
+            foreign = Workspace(name="Not-Yours", personal=False)
+            s.add(foreign)
+            s.commit()
+            foreign_id = foreign.id
+        r = TestClient(app).post(
+            "/settings/workspace/switch",
+            data={"workspace_id": foreign_id},
+            headers=HDR,
+            follow_redirects=False,
+        )
+        assert r.status_code == 303  # silent no-op; a forged id cannot grant access
+        with app.state.session_factory() as s:
+            user = s.scalar(select(User).where(User.email == EMAIL))
+            assert active_workspace_id(s, user.id) == a_id  # unchanged — never foreign
+            assert active_workspace_id(s, user.id) != foreign_id
+
+    def test_solo_user_sees_honest_indicator_no_dead_control(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.get("/dashboard", headers=OTHER_HDR)  # OTHER: a workspace-of-one
+        html = re.sub(r"\s+", " ", client.get("/dashboard", headers=OTHER_HDR).text)
+        assert "workspace-solo" in html  # the honest indicator is present...
+        assert "workspace-menu" not in html  # ...but there is NO switcher menu...
+        assert 'action="/settings/workspace/switch"' not in html  # ...and no dead control
+
+    def test_indicator_reachable_on_every_app_page(self, app: FastAPI) -> None:
+        """Reachability law: the workspace bar is on EVERY app page — the
+        _shell_ctx pages AND the manual-render ones (sources, developer, upload)."""
+        self._seed_two_workspaces(app)
+        client = TestClient(app)
+        for path in (
+            "/dashboard",
+            "/runs",
+            "/settings",
+            "/sources",
+            "/settings/developer",
+            "/upload",
+        ):
+            html = client.get(path, headers=HDR).text
+            assert self.A_NAME in html, f"workspace indicator missing on {path}"

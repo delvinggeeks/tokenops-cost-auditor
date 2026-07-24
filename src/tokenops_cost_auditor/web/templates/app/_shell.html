@@ -77,6 +77,31 @@
          button names the mood it takes you to, like every dark-mode switch. #}
       <button class="btn btn-quiet mood-toggle" type="button" data-mood-toggle
               aria-label="Switch between the day and night looks">Aura</button>
+      {# O-1b-1 workspace switcher (R-ORG): which workspace you're acting in,
+         and a one-click move between the workspaces you belong to. Reuses the
+         account-menu pattern (details/summary, no JS). A user with more than
+         one workspace gets the switcher; a solo user gets a plain, honest
+         indicator with NO dead control (reachability + no-fake-affordance). #}
+      {% if workspaces and workspaces|length > 1 %}
+      <details class="account-menu workspace-menu">
+        <summary aria-label="Switch workspace — acting in {{ active_workspace_name }}">{{ active_workspace_name }}</summary>
+        <div class="account-pop">
+          <div class="muted" style="padding:4px 10px;font-size:12px;">Acting in</div>
+          {% for w in workspaces %}
+            {% if w.active %}
+          <div style="padding:8px 10px;font-size:13.5px;font-weight:600;">{{ w.name }} <span class="muted" style="font-weight:400;">· {{ w.role }}</span> ✓</div>
+            {% else %}
+          <form method="post" action="/settings/workspace/switch">
+            <input type="hidden" name="workspace_id" value="{{ w.id }}">
+            <button class="btn btn-quiet" type="submit">{{ w.name }} <span class="muted">· {{ w.role }}</span></button>
+          </form>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </details>
+      {% elif active_workspace_name %}
+      <span class="muted workspace-solo" title="You are the only member — this is just your workspace">{{ active_workspace_name }}</span>
+      {% endif %}
       {# Account menu (founder walkthrough 2026-07-22: "no logout, account,
          management in the dashboard") — the email IS the menu, the way
          every SaaS topbar works. details/summary: no JS, closes on blur. #}
