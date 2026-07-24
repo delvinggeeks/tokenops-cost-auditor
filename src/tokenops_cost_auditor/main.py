@@ -35,13 +35,16 @@ from tokenops_cost_auditor.services.runner import AuditRunner
 from tokenops_cost_auditor.web import i18n
 from tokenops_cost_auditor.web.routes_admin import router as admin_router
 from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
+from tokenops_cost_auditor.web.routes_api_read import router as api_read_router
 from tokenops_cost_auditor.web.routes_auth import router as auth_router
 from tokenops_cost_auditor.web.routes_billing import router as billing_router
 from tokenops_cost_auditor.web.routes_copilot import router as copilot_router
 from tokenops_cost_auditor.web.routes_dashboard import router as dashboard_router
+from tokenops_cost_auditor.web.routes_developer import router as developer_router
 from tokenops_cost_auditor.web.routes_devices import router as devices_router
 from tokenops_cost_auditor.web.routes_explorer import router as explorer_router
 from tokenops_cost_auditor.web.routes_ingest import router as ingest_router
+from tokenops_cost_auditor.web.routes_oauth import router as oauth_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
 from tokenops_cost_auditor.web.routes_runs import router as runs_router
@@ -55,6 +58,7 @@ ERROR_CODES = {
     400: "bad_request",
     401: "unauthorized",
     402: "payment_required",
+    403: "forbidden",  # S-6: a valid token lacking the required read scope
     404: "not_found",
     413: "payload_too_large",
     422: "validation_error",
@@ -197,6 +201,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(explorer_router)  # FR-32 report explorer (R-EXPLORER)
     app.include_router(runs_router)  # runs observatory (WP-PIPELINE-UI)
     app.include_router(ingest_router)  # S-0 ingest DSN (R-SDK-PLATFORM)
+    app.include_router(api_read_router)  # S-6 read API (R-SDK-PLATFORM)
+    app.include_router(oauth_router)  # S-6 OAuth authorization server (R-SDK-PLATFORM)
+    app.include_router(developer_router)  # S-6 Developer Settings (R-SDK-PLATFORM)
     app.include_router(copilot_router)  # WP-COPILOT-AGG seat governance (R-COPILOT)
     app.include_router(devices_router)  # WP-CC-LINK collector link/ship (T3)
     app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)

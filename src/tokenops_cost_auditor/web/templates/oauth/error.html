@@ -1,0 +1,24 @@
+{# S-6: OAuth request error page. Shown when the client_id or redirect_uri can't
+   be trusted — we DELIBERATELY do not redirect (open-redirect / mix-up guard),
+   so the message lands here on our own origin. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} — TokenOps Cost Auditor</title>
+  <link rel="stylesheet" href="{{ asset('/static/wa-design.css') }}">
+</head>
+<body>
+  <main style="max-width: 32em; margin: 8vh auto; padding: 0 var(--s3);">
+    <div class="widget widget-raised">
+      <div class="widget-head"><h2>{{ title }}</h2></div>
+      <p>{{ detail }}</p>
+      <p class="muted" style="font-size: 13px">If you were sent here by an
+        application, its authorization request is misconfigured — contact the
+        app's developer.</p>
+      <p style="margin-top: var(--s3)"><a class="btn" href="/">Back to home</a></p>
+    </div>
+  </main>
+</body>
+</html>

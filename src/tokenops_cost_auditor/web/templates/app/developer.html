@@ -1,0 +1,142 @@
+{% extends "app/_shell.html" %}
+{% block title %}Developer — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+{#
+  S-6 (R-SDK-PLATFORM): Developer Settings — personal READ tokens and OAuth
+  applications, the READ half of the platform. Mirrors the ingest-key panel's
+  grammar (mint → shown-once reveal → revoke deletes our copy). Every credential
+  here reads only; writing usage stays the write-only ingest key.
+#}
+<h1 class="page-h1">Developer</h1>
+<p class="purpose-line">Both credentials below are <b>read-only</b> — neither can
+  write usage or touch your LLM traffic. <a href="{{ docs_url }}/api/reference/"
+  target="_blank" rel="noopener">API reference →</a></p>
+
+<div class="grid">
+
+  {# ---------------------------------------------------------- API tokens #}
+  {{ kit.surface_open(title="API tokens", icon="source", span=12) }}
+    <p class="tells">A personal token (<code>rt_…</code>) for scripts, CI, and
+      notebooks. Send it as <code>Authorization: Bearer rt_…</code>. Scoped to
+      exactly what you tick — nothing more.</p>
+
+    {% if tokens %}
+    {{ kit.table_open([
+         {"label": "Token"}, {"label": "Label"}, {"label": "Scopes"},
+         {"label": "Created"}, {"label": "Last used"},
+         {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+       ]) }}
+      {% for t in tokens %}
+      <tr>
+        <td><code>rt_{{ t.id[:6] }}…</code></td>
+        <td><b>{{ t.label }}</b></td>
+        <td>{% for s in t.scopes %}<span class="pill">{{ s }}</span> {% endfor %}</td>
+        <td>{{ t.created_at.strftime("%Y-%m-%d") }}</td>
+        <td>{{ t.last_used_at.strftime("%Y-%m-%d %H:%M UTC") if t.last_used_at else "never" }}</td>
+        <td class="row-actions">
+          <form method="post" action="/settings/developer/tokens/{{ t.id }}/revoke"
+                class="inline-form"
+                data-confirm="Revoke this token? It stops working immediately and our copy is deleted.">
+            {{ kit.icon_action("Revoke this token", "trash", danger=True) }}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    <p class="muted">No API tokens yet — mint one to read your audits from code.</p>
+    {% endif %}
+
+    {% if is_pro %}
+    <form hx-post="/settings/developer/tokens" hx-target="#api-token" hx-swap="innerHTML"
+          style="margin-top: var(--s2);">
+      <div style="display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap;">
+        <input name="label" placeholder="what will use this token? e.g. finance notebook"
+               maxlength="80" style="max-width: 22em" aria-label="Token label">
+        <button class="btn btn-primary" type="submit">Mint a read token</button>
+      </div>
+      <fieldset style="margin-top: var(--s2); border:0; padding:0;">
+        <legend class="muted" style="font-size:13px">Scopes — a token reads only what you tick:</legend>
+        {% for slug, desc in all_scopes.items() %}
+        <label class="field-bool" style="display:block; margin-top: var(--s1);">
+          <input type="checkbox" name="scopes" value="{{ slug }}"{% if loop.first %} checked{% endif %}>
+          <span><code>{{ slug }}</code> — {{ desc }}</span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <p class="muted addbar-note">Shown once; revoking deletes our copy the moment you click.</p>
+    </form>
+    <div id="api-token" aria-live="polite"></div>
+    {% else %}
+    <p class="muted">API tokens are part of Pro — <a href="/billing">see plans</a>.</p>
+    {% endif %}
+    <p class="counts-note">A token reads counts and dollars only — audits,
+      findings, spend. There is no read path to your prompt or completion text
+      because we never store any (FR-22).</p>
+  {{ kit.surface_close() }}
+
+  {# --------------------------------------------------- OAuth applications #}
+  {{ kit.surface_open(title="OAuth applications", icon="settings", span=12) }}
+    <p class="tells">Register an app so <b>someone else's</b> tool can ask a
+      customer for read access — the standard "Authorize" flow. The app gets a
+      <code>client_id</code> and a <code>client_secret</code> (shown once);
+      users approve exactly the scopes you request. Read-only, always.</p>
+
+    {% if apps %}
+    {{ kit.table_open([
+         {"label": "Application"}, {"label": "client_id"}, {"label": "Scopes"},
+         {"label": "Redirect URIs"},
+         {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+       ]) }}
+      {% for a in apps %}
+      <tr>
+        <td><b>{{ a.name }}</b></td>
+        <td><code>{{ a.client_id }}</code></td>
+        <td>{% for s in a.scopes %}<span class="pill">{{ s }}</span> {% endfor %}</td>
+        <td>{% for u in a.redirect_uris %}<code style="font-size:12px">{{ u }}</code><br>{% endfor %}</td>
+        <td class="row-actions">
+          <form method="post" action="/settings/developer/apps/{{ a.id }}/revoke"
+                class="inline-form"
+                data-confirm="Revoke this app? Its secret is deleted and every access token it issued stops working now.">
+            {{ kit.icon_action("Revoke this app", "trash", danger=True) }}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    <p class="muted">No OAuth applications yet.</p>
+    {% endif %}
+
+    {% if is_pro %}
+    <form hx-post="/settings/developer/apps" hx-target="#oauth-secret" hx-swap="innerHTML"
+          style="margin-top: var(--s2);">
+      <div style="display:flex; gap:var(--s2); flex-wrap:wrap; align-items:flex-start;">
+        <input name="name" placeholder="application name" maxlength="80"
+               style="max-width: 22em" aria-label="Application name" required>
+        <textarea name="redirect_uris" rows="2" style="max-width: 30em; width:100%"
+                  placeholder="https://yourapp.example/callback&#10;one per line"
+                  aria-label="Redirect URIs"></textarea>
+      </div>
+      <fieldset style="margin-top: var(--s2); border:0; padding:0;">
+        <legend class="muted" style="font-size:13px">Scopes this app may request:</legend>
+        {% for slug, desc in all_scopes.items() %}
+        <label class="field-bool" style="display:block; margin-top: var(--s1);">
+          <input type="checkbox" name="scopes" value="{{ slug }}"{% if loop.first %} checked{% endif %}>
+          <span><code>{{ slug }}</code> — {{ desc }}</span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <button class="btn btn-primary" type="submit" style="margin-top: var(--s2)">Register application</button>
+      <p class="muted addbar-note">Redirect URIs must be https (http only for localhost);
+        the secret is shown once.</p>
+    </form>
+    <div id="oauth-secret" aria-live="polite"></div>
+    {% else %}
+    <p class="muted">OAuth applications are part of Pro — <a href="/billing">see plans</a>.</p>
+    {% endif %}
+  {{ kit.surface_close() }}
+
+</div>
+{% endblock %}

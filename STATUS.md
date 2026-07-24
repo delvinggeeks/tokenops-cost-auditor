@@ -35,6 +35,32 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## S-6 READ PLATFORM (2026-07-24) — read tokens + read API + OAuth server; founder "full S-6 incl OAuth apps"
+
+Founder picked the FULL S-6 slice (AskUserQuestion): read-scoped API tokens,
+the read endpoints, AND a full OAuth 2.0 authorization server, one milestone.
+Built end-to-end (R-VERTICAL): **api_scopes** (read:audits/read:findings — no
+write scope by design), **api_auth** (one bearer resolver for rt_ personal
+tokens AND at_ OAuth tokens → ReadPrincipal; tenancy at the web boundary, the
+engine stays tenant-blind; scope miss = 403), **routes_api_read** (GET
+/api/v1/audits + /audits/{id}/findings — counts/dollars only FR-22, scoped to
+the caller, other-tenant = 404 not 403 so no existence oracle),
+**routes_oauth** (authorization-code + PKCE S256: consent bound to the logged-in
+owner via a signed short-TTL blob = CSRF-safe; redirect_uri matched BYTE-EXACT,
+unknown client/redirect shown on-site never redirected = open-redirect guard;
+/oauth/token requires client_secret AND PKCE, single-use codes under a row lock,
+RFC-6749 error format), **routes_developer** (Developer Settings — mint/revoke
+tokens, register/revoke apps, Pro+ gated, shown-once reveals, hash-only at rest,
+app-revoke kills every token it issued). Four new models + migration 019 (chains
+018); five templates; sidebar Developer nav (reachability). ERROR_CODES gained
+403 forbidden. Read+OAuth sections added to the API reference, accuracy-pinned.
+Ingest key stays WRITE-ONLY (separate credential class — never scoped for read).
+Tests: tests/test_developer_platform.py 24 green (both journeys + the adversarial
+OAuth cases). ruff+mypy clean. Deferred to BACKLOG (one line, R-IMPROVISE): the
+logged-out authorize deep-link return (interstitial is honest meanwhile).
+Gate round next: cold (auth/scoping/OAuth), spec (FR-22/X-scope/traceability),
+system-tester (journey), ux (Developer surface). Then O-0.
+
 ## API reference docs — GATE ROUND CLOSED (2026-07-24) — spec PWN · cold PWN, both notes applied
 
 Both gates PASS-WITH-NOTES; every note applied (doc edits + new pins), full

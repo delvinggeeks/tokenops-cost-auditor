@@ -360,6 +360,90 @@ class IngestKey(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ApiToken(Base):
+    __tablename__ = "api_tokens"  # S-6 (R-SDK-PLATFORM): personal READ-scoped token
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Keyed one-way HMAC of the token (credential_fingerprint) — parity with
+    # ingest keys and devices. NULL after revoke: material DELETED, row kept
+    # for audit attribution. This credential is READ-only by construction:
+    # the read endpoints are the ONLY thing it authenticates.
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    # Space-free CSV of granted read scopes (api_scopes.READ_SCOPES). A token
+    # NEVER carries a write scope — ingest stays the write-only ik_ path.
+    scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OAuthApp(Base):
+    __tablename__ = "oauth_apps"  # S-6: a third-party app a customer registers
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    owner_user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Public identifier (oac_…); safe to embed in an authorize URL.
+    client_id: Mapped[str] = mapped_column(String(48), unique=True, nullable=False)
+    # Keyed HMAC of the confidential secret (oas_…). NULL after revoke.
+    client_secret_hash: Mapped[str | None] = mapped_column(String(64))
+    # Newline-separated EXACT redirect URIs. Authorization only ever redirects
+    # to a byte-exact member of this set (no prefix/substring match) — the
+    # open-redirect guard.
+    redirect_uris: Mapped[str] = mapped_column(Text, nullable=False)
+    # The ceiling of scopes this app may ever request (CSV). The user consents
+    # to a subset of THIS, which is itself a subset of READ_SCOPES.
+    scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OAuthAuthCode(Base):
+    __tablename__ = "oauth_auth_codes"  # S-6: single-use, short-TTL auth code
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    app_id: Mapped[str] = mapped_column(
+        ForeignKey("oauth_apps.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # The resource owner who approved. Their audits are what the token reads.
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    redirect_uri: Mapped[str] = mapped_column(Text, nullable=False)
+    scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    # PKCE (RFC 7636): the S256 challenge; the token exchange proves knowledge
+    # of the verifier. Required for every app — public-client-safe by default.
+    code_challenge: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Set the instant the code is redeemed — a second redemption is refused.
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OAuthAccessToken(Base):
+    __tablename__ = "oauth_access_tokens"  # S-6: issued READ-scoped access token
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    app_id: Mapped[str] = mapped_column(
+        ForeignKey("oauth_apps.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # Keyed HMAC of the at_… token. NULL after revoke.
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Device(Base):
     __tablename__ = "devices"  # WP-CC-LINK: linked Claude Code machines
 

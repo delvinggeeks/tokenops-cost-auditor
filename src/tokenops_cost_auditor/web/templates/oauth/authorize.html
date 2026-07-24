@@ -1,0 +1,47 @@
+{# S-6: the OAuth consent screen. Focused, minimal chrome. Rendered only after
+   the GET validated client_id/redirect_uri/scope/PKCE; the signed auth_request
+   blob binds this decision to the logged-in resource owner. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Authorize — TokenOps Cost Auditor</title>
+  <link rel="stylesheet" href="{{ asset('/static/wa-design.css') }}">
+</head>
+<body>
+  <main style="max-width: 32em; margin: 8vh auto; padding: 0 var(--s3);">
+    <div class="widget widget-raised">
+      <div class="widget-head"><h2>TokenOps Cost Auditor</h2></div>
+
+      {% if needs_login %}
+      <p><strong>{{ app_name }}</strong> is asking to read data from your
+        TokenOps Cost Auditor account.</p>
+      <p class="muted">Sign in first, then reopen this authorization link.</p>
+      <p style="margin-top: var(--s3)">
+        <a class="btn btn-primary" href="/login">Sign in</a>
+      </p>
+      {% else %}
+      <p style="font-size: 1.05rem"><strong>{{ app_name }}</strong> wants
+        <strong>read-only</strong> access to your account:</p>
+      <ul style="margin: var(--s2) 0; padding-left: 1.2em; line-height: 1.7">
+        {% for slug, desc in scopes %}
+        <li><code>{{ slug }}</code> — {{ desc }}</li>
+        {% endfor %}
+      </ul>
+      <p class="muted" style="font-size: 13px">It cannot write usage, change your
+        account, or see any prompt or completion text — we never store any.
+        You can revoke access anytime under Developer settings.</p>
+      <form method="post" action="/oauth/authorize"
+            style="margin-top: var(--s3); display:flex; gap:var(--s2);">
+        <input type="hidden" name="auth_request" value="{{ auth_request }}">
+        <button class="btn btn-primary" type="submit" name="decision" value="approve">Authorize</button>
+        <button class="btn" type="submit" name="decision" value="deny">Deny</button>
+      </form>
+      {% endif %}
+    </div>
+    <p class="muted" style="text-align:center; margin-top: var(--s2); font-size: 12px">
+      Read-only · counts and dollars only · revocable anytime</p>
+  </main>
+</body>
+</html>

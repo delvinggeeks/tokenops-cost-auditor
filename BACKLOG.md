@@ -407,3 +407,11 @@ it under R-PIPELINE-UI-SEQ.
   `atexit.unregister`s a prior closed instance, so a process that re-inits
   thousands of times retains that many small callbacks (object retention,
   not a thread/socket leak). One-line fix in `close()` when touched next.
+
+- OAuth authorize deep-link return (S-6 scope note, 2026-07-24): a
+  logged-OUT user hitting /oauth/authorize sees a "sign in to authorize"
+  interstitial linking to /login, but after login lands on /dashboard —
+  they must reopen the app's authorize link. Polish: carry the authorize
+  URL through login (a `next=` on /login honored by the verify redirect)
+  so the consent screen returns automatically. Bounded out of S-6 to avoid
+  auth-core surgery; the interstitial is honest in the meantime.

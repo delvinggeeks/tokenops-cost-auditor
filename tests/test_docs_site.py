@@ -202,6 +202,10 @@ class TestApiReferenceAccuracy:
         for documented in (
             "/api/v1/ingest",
             "/api/v1/audits/{audit_id}/status",
+            "/api/v1/audits",  # S-6 read endpoint
+            "/api/v1/audits/{audit_id}/findings",  # S-6 read endpoint
+            "/oauth/authorize",  # S-6 OAuth
+            "/oauth/token",  # S-6 OAuth
             "/r/{token}",
             "/r/{token}/pdf",
             "/api/v1/webhooks/stripe",
@@ -233,3 +237,26 @@ class TestApiReferenceAccuracy:
         body = re.sub(r"\s+", " ", self.REF)
         assert "fold into the" in body and "single" in body
         assert "tag" in body and "wins" in body
+
+    def test_10_read_scopes_match_the_code(self) -> None:
+        """S-6: the documented read scopes must be EXACTLY the ones the app
+        enforces — no phantom scope, no missing one, no write scope."""
+        from tokenops_cost_auditor.web.api_scopes import READ_SCOPES
+
+        for scope in READ_SCOPES:
+            assert f"`{scope}`" in self.REF  # every real scope is documented
+        # and the doc never invents a scope the code doesn't know
+        for doc_scope in re.findall(r"`(read:[a-z]+)`", self.REF):
+            assert doc_scope in READ_SCOPES, f"reference.md documents a phantom scope: {doc_scope}"
+        assert all(s.startswith("read:") for s in READ_SCOPES)  # no write scope exists
+
+    def test_11_oauth_and_403_documented(self) -> None:
+        """S-6: the OAuth authorization-code + PKCE flow and the new 403
+        (forbidden = valid token, missing scope) are in the reference."""
+        from tokenops_cost_auditor.main import ERROR_CODES
+
+        assert ERROR_CODES[403] == "forbidden" and "forbidden" in self.REF
+        body = re.sub(r"\s+", " ", self.REF)
+        assert "/oauth/authorize" in body and "/oauth/token" in body
+        assert "PKCE" in body and "code_challenge_method=S256" in body
+        assert "single-use" in body  # the auth-code single-use guarantee

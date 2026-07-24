@@ -223,6 +223,142 @@ The link is emailed when a report is ready and expires after 30 days.
 
 ---
 
+## Read your data
+
+The ingest key writes; to **read** your audits and findings back out, use a
+**read token** or an **OAuth access token**. Both are read-only and both carry
+**scopes** — a token can do only what its scopes allow.
+
+Mint a personal read token under **Developer → API tokens**, tick the scopes it
+needs, and send it as a bearer token:
+
+```
+Authorization: Bearer rt_7Qx…
+```
+
+Two read scopes exist today (there is deliberately **no** write scope — writing
+stays the ingest key's job):
+
+| Scope | Grants |
+|---|---|
+| `read:audits` | list your audits — status, spend totals, counts |
+| `read:findings` | read the findings inside an audit — detector, severity, dollar impact |
+
+### List audits
+
+`GET /api/v1/audits` · scope `read:audits`
+
+Returns your most recent audits (newest first; `?limit=` up to 200). Counts and
+dollars only.
+
+=== "curl"
+
+    ```bash
+    curl -H "Authorization: Bearer $TOKENOPS_COST_AUDITOR_TOKEN" \
+      https://tokenops-cost-auditor.com/api/v1/audits
+    ```
+
+=== "Python"
+
+    ```python
+    import os, requests
+    r = requests.get(
+        "https://tokenops-cost-auditor.com/api/v1/audits",
+        headers={"Authorization": f"Bearer {os.environ['TOKENOPS_COST_AUDITOR_TOKEN']}"},
+        timeout=30,
+    )
+    for a in r.json()["audits"]:
+        print(a["id"], a["status"], a["total_spend_usd"], a["findings"])
+    ```
+
+```json
+{
+  "audits": [
+    {
+      "id": "…", "status": "done", "created_at": "2026-07-24T10:00:00Z",
+      "records": 1200, "observed_days": 7, "total_spend_usd": 42.5,
+      "projected_spend_usd": 170.0, "savings_pct": 18.0,
+      "equiv_spend": false, "findings": 3
+    }
+  ]
+}
+```
+
+### List findings
+
+`GET /api/v1/audits/{audit_id}/findings` · scope `read:findings`
+
+Returns the audit's findings, ranked by monthly impact. An audit that isn't
+yours is a `404` (never a `403`), so a token can't probe which audit ids exist.
+
+```json
+{
+  "audit_id": "…",
+  "findings": [
+    {
+      "id": "d1-001", "detector": "d1_model_overkill", "route": "gpt-5.4",
+      "severity": "high", "confidence": "ESTIMATED",
+      "monthly_cost_impact_usd": 31.0, "fix": "Route these calls to a cheaper model."
+    }
+  ]
+}
+```
+
+A token with `read:audits` but not `read:findings` gets a `403`
+(`forbidden`) here — scopes are enforced per endpoint.
+
+---
+
+## OAuth applications
+
+To let **someone else's** app read a customer's data — the standard "Authorize"
+button — register an OAuth application under **Developer → OAuth applications**.
+You get a `client_id` and a `client_secret` (shown once). The flow is the
+**authorization-code grant with PKCE** (RFC 6749 + RFC 7636), read scopes only.
+
+**1. Send the user to authorize** (`code_challenge` is the S256 hash of a
+per-request `code_verifier` you keep):
+
+```
+GET https://tokenops-cost-auditor.com/oauth/authorize
+  ?response_type=code
+  &client_id=oac_…
+  &redirect_uri=<one of your registered URIs, matched byte-for-byte>
+  &scope=read:audits+read:findings
+  &state=<random, echoed back>
+  &code_challenge=<base64url(sha256(verifier))>
+  &code_challenge_method=S256
+```
+
+The user sees a consent screen listing the scopes and approves. We redirect to
+your `redirect_uri` with `?code=…&state=…`. (An unknown `client_id` or an
+unregistered `redirect_uri` is shown an error on our site and is **never**
+redirected — the open-redirect guard.)
+
+**2. Exchange the code** for a read-only access token:
+
+```bash
+curl -X POST https://tokenops-cost-auditor.com/oauth/token \
+  -d grant_type=authorization_code \
+  -d code=oaq_… \
+  -d redirect_uri=<the same URI> \
+  -d client_id=oac_… \
+  -d client_secret=oas_… \
+  -d code_verifier=<the original verifier>
+```
+
+```json
+{ "access_token": "at_…", "token_type": "Bearer", "expires_in": 2592000, "scope": "read:audits" }
+```
+
+The authorization code is **single-use** and expires in 5 minutes. Use the
+`at_…` token exactly like a read token on the endpoints above. Token-endpoint
+errors follow RFC 6749 (`{"error": "invalid_grant"}`, `invalid_client`, …), not
+the envelope below. Revoking the app deletes its secret **and** stops every
+access token it ever issued.
+
+---
+
 ## Python SDK
 
 ```python
@@ -317,6 +453,7 @@ excepted):
 | 400 | `bad_request` | malformed request |
 | 401 | `unauthorized` | missing/revoked key |
 | 402 | `payment_required` | no active subscription/credit |
+| 403 | `forbidden` | a valid token that lacks the required read scope |
 | 404 | `not_found` | unknown resource |
 | 413 | `payload_too_large` | batch/file too big |
 | 422 | `validation_error` | the counts-only contract was broken |

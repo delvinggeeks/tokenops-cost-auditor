@@ -1,0 +1,30 @@
+{# S-6: shown-once READ token reveal — the ingest-key grammar (full credential,
+   uncut, copy-pasteable) in the key-truth frame. Plaintext exists in this
+   response and nowhere else; only its keyed HMAC is stored. #}
+<div class="key-truth swap-in">
+  <p style="margin-top:0"><strong>Your new read token — shown once, stored
+    hashed.</strong> Copy it now:</p>
+  <pre style="overflow-x:auto"><code>{{ token }}</code></pre>
+  <p style="margin:var(--s2) 0 0">
+    <button class="btn btn-primary" type="button" id="copy-rt" data-tok="{{ token }}">Copy token</button>
+    <span class="muted" style="font-size:13px">Scopes:
+      {% for s in scopes %}<code>{{ s }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</span>
+  </p>
+  <p style="margin:var(--s2) 0 0"><strong>Read your audits — one call:</strong></p>
+  <pre style="overflow-x:auto; font-size:12.5px"><code>curl -H "Authorization: Bearer {{ token }}" \
+  https://tokenops-cost-auditor.com/api/v1/audits</code></pre>
+  <div class="provenance">Read-only — audits, findings, spend as counts and
+    dollars. There is no read path to prompt or completion text; we never store any.</div>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("copy-rt");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    navigator.clipboard.writeText(btn.getAttribute("data-tok")).then(function () {
+      btn.textContent = "Copied";
+      setTimeout(function () { btn.textContent = "Copy token"; }, 2000);
+    });
+  });
+})();
+</script>
