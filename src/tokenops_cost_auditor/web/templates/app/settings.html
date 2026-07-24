@@ -29,9 +29,11 @@
       </div>
       {{ kit.button("Rename", variant="primary") }}
     </form>
+    <p style="margin-top: var(--s2);">{{ kit.button("Manage members", href="/settings/members") }}</p>
     <div class="provenance">Everything you audit, every key and connection, belongs
-      to this workspace. Right now it's just you{% if workspace_personal %} — a
-      workspace of one{% endif %}; shared members and roles come later.</div>
+      to this workspace. {% if workspace_personal %}Right now it's just you — a workspace
+      of one. Invite teammates from Members to share it.{% else %}Invite and see teammates
+      from Members.{% endif %}</div>
   {{ kit.surface_close() }}
 
   {# Email — transactional mail is never opt-out, and we say so #}

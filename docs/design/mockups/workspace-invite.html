@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — invite &amp; accept (O-1b-2)</title>
+<style>
+  :root { --ink:#1a1a1a; --ink-soft:#5b5b5b; --muted:#8a8a8a; --rule:#e3e0da;
+    --surface:#fff; --wash:#f6f4ef; --accent:#c96442; --on-accent:#fff; --radius:8px; }
+  body { font:14px/1.5 system-ui,sans-serif; color:var(--ink); background:var(--wash); margin:0; padding:32px; }
+  h1{font-size:18px} h2{font-size:14px;color:var(--ink-soft);margin-top:30px}
+  .note{color:var(--muted);max-width:64ch}
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:16px;margin:10px 0 20px;max-width:640px}
+  label{display:block;font-weight:600;margin-bottom:4px}
+  input{padding:8px 10px;border:1px solid var(--rule);border-radius:var(--radius);min-width:16em}
+  .btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:var(--radius);padding:8px 14px;font:inherit;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .muted{color:var(--muted)}
+  .prov{color:var(--muted);font-size:13px;margin-top:8px}
+  ul{list-style:none;padding:0;margin:8px 0 0}
+  li{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding:6px 0}
+  .banner{background:var(--wash);border-left:3px solid var(--accent);padding:8px 12px;border-radius:4px;margin-bottom:12px}
+</style>
+</head>
+<body>
+  <h1>Invite &amp; accept — O-1b-2 (R-ORG)</h1>
+  <p class="note">An owner on the Scale plan grows a workspace by inviting teammates by email.
+  The invitee signs in with that address and is dropped INTO the shared workspace (reusing the
+  O-1b-1 switch spine). The code is a one-shot secret, emailed and stored only as a hash.</p>
+
+  <h2>A · Members surface — owner on Scale (the invite form)</h2>
+  <div class="card">
+    <strong>Members of Acme Corp</strong>
+    <div class="banner">Invitation sent — it works once, expires in 7 days, and only for the address you invited.</div>
+    <form class="row" style="margin-top:12px">
+      <div><label>Invite a teammate by email</label><input type="email" placeholder="teammate@company.com"></div>
+      <button class="btn" type="button">Send invite</button>
+    </form>
+    <p class="prov">They join as a member and see this workspace's audits, dashboard and savings.</p>
+    <h3 style="font-size:13px">Pending invitations</h3>
+    <ul>
+      <li><span>dana@company.com</span><span class="muted">invited 2026-07-24 · pending</span></li>
+      <li><span>lee@company.com</span><span class="muted">invited 2026-07-18 · expired</span></li>
+    </ul>
+  </div>
+  <p class="note">Non-owners and non-Scale users never see the form — they see the honest reason
+  ("only the owner can invite" / "inviting is part of Scale — see plans"), never a dead control.</p>
+
+  <h2>B · Accept page — the four honest states (standalone, public shell)</h2>
+  <div class="card">
+    <strong>ready</strong> — signed in as the invited address:
+    <p class="muted">"Join Acme Corp — you're signed in as dana@company.com. [Accept invitation]"</p>
+    <strong>sign_in</strong> — not signed in:
+    <p class="muted">"You're invited to Acme Corp. Sign in with dana@company.com to accept. [Email me a sign-in link]"</p>
+    <strong>wrong_email</strong> — signed in as someone else:
+    <p class="muted">"This invitation is for dana@company.com, but you're signed in as x@y.com. A link alone can't join a different account."</p>
+    <strong>invalid</strong> — used / expired / unknown:
+    <p class="muted">"This invitation isn't valid — it may have been used already or expired. Ask the workspace owner for a new one."</p>
+  </div>
+  <p class="note">GET never consumes (mail scanners pre-fetch links); the confirm POST does — single-use,
+  email-matched, atomic. On success the invitee lands on the dashboard, now scoped to Acme Corp.</p>
+</body>
+</html>

@@ -18,6 +18,9 @@ class MailPort(Protocol):
     # v1.5 WP-3b: the subject carries the number (R-DESIGN §4e)
     def alert(self, to_email: str, subject: str, body: str) -> None: ...
 
+    # O-1b-2 (R-ORG): a one-shot workspace-invite accept link
+    def workspace_invite(self, to_email: str, link_url: str, workspace_name: str) -> None: ...
+
 
 class LogMailAdapter:
     """Structured-log delivery — never sends network mail (PLAN §0.2 MAIL)."""
@@ -30,3 +33,6 @@ class LogMailAdapter:
 
     def alert(self, to_email: str, subject: str, body: str) -> None:
         log.info("mail.alert", to=to_email, subject=subject)
+
+    def workspace_invite(self, to_email: str, link_url: str, workspace_name: str) -> None:
+        log.info("mail.workspace_invite", to=to_email, url=link_url, workspace=workspace_name)

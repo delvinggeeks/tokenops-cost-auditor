@@ -477,6 +477,30 @@ Healthz.
 
 Responses: `200`
 
+## `GET /invite/accept`
+
+Accept Show.
+
+Confirm page — GET NEVER consumes (mail scanners pre-fetch links; same
+reason magic-link uses a confirm step). Shows the honest state: invalid /
+sign-in-required / wrong-email / ready-to-accept.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `code` | query | no | string |
+
+Responses: `200`, `422`
+
+## `POST /invite/accept`
+
+Accept.
+
+Consume the invite: single-use, email-matched, atomic. On success the
+user is a member and their active workspace is the shared one (auto-switch),
+landing on the dashboard — now scoped to that workspace.
+
+Responses: `200`, `422`
+
 ## `GET /legal/dpa`
 
 Dpa.
@@ -695,6 +719,34 @@ Responses: `200`, `422`
 ## `POST /settings/email`
 
 Save Email Prefs.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /settings/members`
+
+Members Page.
+
+The members surface: invite a teammate + the pending-invites list. The
+invite form appears ONLY for an owner on Scale; everyone else sees the honest
+reason it's unavailable (not their workspace to grow / Scale-gated), never a
+dead control.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/members/invite`
+
+Invite Member.
+
+OWNER-ONLY, Scale-gated, rate-limited. Mints a one-shot code stored only
+as an HMAC and emails the accept link; the raw code is never persisted.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
