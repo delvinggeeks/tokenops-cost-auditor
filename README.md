@@ -16,6 +16,8 @@ enforcement.
 ## Quickstart (local development)
 
 Requires [`uv`](https://docs.astral.sh/uv/) (the pinned Python toolchain) and Docker.
+New to the codebase? [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) is the full
+step-by-step walkthrough (setup, the dev loop, structure, how slices ship).
 
 ```bash
 git clone <repo-url> && cd tokenops-cost-auditor
@@ -72,8 +74,9 @@ index — is [`docs/internal/PLATFORM.md`](docs/internal/PLATFORM.md).
 |---|---|
 | `src/` | application code (subsystem hierarchy above) |
 | `tests/` | pytest suite (~1:1 test:code ratio) |
-| `docs/` | architecture & requirements (`00-PRD` … `13-*`), the traceability matrix |
-| `docs/internal/` | plans, STATUS history, runbooks, the ownership map — internal working docs |
+| `docs/` | architecture & requirements (`00-PRD` … `13-*`), the traceability matrix, [`DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
+| `docs/design/` | design-system source (`wa-design.css`, `icons.svg`), motion specs, mockups, evidence |
+| `docs/internal/` | plans, STATUS history, runbooks, the ownership map, launch analysis — internal working docs |
 | `docs-site/` | the public documentation site (mkdocs) |
 | `deploy/` | Terraform (Hetzner) + one-command provisioning |
 | `scripts/` | provisioning, pricing verification, doc generation |

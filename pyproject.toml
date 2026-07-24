@@ -55,9 +55,9 @@ packages = ["src/tokenops_cost_auditor"]
 line-length = 100
 target-version = "py314"
 src = ["src", "tests"]
-# design/ holds mockups and the script that generates them — HTML-in-strings
+# docs/design/ holds mockups and the script that generates them — HTML-in-strings
 # design artifacts, not application code. Product code stays fully linted.
-exclude = ["design"]
+exclude = ["docs/design"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
