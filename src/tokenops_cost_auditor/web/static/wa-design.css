@@ -822,3 +822,58 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
 @keyframes bench-slide { from { transform: translateX(-10px); opacity: 0; } }
 .bench-ends { display: flex; justify-content: space-between;
   font-size: 12px; color: var(--ink-soft); }
+
+/* ============================ FIRST RUN (#4/#5) ============================
+   The guided first-run surface: a "start here" path (#4) + a SAMPLE output
+   preview (#5), shown ONLY when no audit has completed (routes_dashboard /
+   metrics.first_run_preview). Honesty is load-bearing — the preview is fenced
+   as SAMPLE so engine-sample figures can never read as the user's own money
+   (the data-coherence law). All colour via role tokens; adapts across moods. */
+.fr-hero { background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--lift-2); padding: var(--s4); }
+.fr-hero .eyebrow { color: var(--accent); font-weight: 600; font-size: 13px; }
+.fr-hero h2 { font-weight: 600; font-size: 26px;
+  line-height: 1.2; margin: 6px 0 8px; letter-spacing: -0.01em; }
+.fr-hero .lede { color: var(--ink-soft); max-width: 60ch; margin: 0 0 var(--s3); }
+.fr-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2);
+  margin: 0 0 var(--s3); }
+@media (max-width: 720px) { .fr-steps { grid-template-columns: 1fr; } }
+.fr-step { position: relative; border: 1px solid var(--rule);
+  border-radius: var(--radius-sm); padding: var(--s2); background: var(--ground); }
+.fr-step.now { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--surface); }
+.fr-step .n { width: 22px; height: 22px; border-radius: 50%; display: grid;
+  place-items: center; font-size: 12px; font-weight: 700;
+  background: var(--surface-raised); color: var(--ink-soft); }
+.fr-step.now .n { background: var(--accent); color: var(--on-accent); }
+.fr-step .t { font-weight: 600; margin: 8px 0 2px; }
+.fr-step .d { font-size: 13px; color: var(--ink-soft); }
+.fr-here { position: absolute; top: 10px; right: 10px; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
+.fr-cta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.fr-preview { position: relative; border: 2px dashed var(--estimate-line);
+  border-radius: var(--radius); background: var(--estimate-bg); padding: var(--s3); }
+.fr-preview .sample-badge { display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--estimate);
+  background: var(--surface); border: 1px solid var(--estimate-line);
+  border-radius: 999px; padding: 4px 12px; }
+.fr-preview h3 { font-weight: 600; font-size: 18px; margin: 12px 0 4px; }
+.fr-preview .disclaimer { color: var(--estimate); font-size: 13px; max-width: 66ch;
+  margin: 0 0 var(--s3); }
+.fr-pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); }
+@media (max-width: 720px) { .fr-pv-grid { grid-template-columns: 1fr; } }
+.fr-pv-card { background: var(--surface); border: 1px solid var(--estimate-line);
+  border-radius: var(--radius-sm); padding: var(--s3); }
+.fr-pv-stat .n { font-weight: 640; font-size: 34px; line-height: 1;
+  letter-spacing: -0.02em; color: var(--money); }
+.fr-pv-stat .n .per { font-family: var(--sans); font-size: 16px; font-weight: 500;
+  color: var(--ink-soft); }
+.fr-pv-stat .chip { display: inline-block; margin-top: 8px; font-size: 12px;
+  font-weight: 700; color: var(--estimate); background: var(--surface);
+  border: 1px solid var(--estimate-line); border-radius: 999px; padding: 3px 10px; }
+.fr-pv-stat .l { color: var(--ink-soft); font-size: 13px; margin-top: 10px; }
+.fr-pv-stat .scale { color: var(--estimate); font-size: 12px; margin-top: 10px; }
+.fr-pv-more { margin-top: 8px; }
+.fr-pv-foot { display: flex; justify-content: space-between; align-items: center;
+  margin-top: var(--s2); flex-wrap: wrap; gap: 10px; }

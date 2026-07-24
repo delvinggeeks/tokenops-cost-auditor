@@ -93,13 +93,16 @@ class TestDashboard:
         assert TestClient(app).get("/dashboard").status_code == 401
 
     def test_02_zero_state_is_honest(self, app: FastAPI) -> None:
-        """T-DASH-05: no audits -> no invented numbers, and the empty state
-        teaches the next action (R-Q9 + R-DESIGN-SHELL §2)."""
+        """T-DASH-05: no audits -> no invented numbers, and the first-run surface
+        teaches the next action (R-Q9 + R-DESIGN-SHELL §2). The guided first-run
+        hero (#4) replaced the grid of empty widgets; it still names the next
+        action and never fabricates a zero headline. (Full first-run + preview
+        honesty coverage lives in tests/test_guided_first_run.py.)"""
         page = TestClient(app).get("/dashboard", headers=HDR)
         assert page.status_code == 200
-        assert "Connect a source" in page.text
-        assert "$0.00" not in page.text  # never show a fabricated zero headline
-        assert "Your first audit fills this in" in page.text
+        assert "Connect a source" in page.text  # the next action, still named
+        assert "Upload a log file" in page.text  # the guided step-1 CTA
+        assert "$0.00" not in page.text  # never a fabricated zero headline
 
     def test_03_headline_and_widgets_render(self, app: FastAPI) -> None:
         seed_audit(

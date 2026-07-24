@@ -62,6 +62,21 @@ def build_sample(settings: Settings, table: PricingTable) -> ReportModel:
     )
 
 
+_MODEL: ReportModel | None = None
+
+
+def sample_model(settings: Settings, table: PricingTable) -> ReportModel:
+    """The sample ReportModel, memoised. Same committed fixtures as
+    :func:`sample_html`, exposed STRUCTURALLY so in-app surfaces (the first-run
+    output preview, PLAN punch-list #5) can read the headline + findings without
+    rendering — and paying WeasyPrint for — the whole report page. Deterministic:
+    the inputs never change, so one build per process is correct."""
+    global _MODEL
+    if _MODEL is None:
+        _MODEL = build_sample(settings, table)
+    return _MODEL
+
+
 _RENDERED: str | None = None
 
 

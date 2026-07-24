@@ -49,6 +49,52 @@ now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the pro
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
 (founder-chosen): guided first-run + output preview (punch-list #4/#5).
 
+## GUIDED FIRST RUN + OUTPUT PREVIEW (2026-07-25) — founder walkthrough punch-list #4/#5, "proceed guided-first-run"
+
+The first-run vertical (R-VERTICAL), on a branch off main. GOAL: a brand-new
+user (signed in, no source, no audit) met a grid of EMPTY widgets ($0.00, "No data
+yet") + a checklist + a tour — the product read as empty and they had to connect on
+faith. Now, ONLY in the true first-run state (no completed audit), that grid is
+replaced by (a) a GUIDED "start here" hero — the connect→audit→report arc as three
+steps, step 1 lit "YOU ARE HERE", both CTAs live (/upload, /sources) — and (b) an
+OUTPUT PREVIEW of REAL sample-engine output so they SEE the value before connecting.
+SHIPPED: **sample.sample_model** (memoised ReportModel — the FR-16 sample exposed
+structurally, no WeasyPrint); **metrics.first_run_preview** (headline savings/%/spend
++ impact-ranked top-4 findings, $0 rows excluded but honest n_findings kept;
+detector→plain mapped at RENDER via the help registry so the engine stays
+presentation-blind); **routes_dashboard**: first_run = `latest_audit is None`, the
+preview assembled only then and FileNotFoundError-degrades to the hero alone (never a
+500); **_first_run.html** (guided hero + SAMPLE-fenced preview composing the kit
+.ledger — the SAME findings table the real dashboard renders); dashboard.html
+first-run branch (pipeline spine always; hero+preview XOR the live grid); the
+getting-started checklist is SUPPRESSED in first run (the hero is the single
+next-action surface) and resumes after the first audit for review→apply→verify;
+wa-design.css `.fr-*` (estimate-palette fence, role-tokens only). HONESTY is
+load-bearing (the data-coherence lesson): the preview is fenced "SAMPLE — NOT YOUR
+DATA / nothing on this card is yours", uses the estimate palette NEVER verified-green,
+and VANISHES the moment a real audit completes so it never sits beside a user's own
+figures. **Real app figures**: $2.24/mo · 29.5% · 6 findings on the committed sample
+(they track the pinned rate card; the preview + public /sample read the same
+engine+table so they can never disagree). PROCESS NOTES (mine): the ux gate on the
+mockup (BEFORE wiring, R-DESIGN) returned PASS-WITH-NOTES — all 4 actioned (5-vs-4
+findings coherence made explicit; money promoted to the display HERO; the one delight
+named; ribbon flex-wrap). Wiring then tripped THREE shipped laws the mockup's bespoke
+HTML didn't: the kit table-composition law (hand-rolled `<table>` → kit.table_open),
+the retired-serif law (R-LOOK-FINAL — `var(--serif)` banned → heavy sans for money
+prominence), and the CSS `served==source` parity test (edit design/ then cp to
+static). Test collateral fixed WITHOUT weakening intent (widgets that only render past
+first run get a completed-audit seed): test_dashboard zero-state + test_onboarding
+checklist (suppressed→resumes) + the verified-savings celebration + the daily-loop
+"Yesterday" tile (in production a connected source triggers an audit per
+R-LIVE-AUDIT, so daily data and a completed audit always coexist). Journey suite tests/test_guided_first_run.py green;
+HTML-escaping (`&#39;`) + line-wrap were assertion bugs, fixed by whitespace-normalize
++ escape. File-map delta: +services/report/sample.sample_model;
++metrics.first_run_preview; +templates/app/_first_run.html; +wa-design.css `.fr-*`
+(both copies); routes_dashboard passes first_run+preview; dashboard.html branch;
++tests/test_guided_first_run.py; +mockup guided-first-run.html; +traceability row. No
+pricing/estimator touch → CLAUDE.md rule 4 N/A. DEPENDS-DONE: O-1 stack (main).
+Gate round + PR next.
+
 ## DATA COHERENCE + HONEST FRESHNESS (2026-07-24) — founder walkthrough: "no sources connected but overview/findings show old cache data, not real-time"
 
 Founder prod walkthrough (v1.9.0 = O-0) surfaced an HONESTY gap, not a cache bug:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -28,6 +28,10 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.dashboard.savings import SavingsSummary, compute
+
+if TYPE_CHECKING:
+    from tokenops_cost_auditor.config import Settings
+    from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 MONTH_DAYS = 30.0
 
@@ -512,6 +516,48 @@ def audit_clarity(session: Session, table: object, user_id: str) -> dict[str, An
     if unpriced:
         return {"state": "unpriced", "models": unpriced, "row_count": audit.row_count or 0}
     return {"state": "clean", "row_count": audit.row_count or 0, "spend": 0.0}
+
+
+def first_run_preview(settings: object, table: object, top_n: int = 4) -> dict[str, Any]:
+    """The 'output preview' for the guided first run (PLAN punch-list #5): the
+    FR-16 sample report's headline + top findings, so a brand-new user with NO
+    audit yet can SEE what a finished report looks like BEFORE connecting
+    anything.
+
+    Every figure is the REAL engine's output on committed synthetic fixtures
+    (services/report/sample.py) — no invented numbers, no LLM narrative (X-04),
+    counts only (FR-22). The caller renders this ONLY in the first-run state
+    (no completed audit — `latest_audit(...) is None`); it must never sit beside
+    a real user's figures, and the template fences it hard as SAMPLE — the
+    data-coherence honesty law (founder walkthrough 2026-07-24). Detector→plain
+    phrasing is mapped at render time via the help registry (web layer), so the
+    engine stays presentation-blind.
+
+    `findings` are impact-ranked and exclude $0 rows (a "here's what you'll get"
+    teaser shows only findings with dollars); `n_findings` is the honest total,
+    and the template links to /sample for the full list."""
+    from tokenops_cost_auditor.services.report import sample
+
+    m = sample.sample_model(cast("Settings", settings), cast("PricingTable", table))
+    ranked = sorted(m.findings, key=lambda f: -f.monthly_cost_impact_usd)
+    findings = [
+        {
+            "detector": f.detector,
+            "severity": f.severity,
+            "monthly_usd": round(float(f.monthly_cost_impact_usd), 2),
+        }
+        for f in ranked
+        if f.monthly_cost_impact_usd > 0
+    ][:top_n]
+    return {
+        "savings_pct": round(m.savings_pct, 1),
+        "monthly_savings_usd": round(m.monthly_savings_usd, 2),
+        "monthly_spend_usd": round(m.monthly_spend_usd, 2),
+        "row_count": m.row_count,
+        "observed_days": m.observed_days,
+        "n_findings": len(m.findings),
+        "findings": findings,
+    }
 
 
 def pipeline(

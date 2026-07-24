@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Guided first run + output preview (punch-list #4/#5) — SAMPLE DATA</title>
+<style>
+  /* Faithful to web/static/wa-design.css tokens (sanchaya / light). */
+  :root {
+    --ground:#fafaf8; --surface:#ffffff; --surface-raised:#f4f4f0;
+    --ink:#15171a; --ink-soft:#565b62; --rule:#e4e4dd;
+    --accent:#0e6e5e; --accent-ink:#0a564a; --on-accent:#fff;
+    --money:#15171a;
+    --verified:#0e6e5e; --verified-bg:#e4f1ee; --verified-line:#c6e0da;
+    --estimate:#8a5a0b; --estimate-bg:#faf0de; --estimate-line:#ecd9b0;
+    --waste:#b02f22; --waste-bg:#fbeae8; --waste-line:#f0cbc6;
+    --serif:"Charter","Iowan Old Style","Georgia",serif;
+    --sans:"Inter",system-ui,"Segoe UI",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Consolas,monospace;
+    --s1:8px; --s2:16px; --s3:24px; --s4:32px; --radius:10px; --radius-sm:6px;
+    --lift-1:0 1px 2px rgba(21,23,26,.05);
+    --lift-2:0 1px 2px rgba(21,23,26,.05),0 6px 18px -8px rgba(21,23,26,.12);
+  }
+  * { box-sizing:border-box; }
+  body { font:15px/1.55 var(--sans); color:var(--ink); background:var(--ground); margin:0; padding:32px; }
+  .doc { max-width:1000px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  h2.section { font-size:13px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--ink-soft); margin:36px 0 10px; }
+  .note { color:var(--ink-soft); max-width:74ch; font-size:14px; }
+  .note b { color:var(--ink); }
+  code { font:12px var(--mono); background:var(--surface-raised); padding:1px 5px; border-radius:4px; }
+
+  /* ---- the app content column (what renders inside the shell's main) ---- */
+  .canvas { background:var(--ground); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:var(--s3); margin:10px 0 8px; }
+  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:var(--s3); }
+  .w-12 { grid-column:span 12; }
+  .w-6 { grid-column:span 6; }
+  @media (max-width:720px){ .w-6{ grid-column:span 12; } }
+
+  .widget { background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius);
+    box-shadow:var(--lift-1); padding:var(--s3); }
+  .widget-head { display:flex; align-items:center; gap:8px; font-weight:600; margin:0 0 4px; }
+  .widget-head .ic { width:16px; height:16px; color:var(--accent); }
+  .provenance { color:var(--ink-soft); font-size:12px; margin-top:var(--s2);
+    border-top:1px solid var(--rule); padding-top:8px; }
+
+  /* pipeline ribbon (spine) — first run: all stages waiting, nothing lit */
+  .ribbon { display:flex; flex-wrap:wrap; gap:2px; background:var(--surface); border:1px solid var(--rule);
+    border-radius:var(--radius); overflow:hidden; box-shadow:var(--lift-1); }
+  .ribbon .stage { min-width:150px; }
+  .ribbon .stage { flex:1; padding:12px 14px; border-right:1px solid var(--rule); }
+  .ribbon .stage:last-child { border-right:0; }
+  .ribbon .stage .k { font-size:12px; color:var(--ink-soft); }
+  .ribbon .stage .v { font-size:13px; color:var(--ink-soft); margin-top:2px; }
+  .ribbon .stage.waiting { background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(21,23,26,.02) 6px,rgba(21,23,26,.02) 12px); }
+
+  /* guided hero (#4) */
+  .hero { background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius);
+    box-shadow:var(--lift-2); padding:var(--s4); }
+  .hero .eyebrow { color:var(--accent); font-weight:600; font-size:13px; letter-spacing:.02em; }
+  .hero h2 { font:600 26px/1.2 var(--sans); margin:6px 0 8px; letter-spacing:-.01em; }
+  .hero p.lede { color:var(--ink-soft); max-width:60ch; margin:0 0 var(--s3); }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s2); margin:0 0 var(--s3); }
+  @media (max-width:720px){ .steps{ grid-template-columns:1fr; } }
+  .step { border:1px solid var(--rule); border-radius:var(--radius-sm); padding:var(--s2);
+    background:var(--ground); position:relative; }
+  .step.now { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; background:var(--surface); }
+  .step .n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+    font-size:12px; font-weight:700; background:var(--surface-raised); color:var(--ink-soft); }
+  .step.now .n { background:var(--accent); color:var(--on-accent); }
+  .step .t { font-weight:600; margin:8px 0 2px; }
+  .step .d { font-size:13px; color:var(--ink-soft); }
+  .step .badge-now { position:absolute; top:10px; right:10px; font-size:10px; font-weight:700;
+    letter-spacing:.06em; color:var(--accent); }
+  .cta-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .btn { font:inherit; font-weight:600; border-radius:var(--radius-sm); padding:10px 18px;
+    border:1px solid var(--rule); background:var(--surface); color:var(--ink); cursor:pointer;
+    text-decoration:none; display:inline-block; }
+  .btn-primary { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .btn-sm { padding:6px 12px; font-size:13px; }
+  .muted { color:var(--ink-soft); font-size:13px; }
+
+  /* ---- output preview (#5): honesty is load-bearing ---- */
+  .preview { position:relative; border:1.5px dashed var(--estimate-line); border-radius:var(--radius);
+    background:var(--estimate-bg); padding:var(--s3); }
+  .preview::before { content:""; position:absolute; inset:0; border-radius:var(--radius);
+    background:repeating-linear-gradient(45deg,transparent,transparent 22px,rgba(138,90,11,.03) 22px,rgba(138,90,11,.03) 24px);
+    pointer-events:none; }
+  .preview > * { position:relative; }
+  .sample-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+    letter-spacing:.08em; color:var(--estimate); background:var(--surface); border:1px solid var(--estimate-line);
+    border-radius:999px; padding:4px 12px; }
+  .preview h3 { font:600 18px/1.2 var(--sans); margin:12px 0 4px; }
+  .preview .disclaimer { color:var(--estimate); font-size:13px; max-width:66ch; margin:0 0 var(--s3); }
+  .preview .disclaimer b { color:#6e480a; }
+  .pv-card { background:var(--surface); border:1px solid var(--estimate-line); border-radius:var(--radius-sm);
+    padding:var(--s3); }
+  .pv-stat .n { font:640 34px/1 var(--sans); letter-spacing:-.02em; color:var(--money); }
+  .pv-stat .n .per { font-size:16px; color:var(--ink-soft); font-family:var(--sans); font-weight:500; }
+  .pv-stat .chip { display:inline-block; margin-top:8px; font-size:12px; font-weight:700; color:var(--estimate);
+    background:var(--surface); border:1px solid var(--estimate-line); border-radius:999px; padding:3px 10px; }
+  .pv-stat .l { color:var(--ink-soft); font-size:13px; margin-top:10px; }
+  .pv-stat .scale { color:var(--estimate); font-size:12px; margin-top:10px; }
+  table.pv { width:100%; border-collapse:collapse; font-size:14px; }
+  table.pv th { text-align:left; font-size:12px; color:var(--ink-soft); font-weight:600;
+    border-bottom:1px solid var(--estimate-line); padding:6px 8px; }
+  table.pv th.money, table.pv td.money { text-align:right; font-variant-numeric:tabular-nums; }
+  table.pv td.money { color:var(--money); }
+  /* Wired surface composes the kit's .ledger (kit §3) — the SAME table the real
+     dashboard renders; money leads as the heavy-sans HERO above (serif is retired,
+     R-LOOK-FINAL), the table matches the real findings ledger. */
+  table.pv td { padding:8px; border-bottom:1px solid var(--estimate-line); }
+  table.pv tr:last-child td { border-bottom:0; }
+  .sev { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .sev-med { color:var(--estimate); background:var(--estimate-bg); border:1px solid var(--estimate-line); }
+  .sev-low { color:var(--ink-soft); background:var(--surface-raised); border:1px solid var(--rule); }
+  .pv-foot { display:flex; justify-content:space-between; align-items:center; margin-top:var(--s2);
+    flex-wrap:wrap; gap:10px; }
+
+  .callout { border-left:3px solid var(--accent); background:var(--surface); padding:12px 16px;
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:8px 0; font-size:14px; }
+  ul.plain { padding-left:18px; } ul.plain li { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>Guided first run + output preview — punch-list #4 / #5</h1>
+  <p class="note">The state a brand-new user lands in: signed in, <b>no source connected and no
+    audit run yet</b>. Today they meet a grid of empty widgets (<code>$0.00</code>, "No data yet")
+    plus a checklist and a tour — the product reads as empty, and they must connect on faith with no
+    sense of what they'll get. This mockup replaces that grid, <b>only in the true first-run state</b>,
+    with two things: a <b>guided "start here" path (#4)</b> and a <b>preview of real sample-engine
+    output (#5)</b>. The moment a real audit exists, this whole surface is gone and the normal widget
+    grid takes over.</p>
+
+  <h2 class="section">The first-run content column (inside the existing app shell)</h2>
+  <div class="canvas">
+    <div class="grid">
+
+      <!-- SPINE: the pipeline ribbon stays, honestly showing nothing has run -->
+      <div class="w-12">
+        <div class="ribbon" aria-label="Audit pipeline — nothing has run yet">
+          <div class="stage waiting"><div class="k">1 · Ingest</div><div class="v">Waiting for your logs</div></div>
+          <div class="stage waiting"><div class="k">2 · Price</div><div class="v">Pinned rate card</div></div>
+          <div class="stage waiting"><div class="k">3 · Detect</div><div class="v">Six detectors</div></div>
+          <div class="stage waiting"><div class="k">4 · Report</div><div class="v">Ranked by dollars</div></div>
+        </div>
+      </div>
+
+      <!-- #4 GUIDED FIRST RUN -->
+      <div class="w-12">
+        <div class="hero">
+          <div class="eyebrow">First audit — free</div>
+          <h2>Let's find the money hiding in your LLM spend.</h2>
+          <p class="lede">One full audit of your own logs, free — no card, and nothing sits in your
+            request path. Here's the whole path; below it, exactly what you'll get.</p>
+
+          <div class="steps">
+            <div class="step now">
+              <span class="badge-now">YOU ARE HERE</span>
+              <div class="n">1</div>
+              <div class="t">Get your logs in</div>
+              <div class="d">Upload a usage export, or connect a provider for daily pulls.</div>
+            </div>
+            <div class="step">
+              <div class="n">2</div>
+              <div class="t">We price &amp; audit it</div>
+              <div class="d">Your calls, priced on a pinned rate card, run through six deterministic detectors.</div>
+            </div>
+            <div class="step">
+              <div class="n">3</div>
+              <div class="t">You get a ranked report</div>
+              <div class="d">Every finding in plain English, ordered by dollars, with a fix you can paste.</div>
+            </div>
+          </div>
+
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/upload">Upload a log file</a>
+            <a class="btn" href="/sources">Connect a source</a>
+            <span class="muted">Takes a few minutes. You can watch it run.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- #5 OUTPUT PREVIEW -->
+      <div class="w-12">
+        <div class="preview">
+          <span class="sample-badge">◆ SAMPLE — NOT YOUR DATA</span>
+          <h3>A preview of what your report will look like</h3>
+          <p class="disclaimer">Every figure below comes from <b>invented traffic with planted waste,
+            run through the exact engine your logs will use</b> — so the arithmetic is real even though
+            the company isn't. <b>Your own numbers appear here after your first audit;</b> nothing on
+            this card is yours.</p>
+
+          <div class="grid" style="gap:var(--s2)">
+            <div class="w-6">
+              <div class="pv-card pv-stat">
+                <div class="n">$2.24<span class="per">/mo</span></div>
+                <div class="chip">29.5% of sample spend</div>
+                <div class="l">recoverable across 6 findings, from $7.61/mo of sample spend
+                  (164 calls, 3 days).</div>
+                <div class="scale">On the sample the dollars are small; on your real traffic the same
+                  detectors scale with your spend.</div>
+              </div>
+            </div>
+            <div class="w-6">
+              <div class="pv-card">
+                <table class="pv" aria-label="Sample findings">
+                  <thead><tr><th>Finding (sample)</th><th>Severity</th><th class="money">Monthly</th></tr></thead>
+                  <tbody>
+                    <tr><td>You're using a top-tier model for work a cheaper one handles</td>
+                        <td><span class="sev sev-low">Low</span></td><td class="money">$1.35</td></tr>
+                    <tr><td>One route's prompts are far larger than the rest</td>
+                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.50</td></tr>
+                    <tr><td>You're paying full price for prompts you send again and again</td>
+                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.25</td></tr>
+                    <tr><td>An agent loop is making many tiny calls where fewer would do</td>
+                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.10</td></tr>
+                  </tbody>
+                </table>
+                <p class="muted" style="margin-top:8px">Top 4 by dollar impact &middot; 6 findings in
+                  total &mdash; the rest have no dollar impact on this sample. Full list in the sample report.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pv-foot">
+            <span class="muted">This is the same savings figure and findings table your own dashboard will show &mdash; filled with sample data.</span>
+            <a class="btn btn-sm" href="/sample">See the full sample report &rarr;</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <h2 class="section">Design decisions &amp; laws honored</h2>
+  <div class="callout"><b>Honesty is the whole point (data-coherence lesson, 2026-07-24).</b> The last
+    slice closed a gap where historical figures read as live. The preview reopens that risk — sample
+    numbers next to a real, signed-in user — so it is fenced hard: a dashed amber (<code>--estimate</code>)
+    frame, a diagonal wash, a persistent <code>◆ SAMPLE — NOT YOUR DATA</code> badge, an explicit
+    "nothing on this card is yours," and it uses the <b>estimate</b> palette, <b>never</b> the earned
+    <code>verified</code> green. It cannot be mistaken for the user's own money.</div>
+  <ul class="plain note">
+    <li><b>No invented numbers (extends the no-invented-numbers law).</b> The preview is the FR-16
+      <code>/sample</code> data — <code>build_sample()</code> → real ingest→price→detect→assemble.
+      Figures shown here are the actual engine output ($0.89/mo · 11.7% · the five plain-English
+      findings). Placeholders would be a lie; these aren't.</li>
+    <li><b>X-04 (no LLM narrative) untouched.</b> Every word is deterministic template + registry
+      <code>plain</code> phrasing; no generated prose.</li>
+    <li><b>FR-22 (no prompt text).</b> The sample findings carry counts and plain titles only, same as
+      any finding row.</li>
+    <li><b>Reachability (R-VERTICAL).</b> This IS the post-sign-in landing for a new user — reachable by
+      definition. Both CTAs (<code>/upload</code>, <code>/sources</code>) already exist and work.</li>
+    <li><b>Vanishes on first real audit.</b> Gated on <code>audit_clarity.state == "none"</code> (no
+      completed audit in the active workspace). One completed audit → this surface is replaced by the
+      live widget grid; the preview never sits beside real figures.</li>
+    <li><b>Absorbs, doesn't duplicate.</b> The 3-step guided path is the connect→audit→report arc; the
+      standalone getting-started checklist is suppressed in this pure first-run state (the hero IS the
+      guided path) and reappears afterward for the review→apply→verify steps that only make sense once
+      data exists.</li>
+    <li><b>Honest framing.</b> The committed sample is small ($2.24/mo); the preview pairs the dollar
+      hero with %-of-spend and the ranked plain-English findings — the parts that communicate value and
+      scale — and says plainly the dollars scale with real traffic.</li>
+    <li><b>No dead controls (shell rule).</b> Steps 2 and 3 are "what happens next," not buttons; only
+      step 1 is actionable.</li>
+    <li><b>Money is the most-weighted figure (R-DESIGN money law).</b> The $0.89/mo dollar is the 34px
+      serif display numeral; the 11.7% reads as a supporting chip; the findings table's Monthly column
+      renders in serif money type. Dollars lead wherever they appear.</li>
+    <li><b>The one designed delight.</b> The <b>"YOU ARE HERE" marker on step 1</b> of the guided path:
+      the whole four-stage journey is laid out, and exactly one step is lit as the user's current
+      position — the same "you can see the whole loop, and where you are in it" grammar as the pipeline
+      ribbon. One delight, not a carnival.</li>
+    <li><b>Accessibility (R-DESIGN-ADDENDUM).</b> AA verified: <code>--estimate</code> on
+      <code>--estimate-bg</code> ≈ 5.2:1, <code>--ink-soft</code> on <code>--ground</code> ≈ 6.5:1.
+      No motion or animation on this surface, so nothing to gate for reduced-motion.</li>
+  </ul>
+
+  <p class="note" style="margin-top:24px"><b>Mockup only — SAMPLE DATA.</b> The figures shown are the
+    real output of <code>services/report/sample.py</code> at time of writing ($2.24/mo · 29.5% · 6
+    findings); they depend on the pinned rate card and shift as it is re-verified. The wired surface
+    renders them LIVE from <code>metrics.first_run_preview()</code> — the same engine + table
+    <code>/sample</code> uses — so the preview and the public sample report can never disagree, and
+    neither can drift from the engine.</p>
+</div>
+</body>
+</html>

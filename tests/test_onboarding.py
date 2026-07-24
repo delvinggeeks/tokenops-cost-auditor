@@ -12,6 +12,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingRow,
     Source,
     User,
+    utcnow,
 )
 from tokenops_cost_auditor.services.dashboard import metrics
 
@@ -25,6 +26,25 @@ def _user(app: FastAPI) -> str:
         s.add(u)
         s.commit()
         return u.id
+
+
+def _seed_done_audit(app: FastAPI) -> None:
+    """A completed audit → PAST the first-run state. During first run the guided
+    hero (#4) is the surface and the getting-started checklist is suppressed to
+    avoid two competing step-lists; once an audit exists the checklist is the
+    active activation tracker again."""
+    uid = _user(app)
+    with app.state.session_factory() as s:
+        s.add(
+            Audit(
+                user_id=uid,
+                status="done",
+                observed_days=7,
+                total_spend_usd=100.0,
+                report_ready_at=utcnow(),
+            )
+        )
+        s.commit()
 
 
 class TestOnboardingMetric:
@@ -74,12 +94,22 @@ class TestOnboardingMetric:
 
 
 class TestOnboardingOnDashboard:
-    def test_fresh_user_sees_the_checklist(self, app: FastAPI) -> None:
+    def test_fresh_user_sees_guided_hero_not_checklist(self, app: FastAPI) -> None:
+        # First run (no audit): the guided first-run hero (#4) is the surface;
+        # the checklist is intentionally suppressed so the two step-lists don't
+        # double. (Full first-run coverage in tests/test_guided_first_run.py.)
         page = TestClient(app).get("/dashboard", headers=HDR).text
-        assert "Get to your first verified saving" in page
-        assert "0 of 5 done" in page
+        assert "money hiding in your LLM spend" in page  # the guided hero
+        assert "Get to your first verified saving" not in page  # checklist suppressed
+
+    def test_checklist_resumes_after_the_first_audit(self, app: FastAPI) -> None:
+        _seed_done_audit(app)  # past first run → the checklist is the surface again
+        page = TestClient(app).get("/dashboard", headers=HDR).text
+        assert "money hiding in your LLM spend" not in page  # first-run hero gone
+        assert "Get to your first verified saving" in page  # checklist back, tracking
 
     def test_hide_suppresses_it_across_the_session(self, app: FastAPI) -> None:
+        _seed_done_audit(app)  # the checklist only renders past the first-run state
         client = TestClient(app)
         assert "Get to your first verified saving" in client.get("/dashboard", headers=HDR).text
         resp = client.post("/dashboard/onboarding/hide", headers=HDR, follow_redirects=False)
@@ -89,7 +119,8 @@ class TestOnboardingOnDashboard:
         assert "Get to your first verified saving" not in client.get("/dashboard", headers=HDR).text
 
     def test_it_vanishes_when_every_step_is_done(self, app: FastAPI, monkeypatch) -> None:
-        # a completed account (all steps done) → all_done → not rendered
+        # past first run (a completed audit), all steps done → all_done → not rendered
+        _seed_done_audit(app)
         monkeypatch.setattr(
             metrics,
             "onboarding",
@@ -194,8 +225,10 @@ class TestVerifiedSavingsCelebration:
     ) -> None:
         from tokenops_cost_auditor.services.dashboard.metrics import Widget
 
-        # a widget with a real verified figure → celebration; identical widget
-        # with $0 verified → none. Proves the gate is verified>0, nothing else.
+        # past the first-run state so the live savings widget renders (first run
+        # shows the guided hero instead); then a widget with a real verified
+        # figure → celebration. Proves the gate is verified>0, nothing else.
+        _seed_done_audit(app)
         monkeypatch.setattr(
             metrics,
             "savings",
