@@ -139,3 +139,44 @@ class TestDocsLinksReachTheDocs:
         assert (
             docs_url in client.get("/dashboard", headers={"X-User-Email": "docs@example.com"}).text
         )
+
+
+class TestApiReferenceAccuracy:
+    """The curated API reference must match the REAL app — so it can't drift
+    into documenting a contract the code doesn't honor (founder 2026-07-24)."""
+
+    REF = (DOCS / "api/reference.md").read_text(encoding="utf-8")
+
+    def test_01_documents_the_real_ingest_endpoint_and_auth(self) -> None:
+        assert "POST /api/v1/ingest" in self.REF
+        assert "Authorization: Bearer ik_" in self.REF  # the real auth scheme
+        assert "TOKENOPS_COST_AUDITOR_DSN" in self.REF  # R-NAMING full env var
+
+    def test_02_error_codes_match_the_code(self) -> None:
+        from tokenops_cost_auditor.main import ERROR_CODES
+
+        # every documented code string must be a real one the app emits
+        for code in (
+            "unauthorized",
+            "payment_required",
+            "payload_too_large",
+            "validation_error",
+            "rate_limited",
+            "internal_error",
+        ):
+            assert code in ERROR_CODES.values() and code in self.REF
+
+    def test_03_has_multi_language_examples(self) -> None:
+        # Anthropic-style language tabs (pymdownx.tabbed)
+        for lang in ('=== "curl"', '=== "Python (requests)"', '=== "TypeScript"', '=== "Go"'):
+            assert lang in self.REF
+
+    def test_04_states_the_counts_only_contract_not_overclaimed(self) -> None:
+        assert "counts-only" in self.REF or "counts only" in self.REF
+        assert "rejected" in self.REF  # FR-22 door, honestly described
+        # write-only key claim matches S-0's real trust boundary
+        assert "write-only" in self.REF
+
+    def test_05_in_nav(self) -> None:
+        mk = (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+        assert "api/reference.md" in mk

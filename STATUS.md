@@ -35,6 +35,26 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## API reference docs (2026-07-24) — Anthropic-style, multi-language, tied to the code
+
+Founder: "proper API documentation very similar to claude documentations,
+all the apis with examples in different languages." Built a CURATED
+reference (docs-site/api/reference.md) alongside the existing
+auto-generated endpoints.md (which stays — CI regenerates it, MP-3).
+Covers, developer-facing and accurate to the real routes: ingest-key/DSN
+auth (Bearer ik_, write-only trust boundary), POST /api/v1/ingest with the
+full counts-only record schema + MULTI-LANGUAGE examples in pymdownx tabs
+(curl · Python requests · Python SDK · TypeScript · Go), audit status,
+signed report retrieval (/r/{token}[/pdf]), the Python SDK (the three
+guarantees), idempotency, per-key+per-IP rate limits, the NFR-14 error
+envelope with a code table matching ERROR_CODES exactly, and webhooks.
+mkdocs builds clean (exit 0, tabs render). Accuracy is TEST-PINNED
+(TestApiReferenceAccuracy): the doc's error codes are tied to the app's
+ERROR_CODES map, the ingest path/auth/env-var are asserted, the language
+tabs are required — so the reference can't drift from reality silently.
+Full chain green. Gate: spec (accuracy/no-overclaim) + cold (every
+documented contract matches the code). Then the SDK queue (S-6, O-0).
+
 ## WP-COPILOT-AGG CLOSED (2026-07-24) — re-gate PASS; "proceed on connectors" COMPLETE
 
 system-tester re-gate PASS-WITH-NOTES: live render confirms the seat report

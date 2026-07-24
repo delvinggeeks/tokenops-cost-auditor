@@ -90,6 +90,7 @@ nav:
       - Data handling: concepts/data-handling.md
   - API:
       - Overview: api/overview.md
+      - Reference: api/reference.md
       - Endpoints: api/endpoints.md
   - Reports:
       - Reading a report: report/reading-a-report.md
