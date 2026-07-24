@@ -7,11 +7,26 @@ tests/test_smoke.py::test_env_example_complete.
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _blank_env_is_unset(cls, data: object) -> object:
+        """A BLANK env var (e.g. `ONE_SHOT_USD=` — the shape .env.example ships
+        every optional key in) means UNSET, not the string "". Drop blanks so the
+        field default applies instead of pydantic rejecting "" as a non-float.
+        Without this a FRESH deploy crash-loops on startup (all optional pricing
+        floats are blank in .env.example); prod only survived on its long-lived,
+        populated .env. Caught by the staging tier 2026-07-24 — exactly what
+        staging exists to catch. A blank REQUIRED field still errors clearly."""
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if not (isinstance(v, str) and v == "")}
+        return data
 
     # Core
     app_env: str = "dev"  # dev | staging | prod
