@@ -35,6 +35,40 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## PUBLISHED + O-1/LE-1 MERGED TO MAIN (2026-07-24) — founder "publish ... merge and squash", then "ownership/clarity/eliminate cognitive debt"
+
+The repo is LIVE (github.com/delvinggeeks/tokenops-cost-auditor, private) and `main`
+now holds, CI-GREEN (all jobs: authorship·lint·type·docs·test·build; verified on
+GitHub AND a full local run), the entire O-1 tenancy layer (foundation + read
+re-scope sweep + members backend) + LE-1 (authorship hard gate) + PLATFORM.md.
+Fast-forwarded (clean commit story preserved, not squashed to one blob — founder
+may request a flatten). Merged branches deleted; `le-2-continuous-deploy` (PR #6)
+HELD — merging it arms auto-deploy-to-prod and needs DEPLOY_HOST/DOMAIN/SSH_KEY +
+one validated run; `main`'s deploy.yml stays dispatch-only so nothing auto-shipped.
+
+THE FIRST-EVER CI RUN + a cold-review caught THREE latent, non-leak issues, each
+fixed before merge (the loop's containment working, exactly the cognitive-debt
+concern): (1) obs/sentry-sdk optional extra not installed in CI → 1/876 test fail
+→ ci.yml now `uv sync --frozen --all-extras`; (2) endpoints.md 735 lines stale
+since S-6 → regenerated; (3) an N+1 I reintroduced in the O-1b billing re-scope →
+batched via subscriptions._active_workspace_ids (+ deterministic _subs_by_workspace
+ORDER BY, migration-invariant comment) — cold PWN, no leak. Plus a ruff-FORMAT gap
+in routes_dashboard.py the first partial-local checks missed. LESSON: run the EXACT
+full CI commands locally, never partial — that gap is the cognitive-debt surface.
+
+STRATEGIC (founder ownership/clarity ruling): PLATFORM.md is the one-page
+ownership map (architecture · tenant-blind engine boundary · module map · tenancy
+· methods · tools · docs index · §8 cognitive-debt model). Loop model refined to
+COMPREHENSION-PRESERVING autonomy: fully autonomous for routine slices, a
+comprehension checkpoint on the load-bearing few (migrations, engine, money,
+tenancy). See [[loop-engineering-model]], PLAN-LOOP-ENGINEERING.md.
+
+NEXT (each a fresh focused session per K-3/TE-9 — the recommended discipline):
+FOUNDER-LANE: set 3 deploy secrets → un-hold LE-2; branch protection (main
+green-only). LOOP: LE-3 auto-merge → LE-4 gate-agents-in-CI → LE-5 autonomous
+driver. PRODUCT: O-1b-1 workspace switcher → O-1b-2 invite&accept → O-1b-3
+members page&revoke (full specs in PLAN-ORG §O-1). Start any with "proceed <id>".
+
 ## DEVOPS CYCLE ACTIVATED (2026-07-24) — founder "why no PR ... proper devops cycle?"
 
 Root cause: the repo was LOCAL-ONLY (no git remote) — `gh pr`/GitHub Actions had
