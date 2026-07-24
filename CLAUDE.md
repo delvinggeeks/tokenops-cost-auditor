@@ -2,7 +2,7 @@
 
 1. **Scope freeze.** X-01..X-05 (docs/01-REQUIREMENTS.md §G) are forbidden: no live
    proxy/gateway, no policy/budget enforcement, no multi-org RBAC/SSO, no LLM-generated
-   narrative in reports, no SPA frontend. New ideas go to BACKLOG.md, never into code.
+   narrative in reports, no SPA frontend. New ideas go to docs/internal/BACKLOG.md, never into code.
    [Amendment R-IMPROVISE, founder 2026-07-23: "ideas in between has to be
    improvised and validated." The freeze governs SCOPE — new features and
    surfaces. In-flight ideas that improve the CURRENT slice's journey (a
@@ -14,7 +14,7 @@
    forbidden outcome.]
    [Amendment R-ORG, founder 2026-07-23 ("proceed with both"): X-03 is
    RELAXED — but bounded. Enterprise adoption needs workspaces, members,
-   role-based governance, and SSO (PLAN-ORG.md). What is now PERMITTED:
+   role-based governance, and SSO (docs/internal/PLAN-ORG.md). What is now PERMITTED:
    an organization/workspace entity that owns resources; membership +
    invites; RBAC over PRODUCT actions (who may mint keys, see reports,
    manage billing, revoke sources); enterprise SSO login. What stays
@@ -78,7 +78,7 @@
         PASS-WITH-NOTES | FAIL), findings as numbered items each citing
         file:line, max 300 words. No prose essays, no restating the diff.
    TE-9 MAIN THREAD HYGIENE. /clear (or new session) at each milestone
-        start; PLAN.md + STATUS.md + current Dn section are the only
+        start; docs/internal/PLAN.md + STATUS.md + current Dn section are the only
         carry-over context. Never carry a full milestone's transcript.
    TE-10 FAIL FAST. A FAIL verdict stops the milestone; fixes happen in
         the main thread; the gate re-runs on the NEW diff only.
@@ -120,5 +120,5 @@
    log the session in STATUS.md as completed curriculum (one line: date,
    module, questions passed). Target cadence: one module per day, 20-30
    minutes. Curriculum order: services/runner.py first, then rules/, then
-   pricing/. CODE-TOUR.md is the syllabus; DEBUGGING-PLAYBOOK.md is the
+   pricing/. docs/internal/CODE-TOUR.md is the syllabus; docs/internal/DEBUGGING-PLAYBOOK.md is the
    companion reference.
