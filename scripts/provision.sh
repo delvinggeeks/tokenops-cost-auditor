@@ -45,10 +45,25 @@ apt-get update -qq
 apt-get install -y -qq ufw fail2ban git rsync >/dev/null
 ufw allow 22/tcp >/dev/null; ufw allow 80/tcp >/dev/null; ufw allow 443/tcp >/dev/null
 ufw --force enable >/dev/null
-sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-systemctl reload ssh 2>/dev/null || systemctl reload sshd
+# SSH: a bare sed on sshd_config is DEFEATED by cloud images — the Include of
+# /etc/ssh/sshd_config.d/*.conf sits at the top and sshd is first-match-wins, so
+# 50-cloud-init.conf's "PasswordAuthentication yes" overrides the main file
+# (found live 2026-07-24: password + root login were still open after provision).
+# Fix: a drop-in that sorts BEFORE 50-cloud-init.conf, validated before reload.
+cat > /etc/ssh/sshd_config.d/00-hardening.conf <<'SSHD'
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+SSHD
+sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config.d/50-cloud-init.conf 2>/dev/null || true
+if sshd -t; then
+    systemctl reload ssh 2>/dev/null || systemctl reload sshd
+else
+    echo "WARNING: sshd config invalid after hardening drop-in — reverting, SSH left as-is" >&2
+    rm -f /etc/ssh/sshd_config.d/00-hardening.conf
+fi
 systemctl enable --now fail2ban >/dev/null
-echo "hardened: ufw active, password auth off, fail2ban up"
+echo "hardened: ufw active, key-only SSH (no password, root prohibit-password), fail2ban up"
 HARDEN
 
 echo "== [3/6] docker (runbook §2 step 2) =="

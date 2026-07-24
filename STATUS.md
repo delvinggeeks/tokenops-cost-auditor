@@ -35,6 +35,20 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## PROD SECURITY AUDIT + SSH FIX (2026-07-24) — founder "hardening done, security etc?"
+
+Audited the live host. HARDENED OK: ufw active (default-deny in, only 22/80/443),
+app+postgres expose-only (not published — only Caddy binds 80/443), Caddy TLS
+(Let's Encrypt live), fail2ban (sshd jail), .env chmod 600 root-only,
+unattended-upgrades enabled. FOUND + FIXED one real gap: SSH still allowed
+password auth AND root password login — the provision sed on /etc/ssh/sshd_config
+was silently defeated by 50-cloud-init.conf ("PasswordAuthentication yes"),
+because the Include sits at the top and sshd is FIRST-match-wins. Fixed live via
+a 00-hardening.conf drop-in (sorts first → wins): PasswordAuthentication no,
+PermitRootLogin prohibit-password, KbdInteractive no — validated with `sshd -t`
+before reload, key auth preserved (fresh connection verified). provision.sh
+harden step rewritten to do the same so future deploys don't regress (R-IMPROVISE).
+
 ## S-6 DEPLOYED — v1.8.0 LIVE (2026-07-24) — founder "deploy S-6, then O-0"
 
 Founder chose (AskUserQuestion) deploy-first. Pre-deploy backup OK
