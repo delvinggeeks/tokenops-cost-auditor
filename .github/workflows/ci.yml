@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: uv run ruff check .
       - run: uv run ruff format --check .
 
@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: uv run mypy
 
   test:
@@ -76,7 +76,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - name: weasyprint system libraries (PDF rendering, D7)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libharfbuzz-subset0 libfontconfig1 fonts-dejavu-core
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - run: uv run pytest --cov=src/tokenops_cost_auditor --cov-report=json --cov-report=term -m "not perf"
       - name: coverage gate (85% services, 100% money math)
         run: uv run python scripts/coverage_gate.py
@@ -100,7 +100,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       - name: API reference drift gate (MP-3)
         run: uv run python scripts/export_openapi.py --check
       - name: self-audit ledger drift gate (WP-SELF)
@@ -134,7 +134,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
-      - run: uv sync --frozen
+      - run: uv sync --frozen --all-extras
       # exit code 5 (no tests collected) is success until the perf suite lands at D12
       - run: uv run pytest -m perf || { rc=$?; [ "$rc" -eq 5 ] && echo "no perf tests yet"; [ "$rc" -eq 5 ]; }
 

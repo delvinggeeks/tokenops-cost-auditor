@@ -77,8 +77,13 @@ def upgrade() -> None:
         op.add_column(table, sa.Column("workspace_id", sa.String(32), nullable=True))
         op.create_index(f"ix_{table}_workspace_id", table, ["workspace_id"])
 
-    # --- backfill (portable correlated subqueries; every user has exactly one
-    #     owner workspace after O-0, so each lookup resolves to a single value).
+    # --- backfill (portable correlated subqueries). INVARIANT: O-0 gives every
+    #     user EXACTLY ONE owner membership (uq_owner_membership_per_user), so
+    #     each subquery resolves to a single value. A user with ZERO owner
+    #     memberships (an out-of-band shape O-0 prevents) would backfill NULL —
+    #     harmless for users.active_workspace_id (the resolver falls back), but
+    #     it would hide that user's historic alert rows under workspace reads;
+    #     the O-0 invariant is what guarantees this cannot happen in practice.
     conn = op.get_bind()
     conn.execute(
         sa.text(

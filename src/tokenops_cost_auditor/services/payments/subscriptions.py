@@ -26,7 +26,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
-from tokenops_cost_auditor.persistence.models import Subscription, User, utcnow
+from tokenops_cost_auditor.persistence.models import (
+    Subscription,
+    User,
+    WorkspaceMember,
+    utcnow,
+)
 from tokenops_cost_auditor.persistence.repo import active_workspace_id, workspace_id_for
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
@@ -79,10 +84,15 @@ def _subs_by_workspace(
     uniq = [w for w in dict.fromkeys(workspace_ids) if w is not None]
     if not uniq:
         return {}
+    # ORDER BY id so the dict's "last wins" is DETERMINISTIC across engines/runs
+    # (cold-review: one sub per workspace is the model, but if legacy data ever
+    # carried more, the winner must not depend on scan order).
     return {
         s.workspace_id: s
         for s in session.execute(
-            select(Subscription).where(Subscription.workspace_id.in_(uniq))
+            select(Subscription)
+            .where(Subscription.workspace_id.in_(uniq))
+            .order_by(Subscription.id)
         )
         .scalars()
         .all()
@@ -90,16 +100,54 @@ def _subs_by_workspace(
     }
 
 
+def _active_workspace_ids(session: Session, user_ids: list[str]) -> dict[str, str | None]:
+    """Batched equivalent of repo.active_workspace_id for MANY users: each user's
+    active workspace (their User.active_workspace_id iff a live membership, else
+    their personal/owner workspace) resolved in a FIXED two queries, not N — so
+    the digest/scheduler hot paths avoid the per-user N+1 (cold-review restored
+    the V-D8 batching). Mirrors repo.active_workspace_id's validation exactly;
+    it does NOT ensure-create a missing personal workspace (a read-only billing
+    batch shouldn't write) — a workspace-less user resolves to None → Free, which
+    is the same answer, and post-O-0 every user has an owner workspace anyway."""
+    uids = list(dict.fromkeys(user_ids))
+    if not uids:
+        return {}
+    active_ptr = {
+        u.id: u.active_workspace_id
+        for u in session.execute(select(User).where(User.id.in_(uids))).scalars()
+    }
+    owner_ws: dict[str, str] = {}
+    memberships: set[tuple[str, str]] = set()
+    for uid, wid, role in session.execute(
+        select(WorkspaceMember.user_id, WorkspaceMember.workspace_id, WorkspaceMember.role).where(
+            WorkspaceMember.user_id.in_(uids)
+        )
+    ):
+        memberships.add((uid, wid))
+        if role == "owner":
+            owner_ws[uid] = wid
+
+    def _resolve(uid: str) -> str | None:
+        personal = owner_ws.get(uid)
+        active = active_ptr.get(uid)
+        if active and active != personal and (uid, active) in memberships:
+            return active
+        return personal
+
+    return {uid: _resolve(uid) for uid in uids}
+
+
 def entitlements_for(
     session: Session, settings: Settings, user_ids: list[str]
 ) -> dict[str, dict[str, object]]:
     """Batched per-user entitlements, each resolved via the user's ACTIVE
     workspace (members inherit the workspace plan — founder Q3 ruling). Used by
-    the per-recipient digest loops (one entitlement row per user)."""
+    the per-recipient digest loops. THREE queries total regardless of N (users,
+    memberships, subscriptions) — no per-user N+1."""
     if not user_ids:
         return {}
-    ws_of = {uid: active_workspace_id(session, uid) for uid in dict.fromkeys(user_ids)}
-    subs = _subs_by_workspace(session, [w for w in ws_of.values() if w is not None])
+    ws_of = _active_workspace_ids(session, user_ids)
+    subs = _subs_by_workspace(session, list(ws_of.values()))
 
     def _for(uid: str) -> dict[str, object]:
         ws = ws_of.get(uid)
@@ -150,9 +198,7 @@ def entitlements_from_workspace(
     workspace, members inherit). A workspace with no subscription is Free."""
     sub = None
     if workspace_id is not None:
-        sub = session.scalar(
-            select(Subscription).where(Subscription.workspace_id == workspace_id)
-        )
+        sub = session.scalar(select(Subscription).where(Subscription.workspace_id == workspace_id))
     return _entitlements_from(settings, sub)
 
 

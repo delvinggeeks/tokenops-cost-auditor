@@ -15,6 +15,19 @@ Landing.
 
 Responses: `200`
 
+## `GET /activity`
+
+Activity Page.
+
+Wave B — the activity feed. Opening it marks everything seen, so the
+topbar bell resets: the customer's 'what's new' is always accurate.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /admin`
 
 Admin Home.
@@ -63,6 +76,51 @@ FR-18 manual fulfillment; comp grants use provider='comp', amount 0 (Q8).
 
 Responses: `200`, `422`
 
+## `POST /admin/plans/grant`
+
+Grant Plan.
+
+Founder ops (R-DOGFOOD 2026-07-23): grant/set an account's plan without
+touching the database by hand — the direct-SQL path is exactly what an
+audit product must never need. provider='manual' marks it as an ops
+grant, audit-logged with the actor; setting plan='free' removes the
+manual subscription (reverts to the real state).
+
+Responses: `200`, `422`
+
+## `GET /alerts`
+
+Alerts Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /alerts`
+
+Save Alerts.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /api/v1/audits`
+
+List Audits.
+
+The caller's most recent audits — counts and dollars only.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `limit` | query | no | integer |
+| `Authorization` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /api/v1/audits`
 
 Create Audit.
@@ -74,6 +132,20 @@ Create Audit.
 
 Responses: `201`, `422`
 
+## `GET /api/v1/audits/{audit_id}/findings`
+
+List Findings.
+
+The findings inside one of the caller's audits — ranked, counts/dollars
+plus the generated fix guidance. Never any customer prompt/completion text.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `Authorization` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /api/v1/audits/{audit_id}/status`
 
 Audit Status.
@@ -82,6 +154,43 @@ Audit Status.
 |---|---|---|---|
 | `audit_id` | path | yes | string |
 | `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /api/v1/collector/link`
+
+Link Device.
+
+Exchange a link code for a device token. Refuses without the consent
+ASSERTION (R-CC-LINK 2 — see the module docstring for the honest trust
+boundary: the prompt lives in the CLI; the server records the claim).
+
+Responses: `200`, `422`
+
+## `POST /api/v1/collector/ship`
+
+Ship.
+
+Counts-only JSONL from the collector enters the same T1 pipeline as
+an upload. FR-26 idempotency makes scheduled re-ships safe.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `X-Device-Token` | header | no | string |
+| `Idempotency-Key` | header | no | string |
+
+Responses: `201`, `422`
+
+## `POST /api/v1/ingest`
+
+Ingest.
+
+A batch of per-call usage records -> the T1 pipeline (full coverage).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `Authorization` | header | no | string |
+| `Idempotency-Key` | header | no | string |
 
 Responses: `200`, `422`
 
@@ -97,13 +206,53 @@ Stripe Webhook.
 
 Responses: `200`
 
+## `GET /audits/{audit_id}/progress`
+
+Audit Progress.
+
+The live pipeline theater — where the browser lands after an upload.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /audits/{audit_id}/progress/partial`
+
+Audit Progress Partial.
+
+The polled fragment. Ownership re-checked on EVERY poll (§5d — the
+page not being yours must fail here too, not only at first render).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /audits/{audit_id}/row-errors`
+
+Audit Row Errors.
+
+The validator's rejects, as the CSV the pipeline already wrote.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /auth/logout`
 
 Logout.
 
 Responses: `200`
 
-## `POST /auth/magic-link`
+## `POST /auth/signin-link`
 
 Request Magic Link.
 
@@ -111,11 +260,214 @@ Responses: `200`, `422`
 
 ## `GET /auth/verify`
 
-Verify.
+Verify Show.
+
+Show a confirm button — do NOT consume the link. Corporate mail security
+(Outlook SafeLinks, Proofpoint) prefetches links with GET to scan them;
+consuming on GET burned the one-time link before the human clicked, locking
+out exactly the work-email buyer we target (readiness audit 2026-07-22).
+Signature + expiry are checked here; only the POST below signs in.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
 | `token` | query | yes | string |
+
+Responses: `200`, `422`
+
+## `POST /auth/verify`
+
+Verify.
+
+Responses: `200`, `422`
+
+## `GET /auth/{provider}`
+
+Federation Start.
+
+Config-gated: 404s when the provider isn't fully configured — the
+button never renders in that case either, so this is defense in depth,
+not the primary gate.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `provider` | path | yes | string |
+
+Responses: `200`, `422`
+
+## `GET /auth/{provider}/callback`
+
+Federation Callback.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `provider` | path | yes | string |
+| `code` | query | no | string |
+| `state` | query | no | string |
+| `error` | query | no | string |
+
+Responses: `200`, `422`
+
+## `GET /billing`
+
+Billing Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /copilot/seats`
+
+Upload Seats.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /dashboard`
+
+Dashboard.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /dashboard/onboarding/hide`
+
+Hide Onboarding.
+
+Let a customer dismiss the getting-started checklist. Cookie-scoped: it
+auto-hides on completion anyway, so this is only for 'I'd rather not see it'.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /dashboard/w/{key}`
+
+Widget Partial.
+
+One widget, standalone — the htmx refresh target.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `key` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /early-access`
+
+Early Access Signup.
+
+R-GTM-CONTROL: control-plane early-access email capture. No product
+promises, no dates. Signups land in the append-only audit_log (no new
+table) and the daily digest surfaces the weekly count as Phase-2 trigger
+evidence.
+
+Responses: `200`, `422`
+
+## `GET /explore`
+
+Explore Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /explore/views`
+
+Save View.
+
+FR-32 C3: save the current slice under a name. The stored params are
+parse_filters -> serialize_filters round-tripped, so only whitelisted
+filter keys can ever persist. Same name = replace (a view is a bookmark,
+not a ledger). Export stays HELD on the registered data-export trigger.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /explore/views/{view_id}/delete`
+
+Delete View.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `view_id` | path | yes | integer |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /findings`
+
+Findings Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `sort` | query | no | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /findings/{audit_id}/{finding_id}`
+
+Finding Drawer.
+
+Depth (c): why → evidence → fix → verify → methodology (R-CLARITY §1).
+Rendered into a right-hand drawer by htmx (familiarity principle).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `finding_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /findings/{audit_id}/{finding_id}/feedback`
+
+Capture Feedback.
+
+L0 capture (docs/12 Stage 3). Idempotent: re-voting updates in place.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `finding_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /guide`
+
+Guide Index.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /guide/{slug}`
+
+Guide Detail.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `slug` | path | yes | string |
+| `x-user-email` | header | no | string |
 
 Responses: `200`, `422`
 
@@ -143,6 +495,49 @@ Terms.
 
 Responses: `200`
 
+## `GET /login`
+
+Login Page.
+
+Responses: `200`
+
+## `GET /oauth/authorize`
+
+Authorize.
+
+Validate the request, then render the consent screen for the logged-in
+resource owner. Client/redirect problems render on-site (never redirect).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `response_type` | query | no | string |
+| `client_id` | query | no | string |
+| `redirect_uri` | query | no | string |
+| `scope` | query | no | string |
+| `state` | query | no | string |
+| `code_challenge` | query | no | string |
+| `code_challenge_method` | query | no | string |
+
+Responses: `200`, `422`
+
+## `POST /oauth/authorize`
+
+Authorize Decision.
+
+Approve or deny. The signed blob binds this decision to the resource
+owner who started the flow — a forged/cross-user POST fails the email check.
+
+Responses: `200`, `422`
+
+## `POST /oauth/token`
+
+Token.
+
+Exchange a single-use authorization code for a read-scoped access token.
+Requires BOTH the client_secret (confidential client) and the PKCE verifier.
+
+Responses: `200`, `422`
+
 ## `GET /r/{token}`
 
 Web Report.
@@ -160,6 +555,344 @@ Report Pdf.
 | Parameter | In | Required | Type |
 |---|---|---|---|
 | `token` | path | yes | string |
+
+Responses: `200`, `422`
+
+## `GET /runs`
+
+Runs Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /runs/partial`
+
+Runs Partial.
+
+The self-polled runs ledger while a run is in flight (same law as the
+pipeline widget: the swap that catches the landing drops the trigger, and
+idle pages make zero polling requests).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /sample`
+
+Sample Report.
+
+FR-16: a shareable sample built by running synthetic fixture traffic
+through the REAL engine — every figure is arithmetic our detectors
+produced, not a mock-up.
+
+Responses: `200`
+
+## `GET /settings`
+
+Settings Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `purged` | query | no | string |
+| `closed` | query | no | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/benchmarks`
+
+Save Benchmark Pref.
+
+R-F1 SIGN-OFF: cohort membership is the customer's call, one checkbox.
+Audit-logged — leaving or rejoining the benchmark cohort is a data-use
+decision, and data-use decisions leave a trail here.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/close-account`
+
+Close Account.
+
+R-SAAS-BASICS 4a. Everything stated on the page happens, in order:
+raw uploads purged (ONE purge definition), connected keys revoked and
+their ciphertext deleted, the subscription cancelled on our side, this
+session ended — all audit-logged.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /settings/developer`
+
+Developer Home.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/developer/apps`
+
+Register App.
+
+Register a third-party OAuth app. client_secret is shown ONCE.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/developer/apps/{app_id}/revoke`
+
+Revoke App.
+
+Revoke an app: its secret is deleted AND every access token it issued
+dies (the resolver rejects tokens of a revoked app).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `app_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/developer/tokens`
+
+Mint Token.
+
+Mint a personal READ token — shown once, stored hashed.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/developer/tokens/{token_id}/revoke`
+
+Revoke Token.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `token_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/email`
+
+Save Email Prefs.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/purge`
+
+Purge Now.
+
+Delete every raw upload we still hold for this account, now.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/workspace/rename`
+
+Rename Workspace.
+
+O-0 (R-ORG): the owner renames their workspace. Only an owner may rename;
+in O-0 every user owns their workspace-of-one. Audit-logged.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /signup`
+
+Signup Page.
+
+Responses: `200`
+
+## `GET /sources`
+
+Sources Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources`
+
+Connect Source.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/claude-code/code`
+
+Issue Link Code.
+
+Dashboard action: mint a short-lived one-shot link code, shown once.
+Plan-gated at LINK time (the collector is a subscriber deliverable);
+ships are then per-device, no further gate.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /sources/connect/{provider}`
+
+Wizard Page.
+
+The 3-step guided wizard (R-MAGIC-CONNECT §1).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `provider` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/connect/{provider}/validate`
+
+Wizard Validate.
+
+Live validation, then save. R-WIZ-DEGRADE: an unreachable provider
+saves the key and says so plainly — it never blocks the customer.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `provider` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/devices/{device_id}/revoke`
+
+Revoke Device.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `device_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/sdk/key`
+
+Mint Key.
+
+Mint an ingest key — shown once, stored hashed. Pro+ (an SDK stream
+is a subscriber deliverable, same law as the collector).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/sdk/{key_id}/revoke`
+
+Revoke Key.
+
+Revoke = the hash is DELETED (authority law) — ingest stops now.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `key_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /sources/{source_id}/revoke`
+
+Revoke Source.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `source_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /statements`
+
+Statements Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /statements/{period}`
+
+Statement Detail.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `period` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /statements/{period}/send`
+
+Send Statement.
+
+Issue it, or re-send an already-issued one to the same address.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `period` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /tour/dismiss`
+
+Dismiss Tour.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /tour/replay`
+
+Replay Tour.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
 
 Responses: `200`, `422`
 
