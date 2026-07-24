@@ -89,7 +89,7 @@
           <div class="muted" style="padding:4px 10px;font-size:12px;">Acting in</div>
           {% for w in workspaces %}
             {% if w.active %}
-          <div style="padding:8px 10px;font-size:13.5px;font-weight:600;">{{ w.name }} <span class="muted" style="font-weight:400;">· {{ w.role }}</span> ✓</div>
+          <div style="padding:8px 10px;font-size:13.5px;font-weight:600;">{{ w.name }} <span class="muted" style="font-weight:400;">· {{ w.role }} · active</span></div>
             {% else %}
           <form method="post" action="/settings/workspace/switch">
             <input type="hidden" name="workspace_id" value="{{ w.id }}">
@@ -100,7 +100,7 @@
         </div>
       </details>
       {% elif active_workspace_name %}
-      <span class="muted workspace-solo" title="You are the only member — this is just your workspace">{{ active_workspace_name }}</span>
+      <span class="workspace-solo" style="color:var(--ink-soft);font-size:13px;" title="You are the only member — this is just your workspace">{{ active_workspace_name }}</span>
       {% endif %}
       {# Account menu (founder walkthrough 2026-07-22: "no logout, account,
          management in the dashboard") — the email IS the menu, the way

@@ -161,7 +161,14 @@ def switch_workspace(
     target = workspace_id.strip()
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
-        if set_active_workspace(session, user.id, target):
+        # Only switch (and audit) on a REAL change to a workspace the user
+        # belongs to — a self-switch or empty/foreign target writes nothing and
+        # logs nothing, keeping the audit trail to genuine moves.
+        if (
+            target
+            and target != active_workspace_id(session, user.id)
+            and set_active_workspace(session, user.id, target)
+        ):
             auditlog.append(session, user.email, "workspace.switched", target)
         session.commit()
     # land on the dashboard so the switch is immediately visible (every widget

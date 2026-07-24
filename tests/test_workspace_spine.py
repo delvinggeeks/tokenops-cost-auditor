@@ -405,17 +405,49 @@ class TestWorkspaceSwitcherJourney:
         assert 'action="/settings/workspace/switch"' not in html  # ...and no dead control
 
     def test_indicator_reachable_on_every_app_page(self, app: FastAPI) -> None:
-        """Reachability law: the workspace bar is on EVERY app page — the
-        _shell_ctx pages AND the manual-render ones (sources, developer, upload)."""
+        """Reachability law (system-tester gate): the workspace bar is on EVERY
+        app-shell page — the _shell_ctx pages AND the manual-render ones — so a
+        future edit that drops workspace_bar from one consumer (e.g. billing)
+        fails HERE instead of shipping. All 14 shell destinations are walked."""
         self._seed_two_workspaces(app)
         client = TestClient(app)
-        for path in (
+        pages = (
             "/dashboard",
+            "/findings",
+            "/explore",
             "/runs",
-            "/settings",
+            "/activity",
+            "/guide",
             "/sources",
-            "/settings/developer",
+            "/sources/connect/openai",
             "/upload",
-        ):
-            html = client.get(path, headers=HDR).text
-            assert self.A_NAME in html, f"workspace indicator missing on {path}"
+            "/alerts",
+            "/statements",
+            "/billing",
+            "/settings",
+            "/settings/developer",
+        )
+        for path in pages:
+            resp = client.get(path, headers=HDR)
+            assert resp.status_code == 200, f"{path} -> {resp.status_code}"
+            assert self.A_NAME in resp.text, f"workspace indicator missing on {path}"
+
+    def test_workspace_bar_never_empty_ensure_creates(self, app: FastAPI) -> None:
+        """cold-review O-1b-1: workspace_bar always yields a NAMED active
+        workspace — active_workspace_id ensure-creates the personal workspace +
+        membership before list_memberships reads it — so the indicator can never
+        silently vanish. Even a user whose rows were stripped out-of-band gets it."""
+        from sqlalchemy import delete
+
+        from tokenops_cost_auditor.web.shell import workspace_bar
+
+        with app.state.session_factory() as s:
+            user = get_or_create_user(s, EMAIL)
+            s.commit()
+            s.execute(delete(WorkspaceMember).where(WorkspaceMember.user_id == user.id))
+            s.execute(delete(Workspace))
+            s.commit()
+            bar = workspace_bar(s, user.id)
+            assert bar["workspaces"], "workspace_bar must never be empty"
+            assert bar["active_workspace_name"], "the active workspace must be named"
+            assert any(w["active"] for w in bar["workspaces"])

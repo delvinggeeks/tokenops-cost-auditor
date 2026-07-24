@@ -212,11 +212,11 @@ def upload_page(request: Request) -> HTMLResponse:
         # travels before the ask), unlike the plain /signup.
         return _signin_page(request, "signup", show_get_logs=True)
     # O-1b-1: the workspace bar shows here too (reachability). This signed-in
-    # page had no DB session; open a short one just for the bar.
+    # page had no DB session; open a short READ-ONLY one just for the bar (no
+    # commit — rendering a page must not write; the user already exists).
     with request.app.state.session_factory() as session:
         user = get_or_create_user(session, email)
         ws_bar = workspace_bar(session, user.id)
-        session.commit()
     return _render(
         request,
         "app/upload.html",
