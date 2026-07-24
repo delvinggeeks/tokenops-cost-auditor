@@ -66,8 +66,13 @@ per-recipient dedup stays user-scoped; Payment stays user-scoped (O-2). conftest
 fixture-stamp hook extended to AlertEvent/AlertCheck. ruff+mypy clean; affected
 suites green.
 
-REMAINING for O-1b (the member-facing vertical — best in a fresh session per
-K-3/TE-9, this one is large): invite backend (POST /settings/members/invite,
+REMAINING for O-1b is now SPLIT into three fresh-session vertical slices, each
+with acceptance criteria + DoD, in PLAN-ORG.md §O-1 (founder 2026-07-24): **O-1b-1
+workspace switcher** (navigation spine), **O-1b-2 invite & accept** (the core
+grow-the-workspace journey), **O-1b-3 members page & revoke** (governance). Start
+a fresh session per slice ("proceed O-1b-1", etc.); PLAN-ORG carries the full
+spec. Original remaining-work notes (superseded by the split, kept for detail):
+invite backend (POST /settings/members/invite,
 owner-only, TEAM/"Scale"-plan-gated — that plan was SOLD as multi-seat and O-1b
 is what lets it deliver; rate-limited; emailed accept link) + accept flow (email
 match + atomic one-shot consume + add WorkspaceMember(role=member) + set active

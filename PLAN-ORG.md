@@ -51,18 +51,111 @@ carefully-migrated slice so nothing after it is a big-bang rewrite.
   are populated). This is a bounded, safer sequencing of the same work,
   not a scope cut.]
 
-- **O-1 Members + invites** (~2-3d). Invite by email (one-shot hashed
-  code, the link-code grammar); a member joins a workspace; the Members
-  page (Sentry's, honestly ours). Observe-only: a member sees the
-  workspace's audits/reports. DoD: invite → accept → the invitee reaches
-  the shared dashboard; revoke membership stops access; honest empty
-  states. FIRST TASK (inherited from O-0): re-scope the 40+ read sites
-  from `user_id` to `workspace_id` — the moment a second member exists,
-  user-scoped reads would hide the workspace's data from them, so this is
-  O-1's enabler. The columns already exist and are backfilled (O-0), so no
-  migration; the S-6 ingest/read tokens also flip to workspace scope here
-  (PLAN-SDK §3). The isolation test hardens from "1:1 correct" to
-  "multi-member correct."
+- **O-1 Members + invites.** Observe-only tenancy: a member sees the
+  workspace's audits/reports. Delivered in halves, then split into three
+  member-facing vertical slices (founder 2026-07-24: "split ... concretely
+  [into] vertical slices so we create new sessions for separate tasks with
+  acceptance criteria and DoD for each"). Each slice below is ONE fresh
+  session (K-3/TE-9), ships END-TO-END (R-VERTICAL: backend + UI + click path
+  + journey test + ux gate + honest empty/error states), and gate-closes
+  before the next. `active_workspace_id`, `set_active_workspace`,
+  `list_memberships`, `WorkspaceInvite`, and billing-by-workspace already
+  exist (O-1b backend, commit d52960e) — these slices are the reachable
+  surfaces on top.
+
+  - **[DONE] O-1a read re-scope** (commit d7a5c43, gated). Every display
+    read scopes to `active_workspace_id` + `workspace_id`; S-6 tokens too.
+  - **[DONE] O-1b backend foundation** (commit d52960e). Migration 021
+    (`users.active_workspace_id`, `workspace_invites`, `workspace_id` on
+    alert logs); switchable membership-validated resolver; billing
+    inheritance (founder Q3 ruling: one sub per workspace, members inherit;
+    visibility role-gated in O-2); alert-log member-visibility. All
+    behavior-preserving under 1:1.
+
+  ### O-1b-1 — Workspace switcher (the navigation spine) [~0.5-1 session]
+  GOAL (journey): a user who belongs to more than one workspace can move
+  between them, and always knows which one they are acting in.
+  DESIGN/UI (mockup FIRST, ux gate): an "acting in: <workspace>" indicator
+  in the app shell (topbar), and a switcher (dropdown or Settings→Workspace
+  list) of the user's workspaces with their role; a solo user sees an honest
+  "just your workspace — invite people to share it" (no fake affordance).
+  BACKEND: POST `/settings/workspace/switch` → `repo.set_active_workspace`
+  (already validates membership); render the current workspace from
+  `active_workspace_id`; list via `repo.list_memberships`.
+  REACHABILITY: the indicator is on every app page (shell); the switch
+  control is one click from it.
+  ACCEPTANCE CRITERIA: (1) the active-workspace name is visible on the app
+  shell; (2) switching changes what EVERY read returns (dashboard, sources,
+  runs, reports); (3) switching to a workspace the user is NOT a member of
+  is refused and changes nothing; (4) a single-workspace user sees the
+  honest solo state, no dead control; (5) reachable end to end by clicking.
+  DoD: journey test seeds a user into two workspaces (membership rows
+  directly) and walks switch → every surface flips; non-membership switch
+  refused; ux gate on the mockup + wiring; suite green; gate round
+  (ux + spec + cold + system-tester). DEPENDS ON: O-1b backend (done).
+  SESSION START: "proceed O-1b-1 (workspace switcher)".
+
+  ### O-1b-2 — Invite & accept (grow the workspace) [~1 session, the core]
+  GOAL (journey): an owner invites a teammate by email; the teammate accepts
+  and lands in the shared workspace, seeing the workspace's audits/dashboard.
+  DESIGN/UI (mockup FIRST): a Members surface with an invite form (email +
+  role=member) and a pending-invites list with honest states (pending /
+  expired); the emailed accept link; an accept confirmation that drops the
+  invitee INTO the shared workspace (auto-switch on accept, using O-1b-1's
+  spine to move/return).
+  BACKEND: POST `/settings/members/invite` — OWNER-ONLY, gated to the
+  **Scale/"team" plan** (that plan was sold as multi-seat and this is what
+  lets it deliver — see plans.py TEAM note), rate-limited (NFR-03/12
+  pattern), mint a one-shot code (`WorkspaceInvite`, hashed via
+  `credential_fingerprint`, shown once in the email), email the accept link.
+  GET/POST `/invite/accept?code=` — require the logged-in user's email to
+  MATCH the invite email (defense in depth), atomic single-use consume
+  (UPDATE ... WHERE consumed_at IS NULL, the LinkCode grammar), add
+  `WorkspaceMember(role="member")`, then `set_active_workspace` to the joined
+  workspace.
+  ACCEPTANCE CRITERIA: (1) invite is emailed, code stored only as a hash;
+  (2) accept requires a matching email AND an unconsumed, unexpired code —
+  wrong email / reused / expired all refused with honest messages; (3) on
+  accept the user is a member and their active workspace is the shared one;
+  (4) the invitee now sees the workspace's audits on the dashboard; (5)
+  invite is owner-only + Scale-gated + rate-limited; (6) a non-member still
+  sees nothing shared (isolation holds — hardens the test from 1:1 to
+  multi-member).
+  DoD: journey test walks owner-invite → invitee-accept → shared dashboard
+  shows the owner's audits → isolation for a third party; adversarial cases
+  (wrong email, reused code, expired) pinned; ux gate; suite green; gate
+  round. DEPENDS ON: O-1b-1 (the switcher spine, so the invitee can
+  navigate/return). SESSION START: "proceed O-1b-2 (invite & accept)".
+
+  ### O-1b-3 — Members page & revoke (govern the workspace) [~0.5-1 session]
+  GOAL (journey): an owner sees who is in the workspace and can remove them;
+  a removed member loses access.
+  DESIGN/UI (mockup FIRST): the full Members page under Settings — members
+  list (email · role · joined), pending invites with resend/cancel, and a
+  revoke control per member (owner-only, `data-confirm`); honest empty state
+  ("just you so far — invite a teammate").
+  BACKEND: POST `/settings/members/{id}/revoke` — OWNER-ONLY, deletes the
+  `WorkspaceMember`; the switchable resolver already falls a revoked member
+  back to their personal workspace on the next request (no extra work — pin
+  it with a test). Invite resend (re-mint) / cancel (consume/expire).
+  REACHABILITY: a "Members" entry in the Settings nav.
+  ACCEPTANCE CRITERIA: (1) Members page reachable from Settings, lists
+  members (role, joined) + pending invites; (2) owner revokes → that
+  member's next request no longer sees the workspace (falls back to
+  personal) → access stops; (3) mutations are owner-only — a plain member
+  sees NO revoke/invite control (absent, not just 403 — the reachability law
+  for permissions, foreshadowing O-2); (4) honest empty states; (5) resend
+  and cancel pending invites work.
+  DoD: journey test walks revoke → access stops; owner-only surface pinned;
+  ux gate; suite green; gate round. Then update STATUS + docs/04-TRACEABILITY
+  and O-1 closes. DEPENDS ON: O-1b-2 (members exist to govern). SESSION
+  START: "proceed O-1b-3 (members page & revoke)".
+
+  NOTE — deferred OUT of O-1 into O-2 (role-gated) or later, so no slice
+  above silently owns them: billing VISIBILITY to non-owners (Payment stays
+  user-scoped); every mutate a member might attempt beyond the above
+  (revoke a source, mint a key, edit alert rules, purge) stays owner-scoped
+  fail-closed until O-2 assigns roles.
 
 - **O-2 Roles (RBAC)** (~2-3d). `owner | admin | member | viewer` with a
   permission matrix over PRODUCT actions only (mint/revoke keys, manage
