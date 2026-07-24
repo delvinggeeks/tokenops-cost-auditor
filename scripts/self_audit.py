@@ -2,7 +2,7 @@
 
 Runs the Claude Code exporter on THIS project's sessions (counts only, FR-22),
 runs the CLI audit (the same engine customers get), appends one row to
-self_audit/ledger.csv and archives the report JSON. Manual or local-scheduler
+docs/internal/self-audit/ledger.csv and archives the report JSON. Manual or local-scheduler
 runnable; NOT part of the product deployment (ops tooling, engine untouched).
 
 Ledger rows are money-adjacent (R-SELF-AUDIT c): each row lands with
@@ -22,8 +22,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(__file__).parents[1]
-LEDGER = REPO / "self_audit" / "ledger.csv"
-ARCHIVE = REPO / "self_audit" / "reports"  # gitignored; ledger is the record
+LEDGER = REPO / "docs" / "internal" / "self-audit" / "ledger.csv"
+ARCHIVE = REPO / "docs" / "internal" / "self-audit" / "reports"  # gitignored; ledger is the record
 PROJECT_SESSIONS = (
     Path.home() / ".claude" / "projects" / "-home-lokesh-Desktop-tokenops-cost-auditor"
 )

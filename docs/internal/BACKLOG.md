@@ -305,7 +305,7 @@ SDK/proxy note (R-CONNECT 3): remains Phase-2 control plane — X-01/X-02
 intact for the audit product; recorded rationale: in-path components live
 in the customer's VPC per the deployment contract, post-trust.
 
-## Design-audit P3s (founder deep-audit order 2026-07-26; numbered per design/DESIGN-AUDIT.md)
+## Design-audit P3s (founder deep-audit order 2026-07-26; numbered per docs/design/DESIGN-AUDIT.md)
 
 [Batch trigger registered, founder-approved 2026-07-22: F11-F16 fold into
 WP-PIPELINE-UI / WP-REPORT-VISUAL — whichever first touches each item's

@@ -1,4 +1,4 @@
-/* Landing motion, per design/MOTION-SPECS.md C1–C5 (the gate artifact).
+/* Landing motion, per docs/design/MOTION-SPECS.md C1–C5 (the gate artifact).
    Every effect gates on prefers-reduced-motion and degrades to the final
    state: the markup renders complete and visible before this file runs, so
    a failed script costs decoration, never content. Budget: <15KB (raw). */

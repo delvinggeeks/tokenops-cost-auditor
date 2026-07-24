@@ -314,12 +314,12 @@ class TestDesignAssets:
     def test_served_css_matches_the_design_source(self) -> None:
         """The shipped stylesheet and the design source cannot drift."""
         served = Path("src/tokenops_cost_auditor/web/static/wa-design.css").read_text()
-        source = Path("design/wa-design.css").read_text()
-        assert served == source, "run: cp design/wa-design.css src/.../web/static/"
+        source = Path("docs/design/wa-design.css").read_text()
+        assert served == source, "run: cp docs/design/wa-design.css src/.../web/static/"
 
     def test_sprite_matches_the_design_source(self) -> None:
         sprite = Path("src/tokenops_cost_auditor/web/templates/app/_sprite.html").read_text()
-        source = Path("design/icons.svg").read_text()
+        source = Path("docs/design/icons.svg").read_text()
         for symbol in re.findall(r'<symbol id="([^"]+)"', source):
             assert f'id="{symbol}"' in sprite
 
