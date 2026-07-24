@@ -1,0 +1,261 @@
+"""Workspace members & invites (O-1b-2, R-ORG). Grow a workspace: an OWNER on
+the Scale plan invites a teammate by email; the teammate accepts by signing in
+with that email and is dropped INTO the shared workspace (reusing O-1b-1's
+active-workspace switch spine).
+
+Security grammar (mirrors the device link-code in routes_devices):
+- the invite code is a SECRET shown once, stored only as a keyed HMAC (code_hash);
+- acceptance requires the logged-in user's email to MATCH the invite email — a
+  leaked code alone cannot join a different account (defense in depth);
+- acceptance is single-use via an atomic UPDATE-where-unconsumed, rowcount-checked,
+  so two concurrent accepts cannot both add a membership;
+- minting is OWNER-ONLY, Scale-gated (the plan sold as multi-seat), rate-limited.
+"""
+
+from __future__ import annotations
+
+import secrets
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any, cast
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
+
+from tokenops_cost_auditor.api.routes_upload import EMAIL_RE, current_user
+from tokenops_cost_auditor.obs.ratelimit import limiter
+from tokenops_cost_auditor.persistence.models import Workspace, WorkspaceInvite, WorkspaceMember
+from tokenops_cost_auditor.persistence.repo import (
+    active_workspace_id,
+    get_or_create_user,
+    list_workspace_invites,
+    set_active_workspace,
+    workspace_role,
+)
+from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
+from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.web.auth import resolve_session
+from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
+from tokenops_cost_auditor.web.routes_sources import user_plan
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import CursorResult
+
+router = APIRouter(tags=["members"])
+
+INVITE_TTL_DAYS = 7
+
+
+def _aware(dt: datetime) -> datetime:
+    """SQLite hands back naive datetimes for DateTime(timezone=True); make any
+    stored timestamp UTC-aware before comparing, so expiry checks never raise."""
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
+
+def _viewer_email(request: Request) -> str | None:
+    """Soft auth for the invite-accept flow: the session email, or the non-prod
+    dev/test shim, or None. Returning None (instead of raising 401 like
+    current_user) lets an unauthenticated invitee get an honest 'sign in to
+    accept' page rather than a raw error."""
+    settings = request.app.state.settings
+    email = resolve_session(request, settings.secret_key, settings.session_ttl_days)
+    if email:
+        return email
+    shim = request.headers.get("X-User-Email")
+    if settings.app_env != "prod" and shim and EMAIL_RE.match(shim):
+        return shim.lower()
+    return None
+
+
+@router.get("/settings/members", response_class=HTMLResponse)
+def members_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+    """The members surface: invite a teammate + the pending-invites list. The
+    invite form appears ONLY for an owner on Scale; everyone else sees the honest
+    reason it's unavailable (not their workspace to grow / Scale-gated), never a
+    dead control."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None  # ensure-created; never None for an authenticated user
+        workspace = session.get(Workspace, ws)
+        is_owner = workspace_role(session, user.id, ws) == "owner"
+        is_scale = user_plan(session, user.id) == "team"
+        now = datetime.now(UTC)
+        invites = [
+            {"email": inv.email, "created": inv.created_at, "expired": _aware(inv.expires_at) < now}
+            for inv in (list_workspace_invites(session, ws) if is_owner else [])
+        ]
+        ctx = _shell_ctx(session, request, user, "members")
+        return _render(
+            request,
+            "app/members.html",
+            workspace_name=workspace.name if workspace else "your workspace",
+            is_owner=is_owner,
+            is_scale=is_scale,
+            can_invite=is_owner and is_scale,
+            invites=invites,
+            invite_ttl_days=INVITE_TTL_DAYS,
+            invited=request.query_params.get("invited"),
+            **ctx,
+        )
+
+
+@router.post("/settings/members/invite", response_model=None)
+@limiter.limit("5/minute")
+def invite_member(
+    request: Request,
+    email: str = Form(""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """OWNER-ONLY, Scale-gated, rate-limited. Mints a one-shot code stored only
+    as an HMAC and emails the accept link; the raw code is never persisted."""
+    invitee = email.strip().lower()
+    settings = request.app.state.settings
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None  # ensure-created; never None for an authenticated user
+        # fail-closed order: prove ownership, THEN the plan entitlement
+        if workspace_role(session, user.id, ws) != "owner":
+            raise HTTPException(status_code=403, detail="only the workspace owner can invite")
+        if user_plan(session, user.id) != "team":
+            raise HTTPException(
+                status_code=403, detail="inviting teammates is part of Scale — see /billing"
+            )
+        if not EMAIL_RE.match(invitee):
+            return RedirectResponse("/settings/members?invited=-1", status_code=303)
+        workspace = session.get(Workspace, ws)
+        code = secrets.token_urlsafe(24)
+        session.add(
+            WorkspaceInvite(
+                workspace_id=ws,
+                email=invitee,
+                role="member",
+                code_hash=credential_fingerprint(settings.secret_key, code),
+                invited_by_user_id=user.id,
+                expires_at=datetime.now(UTC) + timedelta(days=INVITE_TTL_DAYS),
+            )
+        )
+        auditlog.append(session, user.email, "workspace.invited", invitee)
+        session.commit()
+        ws_name = workspace.name if workspace else "the workspace"
+    # the invite row is committed; a mail failure must not 500 the owner — the
+    # log adapter shows the link in dev, and the honest banner says to retry.
+    try:
+        request.app.state.mail.workspace_invite(invitee, f"/invite/accept?code={code}", ws_name)
+    except Exception:
+        return RedirectResponse("/settings/members?invited=0", status_code=303)
+    return RedirectResponse("/settings/members?invited=1", status_code=303)
+
+
+def _load_invite(request: Request, code: str) -> WorkspaceInvite | None:
+    settings = request.app.state.settings
+    with _session(request) as session:
+        return session.execute(
+            select(WorkspaceInvite).where(
+                WorkspaceInvite.code_hash == credential_fingerprint(settings.secret_key, code)
+            )
+        ).scalar_one_or_none()
+
+
+def _accept_state(invite: WorkspaceInvite | None, viewer: str | None) -> str:
+    """The honest UI state for the accept page — no oracle beyond validity."""
+    if invite is None or invite.consumed_at is not None:
+        return "invalid"
+    if _aware(invite.expires_at) < datetime.now(UTC):
+        return "invalid"
+    if viewer is None:
+        return "sign_in"
+    if viewer.strip().lower() != invite.email.strip().lower():
+        return "wrong_email"
+    return "ready"
+
+
+@router.get("/invite/accept", response_class=HTMLResponse)
+def accept_show(request: Request, code: str = "") -> HTMLResponse:
+    """Confirm page — GET NEVER consumes (mail scanners pre-fetch links; same
+    reason magic-link uses a confirm step). Shows the honest state: invalid /
+    sign-in-required / wrong-email / ready-to-accept."""
+    invite = _load_invite(request, code)
+    viewer = _viewer_email(request)
+    state = _accept_state(invite, viewer)
+    workspace_name = ""
+    if invite is not None and state in ("ready", "sign_in", "wrong_email"):
+        with _session(request) as session:
+            ws = session.get(Workspace, invite.workspace_id)
+            workspace_name = ws.name if ws else ""
+    return _render(
+        request,
+        "invite_accept.html",
+        state=state,
+        code=code,
+        invited_email=invite.email if invite else "",
+        workspace_name=workspace_name,
+        viewer=viewer,
+    )
+
+
+@router.post("/invite/accept", response_model=None)
+def accept(request: Request, code: str = Form("")) -> HTMLResponse | RedirectResponse:
+    """Consume the invite: single-use, email-matched, atomic. On success the
+    user is a member and their active workspace is the shared one (auto-switch),
+    landing on the dashboard — now scoped to that workspace."""
+    viewer = _viewer_email(request)
+    settings = request.app.state.settings
+    now = datetime.now(UTC)
+    with _session(request) as session:
+        invite = session.execute(
+            select(WorkspaceInvite).where(
+                WorkspaceInvite.code_hash == credential_fingerprint(settings.secret_key, code)
+            )
+        ).scalar_one_or_none()
+        state = _accept_state(invite, viewer)
+        if state != "ready" or invite is None or viewer is None:
+            ws = session.get(Workspace, invite.workspace_id) if invite else None
+            return _render(
+                request,
+                "invite_accept.html",
+                state=state,
+                code=code,
+                invited_email=invite.email if invite else "",
+                workspace_name=ws.name if ws else "",
+                viewer=viewer,
+            )
+        user = get_or_create_user(session, viewer)
+        # atomic one-shot claim — two concurrent accepts cannot both take it
+        claimed = session.execute(
+            update(WorkspaceInvite)
+            .where(WorkspaceInvite.id == invite.id, WorkspaceInvite.consumed_at.is_(None))
+            .values(consumed_at=now, consumed_by_user_id=user.id)
+        )
+        if cast("CursorResult[Any]", claimed).rowcount != 1:
+            return _render(
+                request,
+                "invite_accept.html",
+                state="invalid",
+                code=code,
+                invited_email="",
+                workspace_name="",
+                viewer=viewer,
+            )
+        # add the membership (idempotent if somehow already a member) + auto-switch
+        if workspace_role(session, user.id, invite.workspace_id) is None:
+            session.add(
+                WorkspaceMember(workspace_id=invite.workspace_id, user_id=user.id, role=invite.role)
+            )
+        set_active_workspace(session, user.id, invite.workspace_id)
+        auditlog.append(session, user.email, "workspace.invite_accepted", invite.workspace_id)
+        # expiry was enforced in _accept_state (Python, tz-safe via _aware) an
+        # instant ago — the codebase keeps expiry checks in Python, not SQL, to
+        # dodge SQLite naive/aware comparison bugs (see routes_devices).
+        try:
+            session.commit()
+        except IntegrityError:
+            # cold-review O-1b-2 f.2: a concurrent accept of a SECOND invite for
+            # the same email already added this membership (uq_workspace_member);
+            # the user is in either way. Roll back rather than 500 — reopening
+            # the link switches cleanly (they're now a member, so the add skips).
+            session.rollback()
+    return RedirectResponse("/dashboard", status_code=303)

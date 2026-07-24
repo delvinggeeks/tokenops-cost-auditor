@@ -1,0 +1,54 @@
+{% extends "app/_shell.html" %}
+{% block title %}Members — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<div class="grid">
+  {{ kit.surface_open(title="Members of " ~ workspace_name, icon="overview", span=12) }}
+
+    {% if invited == "1" %}
+    <div class="provenance" role="status">Invitation sent — it works once, expires in
+      {{ invite_ttl_days }} days, and only for the address you invited.</div>
+    {% elif invited == "0" %}
+    <div class="provenance" role="alert">The invitation was recorded, but we couldn't send
+      the email just now. Try again in a minute.</div>
+    {% elif invited == "-1" %}
+    <div class="provenance" role="alert">That doesn't look like an email address.</div>
+    {% endif %}
+
+    {% if can_invite %}
+    <form method="post" action="/settings/members/invite" data-once
+          style="display:flex; gap:var(--s2); align-items:flex-end; flex-wrap:wrap;">
+      <div class="field" style="flex:1; min-width:16em;">
+        <label for="invite-email">Invite a teammate by email</label>
+        <input type="email" name="email" id="invite-email"
+               placeholder="teammate@company.com" required>
+      </div>
+      {{ kit.button("Send invite", variant="primary") }}
+    </form>
+    <div class="provenance">They join as a member and see this workspace's audits, dashboard
+      and savings. The link works once and expires in {{ invite_ttl_days }} days.</div>
+    {% elif not is_owner %}
+    <p class="tells">Only the workspace owner can invite people to this workspace.</p>
+    {% elif not is_scale %}
+    <p class="tells">Inviting teammates is part of <strong>Scale</strong> — the plan built for
+      shared workspaces. {{ kit.button("See plans", href="/billing") }}</p>
+    {% endif %}
+
+    <h3 style="margin-top:var(--s4);">Pending invitations</h3>
+    {% if invites %}
+    <ul style="list-style:none; padding:0; margin:0; display:grid; gap:2px;">
+      {% for inv in invites %}
+      <li style="display:flex; justify-content:space-between; gap:var(--s2);
+                 border-bottom:1px solid var(--rule); padding:var(--s1) 0;">
+        <span>{{ inv.email }}</span>
+        <span class="muted">invited {{ inv.created.strftime("%Y-%m-%d") }} ·
+          {% if inv.expired %}expired{% else %}pending{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No pending invitations{% if can_invite %} — invite someone above{% endif %}.</p>
+    {% endif %}
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}

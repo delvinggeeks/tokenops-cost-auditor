@@ -44,6 +44,7 @@ from tokenops_cost_auditor.web.routes_developer import router as developer_route
 from tokenops_cost_auditor.web.routes_devices import router as devices_router
 from tokenops_cost_auditor.web.routes_explorer import router as explorer_router
 from tokenops_cost_auditor.web.routes_ingest import router as ingest_router
+from tokenops_cost_auditor.web.routes_members import router as members_router
 from tokenops_cost_auditor.web.routes_oauth import router as oauth_router
 from tokenops_cost_auditor.web.routes_pages import router as pages_router
 from tokenops_cost_auditor.web.routes_report import router as report_router
@@ -209,6 +210,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(alerts_router)  # observe-and-alert settings (v1.5 WP-3b)
     app.include_router(statements_router)  # monthly owner artifact (v1.5 WP-4)
     app.include_router(settings_router)  # account/data controls (v1.5 WP-5)
+    app.include_router(members_router)  # O-1b-2 workspace invites + accept (R-ORG)
     app.include_router(billing_router)  # plans + dunning state (v1.5 WP-6)
 
     @app.exception_handler(RateLimitExceeded)

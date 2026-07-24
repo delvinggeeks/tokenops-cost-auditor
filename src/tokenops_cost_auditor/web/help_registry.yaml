@@ -36,6 +36,8 @@ destinations:
     purpose: "Everything that has happened on your account — audits, alerts, verified savings — newest first."
   settings:
     purpose: "Manage your profile, data controls and email preferences."
+  members:
+    purpose: "Invite teammates into this workspace and see who's still pending."
   billing:
     purpose: "See your plan, invoices and payment method."
   detectors:

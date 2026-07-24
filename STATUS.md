@@ -2677,3 +2677,26 @@ docs/design/mockups/workspace-switcher.html. File-map delta: +web/shell.py; +POS
 /settings/workspace/switch; _shell_ctx and the 4 manual-render pages now call
 workspace_bar. DEPENDS-DONE: O-1b backend. Next: O-1b-2 (invite & accept) uses this
 switcher spine to drop an invitee into the shared workspace on accept.
+
+---
+
+O-1b-2 (invite & accept) — 2026-07-24, founder "proceed as recommended". The
+workspace grows: an OWNER on the Scale plan invites a teammate by email from the
+new Members surface (/settings/members — in the sidebar Account group + linked from
+Settings); the invitee signs in with that address and is dropped INTO the shared
+workspace, seeing its audits (auto-switch via O-1b-1's spine). Security grammar
+mirrors the device link-code: the invite code is a SECRET shown once, emailed and
+stored ONLY as a keyed HMAC (code_hash); acceptance requires the logged-in user's
+email to MATCH the invite (a leaked code alone can't join a different account), is
+single-use via an atomic UPDATE-where-unconsumed (rowcount-checked), and honors
+expiry. Minting is OWNER-ONLY + Scale-gated (the plan sold as multi-seat) +
+rate-limited (5/min). Honest states throughout: the invite form shows only for an
+owner-on-Scale (others get the reason, no dead control); the accept page renders
+ready/sign_in/wrong_email/invalid — never a raw 401 for an unauthenticated invitee.
+New: web/routes_members.py, templates app/members.html + invite_accept.html,
+mail.workspace_invite (base+log+smtp), repo.workspace_role + list_workspace_invites,
+Members nav + help_registry entry. Proven by tests/test_workspace_invites.py
+(owner→invite→accept→shared dashboard→third-party isolation; wrong-email/reused/
+expired refused; owner-only + Scale-gated; honest states) + /settings/members added
+to the O-1b-1 reachability walk. Mockup: docs/design/mockups/workspace-invite.html.
+Engine untouched. DEPENDS-DONE: O-1b-1. Next: O-1b-3 (members roster + revoke).
