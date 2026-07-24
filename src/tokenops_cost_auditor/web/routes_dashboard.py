@@ -28,7 +28,7 @@ from tokenops_cost_auditor.persistence.models import (
     User,
     utcnow,
 )
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.lifecycle import auditlog
@@ -213,8 +213,11 @@ def widget_partial(
 
 
 def _owned_audit(session: Session, user: User, audit_id: str) -> Audit:
+    # O-1: visible to any member of the audit's workspace (all callers are
+    # display — progress theater, polled fragment, row-errors CSV). Guard is an
+    # `!=` ownership check the `.user_id ==` sweep grep did not surface.
     audit = session.get(Audit, audit_id)
-    if audit is None or audit.user_id != user.id:
+    if audit is None or audit.workspace_id != active_workspace_id(session, user.id):
         raise HTTPException(status_code=404, detail="audit not found")
     return audit
 
@@ -407,8 +410,9 @@ def findings_page(
 def _drawer_context(
     session: Session, request: Request, user: User, audit_id: str, finding_id: str
 ) -> dict[str, object]:
+    # O-1: findings drawer is a display read — visible to workspace members.
     audit = session.get(Audit, audit_id)
-    if audit is None or audit.user_id != user.id:
+    if audit is None or audit.workspace_id != active_workspace_id(session, user.id):
         raise HTTPException(status_code=404, detail="audit not found")
     row = session.execute(
         select(FindingRow).where(
@@ -454,8 +458,10 @@ def _verdict_for_route(session: Session, user_id: str, row: FindingRow) -> Findi
     """Latest verdict recorded for this (detector, route) across the user's
     audits — route identity, the same key R-Q9 credits on."""
     key = (row.detector, row.route or row.finding_id)
+    ws = active_workspace_id(session, user_id)
     audit_ids = [
-        a.id for a in session.execute(select(Audit).where(Audit.user_id == user_id)).scalars().all()
+        a.id
+        for a in session.execute(select(Audit).where(Audit.workspace_id == ws)).scalars().all()
     ]
     rows = (
         session.execute(select(FindingRow).where(FindingRow.audit_id.in_(audit_ids)))
@@ -493,6 +499,11 @@ def capture_feedback(
         raise HTTPException(status_code=400, detail="savings must be >= 0")
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: recording feedback is a MUTATE (writes FindingFeedback that feeds
+        # the shared savings headline). Who-may-mutate a workspace's findings is
+        # an O-2 RBAC decision, so this guard stays user-scoped (fail-closed:
+        # observe-only members get 404 until a role grants it). Behavior-
+        # preserving while 1 user = 1 workspace.
         audit = session.get(Audit, audit_id)
         if audit is None or audit.user_id != user.id:
             raise HTTPException(status_code=404, detail="audit not found")

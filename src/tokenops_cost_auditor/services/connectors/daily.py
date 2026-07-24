@@ -35,6 +35,7 @@ from tokenops_cost_auditor.persistence.models import (
     SourceUsage,
     User,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.alerts.rules import SOFT_BUDGET
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.pricing.table import PricingGapError, PricingTable
@@ -69,11 +70,14 @@ def _rate_cost(table: PricingTable, provider: str, row: SourceUsage) -> float | 
 def spend_between(
     session: Session, table: PricingTable, user_id: str, first: date, last: date
 ) -> DaySpend:
-    """Priced spend for one user's sources over [first, last] inclusive."""
+    """Priced spend for the active workspace's sources over [first, last]
+    inclusive. Same money math (`_rate_cost`) as before — only the tenant scope
+    changed from user_id to the caller's active workspace (O-1)."""
+    ws = active_workspace_id(session, user_id)
     rows = session.execute(
         select(SourceUsage, Source)
         .join(Source, SourceUsage.source_id == Source.id)
-        .where(Source.user_id == user_id, SourceUsage.day >= first, SourceUsage.day <= last)
+        .where(Source.workspace_id == ws, SourceUsage.day >= first, SourceUsage.day <= last)
     ).all()
     out = DaySpend()
     for usage, source in rows:
@@ -100,7 +104,8 @@ def _budget_stage_crossed(
     month = f"{now:%Y-%m}"
     # bounded to the month in SQL — the per-user scan must not grow with
     # account age (cold-review f.3); the detail month check stays as the
-    # authoritative filter
+    # authoritative filter. O-1: AlertEvent has no workspace_id (O-1b deferral),
+    # and budget-alert dedup is per-recipient anyway — this stays user-scoped.
     month_start = datetime(now.year, now.month, 1, tzinfo=UTC)
     fired = session.execute(
         select(AlertEvent).where(
@@ -179,8 +184,11 @@ def run_digests(
                 session, table, user.id, now=now, threshold_pct=settings.forecast_overspend_pct
             )
             forecast_alert = fc.ready and fc.anomaly
+            digest_ws = active_workspace_id(session, user.id)
             budget_rule = session.execute(
-                select(AlertRule).where(AlertRule.user_id == user.id, AlertRule.rule == SOFT_BUDGET)
+                select(AlertRule).where(
+                    AlertRule.workspace_id == digest_ws, AlertRule.rule == SOFT_BUDGET
+                )
             ).scalar_one_or_none()
             stage = (
                 _budget_stage_crossed(session, user, budget_rule, mtd.total_usd, now)

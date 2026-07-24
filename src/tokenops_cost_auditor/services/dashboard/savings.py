@@ -50,6 +50,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingFeedback,
     FindingRow,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 
 MIN_VERIFY_DAYS = 7  # R-Q9: a post-application audit must cover >= 7 days
 
@@ -91,10 +92,11 @@ def compute(
     statements would be a money-math hazard.
     """
     now = now or datetime.now(UTC)
+    ws = active_workspace_id(session, user_id)
     audits = (
         session.execute(
             select(Audit)
-            .where(Audit.user_id == user_id, Audit.status == "done")
+            .where(Audit.workspace_id == ws, Audit.status == "done")
             .order_by(Audit.created_at)
         )
         .scalars()

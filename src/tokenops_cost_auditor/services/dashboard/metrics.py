@@ -24,6 +24,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingRow,
     Source,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.dashboard.savings import SavingsSummary, compute
 
 MONTH_DAYS = 30.0
@@ -50,9 +51,10 @@ def _aware(dt: datetime) -> datetime:
 
 
 def latest_audit(session: Session, user_id: str) -> Audit | None:
+    ws = active_workspace_id(session, user_id)
     return session.execute(
         select(Audit)
-        .where(Audit.user_id == user_id, Audit.status == "done")
+        .where(Audit.workspace_id == ws, Audit.status == "done")
         .order_by(Audit.created_at.desc())
         .limit(1)
     ).scalar_one_or_none()
@@ -107,10 +109,11 @@ def spend_trend(session: Session, user_id: str) -> Widget:
 
 
 def waste_trend(session: Session, user_id: str) -> Widget:
+    ws = active_workspace_id(session, user_id)
     audits = (
         session.execute(
             select(Audit)
-            .where(Audit.user_id == user_id, Audit.status == "done")
+            .where(Audit.workspace_id == ws, Audit.status == "done")
             .order_by(Audit.created_at)
         )
         .scalars()
@@ -172,10 +175,11 @@ def top_findings(session: Session, user_id: str, limit: int = 5) -> Widget:
 
 def sources_health(session: Session, user_id: str, now: datetime | None = None) -> Widget:
     now = now or datetime.now(UTC)
+    ws = active_workspace_id(session, user_id)
     rows = (
         session.execute(
             select(Source)
-            .where(Source.user_id == user_id, Source.status != "revoked")
+            .where(Source.workspace_id == ws, Source.status != "revoked")
             .order_by(Source.created_at)
         )
         .scalars()
@@ -205,8 +209,9 @@ def sources_health(session: Session, user_id: str, now: datetime | None = None) 
 
 def next_audit(session: Session, user_id: str, now: datetime | None = None) -> Widget:
     now = now or datetime.now(UTC)
+    ws = active_workspace_id(session, user_id)
     sources = (
-        session.execute(select(Source).where(Source.user_id == user_id, Source.status == "active"))
+        session.execute(select(Source).where(Source.workspace_id == ws, Source.status == "active"))
         .scalars()
         .all()
     )
@@ -247,8 +252,9 @@ def alerts_armed(session: Session, user_id: str, watching: bool = True) -> Widge
             provenance="Alerts are part of Pro — nothing is watched on this plan",
             data={"count": 0, "rules": []},
         )
+    ws = active_workspace_id(session, user_id)
     rows = (
-        session.execute(select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.enabled))
+        session.execute(select(AlertRule).where(AlertRule.workspace_id == ws, AlertRule.enabled))
         .scalars()
         .all()
     )
@@ -272,8 +278,9 @@ def yesterday_spend(
     now = now or datetime.now(UTC)
     today = now.date()
     yday = today - timedelta(days=1)
+    ws = active_workspace_id(session, user_id)
     sources = (
-        session.execute(select(Source).where(Source.user_id == user_id, Source.status == "active"))
+        session.execute(select(Source).where(Source.workspace_id == ws, Source.status == "active"))
         .scalars()
         .all()
     )
@@ -282,7 +289,7 @@ def yesterday_spend(
     day = daily_svc.spend_between(session, table, user_id, yday, yday)  # type: ignore[arg-type]
     mtd = daily_svc.spend_between(session, table, user_id, today.replace(day=1), yday)  # type: ignore[arg-type]
     rule = session.execute(
-        select(AlertRule).where(AlertRule.user_id == user_id, AlertRule.rule == SOFT_BUDGET)
+        select(AlertRule).where(AlertRule.workspace_id == ws, AlertRule.rule == SOFT_BUDGET)
     ).scalar_one_or_none()
     budget = float(rule.threshold) if rule is not None and rule.enabled and rule.threshold else None
     # Honesty (readiness audit): the tile priced only models on the verified
@@ -315,8 +322,9 @@ def forecast(session: Session, table: object, user_id: str, now: datetime | None
     never a projection from noise (Honesty Law)."""
     from tokenops_cost_auditor.services import forecast as fc
 
+    ws = active_workspace_id(session, user_id)
     sources = (
-        session.execute(select(Source).where(Source.user_id == user_id, Source.status == "active"))
+        session.execute(select(Source).where(Source.workspace_id == ws, Source.status == "active"))
         .scalars()
         .all()
     )
@@ -349,17 +357,18 @@ def onboarding(session: Session, user_id: str) -> dict[str, Any]:
 
     from tokenops_cost_auditor.services.dashboard.savings import compute
 
+    ws = active_workspace_id(session, user_id)
     has_source = (
         session.execute(
             select(func.count(Source.id)).where(
-                Source.user_id == user_id, Source.status == "active"
+                Source.workspace_id == ws, Source.status == "active"
             )
         ).scalar_one()
         > 0
     )
     audit_ids = list(
         session.execute(
-            select(Audit.id).where(Audit.user_id == user_id, Audit.status == "done")
+            select(Audit.id).where(Audit.workspace_id == ws, Audit.status == "done")
         ).scalars()
     )
     has_audit = len(audit_ids) > 0
@@ -459,10 +468,11 @@ def audit_clarity(session: Session, table: object, user_id: str) -> dict[str, An
             "spend": float(audit.total_spend_usd or 0),
         }
     # priced $0 with rows analyzed → the models are unpriced. Name them.
+    ws = active_workspace_id(session, user_id)
     pairs = session.execute(
         select(Source.provider, SourceUsage.model)
         .join(SourceUsage, SourceUsage.source_id == Source.id)
-        .where(Source.user_id == user_id)
+        .where(Source.workspace_id == ws)
         .distinct()
     ).all()
     today = datetime.now(UTC).date()
@@ -488,6 +498,7 @@ def pipeline(
     ever reached — the founder's ribbon read "Waiting" on Analyze beside 11
     findings because it keyed on widget emptiness (an unpriced audit empties
     the spend trend), not on the audit record itself."""
+    ws = active_workspace_id(session, user_id)
     src = sources_health(session, user_id)
     latest = latest_audit(session, user_id)
     clarity = audit_clarity(session, table, user_id)
@@ -496,7 +507,7 @@ def pipeline(
     armed = alerts_armed(session, user_id, watching=watching)
     in_flight = session.execute(
         select(Audit)
-        .where(Audit.user_id == user_id, Audit.status.in_(("queued", "processing")))
+        .where(Audit.workspace_id == ws, Audit.status.in_(("queued", "processing")))
         .order_by(Audit.created_at.desc())
         .limit(1)
     ).scalar_one_or_none()
@@ -583,7 +594,7 @@ def pipeline(
             session.execute(
                 select(func.count(FindingRow.id))
                 .join(Audit, FindingRow.audit_id == Audit.id)
-                .where(Audit.user_id == user_id)
+                .where(Audit.workspace_id == ws)
             ).scalar_one()
         )
         history_note = (

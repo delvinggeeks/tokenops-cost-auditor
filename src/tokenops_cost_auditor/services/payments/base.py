@@ -21,7 +21,11 @@ class PaymentLinkPort(Protocol):
 
 
 def unconsumed_credit(session: Session, user_id: str) -> Payment | None:
-    """Oldest paid, not-yet-consumed credit for this user (FR-18)."""
+    """Oldest paid, not-yet-consumed credit for this user (FR-18).
+
+    O-1: Payment has NO workspace_id column (O-0 stamped 10 tables; Payment
+    was left per-user by design) — pay-per-audit credits stay a per-user
+    ledger. Deferred to O-1b/O-2 with the billing-model decision. Leak-safe."""
     return session.scalar(
         select(Payment)
         .where(

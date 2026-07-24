@@ -205,6 +205,8 @@ def viewer_currency(
     """One rule for every signed-in surface: a subscribed account sees its
     own billing currency; everyone else gets the viewer pick."""
     if user_id is not None:
+        # O-1: billing scope (Subscription) stays user-scoped — see the
+        # deferral note in subscriptions.entitlements (PLAN-ORG Q3, O-1b/O-2).
         sub = session.execute(
             select(Subscription).where(Subscription.user_id == user_id)
         ).scalar_one_or_none()

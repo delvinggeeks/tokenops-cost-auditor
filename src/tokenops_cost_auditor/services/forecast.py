@@ -28,6 +28,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import Source, SourceUsage
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 # Data thresholds (Honesty Law): don't project from noise.
@@ -55,12 +56,13 @@ class Forecast:
 
 
 def _earliest_usage_day(session: Session, user_id: str) -> date | None:
+    ws = active_workspace_id(session, user_id)
     return cast(
         "date | None",
         session.execute(
             select(func.min(SourceUsage.day))
             .join(Source, SourceUsage.source_id == Source.id)
-            .where(Source.user_id == user_id)
+            .where(Source.workspace_id == ws)
         ).scalar_one_or_none(),
     )
 

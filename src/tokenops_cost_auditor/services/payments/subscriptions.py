@@ -107,7 +107,14 @@ def _entitlements_from(settings: Settings, sub: Subscription | None) -> dict[str
 
 def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str, object]:
     """What this account may do right now. Read-only pauses SCHEDULED work
-    and nothing else — the dashboard stays visible and connections are kept."""
+    and nothing else — the dashboard stays visible and connections are kept.
+
+    O-1 SCOPE: this STAYS user-scoped. Subscription carries a workspace_id
+    column (O-0), but whether a workspace member INHERITS the workspace's plan
+    is a billing-model decision that is not yet ruled (PLAN-ORG Q3: one
+    subscription per workspace vs seat-based). Flipping entitlements to
+    workspace scope would silently commit that model, so it is deferred to
+    O-1b/O-2 alongside the billing/RBAC decision. User-scoped is leak-safe."""
     sub = session.execute(
         select(Subscription).where(Subscription.user_id == user_id)
     ).scalar_one_or_none()

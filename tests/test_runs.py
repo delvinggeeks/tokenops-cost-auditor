@@ -31,6 +31,7 @@ from tokenops_cost_auditor.persistence.models import (
     StageEvent,
     User,
 )
+from tokenops_cost_auditor.persistence.repo import workspace_id_for
 from tokenops_cost_auditor.services.alerts import dispatch
 from tokenops_cost_auditor.services.alerts.rules import SPEND_SPIKE, WASTE_ABOVE
 from tokenops_cost_auditor.services.connectors.openai_usage import ConnectorAuthError
@@ -312,7 +313,11 @@ class TestRunsPage:
         with app.state.session_factory() as session:
             user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
             src = make_source(session, app.state.settings, "openai")
+            # O-1: reassigning ownership must carry the workspace too — /runs now
+            # scopes the pull ledger by Source.workspace_id (make_source stamped
+            # it to its own throwaway owner; move it to this account's workspace).
             src.user_id = user.id
+            src.workspace_id = workspace_id_for(session, user.id)
             session.add(PullEvent(source_id=src.id, ok=True, buckets_in=31, upserted=2, updated=29))
             session.add(
                 PullEvent(source_id=src.id, ok=False, error="provider rejected the stored key")

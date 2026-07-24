@@ -24,7 +24,7 @@ from tokenops_cost_auditor.persistence.models import (
     StageEvent,
     User,
 )
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_dashboard import _shell_ctx
@@ -96,9 +96,10 @@ def _ribbon_stages(events: list[StageEvent]) -> list[dict[str, str]]:
 
 
 def _runs_view(session: Session, user: User) -> dict[str, object]:
+    ws = active_workspace_id(session, user.id)
     audits = (
         session.execute(
-            select(Audit).where(Audit.user_id == user.id).order_by(Audit.created_at.desc())
+            select(Audit).where(Audit.workspace_id == ws).order_by(Audit.created_at.desc())
         )
         .scalars()
         .all()
@@ -107,7 +108,7 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
         session.execute(
             select(StageEvent)
             .join(Audit, StageEvent.audit_id == Audit.id)
-            .where(Audit.user_id == user.id)
+            .where(Audit.workspace_id == ws)
             .order_by(StageEvent.started_at)
         )
         .scalars()
@@ -126,7 +127,7 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
             func.sum(FindingRow.monthly_impact_usd),
         )
         .join(Audit, FindingRow.audit_id == Audit.id)
-        .where(Audit.user_id == user.id)
+        .where(Audit.workspace_id == ws)
         .group_by(FindingRow.audit_id, FindingRow.detector)
     ).all()
     impact: dict[str, dict[str, tuple[int, float]]] = {}
@@ -183,16 +184,18 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
     pull_total = session.execute(
         select(func.count(PullEvent.id))
         .join(Source, PullEvent.source_id == Source.id)
-        .where(Source.user_id == user.id)
+        .where(Source.workspace_id == ws)
     ).scalar_one()
     pulls = session.execute(
         select(PullEvent, Source)
         .join(Source, PullEvent.source_id == Source.id)
-        .where(Source.user_id == user.id)
+        .where(Source.workspace_id == ws)
         .order_by(PullEvent.ts.desc())
         .limit(LEDGER_CAP)
     ).all()
 
+    # O-1: AlertCheck (the "silence you can verify" ledger) has no workspace_id
+    # column (O-1b deferral) — this display stays user-scoped for now.
     check_total = session.execute(
         select(func.count(AlertCheck.id)).where(AlertCheck.user_id == user.id)
     ).scalar_one()

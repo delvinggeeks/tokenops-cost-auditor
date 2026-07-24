@@ -35,6 +35,7 @@ from tokenops_cost_auditor.persistence.models import (
     IngestKey,
     Source,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 
 TIERS = ("all", "uploads", "connected")
 GROUPS = ("auto", "day", "month")
@@ -187,8 +188,9 @@ def _day(r: CallAggregate) -> date:
 
 
 def _scope_audits(session: Session, user_id: str, f: Filters) -> list[Audit]:
+    ws = active_workspace_id(session, user_id)
     audits = list(
-        session.execute(select(Audit).where(Audit.user_id == user_id, Audit.status == "done"))
+        session.execute(select(Audit).where(Audit.workspace_id == ws, Audit.status == "done"))
         .scalars()
         .all()
     )
@@ -228,11 +230,12 @@ def _latest_verdicts(session: Session, audit_ids: list[str]) -> dict[tuple[str, 
 
 
 def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
+    ws = active_workspace_id(session, user_id)
     view = ExplorerView(filters=f)
     view.source_options = [
         (s.id, s.label, s.status)
         for s in session.execute(
-            select(Source).where(Source.user_id == user_id).order_by(Source.created_at)
+            select(Source).where(Source.workspace_id == ws).order_by(Source.created_at)
         ).scalars()
     ]
     # WP-CC-LINK (system-tester recon): linked machines are sources too — the
@@ -242,14 +245,14 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
     view.source_options += [
         (d.id, f"{d.hostname} (Claude Code)", "revoked" if d.revoked_at else "active")
         for d in session.execute(
-            select(Device).where(Device.user_id == user_id).order_by(Device.created_at)
+            select(Device).where(Device.workspace_id == ws).order_by(Device.created_at)
         ).scalars()
     ]
     # S-0: ingest keys are sources too — same revoked-stay-listed law.
     view.source_options += [
         (k.id, f"{k.label} (SDK)", "revoked" if k.revoked_at else "active")
         for k in session.execute(
-            select(IngestKey).where(IngestKey.user_id == user_id).order_by(IngestKey.created_at)
+            select(IngestKey).where(IngestKey.workspace_id == ws).order_by(IngestKey.created_at)
         ).scalars()
     ]
     if f.source_id:
@@ -259,7 +262,7 @@ def compose(session: Session, user_id: str, f: Filters) -> ExplorerView:
             a.id
             for a in session.execute(
                 select(Audit).where(
-                    Audit.user_id == user_id,
+                    Audit.workspace_id == ws,
                     Audit.status == "done",
                     Audit.paid_via == "subscription",
                 )

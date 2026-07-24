@@ -16,7 +16,7 @@ from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import Statement
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.statements import build as statements
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
@@ -40,10 +40,11 @@ def statements_page(request: Request, user_email: str = Depends(current_user)) -
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
+        ws = active_workspace_id(session, user.id)
         rows = (
             session.execute(
                 select(Statement)
-                .where(Statement.user_id == user.id)
+                .where(Statement.workspace_id == ws)
                 .order_by(Statement.period.desc())
             )
             .scalars()
@@ -71,8 +72,9 @@ def statement_detail(
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
+        ws = active_workspace_id(session, user.id)
         row = session.execute(
-            select(Statement).where(Statement.user_id == user.id, Statement.period == period)
+            select(Statement).where(Statement.workspace_id == ws, Statement.period == period)
         ).scalar_one_or_none()
         if row is None:
             raise HTTPException(status_code=404, detail="statement not found")
@@ -88,6 +90,9 @@ def send_statement(
     _parse_period(period)  # reject malformed input before touching the DB
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: sending is a MUTATE (issues/re-sends the artifact) — stays
+        # user-scoped, keyed to the (user_id, period) write path (fail-closed
+        # until O-2 RBAC). Statement READS above flip to workspace scope.
         row = session.execute(
             select(Statement).where(Statement.user_id == user.id, Statement.period == period)
         ).scalar_one_or_none()

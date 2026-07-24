@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import AlertCheck, AlertEvent, AlertRule, User
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.alerts.rules import Firing, evaluate
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 
@@ -61,11 +62,14 @@ def run_for_user(
     # every prior stage before alerts run; keep it that way).
     stamp = now or datetime.now(UTC)
     fired_rules = {f.rule for f in firings}
+    ws = active_workspace_id(session, user.id)
     enabled_rules = (
-        session.execute(select(AlertRule).where(AlertRule.user_id == user.id, AlertRule.enabled))
+        session.execute(select(AlertRule).where(AlertRule.workspace_id == ws, AlertRule.enabled))
         .scalars()
         .all()
     )
+    # O-1: AlertCheck (the silence ledger) has no workspace_id (O-1b deferral)
+    # and is written per recipient — the row stays user-scoped.
     for rule_row in enabled_rules:
         crossed = rule_row.rule in fired_rules
         session.add(

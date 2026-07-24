@@ -95,8 +95,24 @@ def active_workspace_id(session: Session, user_id: str) -> str | None:
     while 1 user = 1 workspace. O-1b makes it the *switchable* active workspace
     (validated against the caller's memberships) so a member can view a shared
     workspace. EVERY read of an owned resource must scope to THIS, never to
-    user_id — that is what makes a workspace's members see the same data."""
-    return workspace_id_for(session, user_id)
+    user_id — that is what makes a workspace's members see the same data.
+
+    LEAK-SAFETY (O-1 sweep, load-bearing): a read scoped `Model.workspace_id ==
+    active_workspace_id(...)` must NEVER receive None — SQLAlchemy renders
+    `== None` as `IS NULL`, which would match every tenant's un-stamped rows
+    (a cross-tenant leak). For a real, authenticated caller this cannot return
+    None: get_or_create_user mints the workspace-of-one at first login, O-0
+    backfilled every existing user, and if a User was minted out-of-band we
+    ensure-create their workspace here rather than hand a read a None scope.
+    None is returned ONLY when user_id names no user at all — an impossible
+    input on an authenticated read path; the T-ORG isolation tests pin this."""
+    ws = workspace_id_for(session, user_id)
+    if ws is not None:
+        return ws
+    user = session.get(User, user_id)
+    if user is None:  # pragma: no cover - unreachable on an authenticated path
+        return None
+    return get_or_create_workspace(session, user).id
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:
@@ -122,14 +138,23 @@ def create_audit(session: Session, user_id: str) -> Audit:
 
 
 def get_user_audit(session: Session, audit_id: str, email: str) -> Audit | None:
-    """Audit visible only to its owner (404-equivalence for others)."""
+    """Audit visible to any member of its workspace (404-equivalence for others).
+
+    O-1 (R-ORG): scoped to the caller's ACTIVE WORKSPACE, not just the owner's
+    email — a workspace member can view the workspace's audits/reports/findings.
+    Behavior-preserving while 1 user = 1 workspace (the caller's active
+    workspace == their personal workspace == their own audits' workspace_id).
+    This is an EMAIL-based ownership check the `.user_id ==` sweep grep did not
+    surface; it is a genuine tenant-scoping read and re-scopes here."""
     audit = session.get(Audit, audit_id)
     if audit is None:
         return None
-    owner = session.get(User, audit.user_id)
-    if owner is None or owner.email != email.lower():
+    caller = session.scalar(select(User).where(User.email == email.lower()))
+    if caller is None:
         return None
-    return audit
+    # active_workspace_id never returns None for a real user (leak-safety note
+    # there); a NULL-workspace audit therefore never matches and stays hidden.
+    return audit if audit.workspace_id == active_workspace_id(session, caller.id) else None
 
 
 def processing_count(session: Session) -> int:

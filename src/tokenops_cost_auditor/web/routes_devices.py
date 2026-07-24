@@ -238,6 +238,8 @@ def revoke_device(
 ) -> RedirectResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: revoke is a MUTATE — owner-scoped (fail-closed until O-2 RBAC).
+        # The device LIST display is workspace-scoped (sources_page, explorer).
         device = session.get(Device, device_id)
         if device is None or device.user_id != user.id:
             raise HTTPException(status_code=404, detail="device not found")

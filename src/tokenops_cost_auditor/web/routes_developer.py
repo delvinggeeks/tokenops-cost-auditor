@@ -73,6 +73,12 @@ def developer_home(request: Request, user_email: str = Depends(current_user)) ->
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         is_pro = user_plan(session, user.id) in ("pro", "team")
+        # O-1: developer credentials stay USER-scoped everywhere (list + revoke).
+        # A token/app is minted BY and managed BY the individual who created it —
+        # Developer Settings shows YOUR tokens, revoke affects YOUR tokens. (The
+        # workspace-scoping that matters is on the DATA a token grants: the read
+        # API scopes to the token-owner's active workspace — see routes_api_read.
+        # Workspace-wide credential administration is an O-2 RBAC admin surface.)
         tokens = (
             session.execute(
                 select(ApiToken)

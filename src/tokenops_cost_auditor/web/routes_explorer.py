@@ -53,6 +53,12 @@ def explore_page(request: Request, user_email: str = Depends(current_user)) -> H
             str(item["detector"]) for item in view.findings
         }
         detector_labels = {key: help_registry.detector_plain(key) for key in detector_keys}
+        # O-1: SavedView stays USER-scoped everywhere (list/save/delete). Its
+        # write path has a per-user uniqueness constraint (uq_saved_view_user_
+        # name) AND a per-user cap, so a saved view is a PERSONAL filter bookmark,
+        # not shared workspace data — each member keeps their own regardless of
+        # workspace. (The workspace_id column O-0 stamped is reserved for a
+        # possible future shared "team views" feature — BACKLOG, not O-1.)
         saved = (
             session.execute(
                 select(SavedView).where(SavedView.user_id == user.id).order_by(SavedView.name)

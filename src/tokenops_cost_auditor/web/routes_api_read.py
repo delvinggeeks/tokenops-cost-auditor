@@ -6,9 +6,10 @@ GET /api/v1/audits/{id}/findings      (scope read:findings)
 Every response is COUNTS AND DOLLARS ONLY (FR-22): audit status, token counts,
 spend figures, finding severities and dollar impact. No prompt or completion
 text exists to return — the schema has no such column. Every query is scoped to
-the calling principal's user_id (tenant isolation at the web boundary); an
-audit that isn't the caller's is a 404, never a 403, so token holders can't
-probe which audit ids exist.
+the principal's ACTIVE WORKSPACE (O-1, R-ORG — a read token returns the
+token-owner's workspace data, visible to its members); an audit outside that
+workspace is a 404, never a 403, so token holders can't probe which audit ids
+exist.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 
 from tokenops_cost_auditor.persistence.models import Audit, FindingRow
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.web.api_auth import ReadPrincipal, require_read_scope
 
 router = APIRouter(prefix="/api/v1", tags=["read-api"])
@@ -42,10 +44,11 @@ def list_audits(
 ) -> JSONResponse:
     """The caller's most recent audits — counts and dollars only."""
     with request.app.state.session_factory() as session:
+        ws = active_workspace_id(session, principal.user_id)
         rows = (
             session.execute(
                 select(Audit)
-                .where(Audit.user_id == principal.user_id)
+                .where(Audit.workspace_id == ws)
                 .order_by(Audit.created_at.desc())
                 .limit(limit)
             )
@@ -91,9 +94,9 @@ def list_findings(
     plus the generated fix guidance. Never any customer prompt/completion text."""
     with request.app.state.session_factory() as session:
         audit = session.get(Audit, audit_id)
-        # Tenant isolation: not yours (or absent) is an identical 404 — no
-        # existence oracle across accounts.
-        if audit is None or audit.user_id != principal.user_id:
+        # Tenant isolation: outside the principal's active workspace (or absent)
+        # is an identical 404 — no existence oracle across workspaces (O-1).
+        if audit is None or audit.workspace_id != active_workspace_id(session, principal.user_id):
             raise HTTPException(status_code=404, detail="audit not found")
         rows = (
             session.execute(

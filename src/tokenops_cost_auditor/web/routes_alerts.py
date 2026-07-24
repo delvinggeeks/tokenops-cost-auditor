@@ -17,7 +17,11 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import AlertEvent, AlertRule
-from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
+from tokenops_cost_auditor.persistence.repo import (
+    active_workspace_id,
+    get_or_create_user,
+    workspace_id_for,
+)
 from tokenops_cost_auditor.services.alerts import dispatch
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS, RULES
 from tokenops_cost_auditor.services.lifecycle import auditlog
@@ -65,11 +69,15 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
         # honest upsell in its place. Not a disabled form: nothing is watching
         # on this plan, and a grey form would imply something is.
         watches = _plan_watches(session, settings, user.id)
+        ws = active_workspace_id(session, user.id)
         rules = None
         if watches:
+            # O-1: display the WORKSPACE's alert rules — members see what is
+            # armed. (Editing them, save_alerts below, stays owner-scoped until
+            # O-2 RBAC; the AlertEvent history stays user-scoped — no column.)
             configured = {
                 r.rule: r
-                for r in session.execute(select(AlertRule).where(AlertRule.user_id == user.id))
+                for r in session.execute(select(AlertRule).where(AlertRule.workspace_id == ws))
                 .scalars()
                 .all()
             }
@@ -88,6 +96,8 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
                 }
                 for key in RULES
             ]
+        # O-1: AlertEvent has no workspace_id (O-1b deferral) — the fired-alert
+        # history stays user-scoped (each member sees their own notifications).
         history = (
             session.execute(
                 select(AlertEvent)
@@ -137,6 +147,9 @@ async def save_alerts(
                 status_code=403,
                 detail="alerts are part of the Pro plan — nothing is watching on this plan",
             )
+        # O-1: saving rules is a MUTATE — stays owner-scoped (fail-closed until
+        # O-2 RBAC). Members SEE the workspace's rules (alerts_page) but editing
+        # them is an owner action for now.
         existing = {
             r.rule: r
             for r in session.execute(select(AlertRule).where(AlertRule.user_id == user.id))

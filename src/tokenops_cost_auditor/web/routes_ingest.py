@@ -280,6 +280,9 @@ def mint_key(
                 status_code=403,
                 detail="SDK ingest keys are part of Pro — see /billing",
             )
+        # O-1: minting is an owner-only MUTATE with a per-user cap — stays
+        # user-scoped (the ingest-key LIST display flips to workspace in
+        # sources_page; revoke below is likewise owner-scoped until O-2 RBAC).
         active = session.execute(
             select(IngestKey).where(IngestKey.user_id == user.id, IngestKey.key_hash.is_not(None))
         ).scalars()

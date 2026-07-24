@@ -9,8 +9,10 @@ One resolver for both READ credentials:
 Both hash to a keyed HMAC (credential_fingerprint) and both carry a scope set;
 neither can write. The resolver yields a ReadPrincipal — the owning user_id
 and the granted scopes — and NEVER the token itself. Tenancy lives here at the
-web boundary: downstream read handlers scope every query to principal.user_id;
-the audit engine never learns a token exists.
+web boundary: downstream read handlers scope every query to the principal's
+ACTIVE WORKSPACE (O-1, R-ORG: repo.active_workspace_id(principal.user_id)) —
+so a read token returns the token-owner's workspace data, shared with its
+members — while the audit engine never learns a token or a workspace exists.
 
 Every failure raises HTTPException under /api/ → the NFR-14 envelope.
 """

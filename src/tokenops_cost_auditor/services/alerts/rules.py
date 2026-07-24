@@ -25,6 +25,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingRow,
     User,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 
 SPEND_SPIKE = "spend_spike_dod"
 WASTE_ABOVE = "waste_above_target"
@@ -65,10 +66,11 @@ def evaluate(
     the caller decides delivery and records events (separation keeps this
     function pure enough to test without mail)."""
     now = now or datetime.now(UTC)
+    ws = active_workspace_id(session, user.id)
     audits = (
         session.execute(
             select(Audit)
-            .where(Audit.user_id == user.id, Audit.status == "done")
+            .where(Audit.workspace_id == ws, Audit.status == "done")
             .order_by(Audit.created_at)
         )
         .scalars()
@@ -82,11 +84,13 @@ def evaluate(
     enabled = {
         r.rule: r
         for r in session.execute(
-            select(AlertRule).where(AlertRule.user_id == user.id, AlertRule.enabled)
+            select(AlertRule).where(AlertRule.workspace_id == ws, AlertRule.enabled)
         )
         .scalars()
         .all()
     }
+    # O-1: AlertEvent has no workspace_id (O-1b deferral) and this dedup tracks
+    # what THIS recipient was already notified of, so it stays user-scoped.
     already = {
         (e.rule, str(e.detail.get("audit_id")))
         for e in session.execute(select(AlertEvent).where(AlertEvent.user_id == user.id))

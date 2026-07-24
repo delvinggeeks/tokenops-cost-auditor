@@ -35,6 +35,63 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-1 SWEEP DONE — reads re-scoped to workspace_id (2026-07-24) — founder "proceed with O-1"
+
+The read re-scope, done in a fresh session (K-3/TE-9) as chosen. Measured live:
+87 sites via `grep .user_id ==`, PLUS a whole CLASS the O-1-STARTED inventory
+MISSED — `.user_id !=` ownership guards and repo.get_user_audit's EMAIL check
+(re-swept comprehensively; lesson: a `==`-only grep under-counts tenant scoping).
+
+CHOKEPOINT: repo.active_workspace_id. Every DISPLAY read now resolves
+`ws = active_workspace_id(session, user_id)` and filters `X.workspace_id == ws`
+(signatures unchanged, internal resolution per the O-1-STARTED decision; no
+global query filter). HARDENED active_workspace_id to ensure-create so it NEVER
+returns None for a real user — else `workspace_id == None` renders IS NULL and
+matches every tenant's un-stamped rows (THE load-bearing leak vector; pinned by
+test).
+
+TRIAGE (a comment at EVERY survivor states intent, so the gate reads deliberate
+not missed). FLIPPED→workspace: the 10 owned tables' display reads (Audit,
+Source, IngestKey, ApiToken, OAuthApp, Device, AlertRule, Statement — SavedView
+& Subscription excepted, below) + children via a workspace-owned parent
+(SourceUsage→Source, FindingFeedback→Audit) + get_user_audit + the S-6 read
+tokens (routes_api_read/api_auth → the token-owner's active workspace). STAYED
+user_id, each leak-safe and NONE a miss: membership/idempotency/magic-link
+(identity); AlertEvent/AlertCheck/Payment (NO workspace_id column — O-1b);
+Subscription/entitlements/currency (member plan-inheritance is UNRULED, PLAN-ORG
+Q3 → O-1b/O-2); SavedView + developer tokens/OAuth-app management (personal by
+per-user uq + design); admin (cross-tenant superuser by design); and EVERY
+mutate-select — revoke/rename/purge/close-account/mint/feedback/save-rules —
+fail-closed until O-2 RBAC (a member SEES the workspace, cannot yet CHANGE it).
+No migration (O-0 added + backfilled the columns).
+
+SAFETY NET, all three run: (1) full regression as the 1:1 equivalence oracle —
+it surfaced that ~19 test files build rows RAW (`User(email=…)`,
+`Audit(user_id=…)`) with no workspace_id (invisible under workspace reads) AND a
+3-4x slowdown (raw users had no workspace, so active_workspace_id hit
+ensure-create on EVERY read). Fixed with ONE conftest before_flush PARITY hook:
+raw fixtures get workspace_id stamped + raw users a workspace-of-one, exactly as
+production's create-sites do. It is None-ONLY, so it can NEVER hide a missing
+production stamp — create_audit et al. set a real value and stay tested by
+TestWritePathStamps. (One test, test_runs::test_13, reassigned .user_id after a
+flush → stale workspace_id; fixed in-test to carry the workspace.) (2) the
+comprehensive grep-audit — every surviving `.user_id ==/!=` justified + commented.
+(3) new tests test_workspace_spine.TestReadScopeSweep (ensure-create/never-None,
+get_user_audit workspace scope, NULL-workspace never leaks, service read
+isolates); the existing read-API two-tenant test now exercises the workspace
+path. Whole suite green; ruff+mypy clean. Traceability O-1 row added.
+
+FILE MAP DELTA: repo.active_workspace_id hardened + get_user_audit re-scoped;
+~18 service/route modules flip display reads (import active_workspace_id);
+tests/conftest gains the fixture-stamp hook; tests/test_workspace_spine +4.
+
+NEXT: cold-reviewer gate hunting MISSED sites (the invisible-under-1:1 risk),
+then O-1b MEMBERS — invite (hashed one-shot code, link-code grammar), member
+joins, Members page, workspace SWITCH (this is what makes active_workspace_id
+SWITCHABLE), revoke — plus the enablers this sweep PARKED: AlertEvent/AlertCheck/
+Payment workspace_id + member visibility (activity-feed coherence), the billing
+model (Q3), and the O-2 RBAC that gates the mutate-selects now fail-closed.
+
 ## O-1 STARTED — FOUNDATION ONLY (2026-07-24) — founder "proceed with O-1" → "Fresh session" for the sweep
 
 O-1 (members + invites + the read re-scope). Measured the first task precisely:

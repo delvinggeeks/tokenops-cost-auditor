@@ -22,7 +22,11 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, User, utcnow
-from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
+from tokenops_cost_auditor.persistence.repo import (
+    active_workspace_id,
+    get_or_create_user,
+    workspace_id_for,
+)
 from tokenops_cost_auditor.services.connectors import validate
 from tokenops_cost_auditor.services.connectors.crypto import (
     credential_fingerprint,
@@ -47,6 +51,10 @@ def _session(request: Request) -> Session:
 
 
 def user_plan(session: Session, user_id: str) -> str:
+    # O-1: billing (Subscription) stays user-scoped — see subscriptions.
+    # entitlements (PLAN-ORG Q3, deferred to O-1b/O-2). The plan-limit source
+    # counts below therefore also stay user-scoped, so both sides of the gate
+    # agree; source CREATE/REVOKE are owner-only mutates until O-2 RBAC.
     sub = session.execute(
         select(Subscription).where(Subscription.user_id == user_id)
     ).scalar_one_or_none()
@@ -60,10 +68,16 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
     settings = request.app.state.settings
     with _session(request) as session:
         user = session.execute(select(User).where(User.email == user_email)).scalar_one_or_none()
+        # O-1: the sources page DISPLAYS the workspace's connected sources,
+        # machines and SDK keys — a member sees the same connections the owner
+        # does. (Creating/revoking a connection stays owner-scoped below —
+        # who-may-mutate is O-2 RBAC; the plan-limit count stays user-scoped
+        # with billing.)
+        ws = active_workspace_id(session, user.id) if user else None
         sources = (
             session.execute(
                 select(Source)
-                .where(Source.user_id == user.id, Source.status != "revoked")
+                .where(Source.workspace_id == ws, Source.status != "revoked")
                 .order_by(Source.created_at)
             )
             .scalars()
@@ -78,7 +92,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         devices = (
             session.execute(
                 select(Device)
-                .where(Device.user_id == user.id, Device.revoked_at.is_(None))
+                .where(Device.workspace_id == ws, Device.revoked_at.is_(None))
                 .order_by(Device.created_at)
             )
             .scalars()
@@ -89,7 +103,7 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         ingest_keys = (
             session.execute(
                 select(IngestKey)
-                .where(IngestKey.user_id == user.id, IngestKey.revoked_at.is_(None))
+                .where(IngestKey.workspace_id == ws, IngestKey.revoked_at.is_(None))
                 .order_by(IngestKey.created_at)
             )
             .scalars()
@@ -559,6 +573,8 @@ def revoke_source(
 ) -> RedirectResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: revoke is a MUTATE — stays owner-scoped (fail-closed until O-2
+        # RBAC). Members SEE the workspace's sources but cannot revoke them yet.
         source = session.get(Source, source_id)
         if source is None or source.user_id != user.id:
             raise HTTPException(status_code=404, detail="source not found")

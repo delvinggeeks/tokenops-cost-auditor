@@ -20,6 +20,7 @@ from tokenops_cost_auditor.persistence.models import (
     Payment,
     User,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS
 
 
@@ -38,13 +39,23 @@ def _aware(dt: datetime) -> datetime:
 
 
 def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
+    # O-1 read-scope: audits + applied-fix feedback are workspace-owned, so the
+    # feed shows the active workspace's activity. AlertEvent and Payment have NO
+    # workspace_id column yet (O-0 stamped 10 tables; these three logs — plus
+    # AlertCheck — were left out by design), so they STAY user-scoped here. That
+    # is leak-safe (a member never sees another's alerts/payments) and is a GAP,
+    # not a leak; closing it (does a member see the workspace's alert history and
+    # billing?) is an explicit O-1b decision — see STATUS "O-1 SWEEP" deferrals.
+    ws = active_workspace_id(session, user_id)
     events: list[Event] = []
 
     audits = (
         session.execute(
             select(Audit)
             .where(
-                Audit.user_id == user_id, Audit.status == "done", Audit.report_ready_at.is_not(None)
+                Audit.workspace_id == ws,
+                Audit.status == "done",
+                Audit.report_ready_at.is_not(None),
             )
             .order_by(Audit.report_ready_at.desc())
             .limit(limit)
@@ -97,7 +108,7 @@ def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
         session.execute(
             select(FindingFeedback)
             .join(Audit, FindingFeedback.audit_id == Audit.id)
-            .where(Audit.user_id == user_id, FindingFeedback.verdict == "applied")
+            .where(Audit.workspace_id == ws, FindingFeedback.verdict == "applied")
             .order_by(FindingFeedback.ts.desc())
             .limit(limit)
         )
@@ -150,18 +161,22 @@ def unseen_count(session: Session, user: User, limit: int = 25) -> int:
     from sqlalchemy import func
 
     cut = _aware(user.activity_seen_at) if user.activity_seen_at is not None else None
+    # O-1: mirror recent()'s scoping exactly — audits + applied feedback are
+    # workspace-scoped; AlertEvent + Payment stay user-scoped (no workspace_id;
+    # O-1b deferral). The two must agree or the bell badge would over/under-count.
+    ws = active_workspace_id(session, user.id)
 
     def c(stmt: Select[tuple[int]]) -> int:
         return int(session.execute(stmt).scalar_one())
 
     aq = select(func.count(Audit.id)).where(
-        Audit.user_id == user.id, Audit.status == "done", Audit.report_ready_at.is_not(None)
+        Audit.workspace_id == ws, Audit.status == "done", Audit.report_ready_at.is_not(None)
     )
     eq = select(func.count(AlertEvent.id)).where(AlertEvent.user_id == user.id)
     fq = (
         select(func.count(FindingFeedback.id))
         .join(Audit, FindingFeedback.audit_id == Audit.id)
-        .where(Audit.user_id == user.id, FindingFeedback.verdict == "applied")
+        .where(Audit.workspace_id == ws, FindingFeedback.verdict == "applied")
     )
     pq = select(func.count(Payment.id)).where(
         Payment.user_id == user.id, Payment.provider != "comp"

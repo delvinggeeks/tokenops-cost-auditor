@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, FindingFeedback, Statement, User, utcnow
-from tokenops_cost_auditor.persistence.repo import workspace_id_for
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, workspace_id_for
 from tokenops_cost_auditor.services.dashboard.savings import compute
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
@@ -72,11 +72,12 @@ def should_email(session: Session, settings: Settings, user: User, year: int, mo
     ents = subscriptions.entitlements(session, settings, user.id)
     if str(ents["plan_key"]) in plans.PAID_PLANS:
         return True
+    ws = active_workspace_id(session, user.id)
     start, end = _month_bounds(year, month)
     audit_ran = (
         session.execute(
             select(Audit.id).where(
-                Audit.user_id == user.id,
+                Audit.workspace_id == ws,
                 Audit.created_at >= start,
                 Audit.created_at < end,
             )
@@ -90,7 +91,7 @@ def should_email(session: Session, settings: Settings, user: User, year: int, mo
             select(FindingFeedback.finding_id)
             .join(Audit, FindingFeedback.audit_id == Audit.id)
             .where(
-                Audit.user_id == user.id,
+                Audit.workspace_id == ws,
                 FindingFeedback.ts >= start,
                 FindingFeedback.ts < end,
             )
@@ -101,12 +102,13 @@ def should_email(session: Session, settings: Settings, user: User, year: int, mo
 
 
 def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
+    ws = active_workspace_id(session, user.id)
     start, end = _month_bounds(year, month)
     audits = (
         session.execute(
             select(Audit)
             .where(
-                Audit.user_id == user.id,
+                Audit.workspace_id == ws,
                 Audit.status == "done",
                 Audit.created_at >= start,
                 Audit.created_at < end,
@@ -231,6 +233,10 @@ def archive(session: Session, user: User, doc: StatementDoc) -> Statement:
     month — a re-run replaces the draft rather than stacking copies, and a
     statement already SENT is never rewritten (an archived artifact must not
     change after it has left the building)."""
+    # O-1: this is the WRITE-path find-for-upsert, keyed to the (user_id, period)
+    # unique constraint, so it stays user-scoped — only the owner generates a
+    # statement. Statement READS (routes_statements) flip to workspace_id so
+    # members view the workspace's statements; workspace_id is stamped below.
     existing = session.execute(
         select(Statement).where(Statement.user_id == user.id, Statement.period == doc.period)
     ).scalar_one_or_none()

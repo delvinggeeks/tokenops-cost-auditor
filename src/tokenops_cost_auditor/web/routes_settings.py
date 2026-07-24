@@ -14,7 +14,11 @@ from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, utcnow
-from tokenops_cost_auditor.persistence.repo import get_or_create_user, get_or_create_workspace
+from tokenops_cost_auditor.persistence.repo import (
+    active_workspace_id,
+    get_or_create_user,
+    get_or_create_workspace,
+)
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments import subscriptions
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE
@@ -42,10 +46,11 @@ def settings_page(
         user = get_or_create_user(session, user_email)
         workspace = get_or_create_workspace(session, user)  # O-0: the tenancy root
         session.commit()
+        ws = active_workspace_id(session, user.id)
         sources = (
             session.execute(
                 select(Source)
-                .where(Source.user_id == user.id, Source.status != "revoked")
+                .where(Source.workspace_id == ws, Source.status != "revoked")
                 .order_by(Source.created_at)
             )
             .scalars()
@@ -54,7 +59,7 @@ def settings_page(
         held = (
             session.execute(
                 select(Audit).where(
-                    Audit.user_id == user.id,
+                    Audit.workspace_id == ws,
                     Audit.upload_path.is_not(None),
                     Audit.purged_at.is_(None),
                 )
@@ -171,6 +176,9 @@ def purge_now(
         return RedirectResponse("/settings?purged=-1", status_code=303)
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: DESTRUCTIVE mutate — stays user-scoped. Flipping this to workspace
+        # would let one member purge every member's uploads (data-loss bug); who
+        # may purge a workspace's data is an O-2 RBAC decision. Fail-closed.
         audits = (
             session.execute(
                 select(Audit).where(
@@ -214,6 +222,10 @@ def close_account(
         return RedirectResponse("/settings?closed=-1", status_code=303)
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-1: "close MY account" is inherently per-user — it purges the caller's
+        # own uploads, revokes the caller's own sources, cancels the caller's own
+        # subscription. These STAY user-scoped by construction; scoping them to
+        # the workspace would destroy other members' data when one member leaves.
         audits = (
             session.execute(
                 select(Audit).where(

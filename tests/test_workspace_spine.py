@@ -143,6 +143,88 @@ class TestIsolation:
             assert audit_b.id not in in_a
 
 
+class TestReadScopeSweep:
+    """O-1 (R-ORG) — the read re-scope. Reads flow through active_workspace_id
+    + workspace_id so a workspace's members see the same data (O-1b) while
+    cross-tenant isolation holds. Behavior-preserving while 1 user = 1
+    workspace; pinned so a wrong OR MISSED re-scope regresses a test."""
+
+    def test_active_workspace_id_ensure_creates_and_is_never_none(self, app: FastAPI) -> None:
+        """LEAK-SAFETY: active_workspace_id must never hand a read None — a
+        `Model.workspace_id == None` renders IS NULL and would match every
+        tenant's un-stamped rows. A user with no owner membership (the
+        out-of-band shape) is self-healed to a real workspace, not left None."""
+        from sqlalchemy import delete
+
+        from tokenops_cost_auditor.persistence.repo import active_workspace_id
+
+        with app.state.session_factory() as s:
+            user = get_or_create_user(s, EMAIL)
+            s.commit()
+            # Strip the workspace to simulate a User minted out-of-band (Core
+            # DML bypasses the conftest fixture-stamp hook).
+            s.execute(delete(WorkspaceMember).where(WorkspaceMember.user_id == user.id))
+            s.execute(delete(Workspace))
+            s.commit()
+            assert workspace_id_for(s, user.id) is None
+            wsid = active_workspace_id(s, user.id)  # ensure-creates
+            assert wsid is not None
+            assert workspace_id_for(s, user.id) == wsid  # and it persisted
+
+    def test_get_user_audit_is_workspace_scoped(self, app: FastAPI) -> None:
+        """The EMAIL-based ownership check (grep-missed by the `.user_id ==`
+        inventory) now scopes to the active workspace: visible to its workspace,
+        an identical 404-equiv (None) to another — no existence oracle."""
+        from tokenops_cost_auditor.persistence.repo import get_user_audit
+
+        with app.state.session_factory() as s:
+            ua = get_or_create_user(s, EMAIL)
+            get_or_create_user(s, OTHER)
+            s.commit()
+            aid = create_audit(s, ua.id).id
+            s.commit()
+        with app.state.session_factory() as s:
+            assert get_user_audit(s, aid, EMAIL) is not None
+            assert get_user_audit(s, aid, OTHER) is None
+
+    def test_null_workspace_audit_never_matches_a_workspace_read(self, app: FastAPI) -> None:
+        """A pre-O-0-shaped audit (workspace_id IS NULL) must never surface
+        through a workspace-scoped read — proves `== ws` cannot become IS NULL
+        (ws is never None). Forced un-stamped via Core UPDATE (bypasses the
+        fixture-stamp hook) so even the OWNER cannot reach it."""
+        from sqlalchemy import update
+
+        from tokenops_cost_auditor.persistence.repo import get_user_audit
+
+        with app.state.session_factory() as s:
+            ua = get_or_create_user(s, EMAIL)
+            s.commit()
+            aid = create_audit(s, ua.id).id
+            s.execute(update(Audit).where(Audit.id == aid).values(workspace_id=None))
+            s.commit()
+            assert get_user_audit(s, aid, EMAIL) is None
+
+    def test_rescoped_service_read_isolates_across_workspaces(self, app: FastAPI) -> None:
+        """A representative swept read (metrics.latest_audit) returns the
+        caller's active-workspace audit and NEVER another workspace's."""
+        from tokenops_cost_auditor.services.dashboard import metrics
+
+        with app.state.session_factory() as s:
+            ua = get_or_create_user(s, EMAIL)
+            ub = get_or_create_user(s, OTHER)
+            s.commit()
+            a = create_audit(s, ua.id)
+            a.status = "done"
+            b = create_audit(s, ub.id)
+            b.status = "done"
+            s.commit()
+            la = metrics.latest_audit(s, ua.id)
+            lb = metrics.latest_audit(s, ub.id)
+            assert la is not None and la.id == a.id
+            assert lb is not None and lb.id == b.id
+            assert la.id != lb.id  # A's read never returns B's audit
+
+
 class TestRenameJourney:
     def test_settings_shows_workspace_section(self, app: FastAPI) -> None:
         html = TestClient(app).get("/settings", headers=HDR).text
