@@ -1,4 +1,4 @@
-"""R-MOTION-SPEC — design/MOTION-SPECS.md is a gate artifact, so it has to be
+"""R-MOTION-SPEC — docs/design/MOTION-SPECS.md is a gate artifact, so it has to be
 kept honest by something other than good intentions.
 
 A spec sheet that nobody checks drifts from the code within a milestone, and
@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).parents[1]
-SPECS = REPO / "design/MOTION-SPECS.md"
+SPECS = REPO / "docs/design/MOTION-SPECS.md"
 STATIC = REPO / "src/tokenops_cost_auditor/web/static"
 STYLESHEETS = ("wa-design.css", "wa-public.css")
 
@@ -32,7 +32,7 @@ class TestEveryEffectIsSpecified:
                 if kf not in spec and kf.replace("-", " ") not in spec.lower():
                     undocumented.append(f"{name}:@keyframes {kf}")
         assert not undocumented, (
-            f"motion in the code with no entry in design/MOTION-SPECS.md: {undocumented}. "
+            f"motion in the code with no entry in docs/design/MOTION-SPECS.md: {undocumented}. "
             f"Specify trigger/behavior/duration/reduced-motion/tokens, or delete the effect."
         )
 
