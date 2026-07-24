@@ -42,7 +42,7 @@
         <td class="row-actions">
           {% if m.can_revoke %}
           <form method="post" action="/settings/members/{{ m.id }}/revoke" class="inline-form"
-                data-confirm="Remove {{ m.email }} from this workspace? They lose access on their next request.">
+                data-confirm="Remove this member from the workspace? They lose access on their next request.">
             {{ kit.button("Remove") }}
           </form>
           {% endif %}
@@ -94,7 +94,7 @@
           </form>
           {% endif %}
           <form method="post" action="/settings/members/invite/{{ inv.id }}/cancel" class="inline-form"
-                data-confirm="Cancel the invitation to {{ inv.email }}? Their link stops working.">
+                data-confirm="Cancel this pending invitation? Their link stops working and can no longer be used.">
             {{ kit.button("Cancel") }}
           </form>
         </td>

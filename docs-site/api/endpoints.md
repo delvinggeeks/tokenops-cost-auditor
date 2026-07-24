@@ -730,10 +730,13 @@ Responses: `200`, `422`
 
 Members Page.
 
-The members surface: invite a teammate + the pending-invites list. The
-invite form appears ONLY for an owner on Scale; everyone else sees the honest
-reason it's unavailable (not their workspace to grow / Scale-gated), never a
-dead control.
+The members surface (O-1b-3): the roster of who is in the workspace, the
+invite form, the pending-invites list, and per-member governance. The roster
+is visible to EVERY member (you should know who you share a workspace with);
+the mutating controls — invite, revoke, resend/cancel — render ONLY for an
+owner on Scale. A plain member sees the list with NO revoke/invite control at
+all (absent, not a 403 they'd have to bump into — the reachability law for
+permissions, foreshadowing O-2).
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
@@ -750,6 +753,60 @@ as an HMAC and emails the accept link; the raw code is never persisted.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/members/invite/{invite_id}/cancel`
+
+Cancel Invite.
+
+OWNER-ONLY: withdraw a pending invitation. Deleting the row is the honest
+cancel — the emailed link then loads nothing and shows the same 'invalid'
+state as any dead code, so a withdrawn invite can never be accepted. No Scale
+gate: cleaning up is always allowed, even for an owner who has since lapsed.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `invite_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/members/invite/{invite_id}/resend`
+
+Resend Invite.
+
+OWNER-ONLY, Scale-gated, rate-limited (same email-amplification bound as a
+fresh invite): re-mint a pending invite's one-shot code and re-send the link.
+Re-minting OVERWRITES the stored hash, so the previous code is invalidated the
+instant a new one is issued — a resend is a rotation, never a second live
+code. Only an unconsumed invite of THIS workspace can be resent.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `invite_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/members/{member_id}/revoke`
+
+Revoke Member.
+
+OWNER-ONLY: remove a member from the workspace. Deleting the
+`WorkspaceMember` is the whole mechanism — the switchable resolver already
+falls a revoked member back to their PERSONAL workspace on their very next
+request (`active_workspace_id` validates the active pointer against live
+membership), so access stops with no extra step; the journey test pins it.
+Guards, fail-closed: the caller must own THIS workspace; the target must be a
+member OF this workspace (a foreign/guessed id 404s, never leaks); and the
+OWNER row is never revocable (a workspace always keeps its owner — that also
+blocks an owner revoking themselves into an ownerless workspace).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `member_id` | path | yes | string |
 | `x-user-email` | header | no | string |
 
 Responses: `200`, `422`
