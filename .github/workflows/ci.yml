@@ -12,6 +12,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Clean-authorship law (CLAUDE.md rule 6; founder 2026-07-24). A HARD gate so
+  # it holds for automated / loop-engineering commits too: every commit in the
+  # PR is authored by the founder with no AI trailer/reference. Pure stdlib, no
+  # deps — runs in parallel with lint.
+  authorship:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so the commit range resolves
+      - name: clean-authorship law (Lokesh only, no AI trace)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            RANGE="origin/main..HEAD"
+          fi
+          echo "authorship range: $RANGE"
+          python3 scripts/check_authorship.py "$RANGE"
+
   lint:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
