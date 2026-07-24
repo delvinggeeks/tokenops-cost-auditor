@@ -35,6 +35,81 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-1b-3 MEMBERS PAGE & REVOKE (2026-07-24) — founder "proceed O-1b-3"
+
+The governance slice that CLOSES O-1b, built end-to-end (R-VERTICAL) on a branch
+off main. GOAL: an owner sees who is in the workspace and can remove them; a
+removed member loses access. SHIPPED: **repo.list_workspace_members** (the
+inverse of list_memberships — the users IN one workspace, joined to User for the
+email, owner-first then joined; every row has a real user). **Members page
+roster** — GET /settings/members now renders email · role · joined, VISIBLE TO
+EVERY MEMBER (you should know who you share a workspace with), with a per-member
+**Remove** control that renders ONLY for an owner over a NON-owner (`can_revoke`):
+a plain member sees the roster with NO revoke/invite control AT ALL — absent, not
+a 403 they bump into (the reachability law for permissions, foreshadowing O-2) —
+plus the honest "just you so far" solo empty state. **POST
+/settings/members/{id}/revoke** (OWNER-ONLY) deletes the WorkspaceMember — and
+that is the WHOLE mechanism: the switchable `active_workspace_id` resolver already
+falls a revoked member back to their PERSONAL workspace on their very next
+request, so access stops with no extra step (pinned by the journey test). Guards,
+fail-closed: owner-of-THIS-workspace only; the target must be a member OF this
+workspace else 404 (a guessed/foreign member id can never reach across tenants);
+the OWNER row is never revocable → 400 (a workspace always keeps its owner, which
+also blocks an owner orphaning their own workspace). **Invite governance**: POST
+.../invite/{id}/resend (owner + Scale + rate-limited 5/min; RE-MINTS the code,
+overwriting the stored hash so the previous link dies instantly — a rotation,
+never a second live code) and POST .../invite/{id}/cancel (owner-only, no Scale
+gate — cleanup is always allowed; deletes the pending invite so its link loads
+nothing → the same honest 'invalid' state). All mutations owner-scoped fail-closed
+(member-level RBAC still belongs to O-2). tests/test_workspace_members.py: 8 green
+(roster→revoke→access-stops with resolver fallback; revoke control absent for a
+member AND route owner-only; owner row 400; foreign id 404; solo empty state;
+resend rotates + old link dies; cancel withdraws + kills link; resend/cancel
+owner-only). ruff+mypy clean; workspace suites green. Traceability O-1b-3 row
+added.
+
+GATE ROUND CLOSED — spec PASS-WITH-NOTES · ux PASS-WITH-NOTES · cold
+PASS-WITH-NOTES · system-tester PASS; none FAIL. spec's only note (the new test
+file was untracked → invisible to `git diff main`) resolved by `git add`. cold
+caught two REAL issues, both FIXED: **f.1** — the roster `order_by(role)` sorted
+ascending so "member" (m) preceded "owner" (o), listing members ABOVE the owner
+and contradicting the "owner-first" claim; replaced with an explicit
+`case(role=='owner' → 0)` key (future-proof vs O-2's admin/viewer) + a regression
+test pinning owner-row position. **f.2** — resend rotated the stored hash (killing
+the old link) BEFORE the mail send, so a failed resend stranded the invitee with
+no working link under a banner that only said "try again"; reordered to
+send-BEFORE-rotate so a failed resend leaves the EXISTING link intact, with a
+distinct `resend-failed` banner ("the previous link still works") + a test that
+makes the adapter raise and asserts the old code still accepts. cold f.3 (INNER
+join would silently drop a member if an account-delete path is ever added) →
+comment caveat; f.4 (assert-vs-HTTP for the ws invariant) → pre-existing pattern,
+no change. ux's three kit-conformance notes all APPLIED: roster + pending-invites
+lists converted from hand-rolled `<ul>` to `kit.table_open/close` (labeled
+columns, the Datadog/Stripe row grammar), the solo state now uses
+`kit.empty_state`, mobile crowding resolved by the table treatment. system-tester
+walked the governance journey LIVE (revoke → the fallback is observable on the
+dashboard, a second surface, not merely DB-true; owner-only surface absent-not-403;
+resend/cancel functional; no regressions) with zero product findings.
+
+COLD RE-GATE (fix diff) PASS-WITH-NOTES — both fixes CONFIRMED correct, no
+regressions. Two re-gate notes, both ADDRESSED: (2) the owner-first test was weak
+— the owner's membership seeds BEFORE the member's, so `created_at` alone already
+ordered owner-first and the test would pass even with the `case` key deleted →
+STRENGTHENED: the member's join is now backdated a day BEFORE the owner's, so
+owner-first can hold ONLY if the explicit `case` key beats chronology (the test
+now fails if the key is dropped for a bare `created_at` sort). (4) resend held the
+DB session across the mail call (unlike invite_member, which sends outside it) — a
+latent pool risk with the real SMTP adapter → RESTRUCTURED to three phases:
+authorize+read (session closed), send with NO session held, then reopen to commit
+the rotation (re-checking the invite is still pending — skips silently if it was
+accepted/canceled during the send). Mail is now out of the transaction, matching
+the sibling route; the send-before-rotate guarantee cold already confirmed is
+preserved (a failed send still leaves the old link live). Self-reviewed rather
+than spawning a third cold pass — the change is localized and covered both paths
+(rotate-on-success + failure-leaves-old-link). ruff+mypy clean project-wide;
+workspace suites green (members 10 + invites 7). NEXT: full suite → commit → PR →
+merge → O-1 CLOSES.
+
 ## PUBLISHED + O-1/LE-1 MERGED TO MAIN (2026-07-24) — founder "publish ... merge and squash", then "ownership/clarity/eliminate cognitive debt"
 
 The repo is LIVE (github.com/delvinggeeks/tokenops-cost-auditor, private) and `main`

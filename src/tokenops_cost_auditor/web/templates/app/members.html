@@ -8,13 +8,54 @@
     {% if invited == "1" %}
     <div class="provenance" role="status">Invitation sent — it works once, expires in
       {{ invite_ttl_days }} days, and only for the address you invited.</div>
+    {% elif invited == "resent" %}
+    <div class="provenance" role="status">Invitation re-sent — a fresh link is on its way; the
+      previous one no longer works.</div>
+    {% elif invited == "canceled" %}
+    <div class="provenance" role="status">Invitation canceled — that link no longer works.</div>
+    {% elif invited == "resend-failed" %}
+    <div class="provenance" role="alert">We couldn't send the new invitation just now — the
+      previous link still works. Try resending in a minute.</div>
     {% elif invited == "0" %}
     <div class="provenance" role="alert">The invitation was recorded, but we couldn't send
       the email just now. Try again in a minute.</div>
     {% elif invited == "-1" %}
     <div class="provenance" role="alert">That doesn't look like an email address.</div>
     {% endif %}
+    {% if removed == "1" %}
+    <div class="provenance" role="status">Removed from the workspace — they lose access on their
+      next request and fall back to their own workspace.</div>
+    {% endif %}
 
+    {# ROSTER — who shares this workspace. Visible to EVERY member; the Remove
+       control renders only for an owner over a non-owner (can_revoke). #}
+    <h3>People in this workspace</h3>
+    {{ kit.table_open([
+         {"label": "Person"}, {"label": "Role"}, {"label": "Joined"},
+         {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+       ]) }}
+      {% for m in members %}
+      <tr>
+        <td>{{ m.email }}{% if m.is_you %} <span class="muted">· you</span>{% endif %}</td>
+        <td>{{ m.role }}</td>
+        <td>{{ m.joined.strftime("%Y-%m-%d") }}</td>
+        <td class="row-actions">
+          {% if m.can_revoke %}
+          <form method="post" action="/settings/members/{{ m.id }}/revoke" class="inline-form"
+                data-confirm="Remove {{ m.email }} from this workspace? They lose access on their next request.">
+            {{ kit.button("Remove") }}
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% if members|length == 1 and is_owner %}
+    {{ kit.empty_state("It's just you so far",
+         "Invite a teammate below to share this workspace — they'll see its audits, dashboard and savings.") }}
+    {% endif %}
+
+    <h3 style="margin-top:var(--s4);">Invite a teammate</h3>
     {% if can_invite %}
     <form method="post" action="/settings/members/invite" data-once
           style="display:flex; gap:var(--s2); align-items:flex-end; flex-wrap:wrap;">
@@ -34,20 +75,35 @@
       shared workspaces. {{ kit.button("See plans", href="/billing") }}</p>
     {% endif %}
 
+    {% if is_owner %}
     <h3 style="margin-top:var(--s4);">Pending invitations</h3>
     {% if invites %}
-    <ul style="list-style:none; padding:0; margin:0; display:grid; gap:2px;">
+    {{ kit.table_open([
+         {"label": "Invitee"}, {"label": "Status"},
+         {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+       ]) }}
       {% for inv in invites %}
-      <li style="display:flex; justify-content:space-between; gap:var(--s2);
-                 border-bottom:1px solid var(--rule); padding:var(--s1) 0;">
-        <span>{{ inv.email }}</span>
-        <span class="muted">invited {{ inv.created.strftime("%Y-%m-%d") }} ·
-          {% if inv.expired %}expired{% else %}pending{% endif %}</span>
-      </li>
+      <tr>
+        <td>{{ inv.email }}</td>
+        <td class="muted">invited {{ inv.created.strftime("%Y-%m-%d") }} ·
+          {% if inv.expired %}expired{% else %}pending{% endif %}</td>
+        <td class="row-actions">
+          {% if can_invite %}
+          <form method="post" action="/settings/members/invite/{{ inv.id }}/resend" class="inline-form">
+            {{ kit.button("Resend") }}
+          </form>
+          {% endif %}
+          <form method="post" action="/settings/members/invite/{{ inv.id }}/cancel" class="inline-form"
+                data-confirm="Cancel the invitation to {{ inv.email }}? Their link stops working.">
+            {{ kit.button("Cancel") }}
+          </form>
+        </td>
+      </tr>
       {% endfor %}
-    </ul>
+    {{ kit.table_close() }}
     {% else %}
     <p class="muted">No pending invitations{% if can_invite %} — invite someone above{% endif %}.</p>
+    {% endif %}
     {% endif %}
   {{ kit.surface_close() }}
 </div>

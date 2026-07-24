@@ -25,11 +25,17 @@ from sqlalchemy.exc import IntegrityError
 
 from tokenops_cost_auditor.api.routes_upload import EMAIL_RE, current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
-from tokenops_cost_auditor.persistence.models import Workspace, WorkspaceInvite, WorkspaceMember
+from tokenops_cost_auditor.persistence.models import (
+    User,
+    Workspace,
+    WorkspaceInvite,
+    WorkspaceMember,
+)
 from tokenops_cost_auditor.persistence.repo import (
     active_workspace_id,
     get_or_create_user,
     list_workspace_invites,
+    list_workspace_members,
     set_active_workspace,
     workspace_role,
 )
@@ -70,10 +76,13 @@ def _viewer_email(request: Request) -> str | None:
 
 @router.get("/settings/members", response_class=HTMLResponse)
 def members_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
-    """The members surface: invite a teammate + the pending-invites list. The
-    invite form appears ONLY for an owner on Scale; everyone else sees the honest
-    reason it's unavailable (not their workspace to grow / Scale-gated), never a
-    dead control."""
+    """The members surface (O-1b-3): the roster of who is in the workspace, the
+    invite form, the pending-invites list, and per-member governance. The roster
+    is visible to EVERY member (you should know who you share a workspace with);
+    the mutating controls — invite, revoke, resend/cancel — render ONLY for an
+    owner on Scale. A plain member sees the list with NO revoke/invite control at
+    all (absent, not a 403 they'd have to bump into — the reachability law for
+    permissions, foreshadowing O-2)."""
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
@@ -83,8 +92,27 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
         is_owner = workspace_role(session, user.id, ws) == "owner"
         is_scale = user_plan(session, user.id) == "team"
         now = datetime.now(UTC)
+        members = [
+            {
+                "id": m.id,
+                "email": u.email,
+                "role": m.role,
+                "joined": m.created_at,
+                "is_you": u.id == user.id,
+                # revoke shows for an OWNER over any NON-owner member; the owner
+                # row is never revocable (a workspace always keeps its owner) and
+                # a plain member sees no control at all.
+                "can_revoke": is_owner and m.role != "owner",
+            }
+            for m, u in list_workspace_members(session, ws)
+        ]
         invites = [
-            {"email": inv.email, "created": inv.created_at, "expired": _aware(inv.expires_at) < now}
+            {
+                "id": inv.id,
+                "email": inv.email,
+                "created": inv.created_at,
+                "expired": _aware(inv.expires_at) < now,
+            }
             for inv in (list_workspace_invites(session, ws) if is_owner else [])
         ]
         ctx = _shell_ctx(session, request, user, "members")
@@ -95,9 +123,11 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
             is_owner=is_owner,
             is_scale=is_scale,
             can_invite=is_owner and is_scale,
+            members=members,
             invites=invites,
             invite_ttl_days=INVITE_TTL_DAYS,
             invited=request.query_params.get("invited"),
+            removed=request.query_params.get("removed"),
             **ctx,
         )
 
@@ -148,6 +178,121 @@ def invite_member(
     except Exception:
         return RedirectResponse("/settings/members?invited=0", status_code=303)
     return RedirectResponse("/settings/members?invited=1", status_code=303)
+
+
+@router.post("/settings/members/{member_id}/revoke", response_model=None)
+def revoke_member(
+    request: Request,
+    member_id: str,
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """OWNER-ONLY: remove a member from the workspace. Deleting the
+    `WorkspaceMember` is the whole mechanism — the switchable resolver already
+    falls a revoked member back to their PERSONAL workspace on their very next
+    request (`active_workspace_id` validates the active pointer against live
+    membership), so access stops with no extra step; the journey test pins it.
+    Guards, fail-closed: the caller must own THIS workspace; the target must be a
+    member OF this workspace (a foreign/guessed id 404s, never leaks); and the
+    OWNER row is never revocable (a workspace always keeps its owner — that also
+    blocks an owner revoking themselves into an ownerless workspace)."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None  # ensure-created; never None for an authenticated user
+        if workspace_role(session, user.id, ws) != "owner":
+            raise HTTPException(status_code=403, detail="only the owner can remove members")
+        member = session.get(WorkspaceMember, member_id)
+        if member is None or member.workspace_id != ws:
+            raise HTTPException(status_code=404, detail="no such member in this workspace")
+        if member.role == "owner":
+            raise HTTPException(status_code=400, detail="the workspace owner cannot be removed")
+        removed = session.get(User, member.user_id)
+        target = removed.email if removed else member.user_id
+        session.delete(member)
+        auditlog.append(session, user.email, "workspace.member_revoked", target)
+        session.commit()
+    return RedirectResponse("/settings/members?removed=1", status_code=303)
+
+
+@router.post("/settings/members/invite/{invite_id}/resend", response_model=None)
+@limiter.limit("5/minute")
+def resend_invite(
+    request: Request,
+    invite_id: str,
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """OWNER-ONLY, Scale-gated, rate-limited (same email-amplification bound as a
+    fresh invite): re-mint a pending invite's one-shot code and re-send the link.
+    Re-minting OVERWRITES the stored hash, so the previous code is invalidated the
+    instant a new one is issued — a resend is a rotation, never a second live
+    code. Only an unconsumed invite of THIS workspace can be resent."""
+    settings = request.app.state.settings
+    # Phase 1 — authorize and read the invite. NO write, and (like invite_member)
+    # the mail send is kept OUT of the DB session: hold no connection across the
+    # network call (cold O-1b-3 f.2 re-gate note).
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None
+        if workspace_role(session, user.id, ws) != "owner":
+            raise HTTPException(status_code=403, detail="only the workspace owner can invite")
+        if user_plan(session, user.id) != "team":
+            raise HTTPException(
+                status_code=403, detail="inviting teammates is part of Scale — see /billing"
+            )
+        invite = session.get(WorkspaceInvite, invite_id)
+        if invite is None or invite.workspace_id != ws or invite.consumed_at is not None:
+            raise HTTPException(status_code=404, detail="no such pending invitation")
+        workspace = session.get(Workspace, ws)
+        invitee = invite.email
+        ws_name = workspace.name if workspace else "the workspace"
+        actor = user.email
+    # Phase 2 — send the new link with the session closed. Rotate ONLY on success,
+    # so a failed resend leaves the EXISTING (working) link intact rather than kill
+    # it and strand the invitee with no way in (cold O-1b-3 f.2).
+    code = secrets.token_urlsafe(24)
+    try:
+        request.app.state.mail.workspace_invite(invitee, f"/invite/accept?code={code}", ws_name)
+    except Exception:
+        return RedirectResponse("/settings/members?invited=resend-failed", status_code=303)
+    # Phase 3 — commit the rotation, re-checking the invite is still a pending one
+    # of this workspace (it could have been accepted or canceled during the send;
+    # skip silently in that case — the mail already went, and the stale link the
+    # accept/cancel produced is honestly invalid regardless).
+    with _session(request) as session:
+        invite = session.get(WorkspaceInvite, invite_id)
+        if invite is not None and invite.workspace_id == ws and invite.consumed_at is None:
+            invite.code_hash = credential_fingerprint(settings.secret_key, code)
+            invite.expires_at = datetime.now(UTC) + timedelta(days=INVITE_TTL_DAYS)
+            auditlog.append(session, actor, "workspace.invite_resent", invitee)
+            session.commit()
+    return RedirectResponse("/settings/members?invited=resent", status_code=303)
+
+
+@router.post("/settings/members/invite/{invite_id}/cancel", response_model=None)
+def cancel_invite(
+    request: Request,
+    invite_id: str,
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """OWNER-ONLY: withdraw a pending invitation. Deleting the row is the honest
+    cancel — the emailed link then loads nothing and shows the same 'invalid'
+    state as any dead code, so a withdrawn invite can never be accepted. No Scale
+    gate: cleaning up is always allowed, even for an owner who has since lapsed."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None
+        if workspace_role(session, user.id, ws) != "owner":
+            raise HTTPException(status_code=403, detail="only the owner can manage invites")
+        invite = session.get(WorkspaceInvite, invite_id)
+        if invite is None or invite.workspace_id != ws or invite.consumed_at is not None:
+            raise HTTPException(status_code=404, detail="no such pending invitation")
+        canceled = invite.email
+        session.delete(invite)
+        auditlog.append(session, user.email, "workspace.invite_canceled", canceled)
+        session.commit()
+    return RedirectResponse("/settings/members?invited=canceled", status_code=303)
 
 
 def _load_invite(request: Request, code: str) -> WorkspaceInvite | None:
