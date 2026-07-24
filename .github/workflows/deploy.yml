@@ -1,9 +1,11 @@
-# WP-DEVOPS-OBS: the deploy pipeline. workflow_dispatch IS the founder's
-# "approved to deploy" — pressing the button is the approval ritual, and
-# nothing here runs without it. The pipeline then enforces mechanically
-# what the runbook asked of humans: CI-green on the tag, strict pricing
-# verification (R-AUTO-PRICING), pre-deploy backup, provision, smoke —
-# and rolls back to the previously deployed tag if smoke fails.
+# The deploy pipeline. LE-2 (Loop Engineering, founder 2026-07-24): CONTINUOUS
+# DEPLOYMENT — every merge to `main` auto-deploys to production, no human gate.
+# `workflow_dispatch` stays as the manual escape hatch (deploy an arbitrary tag,
+# or re-deploy). Either trigger runs the SAME mechanical safety the runbook once
+# asked of humans: full CI chain re-run on the exact ref, strict pricing
+# verification (R-AUTO-PRICING), pre-deploy backup, provision, external smoke —
+# and AUTO-ROLLBACK to the previously deployed tag if smoke fails. So prod
+# self-heals even with nobody watching (PLAN-LOOP-ENGINEERING §3 containment).
 #
 # Required repository secrets (founder-lane, one-time):
 #   DEPLOY_SSH_KEY   private key authorized for root@<host>
@@ -18,19 +20,43 @@ on:
       tag:
         description: "Git tag to deploy (e.g. v1.7.0)"
         required: true
+  push:
+    branches: [main]
 
-concurrency: production-deploy  # one deploy at a time, ever
+concurrency: production-deploy # one deploy at a time, ever
 
 jobs:
+  # Resolve what to ship for BOTH triggers into one (ref, tag) pair, so the gate
+  # and deploy jobs stay trigger-agnostic. Manual → the given tag; a merge to
+  # main → the merged commit SHA (a valid `git archive` ref AND a clean Sentry
+  # release id; provision stamps it as RELEASE_TAG and rollback checks it out).
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.r.outputs.ref }}
+      tag: ${{ steps.r.outputs.tag }}
+    steps:
+      - id: r
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            REF="${{ inputs.tag }}"; TAG="${{ inputs.tag }}"
+          else
+            REF="${{ github.sha }}"; TAG="${{ github.sha }}"
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "deploying ref=$REF tag=$TAG (event=${{ github.event_name }})"
+
   gate:
+    needs: resolve
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.resolve.outputs.ref }}
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --frozen
-      - name: full chain on the exact tag
+      - run: uv sync --frozen --all-extras
+      - name: full chain on the exact ref
         run: |
           set -o pipefail
           uv run ruff check .
@@ -40,13 +66,13 @@ jobs:
         run: uv run python scripts/pricing_verify.py
 
   deploy:
-    needs: gate
+    needs: [resolve, gate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 0  # provision ships the tag via git archive
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0 # provision ships the ref via git archive
       - name: ssh setup
         run: |
           mkdir -p ~/.ssh
@@ -64,12 +90,12 @@ jobs:
         run: |
           ssh "root@${{ secrets.DEPLOY_HOST }}" \
             'docker exec tokenops-cost-auditor-postgres /bin/bash /scripts/backup.sh'
-      - name: provision ${{ inputs.tag }}
+      - name: provision ${{ needs.resolve.outputs.tag }}
         run: |
           bash scripts/provision.sh \
             --host "${{ secrets.DEPLOY_HOST }}" \
             --domain "${{ secrets.DEPLOY_DOMAIN }}" \
-            --tag "${{ inputs.tag }}"
+            --tag "${{ needs.resolve.outputs.tag }}"
       - name: external smoke (fails the job -> triggers rollback)
         run: |
           curl -sSf -m 20 "https://${{ secrets.DEPLOY_DOMAIN }}/healthz" | grep -q '"ok":true'
