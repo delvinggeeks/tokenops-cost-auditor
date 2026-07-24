@@ -68,13 +68,15 @@ def run_for_user(
         .scalars()
         .all()
     )
-    # O-1: AlertCheck (the silence ledger) has no workspace_id (O-1b deferral)
-    # and is written per recipient — the row stays user-scoped.
+    # O-1b: stamp the recipient (user_id — dedup/attribution is per person) AND
+    # the workspace (workspace_id — so the /runs silence ledger and the activity
+    # feed show the WORKSPACE's checks/events to its members).
     for rule_row in enabled_rules:
         crossed = rule_row.rule in fired_rules
         session.add(
             AlertCheck(
                 user_id=user.id,
+                workspace_id=ws,
                 rule=rule_row.rule,
                 ts=stamp,
                 crossed=crossed,
@@ -85,7 +87,13 @@ def run_for_user(
     sent: list[Firing] = []
     for f in firings:
         session.add(
-            AlertEvent(user_id=user.id, rule=f.rule, detail=f.detail, ts=now or datetime.now(UTC))
+            AlertEvent(
+                user_id=user.id,
+                workspace_id=ws,
+                rule=f.rule,
+                detail=f.detail,
+                ts=now or datetime.now(UTC),
+            )
         )
         # Commit THIS event before sending, and before attempting any further
         # firing: a later failure must not roll back an email already sent

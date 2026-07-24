@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session as _SASession
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.main import create_app
 from tokenops_cost_auditor.persistence.models import (
+    AlertCheck,
+    AlertEvent,
     AlertRule,
     ApiToken,
     Audit,
@@ -54,6 +56,10 @@ _OWNED_BY: list[tuple[type, str]] = [
     (Statement, "user_id"),
     (SavedView, "user_id"),
     (OAuthApp, "owner_user_id"),
+    # O-1b: operational logs gained workspace_id (member visibility). Payment
+    # is intentionally absent — it has no workspace_id (billing is O-2).
+    (AlertEvent, "user_id"),
+    (AlertCheck, "user_id"),
 ]
 
 

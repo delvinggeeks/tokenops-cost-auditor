@@ -39,13 +39,11 @@ def _aware(dt: datetime) -> datetime:
 
 
 def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
-    # O-1 read-scope: audits + applied-fix feedback are workspace-owned, so the
-    # feed shows the active workspace's activity. AlertEvent and Payment have NO
-    # workspace_id column yet (O-0 stamped 10 tables; these three logs — plus
-    # AlertCheck — were left out by design), so they STAY user-scoped here. That
-    # is leak-safe (a member never sees another's alerts/payments) and is a GAP,
-    # not a leak; closing it (does a member see the workspace's alert history and
-    # billing?) is an explicit O-1b decision — see STATUS "O-1 SWEEP" deferrals.
+    # O-1b read-scope: audits, applied-fix feedback and alert events are all
+    # workspace-owned, so the feed shows the active WORKSPACE's activity to its
+    # members. Payment STAYS user-scoped — billing visibility is role-gated in
+    # O-2 (founder ruling), so a plain member never sees the workspace's
+    # payments here; a member's own (empty) payment line is the honest result.
     ws = active_workspace_id(session, user_id)
     events: list[Event] = []
 
@@ -79,7 +77,7 @@ def recent(session: Session, user_id: str, limit: int = 25) -> list[Event]:
     alerts = (
         session.execute(
             select(AlertEvent)
-            .where(AlertEvent.user_id == user_id)
+            .where(AlertEvent.workspace_id == ws)
             .order_by(AlertEvent.ts.desc())
             .limit(limit)
         )
@@ -161,9 +159,9 @@ def unseen_count(session: Session, user: User, limit: int = 25) -> int:
     from sqlalchemy import func
 
     cut = _aware(user.activity_seen_at) if user.activity_seen_at is not None else None
-    # O-1: mirror recent()'s scoping exactly — audits + applied feedback are
-    # workspace-scoped; AlertEvent + Payment stay user-scoped (no workspace_id;
-    # O-1b deferral). The two must agree or the bell badge would over/under-count.
+    # O-1b: mirror recent()'s scoping EXACTLY or the bell badge would over/under-
+    # count — audits + applied feedback + alert events are workspace-scoped;
+    # Payment stays user-scoped (billing visibility is O-2).
     ws = active_workspace_id(session, user.id)
 
     def c(stmt: Select[tuple[int]]) -> int:
@@ -172,7 +170,7 @@ def unseen_count(session: Session, user: User, limit: int = 25) -> int:
     aq = select(func.count(Audit.id)).where(
         Audit.workspace_id == ws, Audit.status == "done", Audit.report_ready_at.is_not(None)
     )
-    eq = select(func.count(AlertEvent.id)).where(AlertEvent.user_id == user.id)
+    eq = select(func.count(AlertEvent.id)).where(AlertEvent.workspace_id == ws)
     fq = (
         select(func.count(FindingFeedback.id))
         .join(Audit, FindingFeedback.audit_id == Audit.id)

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Subscription
+from tokenops_cost_auditor.persistence.repo import active_workspace_id
 
 FREE = "free"
 PRO = "pro"
@@ -205,11 +206,14 @@ def viewer_currency(
     """One rule for every signed-in surface: a subscribed account sees its
     own billing currency; everyone else gets the viewer pick."""
     if user_id is not None:
-        # O-1: billing scope (Subscription) stays user-scoped — see the
-        # deferral note in subscriptions.entitlements (PLAN-ORG Q3, O-1b/O-2).
-        sub = session.execute(
-            select(Subscription).where(Subscription.user_id == user_id)
-        ).scalar_one_or_none()
+        # O-1b: billing follows the ACTIVE workspace (members inherit — founder
+        # Q3 ruling), so the displayed currency is the workspace's subscription
+        # currency, matching entitlements.
+        sub = session.scalar(
+            select(Subscription).where(
+                Subscription.workspace_id == active_workspace_id(session, user_id)
+            )
+        )
         if sub is not None and (sub.currency or "").upper() in CURRENCIES:
             return str(sub.currency).upper()
     return pick_currency(ccy_param, accept_language, ccy_cookie)

@@ -82,6 +82,13 @@ class User(Base):
     # issued at-or-before this instant is now rejected, so bumping it kills
     # every existing session for the user.
     sessions_valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # O-1b (R-ORG): the workspace the user is currently acting in. Plain
+    # String(32), no FK (the O-0 additive-safe convention) — repo.
+    # active_workspace_id validates it against LIVE memberships and falls back to
+    # the personal workspace, so a stale/foreign value can never scope a read.
+    # None (the backfill default is the personal workspace) is treated as "not
+    # switched" → personal workspace.
+    active_workspace_id: Mapped[str | None] = mapped_column(String(32))
 
 
 class Workspace(Base):
@@ -133,6 +140,33 @@ class WorkspaceMember(Base):
             postgresql_where=text("role = 'owner'"),
         ),
     )
+
+
+class WorkspaceInvite(Base):
+    """O-1b (R-ORG): invite a person (by email) into a workspace with a role.
+    Reuses the LinkCode grammar — the code is a SECRET shown once and stored only
+    as a keyed HMAC (`code_hash`); acceptance is single-use via an atomic
+    consume. The invitee's email must match on accept (defense in depth: a leaked
+    code alone cannot join a different account)."""
+
+    __tablename__ = "workspace_invites"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False, default="member")
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    invited_by_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    consumed_by_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class Audit(Base):
@@ -229,6 +263,9 @@ class Payment(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    # NOTE: no workspace_id here — billing visibility is role-gated in O-2
+    # (founder ruling 2026-07-24), so the payment ledger stays user-scoped and
+    # its workspace column lands with O-2, not O-1b.
     provider: Mapped[str] = mapped_column(String(24), nullable=False)  # razorpay|stripe|manual|comp
     ref: Mapped[str | None] = mapped_column(String(120))  # provider payment reference
     amount: Mapped[float] = mapped_column(Float, nullable=False)  # major units
@@ -381,6 +418,7 @@ class AlertCheck(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-1b (R-ORG)
     rule: Mapped[str] = mapped_column(String(32), nullable=False)
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     crossed: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -570,6 +608,7 @@ class AlertEvent(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-1b (R-ORG)
     rule: Mapped[str] = mapped_column(String(32), nullable=False)
     detail: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

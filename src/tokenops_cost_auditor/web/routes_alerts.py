@@ -96,12 +96,12 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
                 }
                 for key in RULES
             ]
-        # O-1: AlertEvent has no workspace_id (O-1b deferral) — the fired-alert
-        # history stays user-scoped (each member sees their own notifications).
+        # O-1b: the fired-alert history is workspace-scoped — a member sees the
+        # workspace's alerts, matching its (workspace-scoped) rules above.
         history = (
             session.execute(
                 select(AlertEvent)
-                .where(AlertEvent.user_id == user.id)
+                .where(AlertEvent.workspace_id == ws)
                 .order_by(AlertEvent.ts.desc())
                 .limit(20)
             )

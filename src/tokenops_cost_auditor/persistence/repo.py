@@ -88,31 +88,72 @@ def workspace_id_for(session: Session, user_id: str) -> str | None:
     )
 
 
+def _is_member(session: Session, user_id: str, workspace_id: str) -> bool:
+    """True if the user currently holds ANY membership in the workspace (O-1b).
+    The LIVE check that keeps active_workspace_id leak-safe: a revoked member, or
+    a pointer to a workspace the user never joined, is not a member — so the
+    resolver falls back to personal rather than scope a read to foreign data."""
+    return (
+        session.scalar(
+            select(WorkspaceMember.id).where(
+                WorkspaceMember.workspace_id == workspace_id,
+                WorkspaceMember.user_id == user_id,
+            )
+        )
+        is not None
+    )
+
+
 def active_workspace_id(session: Session, user_id: str) -> str | None:
     """O-1: the workspace the user is currently acting in — the READ scope for
-    every owned resource. In O-1a this is the user's personal workspace, so
-    re-scoping reads from user_id to this workspace_id is behavior-preserving
-    while 1 user = 1 workspace. O-1b makes it the *switchable* active workspace
-    (validated against the caller's memberships) so a member can view a shared
-    workspace. EVERY read of an owned resource must scope to THIS, never to
-    user_id — that is what makes a workspace's members see the same data.
+    every owned resource. O-1b: their `User.active_workspace_id` IF they still
+    hold a membership in it, otherwise their personal workspace. EVERY read of an
+    owned resource scopes to THIS, never to user_id — that is what makes a
+    workspace's members see the same data.
 
-    LEAK-SAFETY (O-1 sweep, load-bearing): a read scoped `Model.workspace_id ==
-    active_workspace_id(...)` must NEVER receive None — SQLAlchemy renders
-    `== None` as `IS NULL`, which would match every tenant's un-stamped rows
-    (a cross-tenant leak). For a real, authenticated caller this cannot return
-    None: get_or_create_user mints the workspace-of-one at first login, O-0
-    backfilled every existing user, and if a User was minted out-of-band we
-    ensure-create their workspace here rather than hand a read a None scope.
-    None is returned ONLY when user_id names no user at all — an impossible
-    input on an authenticated read path; the T-ORG isolation tests pin this."""
-    ws = workspace_id_for(session, user_id)
-    if ws is not None:
-        return ws
+    LEAK-SAFETY (load-bearing, two guarantees):
+    1. The returned workspace is ALWAYS one the caller is a member of — a
+       switched pointer is validated against live membership (`_is_member`), so a
+       revoked member or a stale/foreign `active_workspace_id` silently falls
+       back to personal and never scopes a read to another tenant's data.
+    2. It is NEVER None for a real user — a read scoped `Model.workspace_id ==
+       active_workspace_id(...)` must not become `IS NULL` (which would match
+       every tenant's un-stamped rows). The personal workspace is ensure-created
+       if missing. None is returned ONLY when user_id names no user at all — an
+       impossible input on an authenticated read path; T-ORG tests pin both."""
     user = session.get(User, user_id)
     if user is None:  # pragma: no cover - unreachable on an authenticated path
         return None
-    return get_or_create_workspace(session, user).id
+    personal = workspace_id_for(session, user_id)
+    if personal is None:
+        personal = get_or_create_workspace(session, user).id
+    active = user.active_workspace_id
+    if active and active != personal and _is_member(session, user_id, active):
+        return active
+    return personal
+
+
+def set_active_workspace(session: Session, user_id: str, workspace_id: str) -> bool:
+    """O-1b: switch the user's active workspace. Returns False and changes
+    nothing unless the user is a member of the target — a user can only ever act
+    in a workspace they belong to (the switch cannot become a privilege grant)."""
+    user = session.get(User, user_id)
+    if user is None or not _is_member(session, user_id, workspace_id):
+        return False
+    user.active_workspace_id = workspace_id
+    return True
+
+
+def list_memberships(session: Session, user_id: str) -> list[tuple[Workspace, str]]:
+    """Every workspace the user belongs to, with their role — for the workspace
+    switcher and the Members surface. Their personal workspace is included."""
+    rows = session.execute(
+        select(Workspace, WorkspaceMember.role)
+        .join(WorkspaceMember, WorkspaceMember.workspace_id == Workspace.id)
+        .where(WorkspaceMember.user_id == user_id)
+        .order_by(Workspace.created_at)
+    ).all()
+    return [(ws, role) for ws, role in rows]
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:

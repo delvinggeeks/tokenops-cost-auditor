@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Subscription, User, utcnow
-from tokenops_cost_auditor.persistence.repo import workspace_id_for
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, workspace_id_for
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 
@@ -71,20 +71,58 @@ def dunning_stage(failed_at: datetime | None, now: datetime, settings: Settings)
     return PAST_DUE
 
 
+def _subs_by_workspace(
+    session: Session, workspace_ids: list[str | None]
+) -> dict[str, Subscription]:
+    """One query → {workspace_id: Subscription}. One sub per workspace is the
+    O-1b model (founder Q3 ruling); if legacy data carried more, last wins."""
+    uniq = [w for w in dict.fromkeys(workspace_ids) if w is not None]
+    if not uniq:
+        return {}
+    return {
+        s.workspace_id: s
+        for s in session.execute(
+            select(Subscription).where(Subscription.workspace_id.in_(uniq))
+        )
+        .scalars()
+        .all()
+        if s.workspace_id is not None
+    }
+
+
 def entitlements_for(
     session: Session, settings: Settings, user_ids: list[str]
 ) -> dict[str, dict[str, object]]:
-    """Batched entitlements — one query for many users (V-D8 cold-review f.5:
-    the scheduler was issuing one per source)."""
+    """Batched per-user entitlements, each resolved via the user's ACTIVE
+    workspace (members inherit the workspace plan — founder Q3 ruling). Used by
+    the per-recipient digest loops (one entitlement row per user)."""
     if not user_ids:
         return {}
-    subs = {
-        s.user_id: s
-        for s in session.execute(select(Subscription).where(Subscription.user_id.in_(user_ids)))
-        .scalars()
-        .all()
+    ws_of = {uid: active_workspace_id(session, uid) for uid in dict.fromkeys(user_ids)}
+    subs = _subs_by_workspace(session, [w for w in ws_of.values() if w is not None])
+
+    def _for(uid: str) -> dict[str, object]:
+        ws = ws_of.get(uid)
+        return _entitlements_from(settings, subs.get(ws) if ws is not None else None)
+
+    return {uid: _for(uid) for uid in user_ids}
+
+
+def entitlements_for_workspaces(
+    session: Session, settings: Settings, workspace_ids: list[str | None]
+) -> dict[str | None, dict[str, object]]:
+    """Batched entitlements keyed by WORKSPACE — for per-source scheduling, where
+    the governing plan is the SOURCE's workspace, not whatever workspace the
+    owner is currently acting in (they may have switched). A None workspace_id
+    (a source somehow un-stamped) maps to Free — conservative: no scheduled
+    work — never another workspace's plan."""
+    if not workspace_ids:
+        return {}
+    subs = _subs_by_workspace(session, workspace_ids)
+    return {
+        wid: _entitlements_from(settings, subs.get(wid) if wid is not None else None)
+        for wid in workspace_ids
     }
-    return {uid: _entitlements_from(settings, subs.get(uid)) for uid in user_ids}
 
 
 def _entitlements_from(settings: Settings, sub: Subscription | None) -> dict[str, object]:
@@ -105,20 +143,26 @@ def _entitlements_from(settings: Settings, sub: Subscription | None) -> dict[str
     }
 
 
-def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str, object]:
-    """What this account may do right now. Read-only pauses SCHEDULED work
-    and nothing else — the dashboard stays visible and connections are kept.
-
-    O-1 SCOPE: this STAYS user-scoped. Subscription carries a workspace_id
-    column (O-0), but whether a workspace member INHERITS the workspace's plan
-    is a billing-model decision that is not yet ruled (PLAN-ORG Q3: one
-    subscription per workspace vs seat-based). Flipping entitlements to
-    workspace scope would silently commit that model, so it is deferred to
-    O-1b/O-2 alongside the billing/RBAC decision. User-scoped is leak-safe."""
-    sub = session.execute(
-        select(Subscription).where(Subscription.user_id == user_id)
-    ).scalar_one_or_none()
+def entitlements_from_workspace(
+    session: Session, settings: Settings, workspace_id: str | None
+) -> dict[str, object]:
+    """The workspace-keyed core (O-1b, founder Q3 ruling: one subscription per
+    workspace, members inherit). A workspace with no subscription is Free."""
+    sub = None
+    if workspace_id is not None:
+        sub = session.scalar(
+            select(Subscription).where(Subscription.workspace_id == workspace_id)
+        )
     return _entitlements_from(settings, sub)
+
+
+def entitlements(session: Session, settings: Settings, user_id: str) -> dict[str, object]:
+    """What the caller may do right now, per their ACTIVE workspace's plan —
+    members INHERIT the workspace's subscription (founder ruling 2026-07-24,
+    resolving PLAN-ORG Q3: one subscription per workspace). Read-only pauses
+    SCHEDULED work and nothing else — the dashboard stays visible, connections
+    kept. Billing MANAGEMENT/visibility is role-gated separately in O-2."""
+    return entitlements_from_workspace(session, settings, active_workspace_id(session, user_id))
 
 
 def _safe_plan(candidate: str, current: str) -> str:
@@ -149,6 +193,11 @@ def apply_event(
         user = User(email=email)
         session.add(user)
         session.flush()
+    # O-1b: the webhook identifies the PAYER by email → user; the subscription
+    # is found/created keyed to that payer (the workspace owner). It is stamped
+    # with the owner's workspace, and reads scope by workspace_id (members
+    # inherit) — consistent because O-1b has exactly one owner per workspace, so
+    # payer==workspace is 1:1. (Multi-owner billing is an O-2 concern.)
     sub = session.execute(
         select(Subscription).where(Subscription.user_id == user.id)
     ).scalar_one_or_none()

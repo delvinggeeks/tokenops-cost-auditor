@@ -89,8 +89,9 @@ def evaluate(
         .scalars()
         .all()
     }
-    # O-1: AlertEvent has no workspace_id (O-1b deferral) and this dedup tracks
-    # what THIS recipient was already notified of, so it stays user-scoped.
+    # O-1b: AlertEvent now carries workspace_id (for the activity feed), but this
+    # dedup tracks what THIS recipient was already notified of — at-most-once is
+    # per person, so the dedup stays user-scoped.
     already = {
         (e.rule, str(e.detail.get("audit_id")))
         for e in session.execute(select(AlertEvent).where(AlertEvent.user_id == user.id))

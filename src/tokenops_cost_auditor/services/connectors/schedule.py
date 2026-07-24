@@ -50,9 +50,15 @@ def due_pulls(session: Session, now: datetime, settings: Settings | None = None)
     # audit ran at connect time and the tier's COGS bound is exactly that.
     # PLAN-based, not read_only-adjusted: R-Q12 dunning accounts keep pulling
     # (only their scheduled audits pause).
-    ents = subscriptions.entitlements_for(session, settings, [s.user_id for s in due])
+    # O-1b: scheduling follows the SOURCE's workspace plan (members inherit;
+    # the owner may be acting in a different workspace) — key by workspace_id.
+    ents = subscriptions.entitlements_for_workspaces(
+        session, settings, [s.workspace_id for s in due]
+    )
     return [
-        s for s in due if plans.get(settings, str(ents[s.user_id]["plan_key"])).scheduled_audits
+        s
+        for s in due
+        if plans.get(settings, str(ents[s.workspace_id]["plan_key"])).scheduled_audits
     ]
 
 
@@ -70,8 +76,11 @@ def due_audits(session: Session, now: datetime, settings: Settings | None = None
     # R-Q12 day 7: a read-only account keeps its data, its dashboard and its
     # connections — only SCHEDULED audits pause. Pulls continue, so nothing
     # is lost while payment is sorted out.
-    allowed = subscriptions.entitlements_for(session, settings, [s.user_id for s in due])
-    return [s for s in due if allowed[s.user_id]["scheduled_audits"]]
+    # O-1b: as above — the source's workspace governs its scheduled audits.
+    allowed = subscriptions.entitlements_for_workspaces(
+        session, settings, [s.workspace_id for s in due]
+    )
+    return [s for s in due if allowed[s.workspace_id]["scheduled_audits"]]
 
 
 def tick(

@@ -104,8 +104,8 @@ def _budget_stage_crossed(
     month = f"{now:%Y-%m}"
     # bounded to the month in SQL — the per-user scan must not grow with
     # account age (cold-review f.3); the detail month check stays as the
-    # authoritative filter. O-1: AlertEvent has no workspace_id (O-1b deferral),
-    # and budget-alert dedup is per-recipient anyway — this stays user-scoped.
+    # authoritative filter. O-1b: AlertEvent now carries workspace_id (feed
+    # visibility), but budget-alert dedup is per-recipient — stays user-scoped.
     month_start = datetime(now.year, now.month, 1, tzinfo=UTC)
     fired = session.execute(
         select(AlertEvent).where(
@@ -268,6 +268,7 @@ def run_digests(
                 session.add(
                     AlertEvent(
                         user_id=user.id,
+                        workspace_id=digest_ws,  # O-1b: workspace-visible in the feed
                         rule=SOFT_BUDGET,
                         detail={
                             "stage": stage,

@@ -194,15 +194,15 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
         .limit(LEDGER_CAP)
     ).all()
 
-    # O-1: AlertCheck (the "silence you can verify" ledger) has no workspace_id
-    # column (O-1b deferral) — this display stays user-scoped for now.
+    # O-1b: AlertCheck (the "silence you can verify" ledger) is workspace-scoped
+    # now — a member sees the workspace's checks, matching its alert rules/runs.
     check_total = session.execute(
-        select(func.count(AlertCheck.id)).where(AlertCheck.user_id == user.id)
+        select(func.count(AlertCheck.id)).where(AlertCheck.workspace_id == ws)
     ).scalar_one()
     checks = (
         session.execute(
             select(AlertCheck)
-            .where(AlertCheck.user_id == user.id)
+            .where(AlertCheck.workspace_id == ws)
             .order_by(AlertCheck.ts.desc())
             .limit(LEDGER_CAP)
         )

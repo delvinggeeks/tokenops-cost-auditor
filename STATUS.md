@@ -35,6 +35,50 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-1b BACKEND FOUNDATION (2026-07-24) — founder "Approved go with the recommendations"
+
+Founder RULED PLAN-ORG Q3: **one subscription per workspace, members INHERIT the
+plan; billing VISIBILITY is role-gated in O-2** (recorded in auto-memory
+[[workspace-billing-model]]). Built the members backend — all BEHAVIOR-PRESERVING
+under 1:1 (nothing activates until an invite creates a second member), so it is a
+safe checkpoint on the branch; the member-facing VERTICAL (invite UI → journey)
+completes O-1b before any merge/deploy (R-VERTICAL).
+
+SHIPPED: **migration 021** (rehearsed upgrade+backfill+downgrade on throwaway
+sqlite w/ pre-existing data) — `users.active_workspace_id` (backfilled to the
+personal workspace), **workspace_invites** (invite by email, one-shot HASHED code
+= the LinkCode grammar, email-match on accept), and `workspace_id` on
+**alert_events + alert_checks** (backfilled; PAYMENTS deliberately EXCLUDED —
+billing visibility is O-2). **Switchable resolver**: repo.active_workspace_id now
+returns `User.active_workspace_id` IF the caller still holds a live membership in
+it, else the personal workspace — two leak-safety guarantees pinned: (1) the
+returned workspace is ALWAYS one the caller is a member of (a revoked/stale/
+foreign pointer silently falls back — a switch can't become a privilege grant),
+(2) never None for a real user. Added repo.set_active_workspace (validates
+membership) + repo.list_memberships. **Billing re-scope** (the O-1a deferral,
+now ruled): entitlements/entitlements_for/viewer_currency read the ACTIVE
+workspace's subscription (members inherit); new entitlements_from_workspace +
+entitlements_for_workspaces; the scheduler keys on the SOURCE's workspace (not
+the owner's active one); apply_event stays payer-keyed (owner==workspace 1:1 in
+O-1b). **Member-visibility**: AlertEvent/AlertCheck DISPLAY reads (activity feed,
+/runs ledger, alerts history) flip to workspace + their WRITES stamp workspace_id;
+per-recipient dedup stays user-scoped; Payment stays user-scoped (O-2). conftest
+fixture-stamp hook extended to AlertEvent/AlertCheck. ruff+mypy clean; affected
+suites green.
+
+REMAINING for O-1b (the member-facing vertical — best in a fresh session per
+K-3/TE-9, this one is large): invite backend (POST /settings/members/invite,
+owner-only, TEAM/"Scale"-plan-gated — that plan was SOLD as multi-seat and O-1b
+is what lets it deliver; rate-limited; emailed accept link) + accept flow (email
+match + atomic one-shot consume + add WorkspaceMember(role=member) + set active
+workspace) + workspace SWITCH (POST, via repo.set_active_workspace) + revoke
+membership (owner-only); the **Members page** UI (mockup-FIRST per ux gate: list
+members/roles/joined, pending invites, invite form, revoke, switcher) reachable
+from Settings nav; honest empty/error states; the **journey test** (invite →
+accept → invitee reaches the shared dashboard + sees the owner's audits →
+switch → revoke stops access) hardening isolation from 1:1 to multi-member; then
+the gate round (ux, spec, cold, system-tester) + STATUS/traceability.
+
 ## O-1 SWEEP GATE ROUND CLOSED (2026-07-24) — cold PWN · spec PASS · vv PWN; sweep clear for O-1b
 
 Three gates, none FAIL. cold-reviewer PASS-WITH-NOTES: **found NO missed site and
