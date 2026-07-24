@@ -35,6 +35,18 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-0 DEPLOYED — v1.9.0 LIVE (2026-07-24) — founder "Deploy O-0 (v1.9.0), then O-1"
+
+Pre-deploy backup OK. provision.sh --tag v1.9.0: migration 020 applied
+(b7d34e9a1c60 → c8e05a1f6b20). BACKFILL LIVE-VERIFIED on prod: 7 users → 7
+workspaces → 7 owner memberships; 0 users without a workspace; 0 users with 2+
+owner workspaces; 10/10 audits stamped with workspace_id; uq_owner_membership_per_user
+index present. Smoke: healthz {"ok":true}, landing OK, magic-link 200 (the
+provision smoke-path fix now fires), docs 200. CHANGELOG v1.9.0 recorded. The
+patched provisioner also (re)applied the SSH hardening. Next per founder: O-1
+(members + invites + the 40-site read re-scope to workspace_id — O-0's deferred
+half).
+
 ## O-0 GATE ROUND CLOSED (2026-07-24) — architect PWN · spec PASS · cold PWN · system-tester PWN · ux PWN
 
 Five gates, none FAIL. spec PASS (R-ORG bounds, engine tenant-blind, deferral

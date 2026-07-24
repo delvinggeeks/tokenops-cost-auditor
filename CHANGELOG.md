@@ -5,6 +5,26 @@ appended by the person deploying, same day.
 
 (entries append below)
 
+- 2026-07-24 · v1.9.0 · O-0 WORKSPACE TENANCY SPINE (R-ORG). The tenancy root:
+  Workspace + WorkspaceMember, migration 020 backfilling a personal
+  workspace-of-one (owner) for every existing user and stamping workspace_id on
+  the 10 owned tables. Every user is a workspace-of-one (single-tenant default);
+  the 1:1 invariant is a DB fact (partial unique index uq_owner_membership_per_user,
+  user_id WHERE role='owner'). Settings → Workspace surface (see + rename,
+  owner-only). Reads STAY user_id-scoped (correct @ 1:1; the 40-site re-scope to
+  workspace_id is O-1's first task). Engine stays TENANT-BLIND (services/rules +
+  services/pricing never learn workspaces — grep-guard test). Five gates all
+  PASS/PASS-WITH-NOTES; cold f.1 (1:1 now DB-enforced) + f.2 + ux notes fixed;
+  system-tester's report-link reachability gap (pre-existing, separate surface)
+  parked in BACKLOG. MIGRATION: 020 applied cleanly (b7d34e9a1c60 → c8e05a1f6b20).
+  BACKFILL LIVE-VERIFIED on prod: 7 users → 7 workspaces → 7 owner memberships,
+  0 users without a workspace, 0 users with 2+ owner workspaces, 10/10 audits
+  stamped, the owner-uniqueness index present. SMOKE PASS: healthz {"ok":true},
+  landing OK, magic-link 200 (the provision smoke-path fix /auth/magic-link →
+  /auth/signin-link now fires), docs 200. Pre-deploy backup OK. Also shipped the
+  prod SSH hardening fix (key-only, no password/root-password login) via the
+  patched provisioner.
+
 - 2026-07-24 · v1.8.0 · S-6 READ PLATFORM (read tokens, read API, OAuth 2.0).
   The READ half of the platform (R-SDK-PLATFORM), founder "full S-6 incl OAuth
   apps": personal read-scoped API tokens (rt_) and OAuth access tokens (at_)
