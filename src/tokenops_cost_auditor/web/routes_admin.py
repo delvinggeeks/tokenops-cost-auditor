@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.persistence.models import Audit, Subscription, User
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments.base import grant_payment
 
@@ -108,7 +108,13 @@ def grant_plan(
                 )
         elif sub is None:
             session.add(
-                Subscription(user_id=user.id, provider="manual", plan=plan, status="active")
+                Subscription(
+                    user_id=user.id,
+                    workspace_id=workspace_id_for(session, user.id),  # O-0
+                    provider="manual",
+                    plan=plan,
+                    status="active",
+                )
             )
         elif sub.provider == "manual":
             sub.plan = plan

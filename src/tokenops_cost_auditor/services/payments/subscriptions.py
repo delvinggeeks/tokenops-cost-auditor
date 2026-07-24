@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Subscription, User, utcnow
+from tokenops_cost_auditor.persistence.repo import workspace_id_for
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 
@@ -145,7 +146,12 @@ def apply_event(
         select(Subscription).where(Subscription.user_id == user.id)
     ).scalar_one_or_none()
     if sub is None:
-        sub = Subscription(user_id=user.id, provider=provider, plan=plans.FREE)
+        sub = Subscription(
+            user_id=user.id,
+            workspace_id=workspace_id_for(session, user.id),  # O-0
+            provider=provider,
+            plan=plans.FREE,
+        )
         session.add(sub)
         session.flush()
 

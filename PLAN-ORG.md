@@ -36,13 +36,33 @@ carefully-migrated slice so nothing after it is a big-bang rewrite.
   byte-identical; the reachability + journey suites green under the new
   scoping; a second workspace's data is invisible to the first (the
   isolation test is the whole point).
+  [DELIVERED 2026-07-24 — founder decision "Spine now, read-scope in O-1"
+  (AskUserQuestion): O-0 ships the SPINE — Workspace + WorkspaceMember,
+  migration 020 backfilling a workspace-of-one per user, `workspace_id` on
+  the 10 directly-owned resource tables (audits, sources, ingest_keys,
+  api_tokens, oauth_apps, saved_views, alert_rules, subscriptions,
+  statements, devices), the write-path stamping it on creation, the
+  Settings workspace surface (see + rename), and the isolation test. The
+  40+ READ sites STAY user_id-scoped in O-0 — which is provably correct
+  while 1 user = 1 workspace, so ZERO leak risk and O-0's DoD (B invisible
+  to A) is met by the 1:1 invariant. The read re-scoping to workspace_id
+  MOVES INTO O-1, where multi-membership is what makes it load-bearing;
+  O-1 re-scopes reads with no new migration (the columns already exist and
+  are populated). This is a bounded, safer sequencing of the same work,
+  not a scope cut.]
 
 - **O-1 Members + invites** (~2-3d). Invite by email (one-shot hashed
   code, the link-code grammar); a member joins a workspace; the Members
   page (Sentry's, honestly ours). Observe-only: a member sees the
   workspace's audits/reports. DoD: invite → accept → the invitee reaches
   the shared dashboard; revoke membership stops access; honest empty
-  states.
+  states. FIRST TASK (inherited from O-0): re-scope the 40+ read sites
+  from `user_id` to `workspace_id` — the moment a second member exists,
+  user-scoped reads would hide the workspace's data from them, so this is
+  O-1's enabler. The columns already exist and are backfilled (O-0), so no
+  migration; the S-6 ingest/read tokens also flip to workspace scope here
+  (PLAN-SDK §3). The isolation test hardens from "1:1 correct" to
+  "multi-member correct."
 
 - **O-2 Roles (RBAC)** (~2-3d). `owner | admin | member | viewer` with a
   permission matrix over PRODUCT actions only (mint/revoke keys, manage

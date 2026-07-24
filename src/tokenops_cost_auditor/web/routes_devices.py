@@ -37,6 +37,7 @@ from tokenops_cost_auditor.persistence.repo import (
 from tokenops_cost_auditor.persistence.repo import (
     find_idempotent_audit,
     get_or_create_user,
+    workspace_id_for,
 )
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.ingest.base import IngestError, check_file
@@ -132,6 +133,7 @@ def link_device(request: Request, payload: dict[str, object]) -> JSONResponse:
         token = secrets.token_urlsafe(32)
         device = Device(
             user_id=row.user_id,
+            workspace_id=workspace_id_for(session, row.user_id),  # O-0
             hostname=hostname,
             token_hash=credential_fingerprint(settings.secret_key, token),
             consent_at=now,

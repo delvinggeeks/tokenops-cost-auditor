@@ -5,7 +5,13 @@ from __future__ import annotations
 from sqlalchemy import Engine, create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from tokenops_cost_auditor.persistence.models import Audit, IdempotencyKey, User
+from tokenops_cost_auditor.persistence.models import (
+    Audit,
+    IdempotencyKey,
+    User,
+    Workspace,
+    WorkspaceMember,
+)
 
 
 def make_engine(database_url: str) -> Engine:
@@ -29,7 +35,39 @@ def get_or_create_user(session: Session, email: str) -> User:
         user = User(email=email.lower())
         session.add(user)
         session.flush()
+        # O-0 (R-ORG): every user is a workspace-of-one the moment they exist.
+        get_or_create_workspace(session, user)
     return user
+
+
+def get_or_create_workspace(session: Session, user: User) -> Workspace:
+    """O-0 (R-ORG): the user's personal workspace (their owner membership),
+    created on first need. In O-0 every user has exactly one. Idempotent and
+    self-healing — the write-path calls it to resolve a resource's owner."""
+    ws = session.scalar(
+        select(Workspace)
+        .join(WorkspaceMember, WorkspaceMember.workspace_id == Workspace.id)
+        .where(WorkspaceMember.user_id == user.id, WorkspaceMember.role == "owner")
+    )
+    if ws is None:
+        ws = Workspace(name=(f"{user.email}'s workspace")[:80], personal=True)
+        session.add(ws)
+        session.flush()
+        session.add(WorkspaceMember(workspace_id=ws.id, user_id=user.id, role="owner"))
+        session.flush()
+    return ws
+
+
+def workspace_id_for(session: Session, user_id: str) -> str | None:
+    """The id of the user's owning workspace (O-0: their workspace-of-one).
+    Used at resource-creation sites to stamp workspace_id. Returns None only if
+    the user row is gone — callers leave workspace_id NULL, which the 1:1
+    user_id scoping still handles correctly in O-0."""
+    return session.scalar(
+        select(WorkspaceMember.workspace_id).where(
+            WorkspaceMember.user_id == user_id, WorkspaceMember.role == "owner"
+        )
+    )
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:
@@ -44,7 +82,11 @@ def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | N
 
 def create_audit(session: Session, user_id: str) -> Audit:
     """Repo-pattern creation (G4 architect note): routes never touch ORM directly."""
-    audit = Audit(user_id=user_id, status="queued")
+    audit = Audit(
+        user_id=user_id,
+        status="queued",
+        workspace_id=workspace_id_for(session, user_id),  # O-0: stamp the owner
+    )
     session.add(audit)
     session.flush()
     return audit

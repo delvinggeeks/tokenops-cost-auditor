@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, User, utcnow
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
 from tokenops_cost_auditor.services.connectors import validate
 from tokenops_cost_auditor.services.connectors.crypto import (
     credential_fingerprint,
@@ -310,6 +310,7 @@ def wizard_validate(
             )
             source = Source(
                 user_id=user_id,
+                workspace_id=workspace_id_for(session, user_id),  # O-0
                 provider=provider,
                 label=f"{provider} usage" if nth == 1 else f"{provider} usage #{nth}",
                 credentials_encrypted=encrypt_credential(settings.secret_key, key),
@@ -540,6 +541,7 @@ def connect_source(
         session.add(
             Source(
                 user_id=user.id,
+                workspace_id=workspace_id_for(session, user.id),  # O-0
                 provider=provider,
                 label=label.strip()[:120] or provider,
                 credentials_encrypted=encrypt_credential(settings.secret_key, api_key.strip()),

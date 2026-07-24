@@ -35,6 +35,26 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## O-0 WORKSPACE SPINE (2026-07-24) — founder "proceed with O-0" + "Spine now, read-scope in O-1"
+
+The tenancy root, R-ORG. Precisely scoped first: 17 owned tables, 40+ user_id
+query sites. Founder chose (AskUserQuestion) "Spine now, read-scope in O-1" —
+the safe path. Shipped: **Workspace + WorkspaceMember** models (owner membership),
+**migration 020** (creates both tables + backfills a personal workspace-of-one
+per existing user + stamps workspace_id 1:1 — verified upgrade+backfill+downgrade
+on a throwaway sqlite with pre-existing data), **workspace_id** on the 10
+directly-owned resource tables, **repo.get_or_create_workspace / workspace_id_for**
+with get_or_create_user auto-creating the workspace-of-one and all 11 creation
+sites stamping workspace_id, the **Settings → Workspace** surface (see + rename,
+owner-only, audit-logged). Reads STAY user_id-scoped (correct while 1 user = 1
+workspace → ZERO leak risk; O-0's DoD "B invisible to A" holds by the 1:1
+invariant). The 40-site read re-scoping MOVES to O-1 (columns already exist +
+backfilled, so no new migration; S-6 tokens flip to workspace scope there too).
+ENGINE STAYS TENANT-BLIND: a grep-guard test asserts services/rules +
+services/pricing never mention Workspace/workspace_id. tests/test_workspace_spine.py
+10 green (creation, write-path stamp, ISOLATION, rename journey, tenant-blind
+guard, ingest regression). ruff+mypy clean. Gate round next.
+
 ## PROD SECURITY AUDIT + SSH FIX (2026-07-24) — founder "hardening done, security etc?"
 
 Audited the live host. HARDENED OK: ufw active (default-deny in, only 22/80/443),

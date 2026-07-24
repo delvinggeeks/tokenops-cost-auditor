@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import AlertEvent, AlertRule
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
 from tokenops_cost_auditor.services.alerts import dispatch
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS, RULES
 from tokenops_cost_auditor.services.lifecycle import auditlog
@@ -155,7 +155,13 @@ async def save_alerts(
             row = existing.get(key)
             if row is None:
                 session.add(
-                    AlertRule(user_id=user.id, rule=key, threshold=threshold, enabled=enabled)
+                    AlertRule(
+                        user_id=user.id,
+                        workspace_id=workspace_id_for(session, user.id),  # O-0
+                        rule=key,
+                        threshold=threshold,
+                        enabled=enabled,
+                    )
                 )
             else:
                 row.enabled = enabled

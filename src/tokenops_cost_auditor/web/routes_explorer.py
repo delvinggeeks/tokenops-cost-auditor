@@ -19,7 +19,7 @@ from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import SavedView, User
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
 from tokenops_cost_auditor.services.dashboard import explorer
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 from tokenops_cost_auditor.web import help as help_registry
@@ -115,7 +115,14 @@ def save_view(
                     status_code=400,
                     detail=f"{MAX_SAVED_VIEWS} saved views is the limit — delete one first",
                 )
-            session.add(SavedView(user_id=user.id, name=label, params=canonical))
+            session.add(
+                SavedView(
+                    user_id=user.id,
+                    workspace_id=workspace_id_for(session, user.id),  # O-0
+                    name=label,
+                    params=canonical,
+                )
+            )
         session.commit()
     return RedirectResponse(f"/explore?{canonical}", status_code=303)
 

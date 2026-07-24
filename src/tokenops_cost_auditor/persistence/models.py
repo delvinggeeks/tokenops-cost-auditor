@@ -84,6 +84,42 @@ class User(Base):
     sessions_valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class Workspace(Base):
+    """O-0 (R-ORG): the tenancy root. Every resource is owned by a workspace;
+    every user belongs to at least one (their personal workspace-of-one, the
+    single-tenant default). The audit ENGINE never sees this table — tenancy
+    lives only at the web/persistence boundary (CLAUDE.md R-ORG)."""
+
+    __tablename__ = "workspaces"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    # True for a backfilled workspace-of-one (never renamed by an org). Lets the
+    # UI say "your workspace" vs a named org, and O-1 invites target real orgs.
+    personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class WorkspaceMember(Base):
+    """O-0: who belongs to a workspace and their role. O-0 only ever writes
+    role='owner' (the minter); O-1 adds invites/members, O-2 the other roles.
+    One row per (workspace, user)."""
+
+    __tablename__ = "workspace_members"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role: Mapped[str] = mapped_column(String(16), nullable=False, default="owner")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("workspace_id", "user_id", name="uq_workspace_member"),)
+
+
 class Audit(Base):
     __tablename__ = "audits"
 
@@ -91,6 +127,11 @@ class Audit(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    # O-0 (R-ORG): the owning workspace. Backfilled 1:1 from the user's
+    # workspace and set on creation. Plain String(32), no FK — additive-safe on
+    # both backends (the source_id convention). Reads stay user_id-scoped in O-0
+    # (correct while 1 user = 1 workspace); O-1 re-scopes reads to workspace_id.
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)
     status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
     provider_mix: Mapped[str | None] = mapped_column(String(200))
     row_count: Mapped[int | None] = mapped_column(Integer)
@@ -232,6 +273,7 @@ class Source(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     provider: Mapped[str] = mapped_column(String(24), nullable=False)  # openai|anthropic
     label: Mapped[str] = mapped_column(String(120), nullable=False)
     # Fernet token (HKDF from SECRET_KEY). Decrypted ONLY in the pull path;
@@ -277,6 +319,7 @@ class SavedView(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     # Canonical re-serialization of parse_filters output — NEVER the raw
     # querystring, so a stored view can only contain whitelisted filter keys.
@@ -349,6 +392,7 @@ class IngestKey(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     label: Mapped[str] = mapped_column(String(80), nullable=False)
     # Keyed one-way HMAC of the ingest key (credential_fingerprint context).
     # The plaintext lives only in the customer's environment. NULL after
@@ -367,6 +411,7 @@ class ApiToken(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     label: Mapped[str] = mapped_column(String(80), nullable=False)
     # Keyed one-way HMAC of the token (credential_fingerprint) — parity with
     # ingest keys and devices. NULL after revoke: material DELETED, row kept
@@ -388,6 +433,7 @@ class OAuthApp(Base):
     owner_user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     # Public identifier (oac_…); safe to embed in an authorize URL.
     client_id: Mapped[str] = mapped_column(String(48), unique=True, nullable=False)
@@ -453,6 +499,7 @@ class Device(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     hostname: Mapped[str] = mapped_column(String(120), nullable=False)
     # Keyed one-way HMAC of the device token (crypto.credential_fingerprint
     # context) — the plaintext exists only in the customer's config file.
@@ -491,6 +538,7 @@ class AlertRule(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     rule: Mapped[str] = mapped_column(String(32), nullable=False)
     # spend_spike_dod | waste_above_target | new_high_finding | soft_budget
     threshold: Mapped[float | None] = mapped_column(Float)  # semantics per rule
@@ -519,6 +567,7 @@ class Subscription(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     provider: Mapped[str] = mapped_column(String(24), nullable=False)  # razorpay|stripe
     plan: Mapped[str] = mapped_column(String(16), nullable=False, default="free")
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="active")
@@ -538,6 +587,7 @@ class Statement(Base):
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    workspace_id: Mapped[str | None] = mapped_column(String(32), index=True)  # O-0 (R-ORG)
     period: Mapped[str] = mapped_column(String(7), nullable=False)  # YYYY-MM
     # The number leads the subject (R-DESIGN §4e); stored so a resend
     # delivers the same artifact rather than re-deriving it.

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, FindingFeedback, Statement, User, utcnow
+from tokenops_cost_auditor.persistence.repo import workspace_id_for
 from tokenops_cost_auditor.services.dashboard.savings import compute
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
@@ -234,7 +235,13 @@ def archive(session: Session, user: User, doc: StatementDoc) -> Statement:
         select(Statement).where(Statement.user_id == user.id, Statement.period == doc.period)
     ).scalar_one_or_none()
     if existing is None:
-        row = Statement(user_id=user.id, period=doc.period, subject=doc.subject, body_text=doc.body)
+        row = Statement(
+            user_id=user.id,
+            workspace_id=workspace_id_for(session, user.id),  # O-0
+            period=doc.period,
+            subject=doc.subject,
+            body_text=doc.body,
+        )
         session.add(row)
         return row
     if existing.sent_at is None:

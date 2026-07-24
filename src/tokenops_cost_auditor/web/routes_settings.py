@@ -8,13 +8,13 @@ that back /sources, not a second implementation.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, utcnow
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, get_or_create_workspace
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments import subscriptions
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE
@@ -40,6 +40,7 @@ def settings_page(
     settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        workspace = get_or_create_workspace(session, user)  # O-0: the tenancy root
         session.commit()
         sources = (
             session.execute(
@@ -68,6 +69,8 @@ def settings_page(
             "app/settings.html",
             sources=sources,
             providers=PROVIDERS,
+            workspace_name=workspace.name,
+            workspace_personal=workspace.personal,
             plan=plan_display(plan, settings),
             plan_key=plan,
             source_limit=settings.plan_source_limits.get(plan, 0),
@@ -112,6 +115,26 @@ def save_benchmark_pref(
             "settings.benchmark_sharing",
             "included" if benchmark_sharing is not None else "excluded",
         )
+        session.commit()
+    return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/workspace/rename", response_model=None)
+def rename_workspace(
+    request: Request,
+    name: str = Form(""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """O-0 (R-ORG): the owner renames their workspace. Only an owner may rename;
+    in O-0 every user owns their workspace-of-one. Audit-logged."""
+    new_name = name.strip()[:80]
+    if not new_name:
+        raise HTTPException(status_code=400, detail="give your workspace a name")
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        workspace = get_or_create_workspace(session, user)
+        workspace.name = new_name
+        auditlog.append(session, user.email, "workspace.renamed", new_name)
         session.commit()
     return RedirectResponse("/settings", status_code=303)
 

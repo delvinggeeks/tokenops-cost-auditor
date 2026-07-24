@@ -29,7 +29,7 @@ from tokenops_cost_auditor.persistence.models import (
     new_id,
     utcnow,
 )
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.web.api_scopes import READ_SCOPES, parse_scopes, scopes_are_known, to_csv
@@ -156,6 +156,7 @@ def mint_token(
         session.add(
             ApiToken(
                 user_id=user.id,
+                workspace_id=workspace_id_for(session, user.id),  # O-0
                 label=label.strip()[:80] or "read token",
                 token_hash=credential_fingerprint(settings.secret_key, token),
                 scopes=granted,
@@ -231,6 +232,7 @@ def register_app(
             OAuthApp(
                 id=new_id(),
                 owner_user_id=user.id,
+                workspace_id=workspace_id_for(session, user.id),  # O-0
                 name=name,
                 client_id=client_id,
                 client_secret_hash=credential_fingerprint(settings.secret_key, client_secret),

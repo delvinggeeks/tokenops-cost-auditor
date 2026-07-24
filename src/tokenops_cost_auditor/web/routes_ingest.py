@@ -41,7 +41,11 @@ from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.models import IdempotencyKey, IngestKey, User, utcnow
 from tokenops_cost_auditor.persistence.repo import create_audit as repo_create_audit
-from tokenops_cost_auditor.persistence.repo import find_idempotent_audit, get_or_create_user
+from tokenops_cost_auditor.persistence.repo import (
+    find_idempotent_audit,
+    get_or_create_user,
+    workspace_id_for,
+)
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.web.routes_sources import user_plan
@@ -287,6 +291,7 @@ def mint_key(
         token = f"ik_{secrets.token_urlsafe(32)}"
         row = IngestKey(
             user_id=user.id,
+            workspace_id=workspace_id_for(session, user.id),  # O-0
             label=label.strip()[:80] or "api service",
             key_hash=credential_fingerprint(settings.secret_key, token),
         )
