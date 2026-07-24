@@ -134,6 +134,7 @@ class TestInviteAcceptJourney:
             follow_redirects=False,
         )
         assert r.status_code == 200 and "for someone else" in r.text
+        assert 'action="/auth/logout"' in r.text  # ux: an actionable way forward
         with app.state.session_factory() as s:
             assert s.scalar(select(WorkspaceInvite)).consumed_at is None  # untouched
             stranger = s.scalar(select(User).where(User.email == STRANGER))

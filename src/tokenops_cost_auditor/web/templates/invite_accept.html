@@ -35,9 +35,12 @@
     {% elif state == "wrong_email" %}
     <h1 class="page-h1">This invitation is for someone else</h1>
     <p class="signin-lede">It was sent to <strong>{{ invited_email }}</strong>,
-      but you're signed in as <strong>{{ viewer }}</strong>. Sign in with
-      {{ invited_email }} to accept.</p>
-    <p class="signin-note">A link alone can't join a different account — that's by design.</p>
+      but you're signed in as <strong>{{ viewer }}</strong>.</p>
+    <form method="post" action="/auth/logout" class="signin-form">
+      <button class="btn btn-primary" type="submit">Sign out</button>
+    </form>
+    <p class="signin-note">Then reopen this link and sign in as {{ invited_email }}.
+      A link alone can't join a different account — that's by design.</p>
 
     {% else %}
     <h1 class="page-h1">This invitation isn't valid</h1>

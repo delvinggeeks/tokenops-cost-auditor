@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, cast
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 
 from tokenops_cost_auditor.api.routes_upload import EMAIL_RE, current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
@@ -246,5 +247,15 @@ def accept(request: Request, code: str = Form("")) -> HTMLResponse | RedirectRes
             )
         set_active_workspace(session, user.id, invite.workspace_id)
         auditlog.append(session, user.email, "workspace.invite_accepted", invite.workspace_id)
-        session.commit()
+        # expiry was enforced in _accept_state (Python, tz-safe via _aware) an
+        # instant ago — the codebase keeps expiry checks in Python, not SQL, to
+        # dodge SQLite naive/aware comparison bugs (see routes_devices).
+        try:
+            session.commit()
+        except IntegrityError:
+            # cold-review O-1b-2 f.2: a concurrent accept of a SECOND invite for
+            # the same email already added this membership (uq_workspace_member);
+            # the user is in either way. Roll back rather than 500 — reopening
+            # the link switches cleanly (they're now a member, so the add skips).
+            session.rollback()
     return RedirectResponse("/dashboard", status_code=303)

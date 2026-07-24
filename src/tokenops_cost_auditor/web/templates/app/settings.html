@@ -16,9 +16,9 @@
     <div class="provenance">Sign-in is by emailed link — there is no password to manage.</div>
   {{ kit.surface_close() }}
 
-  {# Workspace (O-0, R-ORG) — the tenancy root. Everything you create belongs to
-     this workspace. Today it's yours alone (a workspace of one); members and
-     roles arrive later. Renaming it is the one owner control O-0 ships. #}
+  {# Workspace (O-0/O-1b, R-ORG) — the tenancy root. Everything you create belongs
+     to this workspace. Rename it here (owner control); invite and manage teammates
+     from Members (O-1b-2). #}
   {{ kit.surface_open(title="Workspace", icon="overview", span=6) }}
     <form method="post" action="/settings/workspace/rename"
           style="display:flex; gap:var(--s2); align-items:flex-end; flex-wrap:wrap;">
