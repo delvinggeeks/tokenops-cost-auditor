@@ -425,6 +425,7 @@ class TestWorkspaceSwitcherJourney:
             "/statements",
             "/billing",
             "/settings",
+            "/settings/members",
             "/settings/developer",
         )
         for path in pages:

@@ -16,9 +16,9 @@
     <div class="provenance">Sign-in is by emailed link — there is no password to manage.</div>
   {{ kit.surface_close() }}
 
-  {# Workspace (O-0, R-ORG) — the tenancy root. Everything you create belongs to
-     this workspace. Today it's yours alone (a workspace of one); members and
-     roles arrive later. Renaming it is the one owner control O-0 ships. #}
+  {# Workspace (O-0/O-1b, R-ORG) — the tenancy root. Everything you create belongs
+     to this workspace. Rename it here (owner control); invite and manage teammates
+     from Members (O-1b-2). #}
   {{ kit.surface_open(title="Workspace", icon="overview", span=6) }}
     <form method="post" action="/settings/workspace/rename"
           style="display:flex; gap:var(--s2); align-items:flex-end; flex-wrap:wrap;">
@@ -29,9 +29,11 @@
       </div>
       {{ kit.button("Rename", variant="primary") }}
     </form>
+    <p style="margin-top: var(--s2);">{{ kit.button("Manage members", href="/settings/members") }}</p>
     <div class="provenance">Everything you audit, every key and connection, belongs
-      to this workspace. Right now it's just you{% if workspace_personal %} — a
-      workspace of one{% endif %}; shared members and roles come later.</div>
+      to this workspace. {% if workspace_personal %}Right now it's just you — a workspace
+      of one. Invite teammates from Members to share it.{% else %}Invite and see teammates
+      from Members.{% endif %}</div>
   {{ kit.surface_close() }}
 
   {# Email — transactional mail is never opt-out, and we say so #}

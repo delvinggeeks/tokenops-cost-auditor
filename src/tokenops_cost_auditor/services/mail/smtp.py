@@ -52,6 +52,21 @@ class SmtpMailAdapter:
             f"{self.base_url}",
         )
 
+    def workspace_invite(self, to_email: str, link_url: str, workspace_name: str) -> None:
+        self._send(
+            to_email,
+            f"You're invited to join {workspace_name} on TokenOps Cost Auditor",
+            f"You've been invited to join the {workspace_name} workspace on "
+            "TokenOps Cost Auditor. Use this secure link to accept:\n\n"
+            f"{self.base_url}{link_url}\n\n"
+            "The link works once and expires in 7 days. You'll need to sign in "
+            "with THIS email address to accept — a link alone can't join a "
+            "different account. If you weren't expecting this, you can ignore "
+            "this email.\n\n"
+            "TokenOps Cost Auditor — by WitAura\n"
+            f"{self.base_url}",
+        )
+
     def report_ready(self, to_email: str, report_url: str) -> None:
         self._send(
             to_email,

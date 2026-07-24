@@ -11,6 +11,7 @@ from tokenops_cost_auditor.persistence.models import (
     IdempotencyKey,
     User,
     Workspace,
+    WorkspaceInvite,
     WorkspaceMember,
 )
 
@@ -154,6 +155,32 @@ def list_memberships(session: Session, user_id: str) -> list[tuple[Workspace, st
         .order_by(Workspace.created_at)
     ).all()
     return [(ws, role) for ws, role in rows]
+
+
+def workspace_role(session: Session, user_id: str, workspace_id: str) -> str | None:
+    """The user's role in a workspace (owner|member), or None if not a member.
+    The owner-only gate for O-1b actions (invite; O-1b-3 revoke) reads this."""
+    return session.scalar(
+        select(WorkspaceMember.role).where(
+            WorkspaceMember.workspace_id == workspace_id,
+            WorkspaceMember.user_id == user_id,
+        )
+    )
+
+
+def list_workspace_invites(session: Session, workspace_id: str) -> list[WorkspaceInvite]:
+    """Pending (unconsumed) invites for a workspace — the members surface's
+    pending list. Consumed invites drop off (they became memberships)."""
+    return list(
+        session.scalars(
+            select(WorkspaceInvite)
+            .where(
+                WorkspaceInvite.workspace_id == workspace_id,
+                WorkspaceInvite.consumed_at.is_(None),
+            )
+            .order_by(WorkspaceInvite.created_at.desc())
+        ).all()
+    )
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:

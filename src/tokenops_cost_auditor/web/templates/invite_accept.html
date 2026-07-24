@@ -1,0 +1,55 @@
+{% extends "_public_shell.html" %}
+{% block title %}Join a workspace — TokenOps Cost Auditor{% endblock %}
+{% block main %}
+<main class="pub-main">
+<div class="auth-split">
+  <aside class="auth-brand" data-mood="aura">
+    {% include "_wa_mark.html" %}
+    <h2>TokenOps Cost Auditor</h2>
+    <p>You've been invited to share a workspace — the audits, dashboard and
+      savings are the same for every member. We ask you to sign in with the
+      invited address so a link alone can never join a different account.</p>
+  </aside>
+  <div class="auth-form-panel">
+  <div class="signin">
+    {% if state == "ready" %}
+    <h1 class="page-h1">Join {{ workspace_name }}</h1>
+    <p class="signin-lede">You're signed in as <strong>{{ viewer }}</strong>.
+      Accept to join <strong>{{ workspace_name }}</strong> and see its audits.</p>
+    <form method="post" action="/invite/accept" class="signin-form">
+      <input type="hidden" name="code" value="{{ code }}">
+      <button class="btn btn-primary" type="submit">Accept invitation</button>
+    </form>
+    <p class="signin-note">This link works once and expires 7 days after it was sent.</p>
+
+    {% elif state == "sign_in" %}
+    <h1 class="page-h1">You're invited to {{ workspace_name }}</h1>
+    <p class="signin-lede">Sign in with <strong>{{ invited_email }}</strong> to
+      accept — then reopen this link.</p>
+    <form method="post" action="/auth/signin-link" class="signin-form">
+      <input type="hidden" name="email" value="{{ invited_email }}">
+      <button class="btn btn-primary" type="submit">Email me a sign-in link</button>
+    </form>
+    <p class="signin-note">The invitation only works for {{ invited_email }}.</p>
+
+    {% elif state == "wrong_email" %}
+    <h1 class="page-h1">This invitation is for someone else</h1>
+    <p class="signin-lede">It was sent to <strong>{{ invited_email }}</strong>,
+      but you're signed in as <strong>{{ viewer }}</strong>.</p>
+    <form method="post" action="/auth/logout" class="signin-form">
+      <button class="btn btn-primary" type="submit">Sign out</button>
+    </form>
+    <p class="signin-note">Then reopen this link and sign in as {{ invited_email }}.
+      A link alone can't join a different account — that's by design.</p>
+
+    {% else %}
+    <h1 class="page-h1">This invitation isn't valid</h1>
+    <p class="signin-lede">It may have already been used or expired. Ask the
+      workspace owner to send you a new one.</p>
+    <p class="signin-note"><a href="/dashboard">Go to your dashboard</a></p>
+    {% endif %}
+  </div>
+  </div>
+</div>
+</main>
+{% endblock %}
