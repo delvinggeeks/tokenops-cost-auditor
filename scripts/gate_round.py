@@ -51,8 +51,9 @@ OPS_TRIGGER = (
 AGENTS_DIR = Path(".claude/agents")
 DIFF_CAP = 200_000  # chars of diff embedded in the prompt (kept under model context)
 # TE-8: "VERDICT (PASS | PASS-WITH-NOTES | FAIL)". Longest label first so PASS-WITH-NOTES
-# is never shadowed by a bare PASS match.
-_VERDICT_RE = re.compile(r"VERDICT\W{0,4}(PASS-WITH-NOTES|PASS|FAIL)", re.IGNORECASE)
+# is never shadowed by a bare PASS match; trailing \b so "PASSED"/"FAILING" don't parse as
+# a clean verdict (the label must stand as a whole word).
+_VERDICT_RE = re.compile(r"VERDICT\W{0,4}(PASS-WITH-NOTES|PASS|FAIL)\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -166,8 +167,12 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
         )
     except subprocess.TimeoutExpired:
         return f"[harness] {agent} exceeded the 900s budget — recorded as NO-VERDICT."
-    except FileNotFoundError:
-        return "[harness] `claude` CLI not on PATH — recorded as NO-VERDICT."
+    except Exception as exc:
+        # Broad ON PURPOSE: a missing CLI (FileNotFoundError), a denied exec
+        # (PermissionError), a decode error from text=True (UnicodeDecodeError) — ANY
+        # failure of ONE gate must degrade to NO-VERDICT for that gate, never crash the
+        # whole round and take the other gates' results down with it.
+        return f"[harness] {agent} invocation failed ({type(exc).__name__}) — NO-VERDICT."
     # No VERDICT token in an error tail => parse_verdict returns NO-VERDICT (blocks).
     return proc.stdout + ("\n" + proc.stderr if proc.returncode != 0 else "")
 

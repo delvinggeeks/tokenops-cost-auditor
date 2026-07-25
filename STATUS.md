@@ -3153,8 +3153,8 @@ PR. ACCEPTANCE CRITERIA (all met): (1) verdict parser handles PASS/notes/FAIL/
 parenthesised/bolded/case forms + no-verdict; (2) gate selection matches
 docs/09-SDLC §4 per-card schedule; (3) FAIL and NO-VERDICT block, PASS-WITH-NOTES
 does not; (4) harness runs in CI with NO API key via --dry-run (always green,
-proves selection/parse/aggregate/exit) and posts a PR comment; (5) 20 unit tests,
-lint+format clean, pinned toolchain. HONEST SCOPE (docs/09-SDLC §6): this ships
+proves selection/parse/aggregate/exit) and posts a PR comment; (5) unit tests
+(32 at last count), lint+format clean, pinned toolchain. HONEST SCOPE (docs/09-SDLC §6): this ships
 the MECHANISM, testable. The LIVE agent round is HELD on the founder adding the
 ANTHROPIC_API_KEY repo secret + one validation run on a throwaway PR to confirm
 the `claude -p` contract before the check is made required; until then only the

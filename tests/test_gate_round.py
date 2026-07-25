@@ -62,6 +62,30 @@ class TestParseVerdict:
     def test_harness_error_tail_is_no_verdict(self) -> None:
         assert gr.parse_verdict("[harness] claude CLI not on PATH — NO-VERDICT.") == "NO-VERDICT"
 
+    def test_label_must_be_whole_word_not_substring(self) -> None:
+        # "PASSED"/"FAILING" are not the TE-8 verdict — a missing \b would misread them.
+        assert gr.parse_verdict("VERDICT: PASSED all checks") == "NO-VERDICT"
+        assert gr.parse_verdict("VERDICT: FAILING intermittently") == "NO-VERDICT"
+
+
+class TestLiveInvocationIsCrashSafe:
+    def test_any_subprocess_error_degrades_to_no_verdict(self, monkeypatch) -> None:
+        # One gate's PermissionError/decode error must NOT crash the whole round.
+        def boom(*a, **k):
+            raise PermissionError("exec denied")
+
+        monkeypatch.setattr(gr.subprocess, "run", boom)
+        out = gr._run_agent_live("cold-reviewer", "some diff", "main")
+        assert gr.parse_verdict(out) == "NO-VERDICT"
+
+    def test_timeout_degrades_to_no_verdict(self, monkeypatch) -> None:
+        def slow(*a, **k):
+            raise gr.subprocess.TimeoutExpired(cmd="claude", timeout=900)
+
+        monkeypatch.setattr(gr.subprocess, "run", slow)
+        out = gr._run_agent_live("vv-engineer", "some diff", "main")
+        assert gr.parse_verdict(out) == "NO-VERDICT"
+
 
 class TestSelectGates:
     def test_core_only_for_docs_and_scripts(self) -> None:
