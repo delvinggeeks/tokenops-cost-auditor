@@ -40,14 +40,16 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.models import IdempotencyKey, IngestKey, User, utcnow
-from tokenops_cost_auditor.persistence.repo import create_audit as repo_create_audit
 from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     find_idempotent_audit,
     get_or_create_user,
     workspace_id_for,
 )
+from tokenops_cost_auditor.persistence.repo import create_audit as repo_create_audit
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.routes_sources import user_plan
 
 log = structlog.get_logger("tokenops_cost_auditor.ingest")
@@ -270,6 +272,12 @@ def mint_key(
     settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-2 RBAC: minting an ingest key is a MANAGE_SOURCES action — owner/admin only.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_SOURCES,
+            detail="only an owner or admin can mint ingest keys",
+        )
         # Lock the user row so concurrent mints serialize on the count
         # (cold-review f.3 — the saved-views/link-code race class, caught
         # again). Row lock on Postgres; no-op on SQLite.
@@ -319,6 +327,12 @@ def revoke_key(
     """Revoke = the hash is DELETED (authority law) — ingest stops now."""
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-2 RBAC: revoking a key is a MANAGE_SOURCES action — owner/admin only.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_SOURCES,
+            detail="only an owner or admin can revoke ingest keys",
+        )
         row = session.get(IngestKey, key_id)
         if row is None or row.user_id != user.id:
             raise HTTPException(status_code=404, detail="key not found")

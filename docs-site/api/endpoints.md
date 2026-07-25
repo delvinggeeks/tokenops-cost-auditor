@@ -745,13 +745,13 @@ Responses: `200`, `422`
 
 Members Page.
 
-The members surface (O-1b-3): the roster of who is in the workspace, the
-invite form, the pending-invites list, and per-member governance. The roster
-is visible to EVERY member (you should know who you share a workspace with);
-the mutating controls — invite, revoke, resend/cancel — render ONLY for an
-owner on Scale. A plain member sees the list with NO revoke/invite control at
-all (absent, not a 403 they'd have to bump into — the reachability law for
-permissions, foreshadowing O-2).
+The members surface (O-1b-3 + O-2 RBAC): the roster of who is in the workspace,
+the invite form (with role), the pending-invites list, and per-member governance
+(set-role + remove). The roster is visible to EVERY member (you should know who you
+share a workspace with); the mutating controls render ONLY for a MANAGER (owner or
+admin, Scale-gated) over a non-owner member. A member/viewer sees the list with NO
+governance control at all (absent, not a 403 they'd have to bump into — R-ORG: a
+role never sees a control it can't use).
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
@@ -763,8 +763,9 @@ Responses: `200`, `422`
 
 Invite Member.
 
-OWNER-ONLY, Scale-gated, rate-limited. Mints a one-shot code stored only
-as an HMAC and emails the accept link; the raw code is never persisted.
+MANAGER-ONLY (owner or admin), Scale-gated, rate-limited. Mints a one-shot
+code stored only as an HMAC and emails the accept link; the raw code is never
+persisted. The invitee joins with the role the manager picked — never `owner`.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
@@ -818,6 +819,22 @@ Guards, fail-closed: the caller must own THIS workspace; the target must be a
 member OF this workspace (a foreign/guessed id 404s, never leaks); and the
 OWNER row is never revocable (a workspace always keeps its owner — that also
 blocks an owner revoking themselves into an ownerless workspace).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `member_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/members/{member_id}/role`
+
+Set Member Role.
+
+MANAGER-ONLY: change a member's role. Fail-closed: the actor must manage
+members; the target must be a NON-owner member of THIS workspace and not the
+actor themselves; the new role must be one a manager may assign (never owner —
+ownership moves only by an explicit transfer, out of O-2 scope).
 
 | Parameter | In | Required | Type |
 |---|---|---|---|

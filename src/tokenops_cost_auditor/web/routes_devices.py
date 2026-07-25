@@ -32,16 +32,18 @@ from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.models import Device, IdempotencyKey, LinkCode, User, utcnow
 from tokenops_cost_auditor.persistence.repo import (
-    create_audit as repo_create_audit,
-)
-from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     find_idempotent_audit,
     get_or_create_user,
     workspace_id_for,
 )
+from tokenops_cost_auditor.persistence.repo import (
+    create_audit as repo_create_audit,
+)
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.ingest.base import IngestError, check_file
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.routes_sources import user_plan
 
 router = APIRouter(tags=["collector"])
@@ -68,6 +70,12 @@ def issue_link_code(request: Request, user_email: str = Depends(current_user)) -
     settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-2 RBAC: linking a machine is a MANAGE_SOURCES action — owner/admin only.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_SOURCES,
+            detail="only an owner or admin can link a machine",
+        )
         plan = user_plan(session, user.id)
         if plan not in ("pro", "team"):
             raise HTTPException(
@@ -238,8 +246,13 @@ def revoke_device(
 ) -> RedirectResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
-        # O-1: revoke is a MUTATE — owner-scoped (fail-closed until O-2 RBAC).
-        # The device LIST display is workspace-scoped (sources_page, explorer).
+        # O-2 RBAC: revoke is a MANAGE_SOURCES mutation — owner/admin only. The device
+        # LIST display stays workspace-scoped (sources_page, explorer); mutating 403s.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_SOURCES,
+            detail="only an owner or admin can unlink a machine",
+        )
         device = session.get(Device, device_id)
         if device is None or device.user_id != user.id:
             raise HTTPException(status_code=404, detail="device not found")

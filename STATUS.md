@@ -3242,3 +3242,40 @@ single gate's 15-call budget (ci.yml owns it). OPEN FOLLOW-UP (founder): add the
 gate-round check to branch protection to make it REQUIRED (docs/06-OPS-RUNBOOK §branch-
 protection) — until then it reports but does not enforce merge-block. Next cards: LE-3
 (auto-merge on all-green), LE-5 (Issue-driven intake). WIP=1.
+
+## O-2 RBAC — roles over product actions (2026-07-25) — founder "merge and start LE-3" → chose O-2 (per ROADMAP §3 #1, the plan's next card, after I surfaced LE-3 is parked behind branch protection)
+
+On branch `o2-rbac` off main (all of #23/#24/#25 merged first). The frontier card:
+owner|admin|member|viewer over PRODUCT actions, enforced at the ROUTE boundary; the
+audit engine (services/rules, services/pricing) stays ROLE-BLIND (R-ORG; T-NFR-01
+import-guard unchanged). ROLE MATRIX (mockup docs/design/mockups/o2-rbac.html): view
+reports/dashboard/runs = ALL; upload/run audits = all but viewer; manage sources +
+mint/revoke keys = owner+admin; manage members (invite/revoke/set-role) = owner+admin
+(admin over NON-owners only); billing/plan + delete-workspace/transfer-ownership =
+owner only. viewer=pure read, member=operator, admin=governance-minus-money/ownership,
+owner=all. ACCEPTANCE CRITERIA (SDLC §2 entry gate): (1) ONE require_role/permission
+check at the route boundary gates every mutation, replacing today's ad-hoc inline
+`workspace_role(...)=="owner"` checks (routes_members ×5); (2) each role's RENDERED
+surface is pinned — a viewer/member never SEES a control it can't use (not merely a
+403); (3) fail-closed — a forbidden mutation POSTed directly returns a clean honest
+403/redirect, never executes; (4) owner assigns a role on INVITE (extends O-1b-2's form:
+member|admin|viewer) and can CHANGE a member's role on the roster; admin may too, over
+non-owners; (5) billing visibility becomes owner-only (resolves models.py:266 note);
+(6) single-tenant unchanged — a solo user is owner of their workspace-of-one; (7) journey
+test seeds ONE workspace with all four roles (membership rows) → walks each role's surface,
+asserts each sees exactly its controls and each forbidden mutation fails closed; (8) mockup
+before wiring + ux gate + full gate round. TWO CELLS held for founder lock: member can
+upload/run (proposed YES), admin can manage members (proposed YES, not over owner).
+STATUS: WIRED (founder "approved proceed next" 2026-07-26, matrix locked as proposed —
+member runs audits, admin manages members). SHIPPED: web/authz.py matrix + repo.active_role;
+route-boundary enforcement (routes_members invite+role/revoke/resend/cancel + NEW set-role;
+routes_sources connect/validate/revoke; routes_ingest sdk mint/revoke; routes_devices
+link/revoke; api create_audit RUN_AUDITS); rendered-surface gating (perms in _shell_ctx +
+sources_page/billing) — members.html role select on invite + per-member role dropdown +
+remove; sources.html connect/revoke/mint hidden for non-managers with honest notes;
+billing.html owner-only. Proven: tests/test_authz.py (14, matrix cells) + tests/test_rbac_journey.py
+(7, four-role surface + fail-closed mutations + viewer-can't-run). Engine role-blind (T-NFR-01).
+Fixed in-slice: sources_page used scalar_one_or_none → a brand-new authenticated owner saw no
+connect controls; now get_or_create_user so perms resolve. Held as a PR for founder merge; ux
+gate + gate round run in CI. DEPENDS-DONE: O-1 (members/invites/revoke), workspace_role()
+helper, Membership.role column.

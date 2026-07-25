@@ -18,7 +18,12 @@
 </p>
 
 <div class="addbar">
-  {% if active_count < limit %}
+  {% if not can_manage_sources %}
+    {# O-2 RBAC: connecting/revoking is owner/admin only. A member/viewer sees the
+       connections read-only — no dead Connect control (absent, not a 403-trap). #}
+    <span class="muted addbar-note">Connections are managed by owners and admins —
+      you're seeing usage read-only.</span>
+  {% elif active_count < limit %}
     {# R-CONNECT-VISIBLE (founder report 2026-07-23): EVERY shipped provider
        gets its own entry — Anthropic's wizard existed since WP-1 but no
        surface ever linked it. Rendered from the registry, so a future
@@ -74,10 +79,13 @@
            screen, never unnamed. #}
         {{ kit.icon_action("View usage", "eye", href="/explore?source=" ~ s.id) }}
         {{ kit.drawer_toggle("src-" ~ s.id, label="Connection details", icon="chevron-down") }}
+        {# O-2: revoke is owner/admin only — a member/viewer sees view + details, no revoke. #}
+        {% if can_manage_sources %}
         <form method="post" action="/sources/{{ s.id }}/revoke" class="inline-form"
               data-confirm="{{ t('app.confirm.revoke') }}">
           {{ kit.icon_action("Revoke this connection", "trash", danger=True) }}
         </form>
+        {% endif %}
       </td>
     </tr>
     {# DEPTH (c): the engineer's answer, hidden until asked for. #}
@@ -103,6 +111,9 @@
          "Nothing connected yet",
          "Connect a provider and TokenOps keeps auditing on its own — no more
           uploading files by hand.") }}
+    {# O-2: only a manager (owner/admin) sees the connect wizards; a member/viewer
+       gets the honest reason, never a Connect button that 403s. #}
+    {% if can_manage_sources %}
     <div class="addbar" style="justify-content:center">
       {% for prov in help.wizard_providers() %}
         {{ kit.button("Connect " ~ help.wizard(prov).provider_name,
@@ -110,6 +121,10 @@
              variant="primary" if loop.first else "quiet", icon="plus") }}
       {% endfor %}
     </div>
+    {% else %}
+    <p class="muted" style="text-align:center">An owner or admin connects providers for
+      this workspace.</p>
+    {% endif %}
   {% else %}
     {{ kit.empty_state(
          "Nothing connected yet",
@@ -154,11 +169,15 @@
   {{ kit.table_close() }}
   {% endif %}
   {% if plan in ("pro", "team") %}
+    {% if can_manage_sources %}
     <p style="margin-top: var(--s2);">
       <button class="btn btn-primary" hx-post="/sources/claude-code/code"
               hx-target="#link-code" hx-swap="innerHTML">Link a machine</button>
     </p>
     <div id="link-code" aria-live="polite"></div>
+    {% else %}
+    <p class="muted">Owners and admins link machines for this workspace.</p>
+    {% endif %}
   {% else %}
     <p class="muted">The collector is part of Pro — <a href="/billing">see plans</a>.
       The <a href="/upload">upload path</a> works on every plan.</p>
@@ -198,6 +217,7 @@
     in a minute.</p>
   {% endif %}
   {% if plan in ("pro", "team") %}
+    {% if can_manage_sources %}
     <form hx-post="/sources/sdk/key" hx-target="#ingest-key" hx-swap="innerHTML"
           style="margin-top: var(--s2); display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap;">
       <input name="label" placeholder="what will use this key? e.g. prod api"
@@ -207,6 +227,9 @@
         the moment you click.</span>
     </form>
     <div id="ingest-key" aria-live="polite"></div>
+    {% else %}
+    <p class="muted">Owners and admins mint ingest keys for this workspace.</p>
+    {% endif %}
   {% else %}
     <p class="muted">SDK ingest is part of Pro — <a href="/billing">see plans</a>.
       The <a href="/upload">upload path</a> works on every plan.</p>

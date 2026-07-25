@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O-2 RBAC — role matrix &amp; per-role surfaces (mockup)</title>
+<style>
+  /* Approximation of the app kit for ux-gate review (three-second rule + R-DESIGN
+     checklist). Not pixel-parity — the wired surface reuses kit/_kit.html. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --ok:#0f9d58; --warn:#b45309; --danger:#c0392b; --chip:#eef1f6;
+    --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)} h2{font-size:17px;margin:var(--s4) 0 var(--s2)}
+  h3{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    margin:var(--s3) 0 var(--s2)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  td.c,th.c{text-align:center}
+  .yes{color:var(--ok);font-weight:700} .no{color:var(--muted);opacity:.5}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--chip);
+    font-size:12px;font-weight:600}
+  .badge.owner{background:#e7edff;color:#2540b5} .badge.admin{background:#e6f7ee;color:#0b7a43}
+  .badge.member{background:#eef1f6;color:#3a4150} .badge.viewer{background:#f3eaff;color:#6b3fa0}
+  @media (prefers-color-scheme:dark){
+    .badge.owner{background:#22305e;color:#a9bcff}.badge.admin{background:#12402a;color:#7fd6a3}
+    .badge.member{background:#2a2f3a;color:#c3cad6}.badge.viewer{background:#33224d;color:#c9a9ff}}
+  .toggle{display:flex;gap:var(--s1);flex-wrap:wrap;margin:0 0 var(--s3)}
+  .toggle button{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-weight:600}
+  .toggle button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn{display:inline-block;padding:6px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.danger{color:var(--danger);border-color:var(--danger)}
+  select{font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink)}
+  .tells{color:var(--muted);font-size:13px;background:var(--chip);border-radius:8px;
+    padding:10px 12px;margin:var(--s2) 0}
+  .row-actions{display:flex;gap:var(--s1);justify-content:flex-end}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .field input{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);min-width:16em}
+  .invite-row{display:flex;gap:var(--s2);align-items:flex-end;flex-wrap:wrap}
+  .hidden{display:none}
+  .note{font-size:12px;color:var(--muted);margin-top:var(--s1)}
+  .legend{font-size:13px;color:var(--muted)}
+  code{background:var(--chip);padding:1px 5px;border-radius:5px;font-size:12px}
+  .toggle button{transition:background .15s ease,border-color .15s ease}
+  /* R-DESIGN-ADDENDUM: honor reduced-motion — the toggle's only animation is off here. */
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>O-2 — Roles &amp; RBAC</h1>
+  <p class="sub">Who can see and do things <strong>in the product</strong>. Roles never
+    touch the customer's LLM traffic (X-01/X-02) and the audit engine stays role-blind
+    (R-ORG). Single-tenant is unchanged: a solo user is the <span class="badge owner">owner</span>
+    of their workspace-of-one.</p>
+
+  <!-- ============ THE MATRIX ============ -->
+  <div class="card">
+    <h2 style="margin-top:0">Permission matrix</h2>
+    <table>
+      <thead><tr>
+        <th>Product action</th>
+        <th class="c">owner</th><th class="c">admin</th><th class="c">member</th><th class="c">viewer</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>View reports · dashboard · runs</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+        <tr><td>Upload / run audits <span class="note">(locked: member = yes)</span></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+        <tr><td>Manage sources (connect / revoke)</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Mint / revoke ingest &amp; device keys</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Manage members (invite / revoke / set role) <span class="note">(locked: admin = yes, not over owner)</span></td><td class="c yes">✓</td><td class="c yes">✓*</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Billing / plan</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Delete workspace / transfer ownership</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+      </tbody>
+    </table>
+    <p class="legend" style="margin-top:var(--s2)">
+      <span class="badge viewer">viewer</span> pure read ·
+      <span class="badge member">member</span> operator (does the job, no governance) ·
+      <span class="badge admin">admin</span> governance minus money/ownership ·
+      <span class="badge owner">owner</span> everything.
+      <br>* admin manages non-owner members only; never the owner, never billing.</p>
+  </div>
+
+  <!-- ============ PER-ROLE SURFACES ============ -->
+  <h2>What each role actually SEES</h2>
+  <p class="sub">The rule (R-ORG): a role doesn't just get a 403 — it never <em>sees</em> a
+    control it can't use. Flip the viewer below.</p>
+  <div class="toggle" role="group" aria-label="Preview as role">
+    <button data-role="owner" aria-pressed="true">as owner</button>
+    <button data-role="admin" aria-pressed="false">as admin</button>
+    <button data-role="member" aria-pressed="false">as member</button>
+    <button data-role="viewer" aria-pressed="false">as viewer</button>
+  </div>
+
+  <!-- Members surface -->
+  <div class="card">
+    <h3 style="margin-top:0">Members of Acme Corp</h3>
+    <table>
+      <thead><tr><th>Person</th><th>Role</th><th>Joined</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td>dana@acme.com <span class="muted">· you</span></td>
+          <td><span class="badge owner">owner</span></td><td>2026-06-01</td><td></td>
+        </tr>
+        <tr>
+          <td>lee@acme.com</td>
+          <td>
+            <span class="badge admin r-view">admin</span>
+            <select class="r-manage hidden" aria-label="Change role for lee@acme.com">
+              <option>admin</option><option>member</option><option>viewer</option>
+            </select>
+          </td>
+          <td>2026-06-14</td>
+          <td class="row-actions r-manage hidden"><button class="btn danger">Remove</button></td>
+        </tr>
+        <tr>
+          <td>sam@acme.com</td>
+          <td>
+            <span class="badge member r-view">member</span>
+            <select class="r-manage hidden" aria-label="Change role for sam@acme.com">
+              <option>member</option><option>admin</option><option>viewer</option>
+            </select>
+          </td>
+          <td>2026-07-02</td>
+          <td class="row-actions r-manage hidden"><button class="btn danger">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- invite: managers only -->
+    <div class="r-manage">
+      <h3>Invite a teammate</h3>
+      <div class="invite-row">
+        <div class="field"><label for="em">Email</label><input id="em" type="email" placeholder="teammate@acme.com"></div>
+        <div class="field"><label for="rl">Role</label>
+          <select id="rl"><option>member</option><option>admin</option><option>viewer</option></select>
+        </div>
+        <button class="btn primary">Send invite</button>
+      </div>
+      <p class="note">They join with the role you pick. Owner is assigned only by transferring ownership.</p>
+    </div>
+    <!-- non-managers: honest reason, no dead control -->
+    <div class="r-readonly hidden">
+      <p class="tells">You can see who's in this workspace. Only an <strong>owner</strong> or
+        <strong>admin</strong> can invite or change roles.</p>
+    </div>
+  </div>
+
+  <!-- Sources surface (gated controls) -->
+  <div class="card">
+    <h3 style="margin-top:0">Connected sources <span class="legend">— same page, different controls</span></h3>
+    <table>
+      <thead><tr><th>Provider</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>OpenAI</strong> <span class="muted">prod</span></td>
+          <td><span class="badge admin">Reading usage</span></td>
+          <td class="row-actions">
+            <button class="btn">View usage</button>
+            <button class="btn danger r-manage hidden">Revoke</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="r-manage"><button class="btn primary" style="margin-top:var(--s2)">+ Connect a provider</button></div>
+    <div class="r-readonly hidden"><p class="tells">Connections are managed by owners and admins.
+      You're seeing usage read-only.</p></div>
+  </div>
+
+  <!-- Billing surface (owner only) -->
+  <div class="card">
+    <h3 style="margin-top:0">Billing</h3>
+    <div class="r-owner"><p>Plan: <strong>Scale</strong> · next invoice 2026-08-01 ·
+      <button class="btn">Manage plan</button></p></div>
+    <div class="r-notowner hidden"><p class="tells">Billing is visible to the workspace
+      <strong>owner</strong> only.</p></div>
+  </div>
+
+  <p class="note">Mockup for the O-2 ux gate. Interactions are illustrative; the wired
+    surface reuses <code>kit/_kit.html</code> and gates server-side at the route boundary
+    (fail-closed), so a hidden control can't be reached — the connect wizard itself
+    redirects a non-manager to <code>/sources</code>.</p>
+
+  <!-- R-DESIGN-ADDENDUM (charter checklist for a gated v1.5 surface):
+       • THE ONE DESIGNED DELIGHT: the "viewing as [role]" toggle re-renders all three
+         surfaces live, so the abstract permission matrix becomes something you FEEL —
+         a viewer's page visibly loses its controls as you click, teaching the R-ORG
+         "absent, not a 403-trap" rule in one gesture.
+       • WCAG AA CONTRAST: body ink #1a1c22 on #f7f8fa ≈ 15:1; muted #6b7280 on card
+         ≈ 5.0:1; each role badge pairs a tinted ground with a same-hue dark text
+         (owner #2540b5-on-#e7edff ≈ 7:1) — all ≥ AA for their text size. Dark theme
+         mirrors the pairings.
+       • PREFERS-REDUCED-MOTION: honored — the only transition (toggle hover) is
+         removed under the reduce query above. -->
+
+</div>
+
+<script>
+  // Illustrative surface-gating: manager = owner|admin; owner-only for billing.
+  const rank = {owner:3, admin:2, member:1, viewer:0};
+  function apply(role){
+    const isManager = rank[role] >= rank.admin;   // owner|admin
+    const isOwner = role === 'owner';
+    document.querySelectorAll('.r-manage').forEach(el=>el.classList.toggle('hidden', !isManager));
+    document.querySelectorAll('.r-view').forEach(el=>el.classList.toggle('hidden', isManager)); // badge vs dropdown
+    document.querySelectorAll('.r-readonly').forEach(el=>el.classList.toggle('hidden', isManager));
+    document.querySelectorAll('.r-owner').forEach(el=>el.classList.toggle('hidden', !isOwner));
+    document.querySelectorAll('.r-notowner').forEach(el=>el.classList.toggle('hidden', isOwner));
+    document.querySelectorAll('.toggle button').forEach(b=>
+      b.setAttribute('aria-pressed', String(b.dataset.role === role)));
+  }
+  document.querySelectorAll('.toggle button').forEach(b=>
+    b.addEventListener('click', ()=>apply(b.dataset.role)));
+  apply('owner');
+</script>
+</body>
+</html>
