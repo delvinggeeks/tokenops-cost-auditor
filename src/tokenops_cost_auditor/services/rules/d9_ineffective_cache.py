@@ -3,8 +3,10 @@
 Where prompt caching IS set up (cache_write_tokens > 0) but the reads don't pay
 it back: you keep paying the cache-WRITE premium while earning little cache-READ
 discount, so the caching NET COSTS you money. Disjoint from D2 by construction —
-D2 only considers rows with cache_write_tokens == 0 (no caching at all), so a
-route is never counted by both and the savings never double-count.
+D2 only considers rows with cache_write_tokens == 0 (no caching at all), so no ROW
+is counted by both and the DOLLARS never double-count. (The same route can still
+surface in both a D2 and a D9 finding when it mixes never-cached and cache-written
+calls — the savings amounts never overlap.)
 
 Money math (from the ACTUAL billed cache_write / cache_read token counts, so
 CONSERVATIVE — not an estimate; R-Q4 rate roles):
@@ -62,7 +64,11 @@ class D9IneffectiveCache:
                     loss_obs += (rate.cache_write - rate.input) * cw / 1e6  # write premium
                     loss_obs -= (rate.input - rate.cache_read) * cr / 1e6  # read discount
             except PricingGapError:
-                continue  # unpriced model: cost impact unknowable; skip
+                # An unpriced model OR a partial pricing-date gap in the bucket
+                # (some rows before a model's first effective_from) makes the loss
+                # unknowable → skip the WHOLE bucket rather than invent a number.
+                # Same conservative choice as D2 (d2_missing_cache.py).
+                continue
             if loss_obs <= 0:
                 continue  # caching is net-positive here: working fine, not flagged
             results.append((loss_obs, str(model), str(tag), bucket))

@@ -66,8 +66,10 @@ COSTS you; money-math on the ACTUAL billed cache_write/cached tokens so
 CONSERVATIVE not estimated; golden net_loss 0.3075 derived in
 pricing_golden_NOTES.md D9 section per CLAUDE.md rule 4). KEY money-math property:
 D9 is DISJOINT from D2 by construction — D2's eligible filter already requires
-`cache_write_tokens == 0`, so a route is never counted by both and savings can
-NEVER double-count (no D2 change needed). Both detectors are per-request-only
+`cache_write_tokens == 0`, so no ROW is counted by both and the DOLLARS can NEVER
+double-count, no D2 change needed (cold-review precision: a route CAN surface in
+both a D2 and a D9 finding when it mixes never-cached and cache-written calls —
+the savings amounts still never overlap). Both detectors are per-request-only
 (added to aggregate.INACTIVE_ON_AGGREGATE: D8 needs route tags, D9 needs
 cache_write counts that provider usage-API aggregates don't carry) — so they
 enrich exactly the deep upload/SDK path the founder made primary. Both surface
