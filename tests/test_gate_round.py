@@ -49,6 +49,19 @@ class TestParseVerdict:
         assert gr.parse_verdict("I ran out of budget, PARTIAL.") == "NO-VERDICT"
         assert gr.parse_verdict("") == "NO-VERDICT"
 
+    def test_last_match_wins_over_echoed_instruction(self) -> None:
+        # The killer case: the agent restates the instruction (an early PASS) and then
+        # concludes FAIL. First-match would report a false PASS; last-match is correct.
+        text = (
+            "I will end with VERDICT: PASS | PASS-WITH-NOTES | FAIL as instructed.\n"
+            "1. runner.py:247 real bug\n"
+            "VERDICT: FAIL\n"
+        )
+        assert gr.parse_verdict(text) == "FAIL"
+
+    def test_harness_error_tail_is_no_verdict(self) -> None:
+        assert gr.parse_verdict("[harness] claude CLI not on PATH — NO-VERDICT.") == "NO-VERDICT"
+
 
 class TestSelectGates:
     def test_core_only_for_docs_and_scripts(self) -> None:
@@ -66,6 +79,11 @@ class TestSelectGates:
     def test_ops_added_for_workflows(self) -> None:
         gates = gr.select_gates([".github/workflows/gate-round.yml"])
         assert "ops-engineer" in gates
+
+    def test_ops_trigger_does_not_match_incidental_docker_compose_substrings(self) -> None:
+        # Bare "docker"/"compose" substrings drew a needless ops gate on unrelated paths.
+        gates = gr.select_gates(["docs/dockerized-notes.md", "scripts/decompose.py"])
+        assert "ops-engineer" not in gates
 
     def test_this_le4_diff_selects_core_plus_ops(self) -> None:
         # Self-consistency: this very card touches scripts + a workflow + tests + docs,

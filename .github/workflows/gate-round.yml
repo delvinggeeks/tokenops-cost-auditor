@@ -33,7 +33,6 @@ permissions:
 jobs:
   gate-round:
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
     env:
       # secrets are not allowed directly in step `if:`; surface presence as a plain env.
       # EITHER credential activates the live round (subscription token preferred).

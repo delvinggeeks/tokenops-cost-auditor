@@ -36,9 +36,20 @@ from pathlib import Path
 CORE_GATES = ("cold-reviewer", "spec-guard", "vv-engineer", "system-tester")
 UX_TRIGGER = ("web/templates/", "web/static/", "templates/app/", "landing")
 ARCHITECT_TRIGGER = ("services/", "persistence/models.py")
-OPS_TRIGGER = (".github/workflows/", "scripts/provision", "docker", "compose", "Caddyfile")
+# Specific tokens, not bare "docker"/"compose" — the latter also match docs/
+# dockerized-notes.md and decompose.py, drawing an unneeded ops gate (cold-reviewer note).
+OPS_TRIGGER = (
+    ".github/workflows/",
+    "scripts/provision",
+    "Dockerfile",
+    "docker-compose",
+    "compose.yml",
+    "compose.yaml",
+    "Caddyfile",
+)
 
 AGENTS_DIR = Path(".claude/agents")
+DIFF_CAP = 200_000  # chars of diff embedded in the prompt (kept under model context)
 # TE-8: "VERDICT (PASS | PASS-WITH-NOTES | FAIL)". Longest label first so PASS-WITH-NOTES
 # is never shadowed by a bare PASS match.
 _VERDICT_RE = re.compile(r"VERDICT\W{0,4}(PASS-WITH-NOTES|PASS|FAIL)", re.IGNORECASE)
@@ -53,11 +64,16 @@ class GateResult:
 
 def parse_verdict(text: str) -> str:
     """Extract the TE-8 verdict from an agent's output; NO-VERDICT if none is emitted
-    (treated as a failure — a gate that did not conclude did not pass)."""
-    m = _VERDICT_RE.search(text or "")
-    if not m:
+    (treated as a failure — a gate that did not conclude did not pass).
+
+    Takes the LAST match, not the first: TE-8 puts the verdict on the FINAL line, and a
+    verbose agent commonly echoes the instruction's own "VERDICT: PASS | ... | FAIL"
+    example earlier in its reasoning — first-match would lock onto that echo and could
+    report a false PASS over a real FAIL (cold-reviewer finding)."""
+    matches = list(_VERDICT_RE.finditer(text or ""))
+    if not matches:
         return "NO-VERDICT"
-    return m.group(1).upper().replace(" ", "-")
+    return matches[-1].group(1).upper().replace(" ", "-")
 
 
 def _changed_files(base: str) -> list[str]:
@@ -106,26 +122,53 @@ def agent_model(agent: str) -> str:
     return m.group(1) if m else "sonnet"
 
 
+# The gate agents are read-plus-run reviewers: they must be able to execute the pinned
+# toolchain (`uv run pytest`/`ruff`, TE-11) and read the tree, or they fall back to
+# static review and cannot verify green (vv/system-tester/ops finding). Headless `-p`
+# denies any tool not listed, so name exactly the reviewer set — no writes, no network.
+_ALLOWED_TOOLS = "Read,Grep,Glob,Bash"
+
+
 def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
     """Invoke the pinned claude CLI headless as this gate agent over the PR diff.
     Kept in one place so the exact CLI contract is easy to adjust after the first
     live validation run (see module docstring). `--model` is forced from the charter
-    so the gate round stays on Sonnet (TE-5) regardless of the runner's default tier."""
+    so the gate round stays on Sonnet (TE-5) regardless of the runner's default tier.
+    A crash/timeout/missing-CLI maps to NO-VERDICT (which blocks) rather than tearing
+    down the whole round with a bare traceback and no comment (cold-reviewer finding)."""
+    truncated = len(diff_text) > DIFF_CAP
+    marker = f" (TRUNCATED — first {DIFF_CAP} chars only; coverage is partial)" if truncated else ""
     prompt = (
         f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
         f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
         "Obey TE-2 (diff + STATUS + your charter docs only), TE-6 (<=15 tool calls), "
         "TE-11 (pinned `uv run` toolchain). End your reply with EXACTLY one line:\n"
         "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
-        f"----- diff -----\n{diff_text[:200000]}\n"
+        f"----- diff{marker} -----\n{diff_text[:DIFF_CAP]}\n"
     )
-    proc = subprocess.run(
-        ["claude", "-p", prompt, "--model", agent_model(agent), "--output-format", "text"],
-        capture_output=True,
-        text=True,
-        timeout=900,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            [
+                "claude",
+                "-p",
+                prompt,
+                "--model",
+                agent_model(agent),
+                "--allowedTools",
+                _ALLOWED_TOOLS,
+                "--output-format",
+                "text",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=900,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return f"[harness] {agent} exceeded the 900s budget — recorded as NO-VERDICT."
+    except FileNotFoundError:
+        return "[harness] `claude` CLI not on PATH — recorded as NO-VERDICT."
+    # No VERDICT token in an error tail => parse_verdict returns NO-VERDICT (blocks).
     return proc.stdout + ("\n" + proc.stderr if proc.returncode != 0 else "")
 
 
