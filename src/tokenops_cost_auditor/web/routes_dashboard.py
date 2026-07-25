@@ -12,6 +12,7 @@ methodology, in that fixed order (R-CLARITY §1).
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -585,6 +586,33 @@ def replay_tour(request: Request, user_email: str = Depends(current_user)) -> Re
         user.tour_dismissed_at = None
         session.commit()
     return RedirectResponse("/dashboard", status_code=303)
+
+
+@router.get("/breakdown", response_class=HTMLResponse)
+def breakdown_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+    """Enterprise tokenomics breakdown — exact, deterministic per-dimension usage
+    analysis (founder 2026-07-25). Reads the tokenomics.json the runner wrote at
+    audit time (purged with the audit under FR-21 → honest empty state)."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        audit = metrics.latest_audit(session, user.id)
+        tk: dict[str, object] | None = None
+        if audit is not None:
+            path = Path(request.app.state.settings.report_dir) / audit.id / "tokenomics.json"
+            if path.exists():
+                tk = json.loads(path.read_text(encoding="utf-8"))
+        ctx = _shell_ctx(session, request, user, "breakdown")
+        return _render(
+            request,
+            "app/breakdown.html",
+            tk=tk,
+            audit=audit,
+            clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
+            support_email=request.app.state.settings.support_email,
+            show_tour=False,
+            **ctx,
+        )
 
 
 @router.get("/guide", response_class=HTMLResponse)

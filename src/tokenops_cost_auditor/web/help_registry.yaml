@@ -20,6 +20,8 @@ destinations:
     purpose: "Open or download any past audit, including its full report PDF."
   explore:
     purpose: "Slice your entire history — by time, model, source or finding — and read it as one report."
+  breakdown:
+    purpose: "See exactly where every token and dollar goes — by model, route and efficiency — the audit-grade tokenomics your finance team can reconcile to the penny."
   runs:
     purpose: "Every audit run end to end — what triggered it, how long each stage took, and what each stage did."
   sources:

@@ -49,6 +49,40 @@ now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the pro
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
 (founder-chosen): guided first-run + output preview (punch-list #4/#5).
 
+## TOKENOMICS BREAKDOWN — enterprise depth engine slice 1 (2026-07-25) — founder "enterprise-ready, industry-standard, deterministic, no LLM in the money path"
+
+SHIPPED-TO-MAIN first: D8/D9 richer-findings merged as PR #18 (squash 7115cb9,
+all gates PASS + CI green). Then a strategic thread: founder asked "should we have
+our own trained model / LLM for analysis?" — ruled (my honest counter, founder
+agreed): NO neural/LLM model — it burns tokens, is non-reproducible, can't be
+100% precise on dollars, and FR-22 leaves no text to read anyway; the MOAT is the
+DETERMINISTIC precision engine (exact, reproducible, private, reconciles to the
+invoice) which an LLM tool cannot match. Founder chose (AskUserQuestion) the
+"deterministic depth engine", first slice "usage/tokenomics breakdown", then
+"enterprise-ready, not POC, abundant + granular + industry-standard". SHIPPED on
+branch `tokenomics-breakdown` off main: **services/dashboard/tokenomics.compute** —
+a PURE, deterministic breakdown of a priced frame: vitals (spend, tokens
+in/out/cached, cache-hit rate, output:input, cost/1k-out, cost/request), per-model
++ per-route (tag = cost-allocation/showback) Slices, unit economics, and data
+coverage (%priced/%attributed — untagged spend is its own row, never silently
+allocated). Every figure is an exact sum/ratio of the coster's cost_usd — NOT a new
+estimator, so no rate golden owed, but pinned by tests/test_tokenomics.py against
+hand-derived values. **Runner** writes the tokenomics.json ARTIFACT at audit time
+from the per-request frame (which purges later per FR-21 — computed once, same
+pattern as spend_by_model). **GET /breakdown** reads the latest audit's artifact
+(honest empty / unpriced-clarity state when absent); **breakdown.html**
+(kit-composed stat tiles + `.ledger` tables); **Breakdown** nav in the Monitor
+group + help_registry destination. The enterprise MOCKUP (docs/design/mockups/
+tokenomics-breakdown.html) was ux-gated PASS-WITH-NOTES (all 3 actioned) + founder
+"wire slice 1 as shown"; it also shows the NEXT slices — forecast/run-rate (slice
+2, reuses existing metrics.forecast), statistical anomaly detection (slice 3),
+optimization what-ifs (slice 4), export/API completeness (slice 5) — all
+deterministic. X-02 respected: budget is a display reference for variance only,
+never enforcement. File-map delta: +services/dashboard/tokenomics.py;
++templates/app/breakdown.html; runner writes tokenomics.json; +GET /breakdown;
++shell Breakdown nav; +help_registry breakdown destination; +tests/test_tokenomics.py
++tests/test_breakdown.py; +mockup; traceability row. Gate round + PR next.
+
 ## RICHER FINDINGS — D8/D9 detectors (2026-07-25) — founder "many findings / dynamic analysis", chose "richer findings / more detectors"
 
 SHIPPED-TO-MAIN first: the guided-first-run slice merged as PR #17 (squash
