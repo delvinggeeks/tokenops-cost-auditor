@@ -22,6 +22,7 @@ from typing import Any
 import yaml
 
 from tokenops_cost_auditor.config import Settings
+from tokenops_cost_auditor.services.rules import detector_copy
 
 REGISTRY_PATH = Path(__file__).parent / "help_registry.yaml"
 # Fixed order of depth (c) on every finding (R-CLARITY §1).
@@ -63,10 +64,13 @@ def purpose(destination: str) -> str:
 
 
 def detector(key: str, settings: Settings) -> DetectorHelp:
-    """Detector help with thresholds rendered from LIVE settings."""
-    entry = _raw()["detectors"].get(key)
+    """Detector help with thresholds rendered from LIVE settings. The copy is the
+    SERVICES-layer single source (services.rules.detector_copy) so the in-app finding
+    and the downloadable report read the SAME words (ROADMAP §3 #3); only `why`
+    interpolates live thresholds, which stays a web/settings concern."""
+    entry = detector_copy.entry(key)
     if entry is None:
-        raise KeyError(f"help registry has no detector '{key}'")
+        raise KeyError(f"detector copy has no detector '{key}'")
     return DetectorHelp(
         key=key,
         plain=entry["plain"],
@@ -82,16 +86,14 @@ def detector(key: str, settings: Settings) -> DetectorHelp:
 def detector_summary(key: str) -> str:
     """The plain-English 'what this means' for a finding (no thresholds, so no
     Settings needed). Common-man phrasing that LEADS the finding wherever it is
-    read — findings list, drawer, preview (founder walkthrough 2026-07-25)."""
-    entry = _raw()["detectors"].get(key)
-    return str(entry["summary"]) if entry else ""
+    read — findings list, drawer, preview AND the downloadable report (§3 #3)."""
+    return detector_copy.summary(key)
 
 
 def detector_plain(key: str) -> str:
     """Headline-depth phrasing only (no thresholds, so no Settings needed).
     Templates use this wherever a finding is named above depth (c)."""
-    entry = _raw()["detectors"].get(key)
-    return str(entry["plain"]) if entry else key
+    return detector_copy.plain(key)
 
 
 def _render_thresholds(text: str, settings: Settings) -> str:
@@ -151,7 +153,7 @@ def guide_index() -> list[dict[str, str]]:
 
 
 def detector_keys() -> list[str]:
-    return list(_raw()["detectors"])
+    return list(detector_copy.DETECTOR_COPY)
 
 
 def _threshold_values(settings: Settings) -> dict[str, object]:

@@ -3308,3 +3308,20 @@ job backstop 120→150min so the invariant "a hung agent hits its own ceiling fi
 true at 7 gates. Pinned by tests/test_gate_round.py::test_prompt_tells_agents_not_to_rerun
 _the_full_suite (+ timeout constant). Activated live on the next PR that carries the key.
 Held as a PR for founder merge. Next: resume ROADMAP §3 queue (#2 view-report reachability).
+
+## §3 #3 — report plain-English parity (2026-07-26) — founder "merge and continue once green" (ROADMAP §3 #3)
+
+Closes the parity gap: /findings showed each detector's plain-English plain+summary (from
+web/help_registry.yaml), but the downloadable report (web + PDF) couldn't — that copy lived
+in the WEB layer and services/report can't reach up into web, so the report read more
+technical than the in-app findings. FIX (as the ROADMAP specified — move the copy to a
+services source): NEW services/rules/detector_copy.py is the SINGLE SOURCE of detector display
+copy (all 9 detectors' plain/summary/why/fix/verify), moved VERBATIM from the yaml; the engine
+stays network/LLM-free (T-NFR-01 — pure yaml→dict). web/help.py reads it (in-app copy
+byte-identical, new home); help_registry.yaml drops its detectors section (no dual source).
+render_pdf.render_report_html passes dcopy into the render; _report_body.html (shared by web
+report.html + pdf/report.html) renders each finding's plain headline + summary — the SAME words
+/findings shows. Proven: tests/test_report_web.py::TestReportPlainEnglishParity (one source
+serves both consumers; the report renders each finding's plain+summary). mypy + import-guard +
+all copy consumers (dashboard/explorer/journeys/first-run/wave4) + docs gates green. Held as a
+PR. Next: ROADMAP §3 #4 (landing "Works with" rider) then #7 (O-4 workspace settings).

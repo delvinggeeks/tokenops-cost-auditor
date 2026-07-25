@@ -22,9 +22,11 @@ from tokenops_cost_auditor.services.report.signer import (
     sign_report_url,
     verify_report_url,
 )
+from tokenops_cost_auditor.services.rules import detector_copy
 from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import observed_days
 from tokenops_cost_auditor.services.rules.registry import run_all
+from tokenops_cost_auditor.web import help as web_help
 
 FIXTURES = Path(__file__).parent / "fixtures"
 TABLE = PricingTable.load()
@@ -59,6 +61,33 @@ class TestTREP02Pdf:
         html = render_report_html(waste_report, template="report.html")
         positions = [html.index(f.id) for f in waste_report.findings]
         assert positions == sorted(positions)  # FR-14 ranking preserved in render
+
+
+class TestReportPlainEnglishParity:
+    """ROADMAP §3 #3: the downloadable report shows the SAME plain-English detector
+    copy as the in-app /findings, from ONE services-layer source."""
+
+    def test_one_copy_source_serves_both_consumers(self) -> None:
+        # web/help.py (in-app) and services.report (report) read the SAME source, so
+        # every detector's plain + summary is identical — no drift possible.
+        for key in detector_copy.DETECTOR_COPY:
+            assert web_help.detector_plain(key) == detector_copy.plain(key)
+            assert web_help.detector_summary(key) == detector_copy.summary(key)
+
+    def test_report_renders_each_findings_plain_and_summary(
+        self, waste_report: ReportModel
+    ) -> None:
+        # The web + PDF share _report_body.html, so asserting on the web render covers
+        # both. Every shown finding's plain headline + summary appear verbatim —
+        # HTML-escaped exactly as Jinja autoescape renders them (apostrophes → &#39;).
+        from markupsafe import escape
+
+        html = render_report_html(waste_report, template="report.html")
+        shown = waste_report.findings[: waste_report.render_cap]
+        assert shown, "fixture must produce findings"
+        for f in shown:
+            assert str(escape(detector_copy.plain(f.detector))) in html
+            assert str(escape(detector_copy.summary(f.detector))) in html
 
 
 class TestTREP04Methodology:
