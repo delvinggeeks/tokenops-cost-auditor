@@ -5,19 +5,20 @@
    and (b) a preview of REAL sample-engine output (metrics.first_run_preview),
    fenced HARD as SAMPLE so engine-sample figures can never read as their own —
    the data-coherence honesty law (founder walkthrough 2026-07-24). #}
-{% import "kit/_kit.html" as kit %}
 <section class="w-12" data-reveal>
   <div class="fr-hero">
     <div class="eyebrow">First audit — free</div>
     <h2>Let's find the money hiding in your LLM spend.</h2>
-    <p class="lede">One full audit of your own logs, free — no card, and nothing sits in
-      your request path. Here's the whole path; below it, exactly what you'll get.</p>
+    <p class="lede">Upload a usage log — or drop in the SDK — and we run all six detectors over
+      every call: the deepest audit, and the most findings. Prefer hands-off? Connect your provider
+      for a lighter automatic daily check. Free to start, no card, nothing in your request path.</p>
     <div class="fr-steps">
       <div class="fr-step now">
         <span class="fr-here">YOU ARE HERE</span>
         <div class="n">1</div>
-        <div class="t">Get your logs in</div>
-        <div class="d">Upload a usage export, or connect a provider for daily pulls.</div>
+        <div class="t">Get your usage in</div>
+        <div class="d">Upload a log export (or add the SDK) for the full per-call audit — the most
+          findings. Or connect a provider for automatic daily checks on your usage totals.</div>
       </div>
       <div class="fr-step">
         <div class="n">2</div>
@@ -32,8 +33,9 @@
     </div>
     <div class="fr-cta">
       <a class="btn btn-primary" href="/upload">Upload a log file</a>
-      <a class="btn" href="/sources">Connect a source</a>
-      <span class="muted">Takes a few minutes. You can watch it run.</span>
+      <a class="btn" href="/sources">Connect a provider</a>
+      <span class="muted">Upload or the SDK audits every call — the most findings. Connecting is
+        automatic, but sees only daily provider totals.</span>
     </div>
   </div>
 </section>
@@ -47,43 +49,37 @@
       run through the exact engine your logs will use — so the arithmetic is real even though
       the company isn't. Your own numbers appear here after your first audit; nothing on this
       card is yours.</p>
-    <div class="fr-pv-grid">
-      <div class="fr-pv-card fr-pv-stat">
-        <div class="n">${{ "{:,.2f}".format(preview.monthly_savings_usd) }}<span class="per">/mo</span></div>
-        <div class="chip">{{ "%.1f"|format(preview.savings_pct) }}% of sample spend</div>
-        <div class="l">recoverable across {{ preview.n_findings }} findings, from
-          ${{ "{:,.2f}".format(preview.monthly_spend_usd) }}/mo of sample spend
-          ({{ "{:,}".format(preview.row_count) }} calls, {{ preview.observed_days }} days).</div>
-        <div class="scale">On the sample the dollars are small; on your real traffic the same
-          detectors scale with your spend.</div>
-      </div>
-      <div class="fr-pv-card">
-        {# The SAME ledger the real dashboard + /findings render — so the preview
-           is honestly "the table you'll see," not a bespoke lookalike (kit §3,
-           test_app_screens_do_not_hand_roll_tables). #}
-        {{ kit.table_open([
-             {"label": "Finding (sample)"}, {"label": "Severity"},
-             {"label": "Monthly", "cls": "money"},
-           ], caption="Sample findings") }}
-          {% for f in preview.findings %}
-          <tr>
-            <td>{{ help.detector_plain(f.detector) }}</td>
-            <td><span class="sev sev-{{ f.severity }}">{{ {"high": "High", "med": "Medium", "low": "Low"}.get(f.severity, f.severity) }}</span></td>
-            <td class="money">${{ "{:,.2f}".format(f.monthly_usd) }}</td>
-          </tr>
-          {% endfor %}
-        {{ kit.table_close() }}
-        {% if preview.findings | length < preview.n_findings %}
-        {# Honest: the shown rows are the top by dollars; we do NOT claim the
-           omitted ones are all $0 (the sample could carry more positive findings
-           than we show) — the full list is one click away (cold gate). #}
-        <p class="muted fr-pv-more">Top {{ preview.findings | length }} by dollar impact ·
-          {{ preview.n_findings }} findings in the sample. Full list in the sample report.</p>
-        {% endif %}
-      </div>
+    <div class="fr-pv-card fr-pv-stat">
+      <div class="n">${{ "{:,.2f}".format(preview.monthly_savings_usd) }}<span class="per">/mo</span></div>
+      <div class="chip">{{ "%.1f"|format(preview.savings_pct) }}% of sample spend</div>
+      <div class="l">recoverable across {{ preview.n_findings }} findings, from
+        ${{ "{:,.2f}".format(preview.monthly_spend_usd) }}/mo of sample spend
+        ({{ "{:,}".format(preview.row_count) }} calls, {{ preview.observed_days }} days).</div>
+      <div class="scale">On the sample the dollars are small; on your real traffic the same
+        detectors scale with your spend.</div>
     </div>
+
+    {# Each finding reads in plain English — a human "what this means", not a
+       cryptic label — the SAME treatment as the real Findings page + drawer
+       (founder walkthrough 2026-07-25). #}
+    <div class="fr-findlist">
+      {% for f in preview.findings %}
+      <div class="fr-find">
+        <div class="fr-find-head">
+          <span class="fr-find-title">{{ help.detector_plain(f.detector) }}</span>
+          <span class="fr-find-cost">${{ "{:,.2f}".format(f.monthly_usd) }}<span>/mo</span></span>
+        </div>
+        <p class="fr-find-sum">{{ help.detector_summary(f.detector) }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% if preview.findings | length < preview.n_findings %}
+    <p class="muted fr-pv-more">Top {{ preview.findings | length }} shown ·
+      {{ preview.n_findings }} findings in the sample. Full list in the sample report.</p>
+    {% endif %}
+
     <div class="fr-pv-foot">
-      <span class="muted">This is the same savings figure and findings table your own dashboard
+      <span class="muted">This is the same savings figure and findings your own dashboard
         will show — filled with sample data.</span>
       <a class="btn btn-sm" href="/sample">See the full sample report →</a>
     </div>

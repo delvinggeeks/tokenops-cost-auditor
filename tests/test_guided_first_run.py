@@ -74,10 +74,21 @@ class TestGuidedFirstRun:
         page = _page(app)
         # #4 the guided path: headline + the three steps + the step-1 marker
         assert "money hiding in your LLM spend" in page
-        assert "Get your logs in" in page
+        assert "Get your usage in" in page  # step 1
         assert "YOU ARE HERE" in page
         # both next-actions are named (their routes are exercised below)
-        assert "Upload a log file" in page and "Connect a source" in page
+        assert "Upload a log file" in page and "Connect a provider" in page
+
+    def test_upload_is_the_primary_action_for_depth(self, app: FastAPI) -> None:
+        # Founder decision 2026-07-25: per-request logs (upload/SDK) run all SIX
+        # detectors per route → the most findings, so uploading is the PRIMARY
+        # (btn-primary) action; connecting a provider (coarse aggregate usage,
+        # 3 detectors) is the secondary path — with the trade stated honestly.
+        page = _page(app)
+        assert 'class="btn btn-primary" href="/upload"' in page
+        assert 'class="btn" href="/sources"' in page
+        # the depth honesty is on the surface, not hidden
+        assert "the most findings" in page
 
     def test_next_actions_are_reachable(self, app: FastAPI) -> None:
         # the guided CTAs point at LIVE 200 routes, not dead ends (reachability law)
@@ -93,10 +104,12 @@ class TestGuidedFirstRun:
         page = _page(app)
         assert f"${prev['monthly_savings_usd']:,.2f}" in page  # money is the hero
         assert f"{prev['savings_pct']:.1f}% of sample spend" in page
-        # EVERY previewed finding's plain title (help registry, web layer) renders
+        # EVERY previewed finding renders its plain title AND its plain-English
+        # summary (the founder's "understand the issue in human english") — both.
         assert prev["findings"], "the sample must produce at least one finding"
         for f in prev["findings"]:
             assert _rendered(help_registry.detector_plain(f["detector"])) in page
+            assert _rendered(help_registry.detector_summary(f["detector"])) in page
 
     def test_preview_is_fenced_as_sample_and_never_reads_as_own(self, app: FastAPI) -> None:
         page = _page(app)

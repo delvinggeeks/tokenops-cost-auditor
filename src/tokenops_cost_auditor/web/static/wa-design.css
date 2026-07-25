@@ -877,3 +877,22 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
 .fr-pv-more { margin-top: 8px; }
 .fr-pv-foot { display: flex; justify-content: space-between; align-items: center;
   margin-top: var(--s2); flex-wrap: wrap; gap: 10px; }
+
+/* Plain-English finding treatment (founder walkthrough 2026-07-25): a human
+   summary LEADS every finding; the technical pointers stay below for the
+   technical reader. Role tokens only — adapts across moods. */
+.finding-plain { background: var(--surface-raised); border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 16px; margin: var(--s2) 0; }
+.finding-plain h3 { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--accent); }
+.finding-plain p { margin: 0; }
+.finding-sub { font-size: 13px; color: var(--ink-soft); margin-top: 3px; max-width: 80ch; }
+.fr-findlist { display: grid; gap: var(--s2); margin-top: var(--s2); }
+.fr-find { background: var(--surface); border: 1px solid var(--estimate-line);
+  border-radius: var(--radius-sm); padding: var(--s2) var(--s3); }
+.fr-find-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.fr-find-title { font-weight: 640; }
+.fr-find-cost { font-weight: 640; color: var(--money); white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+.fr-find-cost span { font-weight: 500; font-size: 12px; color: var(--ink-soft); }
+.fr-find-sum { margin: 6px 0 0; color: var(--ink-soft); font-size: 13px; max-width: 74ch; }

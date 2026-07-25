@@ -98,7 +98,43 @@ HTML-escaping (`&#39;`) + line-wrap were assertion bugs, fixed by whitespace-nor
 (both copies); routes_dashboard passes first_run+preview; dashboard.html branch;
 +tests/test_guided_first_run.py; +mockup guided-first-run.html; +traceability row. No
 pricing/estimator touch → CLAUDE.md rule 4 N/A. DEPENDS-DONE: O-1 stack (main).
-Gate round + PR next.
+
+REV 2 (founder walkthrough on PR #17, 2026-07-25 — "not approved… connecting
+sources is the main feature but upload was highlighted… Findings/Report must be
+plain human english, a proper summary; each finding looks too complicated"):
+mockup NOT approved → revised + re-approved (AskUserQuestion: "wire it as shown",
+scope = "technical pointers ALONG WITH the plain-English summary, for both
+technical and common man"). SHIPPED on the same branch: (1) **First-run CTA
+emphasis.** Founder first said "connect is the main feature"; a follow-up ("why so
+few findings — can be many, dynamic analysis") surfaced the DEPTH mechanic and
+REVERSED it (AskUserQuestion "Upload/SDK primary (depth)"): per-request logs
+(upload/SDK) run all SIX detectors PER ROUTE → the most findings, so **Upload a log
+is the PRIMARY action** (btn-primary → /upload); connecting a provider is the
+SECONDARY automatic-daily path — provider usage APIs give only coarse day×model
+aggregates so just 3 of 6 detectors run and it finds less (aggregate.py
+INACTIVE_ON_AGGREGATE). The trade is stated honestly on the hero. "More detectors /
+richer per-route analysis" = a founder-chosen FOLLOW-UP, not this slice. (2)
+**Plain-English finding summaries** — a new `summary` field per detector in
+help_registry.yaml (common-man "what's happening + why it costs"; NO jargon/
+thresholds) + DetectorHelp.summary + help.detector_summary() + i18n
+kit.finding.summary "In plain English". Every finding now LEADS with the plain
+summary and KEEPS the technical pointers (detector id, thresholds, evidence) —
+both audiences, plain-first: finding **drawer** (summary prepended above the
+unchanged depth-c why→evidence→fix→verify, so R-CLARITY order + R-PERSONA jargon
+tests still hold), **Findings page** (summary sub-line under each title), **dashboard
+top-findings** widget, and the **first-run preview** (now plain-English cards:
+title + human summary + $, replacing the kit ledger — no table, so the kit-table
+law is N/A). Detector→summary mapped at render via the registry (engine stays
+presentation-blind). SCOPE CARVE-OUT (transparent): the downloadable **PDF report**
+is render-only + services-layer (render_report_html passes only the ReportModel,
+no help access), so plain-English there needs the detector copy moved to a
+services-accessible source — the explicit FAST-FOLLOW, not hacked in via a
+layering break. Tests: connect-is-primary CTA, preview shows every finding's plain
+title AND summary, drawer has "In plain English" leading + technical pointers still
+present. File-map delta (rev 2): +help.detector_summary + DetectorHelp.summary;
++summary in 6 detector entries; +i18n kit.finding.summary; drawer/findings/
+top_findings/first_run templates lead with summary; +wa-design.css .finding-plain/
+.finding-sub/.fr-find* (both copies). Gate round + PR update next.
 
 ## DATA COHERENCE + HONEST FRESHNESS (2026-07-24) — founder walkthrough: "no sources connected but overview/findings show old cache data, not real-time"
 

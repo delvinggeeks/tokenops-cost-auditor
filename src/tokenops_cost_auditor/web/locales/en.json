@@ -6,6 +6,7 @@
   "kit.error.try_again": "Try again",
   "kit.finding.evidence": "Evidence",
   "kit.finding.fix": "The fix",
+  "kit.finding.summary": "In plain English",
   "kit.finding.verify": "How you'll know it worked",
   "kit.finding.why": "Why we flagged this",
   "kit.help.what_is": "What is {title}?",

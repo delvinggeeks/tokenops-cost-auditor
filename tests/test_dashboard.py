@@ -100,8 +100,8 @@ class TestDashboard:
         honesty coverage lives in tests/test_guided_first_run.py.)"""
         page = TestClient(app).get("/dashboard", headers=HDR)
         assert page.status_code == 200
-        assert "Connect a source" in page.text  # the next action, still named
-        assert "Upload a log file" in page.text  # the guided step-1 CTA
+        assert "Upload a log file" in page.text  # the primary next action (depth)
+        assert "Connect a provider" in page.text  # the secondary automatic path
         assert "$0.00" not in page.text  # never a fabricated zero headline
 
     def test_03_headline_and_widgets_render(self, app: FastAPI) -> None:
@@ -163,6 +163,9 @@ class TestFindingsAndFeedback:
         page = TestClient(app).get("/findings", headers=HDR)
         assert page.status_code == 200
         assert "paying full price for prompts you send again and again" in page.text
+        # plain-English summary reads under the title, so the issue is understandable
+        # at a glance, not just a terse label (founder walkthrough 2026-07-25)
+        assert "charge a fraction to reuse it" in page.text
         table_text = visible_text(page.text.split('id="drawer"')[0])
         assert not DETECTOR_IDS.search(table_text), "detector id leaked to headline depth"
 
@@ -190,7 +193,13 @@ class TestFindingsAndFeedback:
             )
         ]
         assert order == sorted(order), "depth (c) sections out of order"
-        # technical identifier is allowed HERE and only here
+        # Plain-English LEADS (founder walkthrough 2026-07-25): the human summary
+        # sits above the technical "why" — both audiences served, plain first.
+        assert "In plain English" in r.text
+        assert "charge a fraction to reuse it" in r.text  # the summary text itself
+        assert r.text.index("In plain English") < r.text.index(str(escape(t("kit.finding.why"))))
+        # technical pointers stay present for the technical reader (detector id +
+        # thresholds) — the founder asked for BOTH, not one instead of the other
         assert "d2_missing_cache" in r.text
         # threshold values come from live Settings (T-HELP-06)
         assert "25 times" in r.text or "25 " in r.text

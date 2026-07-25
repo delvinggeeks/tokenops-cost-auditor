@@ -119,6 +119,30 @@
   .pv-foot { display:flex; justify-content:space-between; align-items:center; margin-top:var(--s2);
     flex-wrap:wrap; gap:10px; }
 
+  /* plain-English finding cards (founder: findings must read in human english) */
+  .pv-findings { display:grid; gap:var(--s2); margin-top:var(--s2); }
+  .pv-find { background:var(--surface); border:1px solid var(--estimate-line); border-radius:var(--radius-sm);
+    padding:var(--s2) var(--s3); }
+  .pv-find-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .pv-find-title { font-weight:640; }
+  .pv-find-cost { font-weight:640; color:var(--money); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .pv-find-cost span { font-weight:500; font-size:12px; color:var(--ink-soft); }
+  .pv-find-sum { margin:6px 0 0; color:var(--ink-soft); font-size:13px; max-width:70ch; }
+
+  /* plain-English finding DETAIL (the Findings-page / report treatment) */
+  .fdetail { border:1px solid var(--rule); border-radius:var(--radius); background:var(--surface);
+    box-shadow:var(--lift-1); padding:var(--s4); }
+  .fdetail-head { display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; }
+  .fdetail-head h3 { font:640 20px/1.25 var(--sans); margin:0; }
+  .fdetail-cost { font:640 24px/1 var(--sans); color:var(--money); white-space:nowrap; }
+  .fdetail-cost span { font-size:13px; font-weight:500; color:var(--ink-soft); }
+  .fblock { margin-top:var(--s3); }
+  .fblock .k { font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); }
+  .fblock p { margin:4px 0 0; }
+  .fdetail details { margin-top:var(--s3); border-top:1px solid var(--rule); padding-top:var(--s2); }
+  .fdetail summary { cursor:pointer; font-size:13px; color:var(--ink-soft); }
+  .fdetail details p { font-size:13px; color:var(--ink-soft); margin-top:8px; }
+
   .callout { border-left:3px solid var(--accent); background:var(--surface); padding:12px 16px;
     border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:8px 0; font-size:14px; }
   ul.plain { padding-left:18px; } ul.plain li { margin:4px 0; }
@@ -126,7 +150,16 @@
 </head>
 <body>
 <div class="doc">
-  <h1>Guided first run + output preview — punch-list #4 / #5</h1>
+  <h1>Guided first run + output preview — punch-list #4 / #5 <span style="color:var(--accent)">(rev 3)</span></h1>
+  <div class="callout" style="border-color:var(--accent)"><b>Rev 3 — findings-depth decision (founder
+    2026-07-25).</b> (1) <b>Upload a log / SDK is the PRIMARY action</b>: per-request data runs all six
+    detectors PER ROUTE → the deepest audit and the most findings. Connecting a provider is the
+    secondary "automatic daily" path — but provider usage APIs give only coarse day×model totals, so
+    just 3 of 6 detectors run and it finds less; the trade is stated honestly, not hidden. (2)
+    <b>Findings read in plain English</b> (rev 2): each finding leads with a human summary — what's
+    happening, why it costs, what to do — with the engineer-speak (thresholds, detector codes,
+    evidence) kept as technical pointers alongside. Lands on the real Findings page + drawer too, not
+    just the preview. (More detectors = a separate follow-up slice.)</div>
   <p class="note">The state a brand-new user lands in: signed in, <b>no source connected and no
     audit run yet</b>. Today they meet a grid of empty widgets (<code>$0.00</code>, "No data yet")
     plus a checklist and a tour — the product reads as empty, and they must connect on faith with no
@@ -154,15 +187,18 @@
         <div class="hero">
           <div class="eyebrow">First audit — free</div>
           <h2>Let's find the money hiding in your LLM spend.</h2>
-          <p class="lede">One full audit of your own logs, free — no card, and nothing sits in your
-            request path. Here's the whole path; below it, exactly what you'll get.</p>
+          <p class="lede">Upload a usage log — or drop in the SDK — and we run all six detectors over
+            every call: the deepest audit, and the most findings. Prefer hands-off? Connect your
+            provider for a lighter automatic daily check. Free to start, no card, nothing in your
+            request path.</p>
 
           <div class="steps">
             <div class="step now">
               <span class="badge-now">YOU ARE HERE</span>
               <div class="n">1</div>
-              <div class="t">Get your logs in</div>
-              <div class="d">Upload a usage export, or connect a provider for daily pulls.</div>
+              <div class="t">Get your usage in</div>
+              <div class="d">Upload a log export (or add the SDK) for the full per-call audit — the
+                most findings. Or connect a provider for automatic daily checks on your usage totals.</div>
             </div>
             <div class="step">
               <div class="n">2</div>
@@ -178,8 +214,9 @@
 
           <div class="cta-row">
             <a class="btn btn-primary" href="/upload">Upload a log file</a>
-            <a class="btn" href="/sources">Connect a source</a>
-            <span class="muted">Takes a few minutes. You can watch it run.</span>
+            <a class="btn" href="/sources">Connect a provider</a>
+            <span class="muted">Upload or the SDK audits every call — the most findings. Connecting is
+              automatic, but sees only daily provider totals.</span>
           </div>
         </div>
       </div>
@@ -194,37 +231,47 @@
             the company isn't. <b>Your own numbers appear here after your first audit;</b> nothing on
             this card is yours.</p>
 
-          <div class="grid" style="gap:var(--s2)">
-            <div class="w-6">
-              <div class="pv-card pv-stat">
-                <div class="n">$0.89<span class="per">/mo</span></div>
-                <div class="chip">11.7% of sample spend</div>
-                <div class="l">recoverable across 5 findings, from $7.61/mo of sample spend
-                  (164 calls, 3 days).</div>
-                <div class="scale">On the sample the dollars are small; on your real traffic the same
-                  detectors scale with your spend.</div>
+          <div class="pv-card pv-stat">
+            <div class="n">$0.89<span class="per">/mo</span></div>
+            <div class="chip">11.7% of sample spend</div>
+            <div class="l">recoverable across 5 findings, from $7.61/mo of sample spend
+              (164 calls, 3 days).</div>
+            <div class="scale">On the sample the dollars are small; on your real traffic the same
+              detectors scale with your spend.</div>
+          </div>
+
+          <!-- Each finding reads in plain English — a one-line "what this means", not a
+               cryptic label. Same treatment on the real Findings page + Report. -->
+          <div class="pv-findings" aria-label="Sample findings — plain English">
+            <div class="pv-find">
+              <div class="pv-find-head">
+                <span class="pv-find-title">One route's prompts are far larger than the rest</span>
+                <span class="pv-find-cost">$0.50<span>/mo</span></span>
               </div>
+              <p class="pv-find-sum">One part of your app keeps sending much bigger prompts than
+                everywhere else — usually old context or examples that pile up and never get trimmed.
+                You pay for every extra word, on every call.</p>
             </div>
-            <div class="w-6">
-              <div class="pv-card">
-                <table class="pv" aria-label="Sample findings">
-                  <thead><tr><th>Finding (sample)</th><th>Severity</th><th class="money">Monthly</th></tr></thead>
-                  <tbody>
-                    <tr><td>One route's prompts are far larger than the rest</td>
-                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.50</td></tr>
-                    <tr><td>You're paying full price for prompts you send again and again</td>
-                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.25</td></tr>
-                    <tr><td>An agent loop is making many tiny calls where fewer would do</td>
-                        <td><span class="sev sev-low">Low</span></td><td class="money">$0.10</td></tr>
-                    <tr><td>The same request is being sent over and over in bursts</td>
-                        <td><span class="sev sev-med">Medium</span></td><td class="money">$0.05</td></tr>
-                  </tbody>
-                </table>
-                <p class="muted" style="margin-top:8px">Top 4 by dollar impact &middot; 5 findings in
-                  the sample. Full list in the sample report.</p>
+            <div class="pv-find">
+              <div class="pv-find-head">
+                <span class="pv-find-title">You're paying full price for prompts you send again and again</span>
+                <span class="pv-find-cost">$0.25<span>/mo</span></span>
               </div>
+              <p class="pv-find-sum">Some requests repeat the same big block of text every time. Your
+                provider can store it and charge a fraction to reuse it — but that caching isn't
+                switched on, so you pay full price each time.</p>
+            </div>
+            <div class="pv-find">
+              <div class="pv-find-head">
+                <span class="pv-find-title">An agent loop is making many tiny calls where fewer would do</span>
+                <span class="pv-find-cost">$0.10<span>/mo</span></span>
+              </div>
+              <p class="pv-find-sum">An automated loop is firing lots of tiny requests back-to-back.
+                Doing the same work in fewer, larger calls costs less for the same result.</p>
             </div>
           </div>
+          <p class="muted" style="margin-top:var(--s2)">Top 3 shown &middot; 5 findings in the sample.
+            Full list in the sample report.</p>
 
           <div class="pv-foot">
             <span class="muted">This is the same savings figure and findings table your own dashboard will show &mdash; filled with sample data.</span>
@@ -234,6 +281,48 @@
       </div>
 
     </div>
+  </div>
+
+  <h2 class="section">A finding, in plain English (the Findings page, drawer &amp; report)</h2>
+  <p class="note">The walkthrough flagged that finding <b>contents</b> read as engineer-speak —
+    thresholds, "prefix drift", detector codes, an evidence table. Every finding now LEADS with a
+    proper human summary: <b>what's happening · why it costs · what to do · how you'll know it worked</b>
+    — and the technical detection detail is available but tucked into a collapsible. Same treatment on
+    the Findings drawer, the Findings page and the report.</p>
+  <div class="fdetail">
+    <div class="fdetail-head">
+      <h3>You're paying full price for prompts you send again and again</h3>
+      <span class="fdetail-cost">$0.25<span> / month</span></span>
+    </div>
+    <div class="fblock">
+      <div class="k">What's happening</div>
+      <p>A few of your routes send the same large block of text at the start of every request — the
+        same instructions or context, over and over.</p>
+    </div>
+    <div class="fblock">
+      <div class="k">Why it's costing you</div>
+      <p>Your provider can "cache" that repeated block and charge you a fraction to reuse it. Right now
+        that caching isn't turned on for these calls, so you pay full price for the same text every
+        single time.</p>
+    </div>
+    <div class="fblock">
+      <div class="k">What to do</div>
+      <p>Turn on prompt caching for the repeated part — your provider calls it "cache control" or
+        "prompt caching." You mark the stable opening of the prompt once, and repeat calls read it
+        instead of re-sending it.</p>
+    </div>
+    <div class="fblock">
+      <div class="k">How you'll know it worked</div>
+      <p>Your next audit shows cache reads on those calls and this finding shrinks or disappears — the
+        saving shows up in your headline.</p>
+    </div>
+    <details>
+      <summary>How we detected this (technical)</summary>
+      <p>D2 · <code>d2_missing_cache</code> · conservative floor. Flagged when the same prompt prefix
+        repeated ≥ 5 times at ≥ 1,024 tokens with no cache reads; the estimate is reduced by a haircut
+        for prefix drift. Evidence: token counts, timestamps and hashes only — no prompt text is ever
+        stored.</p>
+    </details>
   </div>
 
   <h2 class="section">Design decisions &amp; laws honored</h2>
