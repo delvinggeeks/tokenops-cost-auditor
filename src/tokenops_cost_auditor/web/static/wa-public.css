@@ -178,6 +178,16 @@
 .statcard-src { font-size: 12px; color: var(--ink-soft); border-top: 1px solid var(--rule);
   padding-top: var(--s1); }
 
+/* 2b · sound-familiar pain grid (relatable, founder 2026-07-25) */
+.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3);
+  text-align: left; margin-top: var(--s4); }
+@media (max-width: 860px) { .pain-grid { grid-template-columns: 1fr; } }
+.pain { background: var(--surface-raised); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: var(--s3); box-shadow: var(--lift-1); }
+.pain-q { margin: 0 0 var(--s2); font-weight: 600; color: var(--ink); font-size: 15px;
+  line-height: 1.5; }
+.pain-a { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
+
 /* 3 · pipeline */
 .pipe { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr);
   gap: var(--s2); padding: 0; margin: var(--s3) 0 0; counter-reset: stage; }
