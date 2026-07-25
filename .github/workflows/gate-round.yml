@@ -5,12 +5,17 @@
 # verdict, and the job FAILS if any returns FAIL — so no PR clears the gate check on a
 # FAIL verdict without a human. "Gated by discipline" becomes "gated by machine."
 #
-# ACTIVATION (honest, per docs/09-SDLC §6): the live agent round needs the founder-lane
-# ANTHROPIC_API_KEY repo secret AND one validation run on a throwaway PR to confirm the
-# `claude -p` contract before this check is made required. Until the key is set, only
-# the DRY-RUN step runs — it proves the harness executes in CI (gate selection, parsing,
-# aggregation, exit code) against real fixtures with no API call, and is always green.
-# The moment the key exists, the live step activates on every PR.
+# ACTIVATION (honest, per docs/09-SDLC §6): the live agent round needs a credential
+# AND one validation run on a throwaway PR to confirm the `claude -p` contract before
+# this check is made required. The credential is EITHER of these repo secrets:
+#   * CLAUDE_CODE_OAUTH_TOKEN — runs the gate round on the founder's Claude SUBSCRIPTION
+#     (no metered API bill; the cheaper lane). Generate with `claude setup-token`.
+#   * ANTHROPIC_API_KEY — metered API billing (fallback).
+# Each gate still runs on Sonnet (TE-5, forced via --model from the charter), so the
+# credential is only AUTH, never the cost tier. Until a credential is set, only the
+# DRY-RUN step runs — it proves the harness executes in CI (gate selection, parsing,
+# aggregation, exit code) with no model call, and is always green. The moment a
+# credential exists, the live step activates on every PR.
 name: gate-round
 
 on:
@@ -31,7 +36,8 @@ jobs:
     if: github.event_name != 'schedule'
     env:
       # secrets are not allowed directly in step `if:`; surface presence as a plain env.
-      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      # EITHER credential activates the live round (subscription token preferred).
+      HAS_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
       BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +61,9 @@ jobs:
       - name: gate round (LIVE)
         if: env.HAS_KEY == 'true'
         env:
+          # subscription token preferred; API key is the fallback. The CLI uses whichever
+          # is non-empty — setting both (one empty) is harmless.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: uv run python scripts/gate_round.py --base "$BASE" --comment-out gate-comment.md
 

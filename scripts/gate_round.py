@@ -7,8 +7,14 @@ process exits non-zero if ANY returns FAIL — so a PR cannot pass the gate chec
 FAIL verdict without a human. This turns "gated by discipline" into "gated by machine."
 
 Mechanism: for each required gate it invokes the pinned `claude` CLI headless
-(`claude -p ...`) with that agent's charter (`.claude/agents/<name>.md`) + the PR diff,
-captures the TE-8 verdict, and aggregates. Requires ANTHROPIC_API_KEY (founder-lane).
+(`claude -p --model sonnet ...`) with that agent's charter (`.claude/agents/<name>.md`)
++ the PR diff, captures the TE-8 verdict, and aggregates. Each gate runs on the model
+named in its charter (all `sonnet` — TE-5 cost tiering), never the runner's default.
+
+Auth in CI needs a credential (a GitHub runner has no logged-in session): EITHER
+CLAUDE_CODE_OAUTH_TOKEN (runs on the founder's Claude SUBSCRIPTION — no metered API
+bill, the cheaper lane) OR ANTHROPIC_API_KEY (metered API). The CLI picks up whichever
+is set; the workflow accepts either.
 
 Testable without the API: `--dry-run` mocks each agent's output so the harness's own
 logic — gate selection, diff capture, verdict parsing, aggregation, exit code, PR
@@ -89,10 +95,22 @@ def _charter(agent: str) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else f"(no charter for {agent})"
 
 
+def agent_model(agent: str) -> str:
+    """TE-5 COST TIERING: a gate agent runs on the model named in its charter
+    frontmatter (all `sonnet`), NOT the caller's default tier. Read only the YAML
+    frontmatter block, and default to `sonnet` so a missing/renamed field can never
+    silently escalate a gate to the Opus tier (which is what breaks the cost profile)."""
+    parts = _charter(agent).split("---", 2)
+    front = parts[1] if len(parts) >= 3 else ""
+    m = re.search(r"^model:\s*(\S+)", front, re.MULTILINE)
+    return m.group(1) if m else "sonnet"
+
+
 def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
     """Invoke the pinned claude CLI headless as this gate agent over the PR diff.
     Kept in one place so the exact CLI contract is easy to adjust after the first
-    live validation run (see module docstring)."""
+    live validation run (see module docstring). `--model` is forced from the charter
+    so the gate round stays on Sonnet (TE-5) regardless of the runner's default tier."""
     prompt = (
         f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
         f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
@@ -102,7 +120,7 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
         f"----- diff -----\n{diff_text[:200000]}\n"
     )
     proc = subprocess.run(
-        ["claude", "-p", prompt, "--output-format", "text"],
+        ["claude", "-p", prompt, "--model", agent_model(agent), "--output-format", "text"],
         capture_output=True,
         text=True,
         timeout=900,

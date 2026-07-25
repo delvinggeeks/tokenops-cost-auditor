@@ -80,6 +80,22 @@ class TestSelectGates:
         assert gates == [*gr.CORE_GATES, "ops-engineer"]
 
 
+class TestModelTiering:
+    def test_every_gate_charter_pins_sonnet(self) -> None:
+        # TE-5: the whole cost profile depends on gates running Sonnet, not Opus.
+        for agent in [*gr.CORE_GATES, "ux-reviewer", "architect", "ops-engineer"]:
+            assert gr.agent_model(agent) == "sonnet", agent
+
+    def test_missing_field_defaults_to_sonnet_never_escalates(self, monkeypatch) -> None:
+        # A renamed/absent field must never silently promote a gate to the Opus tier.
+        monkeypatch.setattr(gr, "_charter", lambda a: "---\nname: x\n---\nbody")
+        assert gr.agent_model("whatever") == "sonnet"
+
+    def test_reads_declared_model(self, monkeypatch) -> None:
+        monkeypatch.setattr(gr, "_charter", lambda a: "---\nmodel: haiku\n---\nbody")
+        assert gr.agent_model("whatever") == "haiku"
+
+
 class TestAggregation:
     def _res(self, **verdicts) -> list:
         return [gr.GateResult(agent=a, verdict=v, output="") for a, v in verdicts.items()]
