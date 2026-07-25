@@ -244,7 +244,9 @@ class AuditRunner:
                         audit_id=audit_id,
                         finding_id=f.id,
                         detector=f.detector,
-                        route=str(f.detail.get("model")) if f.detail else None,
+                        route=str(f.detail.get("route") or f.detail.get("model"))
+                        if f.detail and (f.detail.get("route") or f.detail.get("model"))
+                        else None,
                         severity=str(f.severity),
                         monthly_impact_usd=f.monthly_cost_impact_usd,
                         confidence=str(f.confidence),

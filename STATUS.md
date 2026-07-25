@@ -15,6 +15,50 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## PROCESS FIX — the experience gate + staging-review-before-prod (2026-07-25) — founder "why are these issues reaching prod despite spec/gates/CI-CD?"
+
+ROOT CAUSE (honest): the pipeline is strong on CORRECTNESS (spec + 5-agent gates + CI +
+golden money) but blind to EMERGENT, whole-surface, real-data quality — and it
+AUTO-SHIPPED to prod on a healthz smoke, so the founder was the first human to see the
+rendered product = the founder became QA. Per-slice diff gates on CLEAN fixtures cannot
+see a cluttered findings list, a figure page that forgot the honesty banner, or a
+duplicated CTA (each slice was correct alone). TWO structural fixes shipped:
+(1) EXPERIENCE GATE — tests/test_experience_walkthrough.py renders the KEY authenticated
+surfaces with a REAL audit + nothing connected and asserts the LIVED-quality invariants
+per-slice gates miss: the honesty banner on EVERY figure page (cross-cutting contract,
+not a hand-list a new page can forget), /findings clean + route-named, /sources connect
+CTA exactly ONCE. It runs in CI (regular + the deploy `gate` job), so this class of
+regression now fails BEFORE staging. It CAUGHT the two live bugs on first run.
+(2) STAGING-REVIEW-BEFORE-PROD — deploy.yml: prod deploy is now gated `if:
+github.event_name == 'workflow_dispatch'` — every merge auto-deploys STAGING only; prod
+is a MANUAL founder promotion after reviewing the real pages on staging. Reconciles the
+pipeline with the founder's standing "prod deploy is my gated step". FIXES it drove:
+_shell.html _figure_pages +"breakdown" (the /breakdown honesty-banner gap); sources.html
+add-bar connect buttons only render when a connection already exists (empty state is the
+single CTA — the mangled duplicated-CTA bug). All green; CSS parity intact (templates
+only).
+
+## FINDINGS CLARITY — materiality floor + route naming (2026-07-25) — founder "work through what is worth fixing, largest dollar impact first" (prod /findings showed $0.00 + duplicate-looking findings)
+
+Founder pasted prod /findings: 11 findings on a 46,868-call/86-day audit, several worth
+$0.00, and the same plain-English text ("One route's prompts are far larger…") repeated
+7× because the list never named WHICH route. Two defects, both fixed:
+(1) MATERIALITY FLOOR — a SAVINGS finding always computes a strictly-positive impact (a
+detector skips when there is nothing to save), so `0 < impact < min_finding_monthly_usd`
+($0.005 default, configurable) means it renders as $0.00 = noise → dropped in run_all; an
+INFORMATIONAL pointer (D5/D8/D10, D1-INFO) sets impact to EXACTLY 0.0 and is always kept
+(a $0 there means "look at this"). No detector allowlist needed — the 0.0-vs-positive
+invariant does it. Verified on waste_pack: a huge floor leaves ONLY D5 ($0.0), all savings
+dropped. (2) ROUTE NAMING — D1/D2/D3/D9 now carry detail["route"] (the model or tag they
+flag); runner persists FindingRow.route from detail.route‖model; the /findings row renders
+"…on `<route>`" so many findings of one kind read as DISTINCT. FILE MAP: registry.run_all
+(floor); config.min_finding_monthly_usd + .env.example; d1/d2/d3/d9 detail["route"];
+runner FindingRow.route; routes_dashboard items +route; findings.html row +route.
++tests/test_rules.py::TestFindingsClarity (floor drops savings/keeps informational;
+default floor keeps all 6 waste_pack findings; savings findings name their route). Money
+values UNCHANGED (no golden) — this only DROPS $0-noise and NAMES findings. Next: banner
+coverage on /breakdown + all figure pages; then Sources page redesign; then O-2 RBAC.
+
 ## ROADMAP CONSOLIDATION — single source of truth (2026-07-25) — founder "we have a lot of requirements which we got diverted ... single source of truth and not missed or diverted"
 
 Founder course-correction: the depth-engine slices (tokenomics/D10/drift) grew from an

@@ -125,6 +125,7 @@ class D1OversizedModel:
                         f"published rates; {QUALITY_CAVEAT}."
                     ),
                     evidence=make_evidence(bucket, note="short-completion frontier call"),
+                    detail={"route": model},
                 )
             )
         for j, (bucket, model) in enumerate(informational, start=1):

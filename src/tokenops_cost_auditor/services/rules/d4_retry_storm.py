@@ -34,6 +34,7 @@ from tokenops_cost_auditor.services.rules.findings import (
     Finding,
     Severity,
     monthly_factor,
+    route_label,
     sample_evidence_across,
 )
 
@@ -144,7 +145,7 @@ class D4RetryStorm:
                     evidence=sample_evidence_across(
                         session_clusters, note="near-identical call in burst"
                     ),
-                    detail={"clusters": cluster_details},
+                    detail={"route": route_label(tag), "clusters": cluster_details},
                 )
             )
         return findings
