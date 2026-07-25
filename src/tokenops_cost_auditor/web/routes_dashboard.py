@@ -603,7 +603,7 @@ def breakdown_page(request: Request, user_email: str = Depends(current_user)) ->
             if path.exists():
                 try:
                     tk = json.loads(path.read_text(encoding="utf-8"))
-                except (json.JSONDecodeError, OSError):
+                except json.JSONDecodeError, OSError:
                     # a corrupt/partial artifact (crash mid-write, disk error) →
                     # the honest empty state, never a 500 (cold gate).
                     tk = None
