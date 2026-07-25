@@ -25,7 +25,12 @@
           {%- else %}<span class="badge badge-neutral">{{ a.status }}</span>{% endif %}
         </td>
         <td class="r"><code>{{ run.duration or "—" }}</code></td>
-        <td>{{ kit.drawer_toggle("run-" ~ a.id) }}</td>
+        <td class="row-actions">
+          {# R-REACHABILITY #2: the report was email-only — link to it in-app from the
+             ledger of your own runs. Mints a fresh signed link server-side on click. #}
+          {% if run.report_ready %}<a href="/audits/{{ a.id }}/report">View report</a>{% endif %}
+          {{ kit.drawer_toggle("run-" ~ a.id) }}
+        </td>
       </tr>
       {% call kit.drawer("run-" ~ a.id, 6) %}
         {% if run.stages %}
