@@ -80,11 +80,32 @@ class TestLiveInvocationIsCrashSafe:
 
     def test_timeout_degrades_to_no_verdict(self, monkeypatch) -> None:
         def slow(*a, **k):
-            raise gr.subprocess.TimeoutExpired(cmd="claude", timeout=900)
+            raise gr.subprocess.TimeoutExpired(cmd="claude", timeout=gr.AGENT_TIMEOUT_S)
 
         monkeypatch.setattr(gr.subprocess, "run", slow)
         out = gr._run_agent_live("vv-engineer", "some diff", "main")
         assert gr.parse_verdict(out) == "NO-VERDICT"
+
+    def test_prompt_tells_agents_not_to_rerun_the_full_suite(self, monkeypatch) -> None:
+        # The O-2 timeout fix: agents must diff-scope their test run (CI owns the full
+        # suite), or they exhaust the budget and NO-VERDICT. Pin the guidance + budget.
+        captured: dict[str, object] = {}
+
+        def capture(cmd, **kw):
+            captured["prompt"] = cmd[2]  # ["claude", "-p", <prompt>, ...]
+            captured["timeout"] = kw.get("timeout")
+
+            class _P:
+                stdout, stderr, returncode = "VERDICT: PASS", "", 0
+
+            return _P()
+
+        monkeypatch.setattr(gr.subprocess, "run", capture)
+        gr._run_agent_live("vv-engineer", "some diff", "main")
+        prompt = captured["prompt"]
+        assert "do NOT re-run the whole suite" in prompt
+        assert "changed/added test files" in prompt
+        assert captured["timeout"] == gr.AGENT_TIMEOUT_S == 1200
 
 
 class TestSelectGates:
