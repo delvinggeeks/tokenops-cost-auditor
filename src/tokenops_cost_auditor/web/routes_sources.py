@@ -23,6 +23,7 @@ from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, User, utcnow
 from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     active_workspace_id,
     get_or_create_user,
     workspace_id_for,
@@ -36,8 +37,21 @@ from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.payments.base import unconsumed_credit
 from tokenops_cost_auditor.services.pricing.table import PricingTable
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
+
+
+def _require_manage_sources(session: Session, user_id: str) -> None:
+    """O-2 RBAC: connecting/revoking a source (and minting/validating its key) is a
+    MANAGE_SOURCES action — owner or admin only. Fail-closed at the route boundary:
+    a member/viewer 403s before any write, even if they forge the POST directly."""
+    authz.ensure(
+        active_role(session, user_id),
+        authz.Perm.MANAGE_SOURCES,
+        detail="only an owner or admin can manage connections",
+    )
+
 
 router = APIRouter(prefix="/sources", tags=["sources"])
 
@@ -68,7 +82,11 @@ def user_plan(session: Session, user_id: str) -> str:
 def sources_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
     settings = request.app.state.settings
     with _session(request) as session:
-        user = session.execute(select(User).where(User.email == user_email)).scalar_one_or_none()
+        # O-2: ensure the user (and thus their owner workspace + role) exists, so the
+        # perm booleans resolve — a brand-new authenticated user is the OWNER of their
+        # workspace-of-one and must see the connect controls, not a fail-closed blank.
+        user = get_or_create_user(session, user_email)
+        session.commit()
         # O-1: the sources page DISPLAYS the workspace's connected sources,
         # machines and SDK keys — a member sees the same connections the owner
         # does. (Creating/revoking a connection stays owner-scoped below —
@@ -142,6 +160,10 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
                     if user
                     else {"freshness": "", "sources_disconnected": False, "data_as_of": ""}
                 ),
+                # O-2 RBAC: this page renders manually (not via _shell_ctx), so inject
+                # the perm booleans here too, or the manage controls would vanish for
+                # everyone (incl. the owner). perms_context(None) is fail-closed.
+                **authz.perms_context(active_role(session, user.id) if user else None),
                 show_tour=False,
             )
         )
@@ -273,6 +295,7 @@ def wizard_validate(
     # already know we will refuse.
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        _require_manage_sources(session, user.id)  # O-2: owner/admin only
         session.commit()  # durable regardless of what the validation says (f.2)
         user_id = user.id
         plan = user_plan(session, user_id)
@@ -538,6 +561,7 @@ def connect_source(
             ) from None
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        _require_manage_sources(session, user.id)  # O-2: owner/admin only
         plan = user_plan(session, user.id)
         limit = settings.plan_source_limits.get(plan, 0)
         # Lock the user row so concurrent connects serialize on the count
@@ -593,8 +617,9 @@ def revoke_source(
 ) -> RedirectResponse:
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
-        # O-1: revoke is a MUTATE — stays owner-scoped (fail-closed until O-2
-        # RBAC). Members SEE the workspace's sources but cannot revoke them yet.
+        # O-2 RBAC: revoke is a MANAGE_SOURCES mutation — owner/admin only. A
+        # member/viewer 403s here even if they forge the POST (fail-closed).
+        _require_manage_sources(session, user.id)
         source = session.get(Source, source_id)
         if source is None or source.user_id != user.id:
             raise HTTPException(status_code=404, detail="source not found")

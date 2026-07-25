@@ -30,7 +30,11 @@ from tokenops_cost_auditor.persistence.models import (
     User,
     utcnow,
 )
-from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
+from tokenops_cost_auditor.persistence.repo import (
+    active_role,
+    active_workspace_id,
+    get_or_create_user,
+)
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
@@ -82,11 +86,19 @@ def _shell_ctx(
 ) -> dict[str, object]:
     plan_key = user_plan(session, user.id)
     from tokenops_cost_auditor.services.dashboard import activity
+    from tokenops_cost_auditor.web import authz
+
+    # O-2 RBAC: the viewer's role in their ACTIVE workspace + the derived permission
+    # booleans, on EVERY app page so a control a role can't use is never rendered
+    # (R-ORG). active_role resolves against live membership, so a revoked member
+    # falls back to their own workspace (owner) on the next request.
+    role = active_role(session, user.id)
 
     return {
         "page": page,
         # O-1b-1 (R-ORG): the workspace bar on EVERY app page (reachability law).
         **workspace_bar(session, user.id),
+        **authz.perms_context(role),
         # Data-coherence (founder 2026-07-24): freshness + the 'nothing connected'
         # banner state, so historical figures never read as live.
         **data_freshness(session, user.id),

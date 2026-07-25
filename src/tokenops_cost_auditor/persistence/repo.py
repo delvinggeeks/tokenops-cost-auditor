@@ -158,14 +158,23 @@ def list_memberships(session: Session, user_id: str) -> list[tuple[Workspace, st
 
 
 def workspace_role(session: Session, user_id: str, workspace_id: str) -> str | None:
-    """The user's role in a workspace (owner|member), or None if not a member.
-    The owner-only gate for O-1b actions (invite; O-1b-3 revoke) reads this."""
+    """The user's role in a workspace (owner|admin|member|viewer), or None if not a
+    member. The O-2 RBAC gate reads this at the route boundary via active_role()."""
     return session.scalar(
         select(WorkspaceMember.role).where(
             WorkspaceMember.workspace_id == workspace_id,
             WorkspaceMember.user_id == user_id,
         )
     )
+
+
+def active_role(session: Session, user_id: str) -> str | None:
+    """The caller's role in their ACTIVE workspace — the one datum O-2 gating needs.
+    active_workspace_id validates the pointer against live membership, so a revoked
+    member resolves to their own (owner) workspace. None only if there is no
+    membership at all (fail-closed: no role grants no permission)."""
+    ws = active_workspace_id(session, user_id)
+    return workspace_role(session, user_id, ws) if ws else None
 
 
 def list_workspace_invites(session: Session, workspace_id: str) -> list[WorkspaceInvite]:

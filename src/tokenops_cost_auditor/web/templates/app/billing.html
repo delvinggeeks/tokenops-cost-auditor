@@ -3,6 +3,9 @@
 {% block content %}
 {% import "kit/_kit.html" as kit %}
 <div class="grid">
+  {# O-2 RBAC: billing + plan are visible to the workspace OWNER only. A
+     member/admin/viewer gets an honest note, never the invoice or a checkout link. #}
+  {% if can_view_billing %}
   {{ kit.surface_open(title="Your plan: " ~ current.name, icon="billing", span=12) }}
     <p class="tells">What this tells you: what you are on, what it costs, and
       whether anything needs your attention.</p>
@@ -69,5 +72,12 @@
       billed in your country's currency, chosen at checkout. One subscription
       per account.</div>
   {{ kit.surface_close() }}
+  {% else %}
+  {{ kit.surface_open(title="Billing", icon="billing", span=12) }}
+    <p class="tells">Billing and plan are managed by the workspace <strong>owner</strong>.
+      You have full access to this workspace's audits, reports and savings — just not
+      the invoice.</p>
+  {{ kit.surface_close() }}
+  {% endif %}
 </div>
 {% endblock %}

@@ -3266,5 +3266,16 @@ test seeds ONE workspace with all four roles (membership rows) → walks each ro
 asserts each sees exactly its controls and each forbidden mutation fails closed; (8) mockup
 before wiring + ux gate + full gate round. TWO CELLS held for founder lock: member can
 upload/run (proposed YES), admin can manage members (proposed YES, not over owner).
-STATUS: mockup built; awaiting founder matrix-lock + ux gate before wiring. DEPENDS-DONE:
-O-1 (members/invites/revoke), workspace_role() helper, Membership.role column.
+STATUS: WIRED (founder "approved proceed next" 2026-07-26, matrix locked as proposed —
+member runs audits, admin manages members). SHIPPED: web/authz.py matrix + repo.active_role;
+route-boundary enforcement (routes_members invite+role/revoke/resend/cancel + NEW set-role;
+routes_sources connect/validate/revoke; routes_ingest sdk mint/revoke; routes_devices
+link/revoke; api create_audit RUN_AUDITS); rendered-surface gating (perms in _shell_ctx +
+sources_page/billing) — members.html role select on invite + per-member role dropdown +
+remove; sources.html connect/revoke/mint hidden for non-managers with honest notes;
+billing.html owner-only. Proven: tests/test_authz.py (14, matrix cells) + tests/test_rbac_journey.py
+(7, four-role surface + fail-closed mutations + viewer-can't-run). Engine role-blind (T-NFR-01).
+Fixed in-slice: sources_page used scalar_one_or_none → a brand-new authenticated owner saw no
+connect controls; now get_or_create_user so perms resolve. Held as a PR for founder merge; ux
+gate + gate round run in CI. DEPENDS-DONE: O-1 (members/invites/revoke), workspace_role()
+helper, Membership.role column.

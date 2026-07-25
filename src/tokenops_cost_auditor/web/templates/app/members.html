@@ -26,9 +26,14 @@
     <div class="provenance" role="status">Removed from the workspace — they lose access on their
       next request and fall back to their own workspace.</div>
     {% endif %}
+    {% if role_updated == "1" %}
+    <div class="provenance" role="status">Role updated — it applies on their next request.</div>
+    {% endif %}
 
-    {# ROSTER — who shares this workspace. Visible to EVERY member; the Remove
-       control renders only for an owner over a non-owner (can_revoke). #}
+    {# ROSTER — who shares this workspace. Visible to EVERY member (you should know
+       who you share with); the governance controls (set-role, Remove) render ONLY
+       over a NON-owner member you can manage (m.can_govern) — a member/viewer sees
+       the list with no controls at all (absent, not a 403 they bump into). #}
     <h3>People in this workspace</h3>
     {{ kit.table_open([
          {"label": "Person"}, {"label": "Role"}, {"label": "Joined"},
@@ -40,7 +45,17 @@
         <td>{{ m.role }}</td>
         <td>{{ m.joined.strftime("%Y-%m-%d") }}</td>
         <td class="row-actions">
-          {% if m.can_revoke %}
+          {% if m.can_govern %}
+          {# Set-role: a select + explicit Set button (works without JS). #}
+          <form method="post" action="/settings/members/{{ m.id }}/role" class="inline-form"
+                style="display:inline-flex; gap:4px; align-items:center;">
+            <select name="new_role" aria-label="Role for {{ m.email }}">
+              {% for r in assignable_roles %}
+              <option value="{{ r }}" {% if r == m.role %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+            {{ kit.button("Set") }}
+          </form>
           <form method="post" action="/settings/members/{{ m.id }}/revoke" class="inline-form"
                 data-confirm="Remove this member from the workspace? They lose access on their next request.">
             {{ kit.button("Remove") }}
@@ -64,18 +79,24 @@
         <input type="email" name="email" id="invite-email"
                placeholder="teammate@company.com" required>
       </div>
+      <div class="field">
+        <label for="invite-role">Role</label>
+        <select name="invite_role" id="invite-role">
+          {% for r in assignable_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+        </select>
+      </div>
       {{ kit.button("Send invite", variant="primary") }}
     </form>
-    <div class="provenance">They join as a member and see this workspace's audits, dashboard
-      and savings. The link works once and expires in {{ invite_ttl_days }} days.</div>
-    {% elif not is_owner %}
-    <p class="tells">Only the workspace owner can invite people to this workspace.</p>
+    <div class="provenance">They join with the role you pick and see this workspace's audits,
+      dashboard and savings. The link works once and expires in {{ invite_ttl_days }} days.</div>
+    {% elif not can_manage_members %}
+    <p class="tells">Only an owner or admin can invite people to this workspace.</p>
     {% elif not is_scale %}
     <p class="tells">Inviting teammates is part of <strong>Scale</strong> — the plan built for
       shared workspaces. {{ kit.button("See plans", href="/billing") }}</p>
     {% endif %}
 
-    {% if is_owner %}
+    {% if can_manage_members %}
     <h3 style="margin-top:var(--s4);">Pending invitations</h3>
     {% if invites %}
     {{ kit.table_open([
