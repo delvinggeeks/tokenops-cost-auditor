@@ -9,8 +9,8 @@ Counts only everywhere (FR-22). Purged runs stay listed with what remains
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -26,6 +26,7 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS
+from tokenops_cost_auditor.services.report.signer import sign_report_url
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_dashboard import _shell_ctx
 
@@ -178,6 +179,8 @@ def _runs_view(session: Session, user: User) -> dict[str, object]:
                 "rejected": rejected,
                 "purged": a.purged_at is not None,
                 "has_upload": bool(a.upload_path),
+                # R-REACHABILITY #2: a done audit has a rendered report reachable in-app.
+                "report_ready": a.status == "done",
             }
         )
 
@@ -229,6 +232,30 @@ def runs_page(request: Request, user_email: str = Depends(current_user)) -> HTML
         session.commit()
         ctx = _shell_ctx(session, request, user, "runs")
         return _render(request, "app/runs.html", view=_runs_view(session, user), **ctx)
+
+
+@router.get("/audits/{audit_id}/report", response_model=None)
+def view_report(
+    request: Request, audit_id: str, user_email: str = Depends(current_user)
+) -> RedirectResponse:
+    """In-app 'View report' (R-REACHABILITY #2): reports were reachable ONLY via the
+    emailed signed link (/r/{token}) — a customer who closed the email had no in-app
+    way back to their own report. Verify the audit belongs to the caller's ACTIVE
+    workspace and is done (VIEW is universal — every role, incl. viewer, may read a
+    report), mint a FRESH signed token, and redirect to the existing /r/{token} page:
+    one report-rendering path, now reachable from the Runs ledger in one click."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        audit = session.get(Audit, audit_id)
+        # workspace-scoped (never user_id): a member sees the workspace's reports. A
+        # foreign/guessed id 404s (no cross-tenant leak); a not-yet-done audit 404s.
+        if audit is None or audit.workspace_id != ws:
+            raise HTTPException(status_code=404, detail="audit not found")
+        if audit.status != "done":
+            raise HTTPException(status_code=404, detail="this audit has no report yet")
+    token = sign_report_url(request.app.state.settings.secret_key, audit_id)
+    return RedirectResponse(f"/r/{token}", status_code=303)
 
 
 @router.get("/runs/partial", response_class=HTMLResponse)

@@ -3280,6 +3280,20 @@ connect controls; now get_or_create_user so perms resolve. Held as a PR for foun
 gate + gate round run in CI. DEPENDS-DONE: O-1 (members/invites/revoke), workspace_role()
 helper, Membership.role column.
 
+## R-REACHABILITY #2 — in-app "View report" (2026-07-26) — founder "approved and proceed" (ROADMAP §3 #2)
+
+Closes a real R-REACHABILITY gap: a completed report was reachable ONLY via the emailed
+signed link (/r/{token}) — a customer who closed the email had no in-app way back to
+their own report. NEW GET /audits/{id}/report (web/routes_runs.view_report): authenticated,
+verifies the audit is in the caller's ACTIVE workspace + status=done (VIEW is universal —
+every role incl. viewer may read; foreign/guessed id or not-done → 404, no cross-tenant
+leak), mints a FRESH sign_report_url token, 303-redirects to the existing /r/{token} page
+— ONE report-rendering path, reached in-app in one click. The Runs ledger (_runs_ledger.html)
+gains a "View report" link per done run (report_ready flag). Proven: tests/test_view_report_
+reachability.py (ledger links the report; click-through 303→/r/{token}→200 renders; stranger/
+not-done/unknown → 404). endpoints.md regenerated (MP-3). Engine untouched. Held as a PR.
+Next: ROADMAP §3 #3 (report plain-English parity) then #4/#7.
+
 ## LE-4 FOLLOW-UP — gate agents diff-scope their test run (2026-07-26) — founder "approved and proceed" (after O-2's vv NO-VERDICT)
 
 O-2 (PR #26) exposed a real gate-machine hole: vv-engineer hit NO-VERDICT by exceeding

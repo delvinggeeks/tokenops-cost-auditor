@@ -233,6 +233,24 @@ page not being yours must fail here too, not only at first render).
 
 Responses: `200`, `422`
 
+## `GET /audits/{audit_id}/report`
+
+View Report.
+
+In-app 'View report' (R-REACHABILITY #2): reports were reachable ONLY via the
+emailed signed link (/r/{token}) — a customer who closed the email had no in-app
+way back to their own report. Verify the audit belongs to the caller's ACTIVE
+workspace and is done (VIEW is universal — every role, incl. viewer, may read a
+report), mint a FRESH signed token, and redirect to the existing /r/{token} page:
+one report-rendering path, now reachable from the Runs ledger in one click.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /audits/{audit_id}/row-errors`
 
 Audit Row Errors.
