@@ -10,6 +10,7 @@ message only (LLD §8); internals go to logs/error hook.
 from __future__ import annotations
 
 import dataclasses
+import json
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -30,6 +31,7 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.persistence.repo import make_session_factory, processing_count
 from tokenops_cost_auditor.services import ingest
+from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
 from tokenops_cost_auditor.services.ingest.base import IngestError
 from tokenops_cost_auditor.services.ingest.validator import enforce, write_error_file
@@ -184,6 +186,16 @@ class AuditRunner:
             render_report_html(report, template="report.html"), encoding="utf-8"
         )
         render_pdf(report, report_dir / "report.pdf")
+        # Enterprise tokenomics breakdown (founder 2026-07-25): computed at audit
+        # time from the per-request priced frame (purged later, FR-21) and stored
+        # as a report artifact alongside the others — exact, deterministic. Written
+        # atomically (temp + rename) so a concurrent /breakdown read never sees a
+        # half-written file (cold gate).
+        tk_tmp = report_dir / "tokenomics.json.tmp"
+        tk_tmp.write_text(
+            json.dumps(dataclasses.asdict(tokenomics_svc.compute(priced))), encoding="utf-8"
+        )
+        tk_tmp.replace(report_dir / "tokenomics.json")
         t_report = datetime.now(UTC)
         stage_rows = (
             (
