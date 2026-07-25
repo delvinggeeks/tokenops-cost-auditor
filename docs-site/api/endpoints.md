@@ -317,6 +317,20 @@ Billing Page.
 
 Responses: `200`, `422`
 
+## `GET /breakdown`
+
+Breakdown Page.
+
+Enterprise tokenomics breakdown — exact, deterministic per-dimension usage
+analysis (founder 2026-07-25). Reads the tokenomics.json the runner wrote at
+audit time (purged with the audit under FR-21 → honest empty state).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /copilot/seats`
 
 Upload Seats.
