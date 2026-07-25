@@ -322,8 +322,9 @@ Responses: `200`, `422`
 Breakdown Page.
 
 Enterprise tokenomics breakdown — exact, deterministic per-dimension usage
-analysis (founder 2026-07-25). Reads the tokenomics.json the runner wrote at
-audit time (purged with the audit under FR-21 → honest empty state).
+analysis (founder 2026-07-25) + cross-audit efficiency drift (the "vs your last
+audit" trend). Reads the tokenomics.json artifacts the runner wrote (purged with
+the audit under FR-21 → honest empty state).
 
 | Parameter | In | Required | Type |
 |---|---|---|---|

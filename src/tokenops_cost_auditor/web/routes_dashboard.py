@@ -32,6 +32,7 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
+from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
@@ -588,31 +589,58 @@ def replay_tour(request: Request, user_email: str = Depends(current_user)) -> Re
     return RedirectResponse("/dashboard", status_code=303)
 
 
+def _load_tokenomics(report_dir: str | Path, audit: Audit | None) -> dict[str, object] | None:
+    """The exact tokenomics.json the runner wrote for an audit, or None when it is
+    absent/corrupt/purged (FR-21) — an honest empty state, never a 500 (cold gate)."""
+    if audit is None:
+        return None
+    path = Path(report_dir) / audit.id / "tokenomics.json"
+    if not path.exists():
+        return None
+    try:
+        data: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
+        return data
+    except json.JSONDecodeError, OSError:
+        return None
+
+
 @router.get("/breakdown", response_class=HTMLResponse)
 def breakdown_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
     """Enterprise tokenomics breakdown — exact, deterministic per-dimension usage
-    analysis (founder 2026-07-25). Reads the tokenomics.json the runner wrote at
-    audit time (purged with the audit under FR-21 → honest empty state)."""
+    analysis (founder 2026-07-25) + cross-audit efficiency drift (the "vs your last
+    audit" trend). Reads the tokenomics.json artifacts the runner wrote (purged with
+    the audit under FR-21 → honest empty state)."""
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
-        audit = metrics.latest_audit(session, user.id)
-        tk: dict[str, object] | None = None
-        if audit is not None:
-            path = Path(request.app.state.settings.report_dir) / audit.id / "tokenomics.json"
-            if path.exists():
+        report_dir = request.app.state.settings.report_dir
+        audits = metrics.recent_done_audits(session, user.id, 2)
+        audit = audits[0] if audits else None
+        tk = _load_tokenomics(report_dir, audit)
+        # Drift needs the CURRENT and the PRIOR audit to BOTH carry the artifact — a
+        # pre-tokenomics.json audit (older than the feature) yields no trend honestly,
+        # rather than half a comparison.
+        drift_view = None
+        drift_prior_date = None
+        if tk is not None and len(audits) >= 2:
+            prior_tk = _load_tokenomics(report_dir, audits[1])
+            if prior_tk is not None:
                 try:
-                    tk = json.loads(path.read_text(encoding="utf-8"))
-                except json.JSONDecodeError, OSError:
-                    # a corrupt/partial artifact (crash mid-write, disk error) →
-                    # the honest empty state, never a 500 (cold gate).
-                    tk = None
+                    drift_view = drift_svc.compute(tk, prior_tk, audits[1].id)
+                    prior_dt = audits[1].report_ready_at or audits[1].created_at
+                    drift_prior_date = prior_dt.date().isoformat()
+                except KeyError, TypeError, ValueError:
+                    # an older/partial tokenomics.json (valid JSON, missing a vital)
+                    # degrades to no-trend, never a 500 (cold gate).
+                    drift_view = None
         ctx = _shell_ctx(session, request, user, "breakdown")
         return _render(
             request,
             "app/breakdown.html",
             tk=tk,
             audit=audit,
+            drift=drift_view,
+            drift_prior_date=drift_prior_date,
             clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
             support_email=request.app.state.settings.support_email,
             show_tour=False,
