@@ -84,6 +84,14 @@ def monthly_factor(days: int) -> float:
     return 30.0 / max(days, 1)
 
 
+def route_label(value: object) -> str:
+    """A display-safe route/tag name for a finding's detail["route"]: the value, or
+    "(untagged)" for an empty/blank/NaN tag — so it never renders as "nan" or "None"
+    in the UI. Shared by every route-naming detector for one consistent placeholder."""
+    s = str(value).strip()
+    return s if s and s.lower() not in ("nan", "none") else "(untagged)"
+
+
 def effective_prompt_rate(row: pd.Series, rate: object) -> float:
     """USD per 1M prompt tokens as this row was ACTUALLY billed: uncached
     tokens at the input rate, cache reads at the cache_read rate, cache writes

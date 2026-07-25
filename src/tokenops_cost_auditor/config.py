@@ -180,6 +180,10 @@ class Settings(BaseSettings):
     d10_spike_mult: float = 2.0
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
     rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
+    # Materiality floor: a SAVINGS finding below this monthly $ (i.e. it would render
+    # as $0.00) is dropped as noise so the list leads with what is worth fixing.
+    # Informational pointers (D5/D8/D10) are exempt. Raise it to hide small findings.
+    min_finding_monthly_usd: float = 0.005
 
     # Report & sessions (founder-accepted defaults Q9/Q11)
     report_url_expiry_days: int = 30

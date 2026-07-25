@@ -22,12 +22,18 @@
     {# R-CONNECT-VISIBLE (founder report 2026-07-23): EVERY shipped provider
        gets its own entry — Anthropic's wizard existed since WP-1 but no
        surface ever linked it. Rendered from the registry, so a future
-       provider appears here the day its wizard ships. #}
-    {% for prov in help.wizard_providers() %}
-      {{ kit.button("Connect " ~ help.wizard(prov).provider_name,
-           href="/sources/connect/" ~ prov,
-           variant="primary" if loop.first else "quiet", icon="plus") }}
-    {% endfor %}
+       provider appears here the day its wizard ships.
+       De-duplicated (founder 2026-07-25, mangled Sources page): the top-bar
+       connect buttons are the ADD-ANOTHER control and only show when a
+       connection already exists — with nothing connected, the empty state
+       below is the single, prominent CTA, never both. #}
+    {% if sources %}
+      {% for prov in help.wizard_providers() %}
+        {{ kit.button("Connect " ~ help.wizard(prov).provider_name,
+             href="/sources/connect/" ~ prov,
+             variant="primary" if loop.first else "quiet", icon="plus") }}
+      {% endfor %}
+    {% endif %}
     <span class="muted addbar-note">Guided — we show you exactly which key to make.</span>
   {% else %}
     <span class="muted addbar-note">
@@ -87,14 +93,23 @@
     {% endfor %}
   {{ kit.table_close() }}
   {% else %}
-  {# Empty state teaches the next action; at limit 0 it upsells honestly. #}
+  {# Empty state teaches the next action; at limit 0 it upsells honestly.
+     R-CONNECT-VISIBLE + reachability: with nothing connected the add-bar above is
+     hidden (dedup), so THIS is the only place connecting is offered — it must link
+     EVERY shipped wizard, not just two, or the un-hardcoded providers (Azure/Bedrock/
+     Vertex) become unreachable (the unlinked-Anthropic lesson; T-journey reachability). #}
   {% if limit > 0 %}
     {{ kit.empty_state(
          "Nothing connected yet",
          "Connect a provider and TokenOps keeps auditing on its own — no more
-          uploading files by hand.",
-         action_label="Connect OpenAI", action_href="/sources/connect/openai",
-         alt_label="Connect Anthropic", alt_href="/sources/connect/anthropic") }}
+          uploading files by hand.") }}
+    <div class="addbar" style="justify-content:center">
+      {% for prov in help.wizard_providers() %}
+        {{ kit.button("Connect " ~ help.wizard(prov).provider_name,
+             href="/sources/connect/" ~ prov,
+             variant="primary" if loop.first else "quiet", icon="plus") }}
+      {% endfor %}
+    </div>
   {% else %}
     {{ kit.empty_state(
          "Nothing connected yet",
