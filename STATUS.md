@@ -49,6 +49,29 @@ now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the pro
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
 (founder-chosen): guided first-run + output preview (punch-list #4/#5).
 
+## LANDING — RELATABLE MESSAGING (2026-07-25) — founder "marketing to attract a crowd; understandable; correlate to their day-to-day problems"
+
+Founder gave two rounds of landing direction: first "enterprise-grade, what LLMs
+can't do, why companies adopt"; then the CORRECTION — "understandable by people,
+correlate to their actual day-to-day problems." Synthesis (my honest read, founder
+"proceed"): LEAD with the human problem in plain words; the enterprise/deterministic
+strengths become the "why you can trust it" layer, not the headline. SHIPPED on
+branch `landing-relatable` off main: (1) hero sub-line re-toned to lead with the
+BENEFIT — "Point us at your usage and get a plain-English report: exactly where
+every dollar goes, the specific waste you're paying for, and the fix for each" +
+"your prompts never leave your stack" (was the mechanism-first "pulls/audits/
+watches"). (2) NEW **"Sound familiar?" section** (.land-pain/.pain-grid, 6 relatable
+one-liner pains in the customer's own words — "the bill jumped and no one can say
+what changed", "we send the same giant prompt thousands of times at full price",
+"one feature is quietly eating the budget", etc., each with a plain response). CSS
+mirrors the .statcard token grammar (role tokens, hex-free). HONESTY held: the
+attributed stats (79/31/98%) stay; pain lines are illustrative quotes, not claimed
+stats; every capability claim is true (8 detectors, caching, breakdown, alerts,
+counts-only). Landing laws intact: exactly ONE class="cta" (verified), five
+providers still named, screenshots labeled sample data, budgets (<300KB total).
+Independent of PR #19 (tokenomics) — different files. Tests: test_landing_budgets +
+test_design_tokens (hex-free) + test_journeys all green. ux gate + PR next. NOTE:
+this is a fully-editorial slice; FR-23 row (web/templates/landing) already covers it.
 ## TOKENOMICS BREAKDOWN — enterprise depth engine slice 1 (2026-07-25) — founder "enterprise-ready, industry-standard, deterministic, no LLM in the money path"
 
 SHIPPED-TO-MAIN first: D8/D9 richer-findings merged as PR #18 (squash 7115cb9,
