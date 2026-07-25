@@ -34,8 +34,11 @@
 
   {# Wave A — getting-started checklist. Self-completes from real data and
      vanishes when every step is done; a customer can also hide it. Drives the
-     activation sequence to the first VERIFIED saving. #}
-  {% if onboarding and not onboarding.all_done %}
+     activation sequence to the first VERIFIED saving. Suppressed in the pure
+     first-run state (no audit yet): the guided first-run hero below IS the
+     connect→audit→report path, so a second checklist would double it — the
+     checklist reappears afterward for the review→apply→verify steps. #}
+  {% if not first_run and onboarding and not onboarding.all_done %}
   <section class="w-12 onboard" data-reveal>
     <div class="onboard-head">
       <div>
@@ -70,6 +73,13 @@
      never from widget emptiness — the "Waiting beside 11 findings" fix). #}
   {% with w = widgets.pipeline %}{% include "app/widgets/_pipeline.html" %}{% endwith %}
 
+  {% if first_run %}
+    {# Guided first run (#4) + output preview (#5): a new user with no audit yet
+       gets a guided path + a SAMPLE preview of real engine output instead of a
+       grid of empty widgets. Replaced by the live widget grid the moment a real
+       audit completes — the preview never sits beside a user's own figures. #}
+    {% include "app/_first_run.html" %}
+  {% else %}
   {% with w = widgets.savings %}{% include "app/widgets/_savings.html" %}{% endwith %}
   {% with w = widgets.yesterday %}{% include "app/widgets/_yesterday.html" %}{% endwith %}
   {% with w = widgets.forecast %}{% include "app/widgets/_forecast.html" %}{% endwith %}
@@ -80,6 +90,7 @@
   {% with w = widgets.sources %}{% include "app/widgets/_sources.html" %}{% endwith %}
   {% with w = widgets.next_audit %}{% include "app/widgets/_next_audit.html" %}{% endwith %}
   {% with w = widgets.alerts %}{% include "app/widgets/_alerts.html" %}{% endwith %}
+  {% endif %}
 </div>
 
 {% if show_tour %}

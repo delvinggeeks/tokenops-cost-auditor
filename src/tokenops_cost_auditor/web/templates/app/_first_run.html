@@ -1,0 +1,90 @@
+{# Guided first run + output preview (PLAN punch-list #4/#5). Rendered on the
+   dashboard ONLY in the first-run state — no completed audit (routes_dashboard
+   passes first_run). The pipeline spine (the ONE ribbon, design audit F4)
+   renders ABOVE this; here a brand-new user gets (a) a guided "start here" path
+   and (b) a preview of REAL sample-engine output (metrics.first_run_preview),
+   fenced HARD as SAMPLE so engine-sample figures can never read as their own —
+   the data-coherence honesty law (founder walkthrough 2026-07-24). #}
+<section class="w-12" data-reveal>
+  <div class="fr-hero">
+    <div class="eyebrow">First audit — free</div>
+    <h2>Let's find the money hiding in your LLM spend.</h2>
+    <p class="lede">Upload a usage log — or drop in the SDK — and we run all six detectors over
+      every call: the deepest audit, and the most findings. Prefer hands-off? Connect your provider
+      for a lighter automatic daily check. Free to start, no card, nothing in your request path.</p>
+    <div class="fr-steps">
+      <div class="fr-step now">
+        <span class="fr-here">YOU ARE HERE</span>
+        <div class="n">1</div>
+        <div class="t">Get your usage in</div>
+        <div class="d">Upload a log export (or add the SDK) for the full per-call audit — the most
+          findings. Or connect a provider for automatic daily checks on your usage totals.</div>
+      </div>
+      <div class="fr-step">
+        <div class="n">2</div>
+        <div class="t">We price &amp; audit it</div>
+        <div class="d">Your calls, priced on a pinned rate card, run through six deterministic detectors.</div>
+      </div>
+      <div class="fr-step">
+        <div class="n">3</div>
+        <div class="t">You get a ranked report</div>
+        <div class="d">Every finding in plain English, ordered by dollars, with a fix you can paste.</div>
+      </div>
+    </div>
+    <div class="fr-cta">
+      <a class="btn btn-primary" href="/upload">Upload a log file</a>
+      <a class="btn" href="/sources">Connect a provider</a>
+      <span class="muted">Upload or the SDK audits every call — the most findings. Connecting is
+        automatic, but sees only daily provider totals.</span>
+    </div>
+  </div>
+</section>
+
+{% if preview %}
+<section class="w-12" data-reveal>
+  <div class="fr-preview">
+    <span class="sample-badge">◆ SAMPLE — NOT YOUR DATA</span>
+    <h3>A preview of what your report will look like</h3>
+    <p class="disclaimer">Every figure below comes from invented traffic with planted waste,
+      run through the exact engine your logs will use — so the arithmetic is real even though
+      the company isn't. Your own numbers appear here after your first audit; nothing on this
+      card is yours.</p>
+    <div class="fr-pv-card fr-pv-stat">
+      <div class="n">${{ "{:,.2f}".format(preview.monthly_savings_usd) }}<span class="per">/mo</span></div>
+      <div class="chip">{{ "%.1f"|format(preview.savings_pct) }}% of sample spend</div>
+      <div class="l">recoverable across {{ preview.n_findings }} findings, from
+        ${{ "{:,.2f}".format(preview.monthly_spend_usd) }}/mo of sample spend
+        ({{ "{:,}".format(preview.row_count) }} calls, {{ preview.observed_days }} days).</div>
+      <div class="scale">On the sample the dollars are small; on your real traffic the same
+        detectors scale with your spend.</div>
+    </div>
+
+    {# Each finding reads in plain English — a human "what this means", not a
+       cryptic label — the SAME treatment as the real Findings page + drawer
+       (founder walkthrough 2026-07-25). #}
+    <div class="fr-findlist">
+      {% for f in preview.findings %}
+      <div class="fr-find">
+        <div class="fr-find-head">
+          <span class="fr-find-title">{{ help.detector_plain(f.detector) }}</span>
+          <span class="fr-find-cost">${{ "{:,.2f}".format(f.monthly_usd) }}<span>/mo</span></span>
+        </div>
+        <p class="fr-find-sum">{{ help.detector_summary(f.detector) }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {# guard on a non-empty list so a hypothetical all-$0 sample never reads
+       "Top 0 shown" (cold gate — moot for the committed fixture, defensive). #}
+    {% if preview.findings and preview.findings | length < preview.n_findings %}
+    <p class="muted fr-pv-more">Top {{ preview.findings | length }} shown ·
+      {{ preview.n_findings }} findings in the sample. Full list in the sample report.</p>
+    {% endif %}
+
+    <div class="fr-pv-foot">
+      <span class="muted">This is the same savings figure and findings your own dashboard
+        will show — filled with sample data.</span>
+      <a class="btn btn-sm" href="/sample">See the full sample report →</a>
+    </div>
+  </div>
+</section>
+{% endif %}

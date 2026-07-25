@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import structlog
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
@@ -38,6 +39,7 @@ from tokenops_cost_auditor.web.routes_sources import user_plan
 from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
 
 router = APIRouter(tags=["dashboard"])
+log = structlog.get_logger("tokenops_cost_auditor.web")
 
 VERDICTS = ("applied", "dismissed", "not_relevant")
 # Server-side sort keys for the findings table. SSR links, not JS —
@@ -104,6 +106,25 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
         user = get_or_create_user(session, user_email)
         session.commit()
         w_savings, _ = metrics.savings(session, user.id)
+        # Guided first run (#4) + output preview (#5): a brand-new user with NO
+        # completed audit meets a guided path + a SAMPLE preview of real engine
+        # output instead of a grid of empty widgets. The preview is fenced as
+        # SAMPLE in the template so it can never read as their own figures.
+        first_run = metrics.latest_audit(session, user.id) is None
+        preview: dict[str, object] | None = None
+        if first_run:
+            try:
+                preview = metrics.first_run_preview(
+                    request.app.state.settings, request.app.state.pricing_table
+                )
+            except Exception as exc:
+                # The sample preview is NON-CRITICAL: any failure building it —
+                # missing fixtures, a fixture model off the rate card, a detector
+                # raising — must degrade to the guided hero ALONE, never 500 the
+                # whole first-run dashboard (cold/vv gate). Logged so the gap is
+                # visible rather than silent.
+                log.warning("first_run.preview_failed", error=str(exc))
+                preview = None
         ctx = _shell_ctx(session, request, user, "overview")
         watching = alerts_dispatch.plan_watches(request.app.state.settings, str(ctx["plan"]))
         return _render(
@@ -138,6 +159,8 @@ def dashboard(request: Request, user_email: str = Depends(current_user)) -> HTML
             clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
             support_email=request.app.state.settings.support_email,
             show_tour=user.tour_dismissed_at is None,
+            first_run=first_run,
+            preview=preview,
             **ctx,
         )
 

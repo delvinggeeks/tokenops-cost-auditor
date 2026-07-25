@@ -22,10 +22,12 @@ from sqlalchemy import select
 from tokenops_cost_auditor.persistence.models import (
     AlertEvent,
     AlertRule,
+    Audit,
     Source,
     SourceUsage,
     Subscription,
     User,
+    utcnow,
 )
 from tokenops_cost_auditor.services.connectors import daily, schedule
 from tokenops_cost_auditor.services.pricing.table import PricingTable as _PT
@@ -73,6 +75,24 @@ def _source(app: FastAPI, user_id: str, label: str = "Claude Code") -> str:
         session.add(source)
         session.commit()
         return source.id
+
+
+def _past_first_run(app: FastAPI, user_id: str) -> None:
+    """A completed audit → past the guided first-run state, so the live widget
+    grid (which holds the daily-loop 'Yesterday' tile) renders. In production a
+    connected source kicks off an audit (R-LIVE-AUDIT), so daily data and a
+    completed audit always coexist; these tests make that explicit."""
+    with app.state.session_factory() as session:
+        session.add(
+            Audit(
+                user_id=user_id,
+                status="done",
+                observed_days=7,
+                total_spend_usd=100.0,
+                report_ready_at=utcnow(),
+            )
+        )
+        session.commit()
 
 
 def _usage(
@@ -320,6 +340,7 @@ class TestTheTileAndTheTick:
     def test_dashboard_tile_shows_the_same_number(self, app: FastAPI) -> None:
         uid = _paid_user(app)
         _usage(app, _source(app, uid))
+        _past_first_run(app, uid)  # the tile lives in the post-first-run grid
         page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text
         assert "Yesterday" in page and "$10.00" in page
 
@@ -342,7 +363,8 @@ class TestTheTileAndTheTick:
         assert w.data["unpriced"] == ["mystery-model-9"]
 
     def test_tile_empty_state_points_at_sources(self, app: FastAPI) -> None:
-        _paid_user(app)
+        uid = _paid_user(app)
+        _past_first_run(app, uid)  # past first run: the empty tile shows in the grid
         page = TestClient(app).get("/dashboard", headers={"X-User-Email": EMAIL}).text
         assert "The daily loop starts with a connected source" in page
 
