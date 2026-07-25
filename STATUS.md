@@ -3163,3 +3163,22 @@ tests/test_gate_round.py. Engine untouched. DEPENDS: docs/09-SDLC (PR #24, held)
 for the §4/§6 references. Next cards: LE-3 (auto-merge on all-green) then LE-5
 (Issue-driven intake with acceptance criteria). WIP=1 — LE-3/LE-5 are separate
 slices, not folded in here.
+
+LE-4 VALIDATED LIVE — 2026-07-25, founder "added [secret], verify and validate".
+Secret CLAUDE_CODE_OAUTH_TOKEN added; the live gate round ran headless in CI on the
+founder's SUBSCRIPTION (Sonnet, TE-5) across 3 green runs on PR #25. Proven end-to-end:
+credential detected → HAS_KEY flips → claude CLI installs → 5 gates auto-selected
+(core + ops, diff touches .github/workflows) → each returns a parseable TE-8 verdict →
+no FAIL → check green → verdict table + findings posted as a PR comment. The static
+review caught a REAL parser bug (parse_verdict took the FIRST VERDICT match; a verbose
+agent echoes the instruction's own example earlier, so a real FAIL could read as PASS)
+— fixed to last-match. Also fixed from gate findings: subprocess wrapped so timeout/
+missing-CLI → NO-VERDICT (fails CLOSED, ops-verified); --allowedTools Read,Grep,Glob,Bash
+so agents EXECUTE the pinned toolchain (vv ran `uv run pytest` → 29 passed, TE-11 met,
+not just static review); diff-truncation marker; OPS_TRIGGER tightened off bare
+docker/compose substrings; dead `if: != schedule` dropped. Remaining PASS-WITH-NOTES are
+non-defects: docs/09-SDLC refs resolve when PR #24 lands; full-repo coverage is out of a
+single gate's 15-call budget (ci.yml owns it). OPEN FOLLOW-UP (founder): add the
+gate-round check to branch protection to make it REQUIRED (docs/06-OPS-RUNBOOK §branch-
+protection) — until then it reports but does not enforce merge-block. Next cards: LE-3
+(auto-merge on all-green), LE-5 (Issue-driven intake). WIP=1.
