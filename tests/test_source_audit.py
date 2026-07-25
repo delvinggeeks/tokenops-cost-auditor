@@ -149,7 +149,7 @@ class TestSourceAudit:
         )
         assert report["tier"] == "account"
         cov = {c["detector"]: c for c in report["coverage"]}
-        assert len(cov) == 8
+        assert len(cov) == 9
         for d in ("d1_oversized_model", "d2_missing_cache", "d3_prompt_bloat"):
             assert cov[d]["status"] == "active"
         for d in (
@@ -158,6 +158,7 @@ class TestSourceAudit:
             "d6_chatty_loop",
             "d8_spend_concentration",
             "d9_ineffective_cache",
+            "d10_spend_anomaly",
         ):
             assert cov[d]["status"] == "requires_per_request_logs"
             assert "per-request logs" in cov[d]["note"]

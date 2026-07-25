@@ -13,6 +13,7 @@ from tokenops_cost_auditor.services.rules.d5_unbounded_max_tokens import D5Unbou
 from tokenops_cost_auditor.services.rules.d6_chatty_loop import D6ChattyLoop
 from tokenops_cost_auditor.services.rules.d8_spend_concentration import D8SpendConcentration
 from tokenops_cost_auditor.services.rules.d9_ineffective_cache import D9IneffectiveCache
+from tokenops_cost_auditor.services.rules.d10_spend_anomaly import D10SpendAnomaly
 from tokenops_cost_auditor.services.rules.findings import Finding
 
 # Ordered: registry order is the tiebreak for equal-impact findings (stable output).
@@ -25,6 +26,7 @@ DETECTORS: tuple[Detector, ...] = (
     D6ChattyLoop(),
     D8SpendConcentration(),
     D9IneffectiveCache(),
+    D10SpendAnomaly(),
 )
 
 

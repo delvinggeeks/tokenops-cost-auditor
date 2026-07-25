@@ -77,6 +77,7 @@ class TestAggregateGoldens:
             "d6_chatty_loop",
             "d8_spend_concentration",
             "d9_ineffective_cache",
+            "d10_spend_anomaly",
         )
         assert "per-request logs" in UPGRADE_PATH_LINE
 

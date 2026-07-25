@@ -47,6 +47,19 @@ context re-read pattern via repeated prefixes) highlighted.
 FR-13 (M) Each Finding = {id, detector, severity, monthly_cost_impact_usd,
 evidence_row_refs[≤20 samples], fix_recommendation, confidence}.
 Conservative estimation rules documented in-code and in report appendix.
+FR-33 (M) [amendment 2026-07-25, R-DEPTH-ENGINE, founder "richer findings /
+dynamic analysis"] Deterministic DEPTH detectors beyond the D1-D6 savings set,
+all per-request-only (INACTIVE_ON_AGGREGATE) and INFORMATIONAL unless a
+conservative net-loss is directly observed: D8 spend-concentration (the route
+carrying the largest share of spend — where to optimise first; $0 claimed);
+D9 ineffective-cache (cache written but rarely read = a conservative net cost
+on OBSERVED billed tokens, disjoint from D2); D10 spend-anomaly (a day whose
+spend is a robust temporal outlier — median+MAD, scale-free statistical +
+materiality gates — vs the account's OWN daily baseline; catches unnamed cost
+events the pattern detectors miss; $0 claimed). Same Finding schema (FR-13),
+same privacy (FR-22), deterministic (X-04 — no LLM), engine-pure (T-NFR-01).
+They POINT the customer at where to look; they never invent a saving number
+for an unnamed cause.
 
 ## C. Reporting
 
