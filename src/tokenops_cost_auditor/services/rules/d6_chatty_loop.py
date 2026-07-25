@@ -35,6 +35,7 @@ from tokenops_cost_auditor.services.rules.findings import (
     Finding,
     effective_prompt_rate,
     monthly_factor,
+    route_label,
     sample_evidence_across,
     severity_for_impact,
 )
@@ -143,7 +144,7 @@ class D6ChattyLoop:
                     evidence=sample_evidence_across(
                         session_runs, note="small sequential call in burst"
                     ),
-                    detail={"runs": run_details},
+                    detail={"route": route_label(tag), "runs": run_details},
                 )
             )
         return findings

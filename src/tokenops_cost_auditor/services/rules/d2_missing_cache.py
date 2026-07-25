@@ -142,6 +142,7 @@ class D2MissingCache:
                         "calls; the varying suffix stays uncached."
                     ),
                     evidence=make_evidence(bucket, note="uncached repeated-prefix call"),
+                    detail={"route": str(model)},
                 )
             )
         return findings

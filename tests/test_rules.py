@@ -838,6 +838,7 @@ class TestD9IneffectiveCache:
         assert f.monthly_cost_impact_usd == pytest.approx(self.GOLDEN_MONTHLY, abs=1e-9)
         assert f.confidence is Confidence.CONSERVATIVE  # observed billed tokens
         assert "cachey" in f.fix_text
+        assert f.detail and f.detail.get("route") == "cachey"  # named for the list
 
     def test_02_net_positive_caching_is_silent(self) -> None:
         # reads dominate writes → caching pays off → not flagged
@@ -1051,3 +1052,49 @@ class TestD10SpendAnomaly:
         ]
         frame = synth_frame(rows)
         assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+
+class TestFindingsClarity:
+    """Findings clarity (founder 2026-07-25, "work through what is worth fixing"):
+    a savings finding that would render as $0.00 is noise and is dropped by the
+    materiality floor; an informational pointer ($0.0 exactly) is always kept; and
+    every per-route/model savings finding names its route so many findings of the
+    same kind read as DISTINCT, not duplicated."""
+
+    def test_floor_drops_small_savings_keeps_informational(self, waste_pack: pd.DataFrame) -> None:
+        default = run_all(waste_pack, ctx_for(waste_pack))
+        assert any(f.monthly_cost_impact_usd > 0 for f in default)  # savings present
+        assert any(f.monthly_cost_impact_usd == 0.0 for f in default)  # informational present
+        # a floor above every savings figure leaves ONLY the $0 informational pointers —
+        # proving savings are dropped by materiality but informational is never dropped.
+        tuned = make_settings(min_finding_monthly_usd=1e9)
+        high = run_all(waste_pack, ctx_for(waste_pack, tuned))
+        assert high and all(f.monthly_cost_impact_usd == 0.0 for f in high)
+        assert {f.id for f in high} <= {f.id for f in default}  # nothing invented
+
+    def test_default_floor_keeps_every_material_finding(self, waste_pack: pd.DataFrame) -> None:
+        # the shipped floor ($0.005) is below every real waste_pack finding, so the
+        # honest set is unchanged — the floor only ever removes $0.00 noise.
+        assert len(run_all(waste_pack, ctx_for(waste_pack))) == 6
+
+    def test_savings_findings_name_their_route(self, waste_pack: pd.DataFrame) -> None:
+        by_det = {f.detector: f for f in run_all(waste_pack, ctx_for(waste_pack))}
+        # every per-route/model savings detector names its target so the list reads
+        # as distinct findings, not repeated identical text.
+        for det in (
+            "d1_oversized_model",
+            "d2_missing_cache",
+            "d3_prompt_bloat",
+            "d4_retry_storm",
+            "d6_chatty_loop",
+        ):
+            assert det in by_det, det
+            assert by_det[det].detail and by_det[det].detail.get("route"), det
+
+    def test_route_label_placeholder_never_renders_nan_or_none(self) -> None:
+        from tokenops_cost_auditor.services.rules.findings import route_label
+
+        assert route_label("checkout") == "checkout"
+        assert route_label("") == "(untagged)"
+        assert route_label(None) == "(untagged)"
+        assert route_label(float("nan")) == "(untagged)"
