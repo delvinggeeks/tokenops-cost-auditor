@@ -164,6 +164,12 @@ class Settings(BaseSettings):
     d6_run_window_s: int = 600  # LLD: run of small calls within 10 min
     d6_session_gap_s: int = 900  # LLD: session = tag + 15-min gap split
     d6_reread_min: int = 5  # LLD: same prefix_hash >= 5 in session = agent re-read
+    # D8 spend concentration (informational): flag a route (tag) at >= this share
+    # of total audited spend, only when spend spans 2+ named routes.
+    d8_concentration_min_share: float = 0.5
+    # D9 ineffective cache: only consider routes with at least this many cache-write
+    # tokens (ignore trivial caching), then flag when write premium > read savings.
+    d9_min_cache_write_tokens: int = 1024
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
     rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
 

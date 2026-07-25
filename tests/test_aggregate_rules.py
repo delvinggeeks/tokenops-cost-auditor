@@ -75,6 +75,8 @@ class TestAggregateGoldens:
             "d4_retry_storm",
             "d5_unbounded_max_tokens",
             "d6_chatty_loop",
+            "d8_spend_concentration",
+            "d9_ineffective_cache",
         )
         assert "per-request logs" in UPGRADE_PATH_LINE
 
