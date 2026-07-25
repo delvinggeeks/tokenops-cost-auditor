@@ -6,6 +6,17 @@ passing test; matrix checked in review before merge to main. DOC column added
 at D-DOCS (DOCS-PLAN §5.4): the docs-site page that covers the requirement
 publicly ("—" = internal-only, no public page needed).
 
+**Scope of this matrix (settled convention, so gates don't re-derive it).** This
+matrix tracks CUSTOMER-FACING product requirements (FR/NFR in 01-REQUIREMENTS.md)
+only. Loop-engineering / SDLC / CI tooling — the LE-* cards, the gate agents, the
+gate-round harness (`scripts/gate_round.py`), `scripts/check_authorship.py`,
+`scripts/pricing_verify.py` and peers — is governed by CLAUDE.md rule 7 (TOKEN
+ECONOMY, TE-1..11) and docs/09-SDLC, NOT by 01-REQUIREMENTS, so it owns no row
+here and CLAUDE.md rule 5's "implemented requirement" trigger does not fire for it.
+Relatedly, X-04's ban on "LLM-generated narrative in reports" scopes to the
+customer-facing audit report (FR-16); it does NOT govern internal engineering
+surfaces such as the gate-round PR comment.
+
 | Req    | HLD | LLD module(s)                              | Tests | DOC (docs-site/) |
 |--------|-----|--------------------------------------------|-------|------------------|
 | FR-01  | C1,C2 | web/upload, api/routes_upload, ingest/*  | T-ING-01..04, T-API-01 | quickstart, api/overview |

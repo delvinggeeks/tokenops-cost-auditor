@@ -33,6 +33,7 @@ permissions:
 jobs:
   gate-round:
     runs-on: ubuntu-latest
+    timeout-minutes: 60 # job ceiling for fast-fail; per-agent 900s timeouts bound it tighter
     env:
       # secrets are not allowed directly in step `if:`; surface presence as a plain env.
       # EITHER credential activates the live round (subscription token preferred).
@@ -55,7 +56,9 @@ jobs:
       # any gate exits non-zero and fails this job → blocks the PR.
       - name: install claude CLI
         if: env.HAS_KEY == 'true'
-        run: npm install -g @anthropic-ai/claude-code
+        # Pinned (TE-11 ethos): an unpinned `latest` could silently flip gate output on a
+        # breaking upstream release. Bump this deliberately, re-validating on a throwaway PR.
+        run: npm install -g @anthropic-ai/claude-code@2.1.220
 
       - name: gate round (LIVE)
         if: env.HAS_KEY == 'true'
