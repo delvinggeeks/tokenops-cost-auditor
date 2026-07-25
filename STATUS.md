@@ -49,6 +49,59 @@ now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the pro
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
 (founder-chosen): guided first-run + output preview (punch-list #4/#5).
 
+## TOKENOMICS BREAKDOWN — enterprise depth engine slice 1 (2026-07-25) — founder "enterprise-ready, industry-standard, deterministic, no LLM in the money path"
+
+SHIPPED-TO-MAIN first: D8/D9 richer-findings merged as PR #18 (squash 7115cb9,
+all gates PASS + CI green). Then a strategic thread: founder asked "should we have
+our own trained model / LLM for analysis?" — ruled (my honest counter, founder
+agreed): NO neural/LLM model — it burns tokens, is non-reproducible, can't be
+100% precise on dollars, and FR-22 leaves no text to read anyway; the MOAT is the
+DETERMINISTIC precision engine (exact, reproducible, private, reconciles to the
+invoice) which an LLM tool cannot match. Founder chose (AskUserQuestion) the
+"deterministic depth engine", first slice "usage/tokenomics breakdown", then
+"enterprise-ready, not POC, abundant + granular + industry-standard". SHIPPED on
+branch `tokenomics-breakdown` off main: **services/dashboard/tokenomics.compute** —
+a PURE, deterministic breakdown of a priced frame: vitals (spend, tokens
+in/out/cached, cache-hit rate, output:input, cost/1k-out, cost/request), per-model
++ per-route (tag = cost-allocation/showback) Slices, unit economics, and data
+coverage (%priced/%attributed — untagged spend is its own row, never silently
+allocated). Every figure is an exact sum/ratio of the coster's cost_usd — NOT a new
+estimator, so no rate golden owed, but pinned by tests/test_tokenomics.py against
+hand-derived values. **Runner** writes the tokenomics.json ARTIFACT at audit time
+from the per-request frame (which purges later per FR-21 — computed once, same
+pattern as spend_by_model). **GET /breakdown** reads the latest audit's artifact
+(honest empty / unpriced-clarity state when absent); **breakdown.html**
+(kit-composed stat tiles + `.ledger` tables); **Breakdown** nav in the Monitor
+group + help_registry destination. The enterprise MOCKUP (docs/design/mockups/
+tokenomics-breakdown.html) was ux-gated PASS-WITH-NOTES (all 3 actioned) + founder
+"wire slice 1 as shown"; it also shows the NEXT slices — forecast/run-rate (slice
+2, reuses existing metrics.forecast), statistical anomaly detection (slice 3),
+optimization what-ifs (slice 4), export/API completeness (slice 5) — all
+deterministic. X-02 respected: budget is a display reference for variance only,
+never enforcement. File-map delta: +services/dashboard/tokenomics.py;
++templates/app/breakdown.html; runner writes tokenomics.json; +GET /breakdown;
++shell Breakdown nav; +help_registry breakdown destination; +tests/test_tokenomics.py
++tests/test_breakdown.py; +mockup; traceability row.
+
+GATE ROUND: spec-guard PASS (X-01/X-02 read-only + budget display-only, FR-22
+counts-only, T-NFR-01 pure, no golden owed, traceability) · cold PASS-WITH-NOTES ·
+ux PASS-WITH-NOTES · vv money-CONFIRMED (golden re-derived; suite-green by my
+un-piped runs) · system-tester PASS-WITH-NOTES (journey/reachability/seams
+confirmed). Notes ALL actioned: (cold f.1) /breakdown now guards json.loads
+(JSONDecodeError/OSError → honest empty state, never 500) AND the runner writes
+tokenomics.json ATOMICALLY (temp + os.replace) so a concurrent read never sees a
+partial file — pinned by test_corrupt_artifact_degrades_to_empty_state_not_500.
+(cold f.2) attribution is now SPEND-weighted (Σ tagged cost / total, not row-count)
+— the meaningful cost-allocation metric; "priced" renamed "Requests priced" (honest
+— unpriced $ is unknowable); pinned by test_untagged_spend_lowers_attribution_by_
+dollars_not_count. (ux f.4) the page now LEADS with a plain-English sentence bearing
+the headline $/mo (R-PERSONA §5). (system-tester gap) added a cross-surface test
+that the breakdown's monthly spend equals the ReportModel's. Full suite green; PR
+next (holding merge for founder). One process slip owned: two gate agents (vv,
+system-tester) hit their tool budget and one earlier gate committed mid-run — the
+non-determinism/[[never-mask-pytest-exit]] discipline; the suite-green rests on my
+own un-piped runs, not a masked agent invocation.
+
 ## RICHER FINDINGS — D8/D9 detectors (2026-07-25) — founder "many findings / dynamic analysis", chose "richer findings / more detectors"
 
 SHIPPED-TO-MAIN first: the guided-first-run slice merged as PR #17 (squash

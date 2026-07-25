@@ -1,0 +1,106 @@
+{% extends "app/_shell.html" %}
+{% block title %}Breakdown — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<div class="grid">
+{% if not tk %}
+  {# Honest empty state — no audit yet, or the audit's artifacts were purged
+     (FR-21). Never invents a breakdown. #}
+  <section class="w-12" data-reveal>
+    {% if clarity and clarity.state == "unpriced" %}
+      {{ kit.empty_state(
+           "We analyzed your usage, but couldn't price it yet",
+           "Your audit ran, but its models aren't on our verified rate card yet — so we
+            won't guess a breakdown. Email " ~ support_email ~ " and we'll price it.",
+           action_label="Contact support", action_href="mailto:" ~ support_email) }}
+    {% else %}
+      {{ kit.empty_state(
+           "No breakdown yet",
+           "Run an audit — upload a request log or connect a source — and your exact
+            tokenomics breakdown appears here: spend and tokens by model and route, with
+            the efficiency ratios your finance team can reconcile to the penny.",
+           action_label="Upload a log file", action_href="/upload",
+           alt_label="Connect a source", alt_href="/sources") }}
+    {% endif %}
+  </section>
+{% else %}
+  {# ---- Plain-English lead bearing the headline money figure (R-PERSONA §5) ---- #}
+  <section class="w-12" data-reveal>
+    <h2>Here's exactly where your ${{ "{:,.2f}".format(tk.monthly_spend_usd) }}/mo of LLM spend goes.</h2>
+    <p class="tells">Broken down by model, by route and by efficiency — every figure is exact
+      arithmetic on the pinned rate card, reproducible, and it reconciles to your provider invoice
+      to the penny.</p>
+  </section>
+
+  {# ---- Tokenomics vitals: five exact numbers ---- #}
+  <section class="w-12" data-reveal>
+    <div class="widget-head"><h2>Tokenomics vitals</h2></div>
+    <div class="grid">
+      <div class="w-4">{{ kit.stat("Monthly spend", "$" ~ "{:,.2f}".format(tk.monthly_spend_usd), meta="30-day window, priced") }}</div>
+      <div class="w-4">{{ kit.stat("Tokens", "{:,.1f}M".format(tk.tokens_in / 1000000), meta="input · " ~ "{:,.1f}M".format(tk.tokens_out / 1000000) ~ " output") }}</div>
+      <div class="w-4">{{ kit.stat("Cache-hit rate", "{:.0f}%".format(tk.cache_hit_rate * 100), meta="of input served from cache") }}</div>
+      <div class="w-4">{{ kit.stat("Output per input", "{:.2f}".format(tk.out_in_ratio), meta="completion ÷ prompt tokens") }}</div>
+      <div class="w-4">{{ kit.stat("Cost / 1k output", "$" ~ "{:,.4f}".format(tk.cost_per_1k_out), meta="blended") }}</div>
+      <div class="w-4">{{ kit.stat("Cost / request", "$" ~ "{:,.4f}".format(tk.cost_per_request), meta="across all calls") }}</div>
+    </div>
+  </section>
+
+  {# ---- Breakdown by model ---- #}
+  <section class="widget w-12" data-reveal>
+    <div class="widget-head"><h2>By model</h2></div>
+    {{ kit.table_open([
+         {"label": "Model"}, {"label": "Monthly $", "cls": "money"}, {"label": "Share", "cls": "money"},
+         {"label": "Calls", "cls": "money"}, {"label": "Cache hit", "cls": "money"},
+         {"label": "Out/in", "cls": "money"}, {"label": "$/1k out", "cls": "money"},
+       ]) }}
+      {% for s in tk.by_model %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td class="money">${{ "{:,.2f}".format(s.monthly_usd) }}</td>
+          <td class="money">{{ "{:.0f}%".format(s.share * 100) }}</td>
+          <td class="money">{{ "{:,}".format(s.calls) }}</td>
+          <td class="money">{{ "{:.0f}%".format(s.cache_hit_rate * 100) }}</td>
+          <td class="money">{{ "{:.2f}".format(s.out_in_ratio) }}</td>
+          <td class="money">${{ "{:,.4f}".format(s.cost_per_1k_out) }}</td>
+        </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+  </section>
+
+  {# ---- Cost allocation by route (showback) ---- #}
+  <section class="widget w-12" data-reveal>
+    <div class="widget-head"><h2>By route (cost allocation)</h2></div>
+    <p class="tells">Attributed from your call <code>tag</code>. Untagged spend is its own row —
+      never silently allocated, so the numbers stay honest.</p>
+    {{ kit.table_open([
+         {"label": "Route"}, {"label": "Monthly $", "cls": "money"}, {"label": "Share", "cls": "money"},
+         {"label": "Calls", "cls": "money"}, {"label": "Cache hit", "cls": "money"},
+         {"label": "$/1k out", "cls": "money"},
+       ]) }}
+      {% for s in tk.by_route %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td class="money">${{ "{:,.2f}".format(s.monthly_usd) }}</td>
+          <td class="money">{{ "{:.0f}%".format(s.share * 100) }}</td>
+          <td class="money">{{ "{:,}".format(s.calls) }}</td>
+          <td class="money">{{ "{:.0f}%".format(s.cache_hit_rate * 100) }}</td>
+          <td class="money">${{ "{:,.4f}".format(s.cost_per_1k_out) }}</td>
+        </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+  </section>
+
+  {# ---- Data coverage: trust the completeness ---- #}
+  <section class="w-12" data-reveal>
+    <div class="widget-head"><h2>Data coverage &amp; quality</h2></div>
+    <div class="grid">
+      <div class="w-4">{{ kit.stat("Requests priced", "{:.1f}%".format(tk.pct_priced * 100), meta="rest are unpriced models") }}</div>
+      <div class="w-4">{{ kit.stat("Spend attributed", "{:.0f}%".format(tk.pct_attributed * 100), meta="of dollars carrying a route tag") }}</div>
+      <div class="w-4">{{ kit.stat("Reproducible", "byte-identical", meta="same logs → same breakdown") }}</div>
+    </div>
+    <div class="provenance">Computed at audit time from your per-request logs · audit
+      <code>{{ audit.id[:4] }}…{{ audit.id[-3:] }}</code></div>
+  </section>
+{% endif %}
+</div>
+{% endblock %}
