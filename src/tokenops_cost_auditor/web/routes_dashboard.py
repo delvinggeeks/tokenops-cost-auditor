@@ -401,6 +401,9 @@ def findings_page(
             {
                 "finding_id": r.finding_id,
                 "detector": r.detector,
+                # the specific route/model this finding is about — so many findings of
+                # the same kind read as DISTINCT, not duplicated (founder 2026-07-25).
+                "route": r.route,
                 # headline depth: plain phrasing only (R-PERSONA jargon law)
                 "plain": help_registry.detector(r.detector, settings).plain,
                 "severity": r.severity,

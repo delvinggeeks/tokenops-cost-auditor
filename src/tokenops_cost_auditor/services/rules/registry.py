@@ -32,13 +32,27 @@ DETECTORS: tuple[Detector, ...] = (
 
 def run_all(frame: pd.DataFrame, ctx: DetectorContext) -> list[Finding]:
     """Run enabled detectors in registry order; findings ranked by monthly $ impact
-    (registry order then id as stable tiebreaks). Disable via settings.rules_disabled."""
+    (registry order then id as stable tiebreaks). Disable via settings.rules_disabled.
+
+    Materiality floor (founder 2026-07-25, "work through what is worth fixing"): a
+    SAVINGS finding always computes a STRICTLY-POSITIVE impact (a detector skips when
+    there is nothing to save), so 0 < impact < settings.min_finding_monthly_usd means
+    it would render as $0.00 — noise, not a finding, and is dropped so the list leads
+    with real money. An INFORMATIONAL pointer (D5/D8/D10, D1-INFO) sets impact to
+    EXACTLY 0.0 and is always kept — a $0 there means 'look at this', not 'worth
+    nothing'. This drops noise without a detector allowlist."""
     disabled = set(ctx.settings.rules_disabled)
+    floor = ctx.settings.min_finding_monthly_usd
     order = {d.name: i for i, d in enumerate(DETECTORS)}
     findings: list[Finding] = []
     for detector in DETECTORS:
         if detector.name in disabled:
             continue
         findings.extend(detector.run(frame, ctx))
+    findings = [
+        f
+        for f in findings
+        if f.monthly_cost_impact_usd == 0.0 or f.monthly_cost_impact_usd >= floor
+    ]
     findings.sort(key=lambda f: (-f.monthly_cost_impact_usd, order[f.detector], f.id))
     return findings

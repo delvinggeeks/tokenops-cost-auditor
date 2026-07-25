@@ -48,7 +48,7 @@
           {# Headline depth: plain phrasing only — the detector id lives in the
              drawer at depth (c) (R-PERSONA jargon law). #}
           <tr>
-            <td>{{ it.plain }}
+            <td>{{ it.plain }}{% if it.route %} <span class="muted">on <code>{{ it.route }}</code></span>{% endif %}
               {# plain-English summary so the issue reads at a glance, not just a
                  terse label (founder walkthrough 2026-07-25). #}
               <div class="finding-sub">{{ help.detector_summary(it.detector) }}</div>

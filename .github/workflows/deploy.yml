@@ -1,7 +1,15 @@
-# The deploy pipeline. LE-2 + staging tier (founder 2026-07-24): build → STAGING
-# → smoke → PRODUCTION. Every merge to main auto-promotes through staging first;
-# prod only ever ships what staging just proved. No human gate — staging IS the
-# gate. workflow_dispatch stays as the manual escape hatch.
+# The deploy pipeline. build → STAGING → smoke → (founder review) → PRODUCTION.
+#
+# Founder ruling 2026-07-25 ("why are these reaching prod?"): a HEALTHZ smoke is not
+# a review — emergent, real-data UX issues (cluttered findings, a page that forgot the
+# honesty banner, a duplicated CTA) sailed to prod because nothing HUMAN saw the
+# rendered pages first. So:
+#   - every merge to main AUTO-DEPLOYS to STAGING (staging always mirrors main),
+#   - PROD is a MANUAL promotion (workflow_dispatch) the founder triggers AFTER
+#     reviewing the real pages on staging.
+# The whole-surface experience gate (tests/test_experience_walkthrough.py) runs in the
+# `gate` job below, so emergent-quality regressions fail BEFORE even staging. prod
+# never ships automatically again.
 #
 # Environments (repo Settings → Environments), each with its OWN secrets:
 #   staging     DEPLOY_HOST=169.58.69.81   DEPLOY_DOMAIN=staging.tokenops-cost-auditor.com
@@ -84,6 +92,9 @@ jobs:
 
   deploy-production:
     needs: [resolve, gate, deploy-staging] # prod only runs if staging is green
+    # Founder-gated: prod ships ONLY on a manual promotion after staging review — never
+    # on a push to main (which deploys staging only). This is the staging-review gate.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
     steps:

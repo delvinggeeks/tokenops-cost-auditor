@@ -27,6 +27,7 @@ from tokenops_cost_auditor.services.rules.findings import (
     effective_prompt_rate,
     make_evidence,
     monthly_factor,
+    route_label,
     severity_for_impact,
 )
 
@@ -94,6 +95,7 @@ class D3PromptBloat:
                         "only half the excess is removable (0.5 safety factor)."
                     ),
                     evidence=make_evidence(sub, note="prompt above corpus norm"),
+                    detail={"route": route_label(tag), "endpoint": endpoint},
                 )
             )
         return findings

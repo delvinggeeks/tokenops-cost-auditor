@@ -34,6 +34,7 @@ from tokenops_cost_auditor.services.rules.findings import (
     Finding,
     make_evidence,
     monthly_factor,
+    route_label,
     severity_for_impact,
 )
 
@@ -94,6 +95,7 @@ class D9IneffectiveCache:
                         f"${monthly:,.2f}/month at the observed read rate."
                     ),
                     evidence=make_evidence(bucket, note="cache written but rarely read"),
+                    detail={"route": route_label(tag), "model": str(model)},
                 )
             )
         return findings
