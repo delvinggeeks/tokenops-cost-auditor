@@ -21,17 +21,19 @@ from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.models import IdempotencyKey
 from tokenops_cost_auditor.persistence.repo import (
-    create_audit as repo_create_audit,
-)
-from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     find_idempotent_audit,
     get_or_create_user,
     get_user_audit,
     queue_position,
 )
+from tokenops_cost_auditor.persistence.repo import (
+    create_audit as repo_create_audit,
+)
 from tokenops_cost_auditor.services.ingest.base import ALLOWED_EXTENSIONS, IngestError, check_file
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments.base import claim_credit, unconsumed_credit
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.auth import resolve_session
 
 router = APIRouter(prefix="/api/v1", tags=["audits"])
@@ -88,6 +90,13 @@ def create_audit(
     settings: Settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
+        # O-2 RBAC: running an audit spends a run — RUN_AUDITS, every role but viewer.
+        # A viewer in a shared workspace reads reports but can't kick off a new audit.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.RUN_AUDITS,
+            detail="a viewer can view reports but can't run audits",
+        )
         if idempotency_key:  # FR-26
             existing = find_idempotent_audit(session, user.id, idempotency_key)
             if existing is not None:

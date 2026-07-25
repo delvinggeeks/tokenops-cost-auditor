@@ -41,6 +41,7 @@ from tokenops_cost_auditor.persistence.repo import (
 )
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.lifecycle import auditlog
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.auth import resolve_session
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 from tokenops_cost_auditor.web.routes_sources import user_plan
@@ -76,21 +77,26 @@ def _viewer_email(request: Request) -> str | None:
 
 @router.get("/settings/members", response_class=HTMLResponse)
 def members_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
-    """The members surface (O-1b-3): the roster of who is in the workspace, the
-    invite form, the pending-invites list, and per-member governance. The roster
-    is visible to EVERY member (you should know who you share a workspace with);
-    the mutating controls — invite, revoke, resend/cancel — render ONLY for an
-    owner on Scale. A plain member sees the list with NO revoke/invite control at
-    all (absent, not a 403 they'd have to bump into — the reachability law for
-    permissions, foreshadowing O-2)."""
+    """The members surface (O-1b-3 + O-2 RBAC): the roster of who is in the workspace,
+    the invite form (with role), the pending-invites list, and per-member governance
+    (set-role + remove). The roster is visible to EVERY member (you should know who you
+    share a workspace with); the mutating controls render ONLY for a MANAGER (owner or
+    admin, Scale-gated) over a non-owner member. A member/viewer sees the list with NO
+    governance control at all (absent, not a 403 they'd have to bump into — R-ORG: a
+    role never sees a control it can't use)."""
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
         ws = active_workspace_id(session, user.id)
         assert ws is not None  # ensure-created; never None for an authenticated user
         workspace = session.get(Workspace, ws)
-        is_owner = workspace_role(session, user.id, ws) == "owner"
+        role = workspace_role(session, user.id, ws)
+        is_owner = role == "owner"
         is_scale = user_plan(session, user.id) == "team"
+        # O-2: governance (invite/revoke/set-role) belongs to any MANAGER (owner or
+        # admin), never a member/viewer. Managing is Scale-gated exactly as inviting
+        # always was (the plan sold as multi-seat).
+        can_manage = authz.can(role, authz.Perm.MANAGE_MEMBERS)
         now = datetime.now(UTC)
         members = [
             {
@@ -99,10 +105,9 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
                 "role": m.role,
                 "joined": m.created_at,
                 "is_you": u.id == user.id,
-                # revoke shows for an OWNER over any NON-owner member; the owner
-                # row is never revocable (a workspace always keeps its owner) and
-                # a plain member sees no control at all.
-                "can_revoke": is_owner and m.role != "owner",
+                # A manager governs any NON-owner member — but never their own row
+                # (no self-revoke / self-demote) and never the owner (can_manage_member).
+                "can_govern": authz.can_manage_member(role, m.role) and u.id != user.id,
             }
             for m, u in list_workspace_members(session, ws)
         ]
@@ -113,7 +118,7 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
                 "created": inv.created_at,
                 "expired": _aware(inv.expires_at) < now,
             }
-            for inv in (list_workspace_invites(session, ws) if is_owner else [])
+            for inv in (list_workspace_invites(session, ws) if can_manage else [])
         ]
         ctx = _shell_ctx(session, request, user, "members")
         return _render(
@@ -122,12 +127,13 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
             workspace_name=workspace.name if workspace else "your workspace",
             is_owner=is_owner,
             is_scale=is_scale,
-            can_invite=is_owner and is_scale,
+            can_invite=can_manage and is_scale,
             members=members,
             invites=invites,
             invite_ttl_days=INVITE_TTL_DAYS,
             invited=request.query_params.get("invited"),
             removed=request.query_params.get("removed"),
+            role_updated=request.query_params.get("role"),
             **ctx,
         )
 
@@ -137,32 +143,37 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
 def invite_member(
     request: Request,
     email: str = Form(""),
+    invite_role: str = Form("member"),
     user_email: str = Depends(current_user),
 ) -> RedirectResponse:
-    """OWNER-ONLY, Scale-gated, rate-limited. Mints a one-shot code stored only
-    as an HMAC and emails the accept link; the raw code is never persisted."""
+    """MANAGER-ONLY (owner or admin), Scale-gated, rate-limited. Mints a one-shot
+    code stored only as an HMAC and emails the accept link; the raw code is never
+    persisted. The invitee joins with the role the manager picked — never `owner`."""
     invitee = email.strip().lower()
     settings = request.app.state.settings
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         ws = active_workspace_id(session, user.id)
         assert ws is not None  # ensure-created; never None for an authenticated user
-        # fail-closed order: prove ownership, THEN the plan entitlement
-        if workspace_role(session, user.id, ws) != "owner":
-            raise HTTPException(status_code=403, detail="only the workspace owner can invite")
+        # fail-closed order: prove the manager permission, THEN the plan entitlement
+        role = workspace_role(session, user.id, ws)
+        authz.ensure(role, authz.Perm.MANAGE_MEMBERS, detail="only an owner or admin can invite")
         if user_plan(session, user.id) != "team":
             raise HTTPException(
                 status_code=403, detail="inviting teammates is part of Scale — see /billing"
             )
         if not EMAIL_RE.match(invitee):
             return RedirectResponse("/settings/members?invited=-1", status_code=303)
+        # the assigned role must be one a manager may hand out (never owner); an
+        # unknown/forged value falls back to least-privilege 'member', never higher.
+        assigned = invite_role if invite_role in authz.assignable_roles(role) else "member"
         workspace = session.get(Workspace, ws)
         code = secrets.token_urlsafe(24)
         session.add(
             WorkspaceInvite(
                 workspace_id=ws,
                 email=invitee,
-                role="member",
+                role=assigned,
                 code_hash=credential_fingerprint(settings.secret_key, code),
                 invited_by_user_id=user.id,
                 expires_at=datetime.now(UTC) + timedelta(days=INVITE_TTL_DAYS),
@@ -199,19 +210,59 @@ def revoke_member(
         user = get_or_create_user(session, user_email)
         ws = active_workspace_id(session, user.id)
         assert ws is not None  # ensure-created; never None for an authenticated user
-        if workspace_role(session, user.id, ws) != "owner":
-            raise HTTPException(status_code=403, detail="only the owner can remove members")
+        # fail-closed base check first — a member/viewer is refused before any lookup.
+        role = workspace_role(session, user.id, ws)
+        authz.ensure(role, authz.Perm.MANAGE_MEMBERS, detail="you can't remove members")
         member = session.get(WorkspaceMember, member_id)
         if member is None or member.workspace_id != ws:
             raise HTTPException(status_code=404, detail="no such member in this workspace")
-        if member.role == "owner":
-            raise HTTPException(status_code=400, detail="the workspace owner cannot be removed")
+        # never the owner (can_manage_member encodes that — the matrix is the single
+        # source of truth), never yourself (no self-revoke).
+        if member.user_id == user.id or not authz.can_manage_member(role, member.role):
+            raise HTTPException(status_code=400, detail="that member cannot be removed")
         removed = session.get(User, member.user_id)
         target = removed.email if removed else member.user_id
         session.delete(member)
         auditlog.append(session, user.email, "workspace.member_revoked", target)
         session.commit()
     return RedirectResponse("/settings/members?removed=1", status_code=303)
+
+
+@router.post("/settings/members/{member_id}/role", response_model=None)
+def set_member_role(
+    request: Request,
+    member_id: str,
+    new_role: str = Form(""),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """MANAGER-ONLY: change a member's role. Fail-closed: the actor must manage
+    members; the target must be a NON-owner member of THIS workspace and not the
+    actor themselves; the new role must be one a manager may assign (never owner —
+    ownership moves only by an explicit transfer, out of O-2 scope)."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None
+        role = workspace_role(session, user.id, ws)
+        authz.ensure(role, authz.Perm.MANAGE_MEMBERS, detail="you can't change roles")
+        member = session.get(WorkspaceMember, member_id)
+        if member is None or member.workspace_id != ws:
+            raise HTTPException(status_code=404, detail="no such member in this workspace")
+        # never the owner (via can_manage_member — single source), never yourself.
+        if member.user_id == user.id or not authz.can_manage_member(role, member.role):
+            raise HTTPException(status_code=400, detail="that member's role cannot be changed")
+        if new_role not in authz.assignable_roles(role):
+            raise HTTPException(status_code=400, detail="not a role you can assign")
+        member.role = new_role
+        target = session.get(User, member.user_id)
+        auditlog.append(
+            session,
+            user.email,
+            "workspace.member_role_set",
+            f"{target.email if target else member.user_id}:{new_role}",
+        )
+        session.commit()
+    return RedirectResponse("/settings/members?role=1", status_code=303)
 
 
 @router.post("/settings/members/invite/{invite_id}/resend", response_model=None)
@@ -234,8 +285,8 @@ def resend_invite(
         user = get_or_create_user(session, user_email)
         ws = active_workspace_id(session, user.id)
         assert ws is not None
-        if workspace_role(session, user.id, ws) != "owner":
-            raise HTTPException(status_code=403, detail="only the workspace owner can invite")
+        role = workspace_role(session, user.id, ws)
+        authz.ensure(role, authz.Perm.MANAGE_MEMBERS, detail="only an owner or admin can invite")
         if user_plan(session, user.id) != "team":
             raise HTTPException(
                 status_code=403, detail="inviting teammates is part of Scale — see /billing"
@@ -283,8 +334,10 @@ def cancel_invite(
         user = get_or_create_user(session, user_email)
         ws = active_workspace_id(session, user.id)
         assert ws is not None
-        if workspace_role(session, user.id, ws) != "owner":
-            raise HTTPException(status_code=403, detail="only the owner can manage invites")
+        role = workspace_role(session, user.id, ws)
+        authz.ensure(
+            role, authz.Perm.MANAGE_MEMBERS, detail="only an owner or admin can manage invites"
+        )
         invite = session.get(WorkspaceInvite, invite_id)
         if invite is None or invite.workspace_id != ws or invite.consumed_at is not None:
             raise HTTPException(status_code=404, detail="no such pending invitation")
