@@ -1,0 +1,82 @@
+# LE-4 — the adversarial gate round, in CI (docs/09-SDLC §4/§6).
+#
+# The keystone of loop engineering: the gate agents that today are run BY HAND in the
+# main thread run here on the PR diff (scripts/gate_round.py), each emits its TE-8
+# verdict, and the job FAILS if any returns FAIL — so no PR clears the gate check on a
+# FAIL verdict without a human. "Gated by discipline" becomes "gated by machine."
+#
+# ACTIVATION (honest, per docs/09-SDLC §6): the live agent round needs a credential
+# AND one validation run on a throwaway PR to confirm the `claude -p` contract before
+# this check is made required. The credential is EITHER of these repo secrets:
+#   * CLAUDE_CODE_OAUTH_TOKEN — runs the gate round on the founder's Claude SUBSCRIPTION
+#     (no metered API bill; the cheaper lane). Generate with `claude setup-token`.
+#   * ANTHROPIC_API_KEY — metered API billing (fallback).
+# Each gate still runs on Sonnet (TE-5, forced via --model from the charter), so the
+# credential is only AUTH, never the cost tier. Until a credential is set, only the
+# DRY-RUN step runs — it proves the harness executes in CI (gate selection, parsing,
+# aggregation, exit code) with no model call, and is always green. The moment a
+# credential exists, the live step activates on every PR.
+name: gate-round
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: gate-round-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write # to post the verdict table as a PR comment
+
+jobs:
+  gate-round:
+    runs-on: ubuntu-latest
+    # Outer backstop only. Up to 7 gates run sequentially, each capped at 900s in
+    # scripts/gate_round.py (worst case ~105min of agent time), so this ceiling sits
+    # ABOVE that on purpose — a hung agent hits its own 900s NO-VERDICT first.
+    timeout-minutes: 120
+    env:
+      # secrets are not allowed directly in step `if:`; surface presence as a plain env.
+      # EITHER credential activates the live round (subscription token preferred).
+      HAS_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+      BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so BASE...HEAD resolves
+      - run: git fetch origin main --depth=1 || true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen --all-extras
+
+      # ALWAYS: prove the harness runs in CI — no API key needed. Fails only on a real
+      # harness defect (bad gate selection, parser regression, crash), never on verdicts.
+      - name: gate-round harness (dry-run — no API)
+        run: uv run python scripts/gate_round.py --base "$BASE" --dry-run
+
+      # LIVE: runs only once the founder adds ANTHROPIC_API_KEY. A FAIL/NO-VERDICT from
+      # any gate exits non-zero and fails this job → blocks the PR.
+      - name: install claude CLI
+        if: env.HAS_KEY == 'true'
+        # Pinned (TE-11 ethos): an unpinned `latest` could silently flip gate output on a
+        # breaking upstream release. Bump this deliberately, re-validating on a throwaway PR.
+        run: npm install -g @anthropic-ai/claude-code@2.1.220
+
+      - name: gate round (LIVE)
+        if: env.HAS_KEY == 'true'
+        env:
+          # subscription token preferred; API key is the fallback. The CLI uses whichever
+          # is non-empty — setting both (one empty) is harmless.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python scripts/gate_round.py --base "$BASE" --comment-out gate-comment.md
+
+      - name: post verdicts to the PR
+        if: ${{ always() && env.HAS_KEY == 'true' && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f gate-comment.md ]; then
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file gate-comment.md
+          fi
