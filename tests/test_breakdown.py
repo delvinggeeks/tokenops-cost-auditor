@@ -67,6 +67,19 @@ class TestBreakdownJourney:
         assert "Data coverage" in page
         assert tk["by_model"][0]["name"] in page  # the top model appears in the table
 
+    def test_corrupt_artifact_degrades_to_empty_state_not_500(
+        self, app: FastAPI, settings: Settings
+    ) -> None:
+        # a partial/corrupt tokenomics.json (crash mid-write) must not 500 the page
+        audit_id = _seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        (Path(settings.report_dir) / audit_id / "tokenomics.json").write_text(
+            "{ this is not valid json", encoding="utf-8"
+        )
+        resp = TestClient(app).get("/breakdown", headers=HDR)
+        assert resp.status_code == 200  # not a 500
+        assert "No breakdown yet" in resp.text  # honest empty state
+
     def test_no_audit_shows_honest_empty_state(self, app: FastAPI) -> None:
         page = TestClient(app).get("/breakdown", headers=HDR)
         assert page.status_code == 200

@@ -188,10 +188,14 @@ class AuditRunner:
         render_pdf(report, report_dir / "report.pdf")
         # Enterprise tokenomics breakdown (founder 2026-07-25): computed at audit
         # time from the per-request priced frame (purged later, FR-21) and stored
-        # as a report artifact alongside the others — exact, deterministic.
-        (report_dir / "tokenomics.json").write_text(
+        # as a report artifact alongside the others — exact, deterministic. Written
+        # atomically (temp + rename) so a concurrent /breakdown read never sees a
+        # half-written file (cold gate).
+        tk_tmp = report_dir / "tokenomics.json.tmp"
+        tk_tmp.write_text(
             json.dumps(dataclasses.asdict(tokenomics_svc.compute(priced))), encoding="utf-8"
         )
+        tk_tmp.replace(report_dir / "tokenomics.json")
         t_report = datetime.now(UTC)
         stage_rows = (
             (

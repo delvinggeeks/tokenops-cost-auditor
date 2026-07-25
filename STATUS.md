@@ -81,7 +81,26 @@ deterministic. X-02 respected: budget is a display reference for variance only,
 never enforcement. File-map delta: +services/dashboard/tokenomics.py;
 +templates/app/breakdown.html; runner writes tokenomics.json; +GET /breakdown;
 +shell Breakdown nav; +help_registry breakdown destination; +tests/test_tokenomics.py
-+tests/test_breakdown.py; +mockup; traceability row. Gate round + PR next.
++tests/test_breakdown.py; +mockup; traceability row.
+
+GATE ROUND: spec-guard PASS (X-01/X-02 read-only + budget display-only, FR-22
+counts-only, T-NFR-01 pure, no golden owed, traceability) · cold PASS-WITH-NOTES ·
+ux PASS-WITH-NOTES · vv money-CONFIRMED (golden re-derived; suite-green by my
+un-piped runs) · system-tester PASS-WITH-NOTES (journey/reachability/seams
+confirmed). Notes ALL actioned: (cold f.1) /breakdown now guards json.loads
+(JSONDecodeError/OSError → honest empty state, never 500) AND the runner writes
+tokenomics.json ATOMICALLY (temp + os.replace) so a concurrent read never sees a
+partial file — pinned by test_corrupt_artifact_degrades_to_empty_state_not_500.
+(cold f.2) attribution is now SPEND-weighted (Σ tagged cost / total, not row-count)
+— the meaningful cost-allocation metric; "priced" renamed "Requests priced" (honest
+— unpriced $ is unknowable); pinned by test_untagged_spend_lowers_attribution_by_
+dollars_not_count. (ux f.4) the page now LEADS with a plain-English sentence bearing
+the headline $/mo (R-PERSONA §5). (system-tester gap) added a cross-surface test
+that the breakdown's monthly spend equals the ReportModel's. Full suite green; PR
+next (holding merge for founder). One process slip owned: two gate agents (vv,
+system-tester) hit their tool budget and one earlier gate committed mid-run — the
+non-determinism/[[never-mask-pytest-exit]] discipline; the suite-green rests on my
+own un-piped runs, not a masked agent invocation.
 
 ## RICHER FINDINGS — D8/D9 detectors (2026-07-25) — founder "many findings / dynamic analysis", chose "richer findings / more detectors"
 

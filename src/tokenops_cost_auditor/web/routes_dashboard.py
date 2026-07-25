@@ -601,7 +601,12 @@ def breakdown_page(request: Request, user_email: str = Depends(current_user)) ->
         if audit is not None:
             path = Path(request.app.state.settings.report_dir) / audit.id / "tokenomics.json"
             if path.exists():
-                tk = json.loads(path.read_text(encoding="utf-8"))
+                try:
+                    tk = json.loads(path.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, OSError):
+                    # a corrupt/partial artifact (crash mid-write, disk error) →
+                    # the honest empty state, never a 500 (cold gate).
+                    tk = None
         ctx = _shell_ctx(session, request, user, "breakdown")
         return _render(
             request,

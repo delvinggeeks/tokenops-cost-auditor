@@ -24,11 +24,17 @@
     {% endif %}
   </section>
 {% else %}
+  {# ---- Plain-English lead bearing the headline money figure (R-PERSONA §5) ---- #}
+  <section class="w-12" data-reveal>
+    <h2>Here's exactly where your ${{ "{:,.2f}".format(tk.monthly_spend_usd) }}/mo of LLM spend goes.</h2>
+    <p class="tells">Broken down by model, by route and by efficiency — every figure is exact
+      arithmetic on the pinned rate card, reproducible, and it reconciles to your provider invoice
+      to the penny.</p>
+  </section>
+
   {# ---- Tokenomics vitals: five exact numbers ---- #}
   <section class="w-12" data-reveal>
     <div class="widget-head"><h2>Tokenomics vitals</h2></div>
-    <p class="tells">Every figure is exact arithmetic on the pinned rate card — no estimate,
-      reproducible, and it reconciles to your provider invoice.</p>
     <div class="grid">
       <div class="w-4">{{ kit.stat("Monthly spend", "$" ~ "{:,.2f}".format(tk.monthly_spend_usd), meta="30-day window, priced") }}</div>
       <div class="w-4">{{ kit.stat("Tokens", "{:,.1f}M".format(tk.tokens_in / 1000000), meta="input · " ~ "{:,.1f}M".format(tk.tokens_out / 1000000) ~ " output") }}</div>
@@ -88,8 +94,8 @@
   <section class="w-12" data-reveal>
     <div class="widget-head"><h2>Data coverage &amp; quality</h2></div>
     <div class="grid">
-      <div class="w-4">{{ kit.stat("Spend priced", "{:.1f}%".format(tk.pct_priced * 100), meta="rest are unpriced models") }}</div>
-      <div class="w-4">{{ kit.stat("Spend attributed", "{:.0f}%".format(tk.pct_attributed * 100), meta="rest is untagged, shown above") }}</div>
+      <div class="w-4">{{ kit.stat("Requests priced", "{:.1f}%".format(tk.pct_priced * 100), meta="rest are unpriced models") }}</div>
+      <div class="w-4">{{ kit.stat("Spend attributed", "{:.0f}%".format(tk.pct_attributed * 100), meta="of dollars carrying a route tag") }}</div>
       <div class="w-4">{{ kit.stat("Reproducible", "byte-identical", meta="same logs → same breakdown") }}</div>
     </div>
     <div class="provenance">Computed at audit time from your per-request logs · audit

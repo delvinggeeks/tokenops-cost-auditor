@@ -48,8 +48,8 @@ class Tokenomics:
     cost_per_request: float
     by_model: tuple[Slice, ...]
     by_route: tuple[Slice, ...]
-    pct_priced: float  # share of rows we could price
-    pct_attributed: float  # share of rows carrying a route tag
+    pct_priced: float  # share of REQUESTS we could price (unpriced $ is unknowable)
+    pct_attributed: float  # share of SPEND (dollars) carrying a route tag
 
 
 def _rate(numer: float, denom: float) -> float:
@@ -104,7 +104,12 @@ def compute(priced: pd.DataFrame) -> Tokenomics:
 
     by_model = _ranked(rows, "model", str, total_cost, factor)
     by_route = _ranked(rows, "tag", _route_name, total_cost, factor)
-    tagged = int((rows["tag"].astype(str).str.strip() != "").sum()) if len(rows) else 0
+    # Attribution is SPEND-weighted (cold gate): what share of DOLLARS carries a
+    # route tag — a cheap untagged call matters less than an expensive one.
+    if len(rows):
+        tagged_cost = float(rows.loc[rows["tag"].astype(str).str.strip() != "", "cost_usd"].sum())
+    else:
+        tagged_cost = 0.0
     return Tokenomics(
         monthly_spend_usd=total_cost * factor,
         tokens_in=inp,
@@ -116,6 +121,6 @@ def compute(priced: pd.DataFrame) -> Tokenomics:
         cost_per_request=_rate(total_cost, n_total),
         by_model=by_model,
         by_route=by_route,
-        pct_priced=_rate(len(rows), n_total),
-        pct_attributed=_rate(tagged, n_total),
+        pct_priced=_rate(len(rows), n_total),  # share of REQUESTS we could price
+        pct_attributed=_rate(tagged_cost, total_cost),  # share of SPEND carrying a tag
     )

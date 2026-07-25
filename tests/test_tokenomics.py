@@ -74,11 +74,30 @@ class TestTokenomicsSlices:
         assert sum(s.share for s in tk.by_model) == pytest.approx(1.0)
         assert {s.name for s in tk.by_route} == {"chat", "b"}
 
-    def test_untagged_spend_is_its_own_slice_and_lowers_attribution(self) -> None:
-        frame = _priced([{"tag": "chat"}, {"tag": ""}])  # one tagged, one untagged
+    def test_untagged_spend_lowers_attribution_by_dollars_not_count(self) -> None:
+        # the untagged row is the EXPENSIVE one → spend-weighted attribution is
+        # well below 0.5 (a row-COUNT metric would wrongly report exactly 0.5).
+        frame = _priced(
+            [
+                {"tag": "chat", "prompt_tokens": 1000},
+                {"tag": "", "prompt_tokens": 9000},
+            ]
+        )
         tk = tokenomics.compute(frame)
-        assert tk.pct_attributed == pytest.approx(0.5)
+        assert tk.pct_attributed < 0.5
         assert tokenomics.UNTAGGED in {s.name for s in tk.by_route}
+
+    def test_monthly_spend_agrees_with_the_report_model(self) -> None:
+        # cross-surface consistency (system-tester gate): the breakdown's headline
+        # spend equals the report's, both from the same priced frame.
+        from tokenops_cost_auditor.services.report.model import ReportModel
+
+        frame = _priced([{"cached_tokens": 100}, {"tag": "b", "prompt_tokens": 4000}])
+        tk = tokenomics.compute(frame)
+        report = ReportModel.build(
+            audit_id="a" * 32, priced=frame, findings=[], unpriced=[], table=TABLE
+        )
+        assert tk.monthly_spend_usd == pytest.approx(report.monthly_spend_usd)
 
 
 class TestTokenomicsCoverage:
