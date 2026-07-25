@@ -356,3 +356,32 @@ summed (a summed 1,125.00 is asserted absent).
   upload and connector paths can never disagree on a rank.
   Pinned by tests/test_flywheel.py::TestBenchmarks tests 19-21.
   | Lokesh Prasanna Kumar S
+
+## D9 ineffective cache (founder 2026-07-25 "richer findings") — derivation
+
+Detector: cache written but rarely read → net cost. Money math on OBSERVED
+billed tokens (conservative, not an estimate). Per (provider, model, route):
+
+    net_loss = Σ (cache_write - input) × cache_write_tokens   (write premium PAID)
+             - Σ (input - cache_read)  × cached_tokens        (read discount EARNED)
+    monthly  = net_loss × 30 / observed_days
+
+Golden fixture (tests/test_rules.py::TestD9IneffectiveCache.test_01_golden_net_loss):
+model claude-opus-4-8 (rates USD/1M from prices.yaml v2026-07-17, effective
+2026-06-01: input 5.00, cache_write 6.25, cache_read 0.50), route "cachey",
+5 identical rows, each cache_write_tokens=2000, cached_tokens=100, all on
+2026-06-15 → observed_days=1 → factor 30.
+
+  per-row write premium = (6.25 - 5.00) × 2000 / 1e6 = 1.25 × 2000 / 1e6 = 0.00250
+  per-row read discount  = (5.00 - 0.50) × 100  / 1e6 = 4.50 ×  100 / 1e6 = 0.00045
+  per-row net_loss       = 0.00250 - 0.00045                              = 0.00205
+  5 rows                 = 0.01025
+  monthly (× 30)         = 0.30750   → GOLDEN_MONTHLY = 0.3075
+
+Boundary rows: a no-write-premium model (cache_write defaults to input, e.g.
+gpt-5.4) yields per-row premium 0 → net_loss ≤ 0 → silent; a read-dominated
+route (writes ≪ reads) yields net_loss < 0 → silent. Disjoint from D2 by
+construction (D2 filters cache_write_tokens == 0), so savings never double-count.
+
+Spreadsheet diff: none — no rate rows changed; this is a NEW estimator over the
+existing v2026-07-17 rate card. No pricing_verify impact (no new/edited rates).

@@ -194,6 +194,22 @@ detectors:
     fix: "Batch the loop's work into fewer calls, or cache the repeated context between iterations."
     verify: "Your next audit sees fewer, larger calls on that route and prices the difference."
     methodology_url: "/methodology/#d6-chatty-loop"
+  d8_spend_concentration:
+    plain: "One route is eating most of your spend"
+    summary: "A single part of your app accounts for most of what you spend on LLM calls. It's not waste on its own — but it's where optimizing pays off the most, because the fixes that touch this route move the most money."
+    technical: "D8 spend concentration"
+    why: "Flagged when one route is at least {d8_concentration_min_share_pct} of total audited spend, across two or more named routes. Informational — no dollar saving is claimed."
+    fix: "Start your optimization here — apply the caching, model-sizing and prompt fixes on this route first, since it carries the most dollars."
+    verify: "As you optimize this route, its share of spend drops on your next audit and your total spend falls."
+    methodology_url: "/methodology/#d8-spend-concentration"
+  d9_ineffective_cache:
+    plain: "Your prompt caching is costing more than it saves"
+    summary: "You've turned on prompt caching, but it isn't paying off — the calls rarely reuse the cached text, so you keep paying the higher write price without getting the read discount back. Right now the caching is a net cost, not a saving."
+    technical: "D9 ineffective cache"
+    why: "Flagged when a route's cache-write premium exceeds its cache-read savings, over at least {d9_min_cache_write_tokens} cache-write tokens. Computed from the actual billed cache_write and cache_read token counts, so it is conservative, not an estimate."
+    fix: "Make the cached prefix stable and ensure repeat calls reuse it within the cache TTL — or stop caching this route. Fewer writes, more reads."
+    verify: "Your next audit shows more cache reads (or fewer writes) on this route, and its net cost flips to a saving."
+    methodology_url: "/methodology/#d9-ineffective-cache"
 
 wizard:
   # Honest key framing (founder walkthrough 2026-07-22, verified against

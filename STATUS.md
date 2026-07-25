@@ -49,6 +49,40 @@ now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the pro
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
 (founder-chosen): guided first-run + output preview (punch-list #4/#5).
 
+## RICHER FINDINGS — D8/D9 detectors (2026-07-25) — founder "many findings / dynamic analysis", chose "richer findings / more detectors"
+
+SHIPPED-TO-MAIN first: the guided-first-run slice merged as PR #17 (squash
+0adb355; all gates PASS/PASS-WITH-NOTES + CI green; prod deploy stays
+founder-gated). Then, on branch `richer-findings` off main, the founder's
+"why so few findings" thread turned into two new detectors (AskUserQuestion: A +
+D). Cross-provider arbitrage was DROPPED after checking the rate card — bedrock/
+azure mirror anthropic/openai at parity, so no arbitrage exists. SHIPPED:
+**D8 spend concentration** (informational "start here", like d5: flags a route
+carrying >= d8_concentration_min_share (default 50%) of total spend, only across
+2+ NAMED routes so a single-route log is never trivially flagged; $0 impact — a
+pointer, never a claimed saving). **D9 ineffective cache** (cache is WRITTEN but
+rarely READ → you pay the write premium without the read discount, so caching NET
+COSTS you; money-math on the ACTUAL billed cache_write/cached tokens so
+CONSERVATIVE not estimated; golden net_loss 0.3075 derived in
+pricing_golden_NOTES.md D9 section per CLAUDE.md rule 4). KEY money-math property:
+D9 is DISJOINT from D2 by construction — D2's eligible filter already requires
+`cache_write_tokens == 0`, so no ROW is counted by both and the DOLLARS can NEVER
+double-count, no D2 change needed (cold-review precision: a route CAN surface in
+both a D2 and a D9 finding when it mixes never-cached and cache-written calls —
+the savings amounts still never overlap). Both detectors are per-request-only
+(added to aggregate.INACTIVE_ON_AGGREGATE: D8 needs route tags, D9 needs
+cache_write counts that provider usage-API aggregates don't carry) — so they
+enrich exactly the deep upload/SDK path the founder made primary. Both surface
+through the existing finding UI (plain-English summary + technical pointers). They
+do NOT fire on the committed waste_pack sample (checked), so the sample count +
+report goldens are unchanged. File-map delta: +services/rules/d8_spend_concentration.py
++d9_ineffective_cache.py; registry DETECTORS (+2); aggregate INACTIVE (+2); config
+d8_concentration_min_share/d9_min_cache_write_tokens; help_registry (+2 entries with
+summary); help._threshold_values (+2); tests/test_rules.py (+TestD8/+TestD9 goldens)
++ registry-order/detector-count(6→8)/aggregate-coverage(6→8) updated; NOTES D9
+derivation; traceability row. "More detectors beyond these two" stays a
+founder-chosen follow-up (BACKLOG). Gate round + PR next.
+
 ## GUIDED FIRST RUN + OUTPUT PREVIEW (2026-07-25) — founder walkthrough punch-list #4/#5, "proceed guided-first-run"
 
 The first-run vertical (R-VERTICAL), on a branch off main. GOAL: a brand-new
