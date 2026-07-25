@@ -3279,3 +3279,18 @@ Fixed in-slice: sources_page used scalar_one_or_none → a brand-new authenticat
 connect controls; now get_or_create_user so perms resolve. Held as a PR for founder merge; ux
 gate + gate round run in CI. DEPENDS-DONE: O-1 (members/invites/revoke), workspace_role()
 helper, Membership.role column.
+
+## LE-4 FOLLOW-UP — gate agents diff-scope their test run (2026-07-26) — founder "approved and proceed" (after O-2's vv NO-VERDICT)
+
+O-2 (PR #26) exposed a real gate-machine hole: vv-engineer hit NO-VERDICT by exceeding
+the 900s per-agent budget RUNNING THE FULL SUITE — a harness timeout on a large PR, not
+a code defect, but it BLOCKS the (advisory) gate-round check and undermines trust in the
+machine. ROOT-CAUSE FIX (scripts/gate_round.py): the agent prompt now states the full
+suite + lint + type ALREADY run as REQUIRED CI checks that gate the merge independently,
+so an agent must NOT re-run the whole suite — validate the DIFF (run ONLY the changed/
+added test files if useful) and reason about the rest within the TE-6 budget. Belt-and-
+suspenders: AGENT_TIMEOUT_S 900→1200s (constant, used in the message too) + gate-round.yml
+job backstop 120→150min so the invariant "a hung agent hits its own ceiling first" stays
+true at 7 gates. Pinned by tests/test_gate_round.py::test_prompt_tells_agents_not_to_rerun
+_the_full_suite (+ timeout constant). Activated live on the next PR that carries the key.
+Held as a PR for founder merge. Next: resume ROADMAP §3 queue (#2 view-report reachability).

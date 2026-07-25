@@ -33,10 +33,12 @@ permissions:
 jobs:
   gate-round:
     runs-on: ubuntu-latest
-    # Outer backstop only. Up to 7 gates run sequentially, each capped at 900s in
-    # scripts/gate_round.py (worst case ~105min of agent time), so this ceiling sits
-    # ABOVE that on purpose — a hung agent hits its own 900s NO-VERDICT first.
-    timeout-minutes: 120
+    # Outer backstop only. Up to 7 gates run sequentially, each capped at AGENT_TIMEOUT_S
+    # =1200s in scripts/gate_round.py (worst case ~140min of agent time), so this ceiling
+    # sits ABOVE that on purpose — a hung agent hits its own 1200s NO-VERDICT first. In
+    # practice agents diff-scope their test run (CI owns the full suite) and finish in
+    # minutes, so this is rarely approached.
+    timeout-minutes: 150
     env:
       # secrets are not allowed directly in step `if:`; surface presence as a plain env.
       # EITHER credential activates the live round (subscription token preferred).

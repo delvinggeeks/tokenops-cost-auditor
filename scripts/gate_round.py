@@ -50,6 +50,10 @@ OPS_TRIGGER = (
 
 AGENTS_DIR = Path(".claude/agents")
 DIFF_CAP = 200_000  # chars of diff embedded in the prompt (kept under model context)
+# Per-agent wall-clock backstop. Raised from 900s after O-2 (PR #26) timed vv out to
+# NO-VERDICT: the primary fix is telling agents NOT to re-run the full suite (below),
+# this ceiling is the safety margin so a legitimately thorough gate still concludes.
+AGENT_TIMEOUT_S = 1200
 # TE-8: "VERDICT (PASS | PASS-WITH-NOTES | FAIL)". Longest label first so PASS-WITH-NOTES
 # is never shadowed by a bare PASS match; trailing \b so "PASSED"/"FAILING" don't parse as
 # a clean verdict (the label must stand as a whole word).
@@ -143,7 +147,12 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
         f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
         f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
         "Obey TE-2 (diff + STATUS + your charter docs only), TE-6 (<=15 tool calls), "
-        "TE-11 (pinned `uv run` toolchain). End your reply with EXACTLY one line:\n"
+        "TE-11 (pinned `uv run` toolchain). "
+        "The FULL test suite, lint and type-check ALREADY run as REQUIRED CI checks that "
+        "gate this merge independently — do NOT re-run the whole suite here (it will "
+        "exhaust your time budget and record a NO-VERDICT). Validate the DIFF: if a test "
+        "run helps, execute ONLY the changed/added test files (`uv run pytest <those "
+        "files> -q`) and reason about the rest. End your reply with EXACTLY one line:\n"
         "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
         f"----- diff{marker} -----\n{diff_text[:DIFF_CAP]}\n"
     )
@@ -162,11 +171,11 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
             ],
             capture_output=True,
             text=True,
-            timeout=900,
+            timeout=AGENT_TIMEOUT_S,
             check=False,
         )
     except subprocess.TimeoutExpired:
-        return f"[harness] {agent} exceeded the 900s budget — recorded as NO-VERDICT."
+        return f"[harness] {agent} exceeded the {AGENT_TIMEOUT_S}s budget — recorded as NO-VERDICT."
     except Exception as exc:
         # Broad ON PURPOSE: a missing CLI (FileNotFoundError), a denied exec
         # (PermissionError), a decode error from text=True (UnicodeDecodeError) — ANY
