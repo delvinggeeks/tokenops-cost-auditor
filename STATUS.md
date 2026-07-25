@@ -59,6 +59,22 @@ default floor keeps all 6 waste_pack findings; savings findings name their route
 values UNCHANGED (no golden) — this only DROPS $0-noise and NAMES findings. Next: banner
 coverage on /breakdown + all figure pages; then Sources page redesign; then O-2 RBAC.
 
+## ROADMAP CONSOLIDATION — single source of truth (2026-07-25) — founder "we have a lot of requirements which we got diverted ... single source of truth and not missed or diverted"
+
+Founder course-correction: the depth-engine slices (tokenomics/D10/drift) grew from an
+improvised "more findings" thread and diverted from the planned requirement order (after
+O-1, the plan's next milestone was O-2 RBAC). Requirements were scattered across ~18 plan
+docs with no consolidated view, which is HOW the divergence went uncaught. FIX: a full
+5-way parallel sweep of every plan/requirement doc → consolidated into **docs/internal/ROADMAP.md**
+(the single source of truth): §0 shipped baseline · §1 X-guardrails · §2 process + DoD ·
+§3 buildable-now frontier (9 items, prioritized; O-2 RBAC is #1) · §4 founder-owned ·
+§5 trigger-gated (parked by design) · §6 reconciliations. KEY FINDING: all FR-01..32 /
+NFR-01..15 are traced-done; nearly all outstanding work is DELIBERATELY trigger-gated or
+founder-owned — not forgotten. Supersedes the stale KANBAN.md 2026-07-24 snapshot as the
+working queue. PROCESS RULINGS: work §3 top-down,
+no task-tool kanban (track in STATUS + ROADMAP), each slice FULLY covers its req (R-VERTICAL),
+new ideas go to §5 not into code. Next build: O-2 Roles/RBAC.
+
 ## CROSS-AUDIT DRIFT — Breakdown "vs your last audit" (2026-07-25) — founder "proceed as recommended next step" (the drift half of anomaly & drift)
 
 On branch `cross-audit-drift` off main (cf75687). Second half of the founder's chosen
