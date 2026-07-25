@@ -73,7 +73,9 @@
       </div>
       {% endfor %}
     </div>
-    {% if preview.findings | length < preview.n_findings %}
+    {# guard on a non-empty list so a hypothetical all-$0 sample never reads
+       "Top 0 shown" (cold gate — moot for the committed fixture, defensive). #}
+    {% if preview.findings and preview.findings | length < preview.n_findings %}
     <p class="muted fr-pv-more">Top {{ preview.findings | length }} shown ·
       {{ preview.n_findings }} findings in the sample. Full list in the sample report.</p>
     {% endif %}
