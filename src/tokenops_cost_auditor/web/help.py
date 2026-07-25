@@ -170,4 +170,7 @@ def _threshold_values(settings: Settings) -> dict[str, object]:
         "d6_small_completion_t": settings.d6_small_completion_t,
         "d6_run_window_s": settings.d6_run_window_s,
         "d6_batch_sz": settings.d6_batch_sz,
+        # rendered as a percentage so the help text reads naturally ("50%")
+        "d8_concentration_min_share_pct": f"{settings.d8_concentration_min_share * 100:.0f}%",
+        "d9_min_cache_write_tokens": settings.d9_min_cache_write_tokens,
     }

@@ -18,6 +18,8 @@ from tokenops_cost_auditor.services.rules import d2_missing_cache as d2mod
 from tokenops_cost_auditor.services.rules.base import DetectorContext, ttl_window_s
 from tokenops_cost_auditor.services.rules.d2_missing_cache import D2MissingCache
 from tokenops_cost_auditor.services.rules.d4_retry_storm import D4RetryStorm
+from tokenops_cost_auditor.services.rules.d8_spend_concentration import D8SpendConcentration
+from tokenops_cost_auditor.services.rules.d9_ineffective_cache import D9IneffectiveCache
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     EvidenceRef,
@@ -123,6 +125,8 @@ class TestTRUL00Registry:
             "d4_retry_storm",
             "d5_unbounded_max_tokens",
             "d6_chatty_loop",
+            "d8_spend_concentration",
+            "d9_ineffective_cache",
         ]
 
 
@@ -757,3 +761,118 @@ class TestRD6AGGSessionAggregation:
         detail = findings[0].detail
         assert detail is not None and len(detail["clusters"]) == 2
         assert "2 burst(s) in one session" in findings[0].fix_text
+
+
+class TestD8SpendConcentration:
+    """D8 — informational 'start here' pointer (founder 2026-07-25). Flags the
+    route that carries a large share of spend; never claims a saving."""
+
+    def test_flags_the_dominant_route_as_informational(self) -> None:
+        frame = synth_frame(
+            [
+                {"tag": "chat", "prompt_tokens": 1_000_000, "completion_tokens": 1000},
+                {"tag": "chat", "prompt_tokens": 1_000_000, "completion_tokens": 1000},
+                {"tag": "batch", "prompt_tokens": 1000, "completion_tokens": 10},
+            ]
+        )
+        findings = D8SpendConcentration().run(frame, ctx_for(frame))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.detector == "d8_spend_concentration"
+        assert f.monthly_cost_impact_usd == 0.0  # informational — never a claimed saving
+        assert "chat" in f.fix_text and "%" in f.fix_text
+        assert f.evidence  # counts-only evidence attached
+
+    def test_single_route_is_never_flagged(self) -> None:
+        frame = synth_frame([{"tag": "only", "prompt_tokens": 1_000_000} for _ in range(2)])
+        assert D8SpendConcentration().run(frame, ctx_for(frame)) == []
+
+    def test_even_split_below_threshold_not_flagged(self) -> None:
+        # three routes each ~33% of spend — none clears the 50% bar
+        frame = synth_frame([{"tag": t, "prompt_tokens": 1_000_000} for t in ("a", "b", "c")])
+        assert D8SpendConcentration().run(frame, ctx_for(frame)) == []
+
+    def test_untagged_spend_never_anchors(self) -> None:
+        # a dominant but UNTAGGED bucket is not an actionable route
+        frame = synth_frame(
+            [
+                {"tag": "", "prompt_tokens": 1_000_000},
+                {"tag": "", "prompt_tokens": 1_000_000},
+                {"tag": "named", "prompt_tokens": 1000},
+            ]
+        )
+        assert D8SpendConcentration().run(frame, ctx_for(frame)) == []
+
+
+class TestD9IneffectiveCache:
+    """D9 — cache written but rarely read = net cost. Money math on OBSERVED
+    billed tokens; golden derived in pricing_golden_NOTES.md (D9 section).
+    Disjoint from D2 by construction (D2 requires cache_write_tokens == 0)."""
+
+    # (6.25-5)*2000/1e6 - (5-0.5)*100/1e6 = 0.00205/row; x5 rows x30/1day = 0.3075
+    GOLDEN_MONTHLY = 0.3075
+
+    def _net_loss_frame(self) -> pd.DataFrame:
+        return synth_frame(
+            [
+                {
+                    "provider": "anthropic",
+                    "model": "claude-opus-4-8",
+                    "tag": "cachey",
+                    "prompt_tokens": 3000,
+                    "cache_write_tokens": 2000,
+                    "cached_tokens": 100,
+                }
+                for _ in range(5)
+            ]
+        )
+
+    def test_01_golden_net_loss(self) -> None:
+        frame = self._net_loss_frame()
+        findings = D9IneffectiveCache().run(frame, ctx_for(frame))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.detector == "d9_ineffective_cache"
+        assert f.monthly_cost_impact_usd == pytest.approx(self.GOLDEN_MONTHLY, abs=1e-9)
+        assert f.confidence is Confidence.CONSERVATIVE  # observed billed tokens
+        assert "cachey" in f.fix_text
+
+    def test_02_net_positive_caching_is_silent(self) -> None:
+        # reads dominate writes → caching pays off → not flagged
+        frame = synth_frame(
+            [
+                {
+                    "provider": "anthropic",
+                    "model": "claude-opus-4-8",
+                    "tag": "good",
+                    "prompt_tokens": 3000,
+                    "cache_write_tokens": 100,
+                    "cached_tokens": 2000,
+                }
+                for _ in range(5)
+            ]
+        )
+        assert D9IneffectiveCache().run(frame, ctx_for(frame)) == []
+
+    def test_03_no_write_premium_model_is_silent(self) -> None:
+        # a model whose cache_write defaults to input can never net-lose
+        frame = synth_frame(
+            [
+                {
+                    "provider": "openai",
+                    "model": "gpt-5.4",
+                    "tag": "x",
+                    "prompt_tokens": 3000,
+                    "cache_write_tokens": 2000,
+                    "cached_tokens": 0,
+                }
+                for _ in range(5)
+            ]
+        )
+        assert D9IneffectiveCache().run(frame, ctx_for(frame)) == []
+
+    def test_04_disjoint_from_d2(self) -> None:
+        # the D9 case (cache_write>0) is invisible to D2, and vice versa —
+        # savings can never double-count on one route.
+        frame = self._net_loss_frame()
+        assert D2MissingCache().run(frame, ctx_for(frame)) == []
