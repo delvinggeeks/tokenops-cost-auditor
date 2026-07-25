@@ -170,6 +170,14 @@ class Settings(BaseSettings):
     # D9 ineffective cache: only consider routes with at least this many cache-write
     # tokens (ignore trivial caching), then flag when write premium > read savings.
     d9_min_cache_write_tokens: int = 1024
+    # D10 spend anomaly (informational): robust temporal spike detection over daily
+    # spend. Needs a weekly baseline (d10_min_days); a day is flagged only when it
+    # is a strong robust outlier (>= d10_z_threshold MADs above median) AND
+    # materially above typical (>= d10_spike_mult x median). Both gates are
+    # scale-free, so window length never dilutes a real spike. Per-request only.
+    d10_min_days: int = 7
+    d10_z_threshold: float = 3.5
+    d10_spike_mult: float = 2.0
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
     rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
 

@@ -13,9 +13,17 @@
         finding <code>{{ row.finding_id }}</code></small>
     </div>
     <div style="text-align:right">
+      {% if row.monthly_impact_usd > 0 %}
       <div class="money money-lg" style="color: var(--waste);">
         ${{ "{:,.2f}".format(row.monthly_impact_usd) }}</div>
       <small class="muted">per month</small>
+      {% else %}
+      {# Informational finding (D5/D8/D10): no monthly saving is claimed, so we never
+         show a misleading $0.00 in the waste colour (ux gate 2026-07-25). The
+         magnitude lives in the severity chip and the plain-English summary/fix. #}
+      <span class="badge badge-neutral">Informational</span>
+      <small class="muted" style="display:block">a pointer — no saving claimed</small>
+      {% endif %}
     </div>
   </div>
 

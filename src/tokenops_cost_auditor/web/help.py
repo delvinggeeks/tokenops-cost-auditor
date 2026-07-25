@@ -173,4 +173,7 @@ def _threshold_values(settings: Settings) -> dict[str, object]:
         # rendered as a percentage so the help text reads naturally ("50%")
         "d8_concentration_min_share_pct": f"{settings.d8_concentration_min_share * 100:.0f}%",
         "d9_min_cache_write_tokens": settings.d9_min_cache_write_tokens,
+        "d10_min_days": settings.d10_min_days,
+        "d10_z_threshold": settings.d10_z_threshold,
+        "d10_spike_mult": settings.d10_spike_mult,
     }

@@ -15,6 +15,56 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## SPEND ANOMALY — D10 detector, depth-engine "dynamic analysis" (2026-07-25) — founder "proceed next", chose "Anomaly & drift detection"
+
+On branch `anomaly-detection` off main (cf75687). Next deterministic depth-engine
+slice = the "dynamic analysis based on logs" the founder repeatedly asked for.
+Shipped **D10 spend anomaly** (`services/rules/d10_spend_anomaly`): robust temporal
+spike detection over the audit's OWN daily-spend series — median + MAD, NOT mean +
+std, so a spike cannot inflate its own baseline and hide (a std-based detector
+would). A day flags only when it clears TWO scale-free gates — statistical
+(>= d10_z_threshold=3.5 MADs above the median day; on a perfectly flat baseline z
+is undefined and the gate is carried by materiality) AND materiality
+(>= d10_spike_mult=2.0x the median) — over a weekly baseline (>= d10_min_days=7).
+Both gates are scale-free, so window length never dilutes a real spike (the
+excess-share-of-total gate was DROPPED in the gate round — cold-reviewer f.3:
+it caused a window-length-dependent false negative on long audits and was
+redundant with the multiple gate). Self-referential (each
+day vs the customer's OWN typical day), so a legitimately heavier route is NEVER
+mistaken for waste (the founder's 100%-precise bar). INFORMATIONAL: $0 claimed (like
+D8) — an unnamed spike has no known fix, so we never invent a saving; complementary
+to the pattern detectors (D4/D6/D1 price the recoverable part on the same day, not
+duplicated). Honestly DORMANT below the weekly baseline and on aggregates
+(INACTIVE_ON_AGGREGATE — the aggregate path prices buckets itself). Each spike
+attributes its top DRIVER (model + route). NO new rate/estimator (sums the coster's
+cost_usd + statistics) → NO golden owed; pinned by hand-derived RATE-INDEPENDENT
+multiples (day/median cancels the rate). FILE MAP: +d10_spend_anomaly; registry
+DETECTORS + INACTIVE_ON_AGGREGATE (+d10); config d10_* + .env.example; help_registry
+d10 entry + help._threshold_values (+4); +tests/test_rules.py::TestD10 (11 cases:
+rate-indep golden multiple, driver attribution, dormancy, flat-silent, robustness,
+each of 3 gates, untagged, chronological ids, short-fixture dormant) +
+tests/test_spend_anomaly.py (journey: 7-day spike fixture → real audit → reachable
+/findings + drawer plain-English BOTH audiences) + tests/fixtures/spend_spike.csv;
+test_dashboard help-count(8→9), test_source_audit coverage(8→9), test_aggregate_rules
+INACTIVE list. Surfaces through the EXISTING finding UI (Findings + drawer) — no new
+route, no endpoints.md drift. Engine pure (T-NFR-01), FR-22 counts-only. OPEN
+(parked BACKLOG, NOT silently changed): the "six detectors" customer copy
+(landing/first-run/findings/tour/docs) is stale — engine now runs 9 (d1-6 savings +
+d8/d9/d10 informational); needs a deliberate messaging refresh (savings-finders vs
+informational insights) with the ux gate, not a mid-slice find-replace.
+GATE ROUND (all 5 PASS-WITH-NOTES, full suite green, notes ACTIONED): cold f.1 →
+severity now anomaly-native by the deviation MULTIPLE (>=10x HIGH, >=4x MED, else
+LOW), not the monthly-USD scale; f.2 → test_05 rewritten to genuinely demonstrate
+robustness (two mutually-masking spikes a mean+std detector misses — asserted z<bar
+— but median+MAD catches both); f.3 → dropped the window-dependent excess-share
+gate (two scale-free gates now); f.4 → docstring softened + day-of-week/seasonal
+baseline parked (BACKLOG). ux f.1/f.2 → the $0.00 waste headline is replaced by an
+honest "Informational" chip for D5/D8/D10 in _finding_drawer.html; the per-incident
+figure prominence (needs FindingRow.detail persisted) parked (BACKLOG). vv f.2 →
++3 guard-branch tests (empty / all-unpriced / median<=0). spec f.1 → requirements.md
+FR-33 amendment (R-DEPTH-ENGINE) backfills the D8/D9/D10 depth detectors formally.
+system-tester → all PASS (reachable, dormant-honest, no regression, aggregate-inactive).
+
 ## PROXY-HEADERS FIX (2026-07-23) — the S-0 verify surfaced a pre-existing prod rate-limit gap
 
 The final S-0 security verify (PASS, no bypass) flagged an operational
