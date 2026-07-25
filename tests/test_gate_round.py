@@ -128,6 +128,22 @@ class TestComment:
         res = [gr.GateResult("cold-reviewer", "PASS", "")]
         assert "All gates cleared" in gr.to_comment(res)
 
+    def test_notes_are_surfaced_for_pass_with_notes(self) -> None:
+        # The whole value of a gate is its findings — PASS-WITH-NOTES must show them.
+        res = [gr.GateResult("vv-engineer", "PASS-WITH-NOTES", "1. findings.py:12 missing test")]
+        out = gr.to_comment(res)
+        assert "<details>" in out and "findings.py:12 missing test" in out
+
+    def test_clean_pass_carries_no_findings_block(self) -> None:
+        res = [gr.GateResult("spec-guard", "PASS", "some chatter that should NOT render")]
+        out = gr.to_comment(res)
+        assert "<details>" not in out and "chatter" not in out
+
+    def test_long_findings_truncated_under_comment_cap(self) -> None:
+        res = [gr.GateResult("cold-reviewer", "FAIL", "x" * 20000)]
+        out = gr.to_comment(res)
+        assert "truncated" in out and len(out) < 12000
+
 
 class TestRunRoundDryRun:
     def test_dry_run_wires_mock_verdicts_through(self, monkeypatch) -> None:

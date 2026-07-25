@@ -143,15 +143,34 @@ def run_round(base: str, dry_run: bool, mock: dict[str, str] | None = None) -> l
     return results
 
 
+_MARK = {"PASS": "✅", "PASS-WITH-NOTES": "⚠️", "FAIL": "❌", "NO-VERDICT": "❓"}
+_FINDINGS_CAP = 6000  # keep each agent's block well under GitHub's 65 536-char comment cap
+
+
 def to_comment(results: list[GateResult]) -> str:
     lines = ["## Gate round (LE-4)", "", "| Gate | Verdict |", "|------|---------|"]
     for r in results:
-        mark = {"PASS": "✅", "PASS-WITH-NOTES": "⚠️", "FAIL": "❌", "NO-VERDICT": "❓"}.get(
-            r.verdict, "❓"
-        )
-        lines.append(f"| {r.agent} | {mark} {r.verdict} |")
+        lines.append(f"| {r.agent} | {_MARK.get(r.verdict, '❓')} {r.verdict} |")
     blocked = [r.agent for r in results if r.verdict in ("FAIL", "NO-VERDICT")]
     lines += ["", ("**BLOCKED** — " + ", ".join(blocked)) if blocked else "**All gates cleared.**"]
+    # A gate's NOTES are the whole point of a gate — surface every non-clean verdict's
+    # findings inline (collapsed) so PASS-WITH-NOTES is ACTIONABLE on the PR, not lost in
+    # the run log. A clean PASS carries nothing to resolve, so it stays a table row only.
+    for r in results:
+        if r.verdict == "PASS":
+            continue
+        body = (r.output or "").strip()
+        if len(body) > _FINDINGS_CAP:
+            body = "…(truncated; full text in the CI log)…\n" + body[-_FINDINGS_CAP:]
+        lines += [
+            "",
+            f"<details><summary>{_MARK.get(r.verdict, '❓')} {r.agent} — {r.verdict}</summary>",
+            "",
+            "```",
+            body or "(no output captured)",
+            "```",
+            "</details>",
+        ]
     return "\n".join(lines)
 
 
@@ -169,6 +188,10 @@ def main() -> int:
     args = ap.parse_args()
 
     results = run_round(args.base, dry_run=args.dry_run)
+    # Full per-agent output to the CI log first (untruncated backup), then the comment.
+    for r in results:
+        if not args.dry_run:
+            print(f"\n===== {r.agent} ({r.verdict}) =====\n{(r.output or '').strip()}")
     comment = to_comment(results)
     print(comment)
     if args.comment_out:
