@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Tokenomics breakdown (deterministic depth engine, slice 1) — SAMPLE DATA</title>
+<style>
+  /* Faithful to web/static/wa-design.css tokens (sanchaya / light). */
+  :root {
+    --ground:#fafaf8; --surface:#ffffff; --surface-raised:#f4f4f0;
+    --ink:#15171a; --ink-soft:#565b62; --rule:#e4e4dd;
+    --accent:#0e6e5e; --accent-ink:#0a564a; --on-accent:#fff; --money:#15171a;
+    --verified:#0e6e5e; --verified-bg:#e4f1ee; --verified-line:#c6e0da;
+    --estimate:#8a5a0b; --estimate-bg:#faf0de; --estimate-line:#ecd9b0;
+    --waste:#b02f22; --waste-bg:#fbeae8; --waste-line:#f0cbc6;
+    --sans:"Inter",system-ui,"Segoe UI",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Consolas,monospace;
+    --s1:8px; --s2:16px; --s3:24px; --s4:32px; --radius:10px; --radius-sm:6px;
+    --lift-1:0 1px 2px rgba(21,23,26,.05);
+    --lift-2:0 1px 2px rgba(21,23,26,.05),0 6px 18px -8px rgba(21,23,26,.12);
+  }
+  * { box-sizing:border-box; }
+  body { font:15px/1.55 var(--sans); color:var(--ink); background:var(--ground); margin:0; padding:32px; }
+  .doc { max-width:1040px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  h2.section { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:34px 0 10px; }
+  .note { color:var(--ink-soft); max-width:76ch; font-size:14px; }
+  .note b { color:var(--ink); }
+  code { font:12px var(--mono); background:var(--surface-raised); padding:1px 5px; border-radius:4px; }
+  .canvas { background:var(--ground); border:1px solid var(--rule); border-radius:var(--radius); padding:var(--s3); margin:10px 0 8px; }
+
+  /* vitals strip — the tokenomics top line, all EXACT */
+  .vitals { display:grid; grid-template-columns:repeat(5,1fr); gap:var(--s2); }
+  @media (max-width:820px){ .vitals{ grid-template-columns:repeat(2,1fr); } }
+  .vital { background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius); padding:var(--s2) var(--s3); box-shadow:var(--lift-1); }
+  .vital .k { font-size:12px; color:var(--ink-soft); }
+  .vital .v { font:640 24px/1.1 var(--sans); color:var(--money); margin-top:4px; letter-spacing:-.02em; }
+  .vital .sub { font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .vital.warn .v { color:var(--waste); }
+
+  .tabs { display:flex; gap:6px; margin:var(--s3) 0 var(--s2); flex-wrap:wrap; }
+  .tab { font-size:13px; font-weight:600; padding:6px 14px; border-radius:999px; border:1px solid var(--rule); background:var(--surface); color:var(--ink-soft); cursor:pointer; }
+  .tab.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+
+  .card { background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius); box-shadow:var(--lift-1); padding:var(--s3); }
+  table.bd { width:100%; border-collapse:collapse; font-size:14px; }
+  table.bd th { text-align:left; font-size:12px; color:var(--ink-soft); font-weight:600; border-bottom:1px solid var(--rule); padding:8px; white-space:nowrap; }
+  table.bd th.r, table.bd td.r { text-align:right; font-variant-numeric:tabular-nums; }
+  table.bd td { padding:9px 8px; border-bottom:1px solid var(--rule); }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd .name { font-weight:600; }
+  .bar { height:6px; border-radius:999px; background:var(--surface-raised); overflow:hidden; margin-top:4px; }
+  .bar span { display:block; height:100%; background:var(--accent); }
+  .chip { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .chip-bad { color:var(--waste); background:var(--waste-bg); border:1px solid var(--waste-line); }
+  .chip-ok { color:var(--verified); background:var(--verified-bg); border:1px solid var(--verified-line); }
+  .cell-bad { color:var(--waste); font-weight:600; }
+
+  /* granular insights — precise, dollar-quantified, plain-English */
+  .insights { display:grid; gap:var(--s2); margin-top:var(--s2); }
+  .insight { border-left:3px solid var(--waste); background:var(--surface); border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:12px 16px; box-shadow:var(--lift-1); }
+  .insight .top { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .insight .t { font-weight:640; }
+  .insight .$ { font:640 18px/1 var(--sans); color:var(--money); white-space:nowrap; }
+  .insight .$ span { font-size:12px; font-weight:500; color:var(--ink-soft); }
+  .insight .sum { margin:6px 0 0; color:var(--ink-soft); font-size:13px; }
+  .insight.info { border-left-color:var(--accent); }
+  .callout { border-left:3px solid var(--accent); background:var(--surface); padding:12px 16px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:8px 0; font-size:14px; }
+  ul.plain { padding-left:18px; } ul.plain li { margin:5px 0; }
+  .muted { color:var(--ink-soft); font-size:13px; }
+  .samplebadge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--estimate); background:var(--estimate-bg); border:1px solid var(--estimate-line); border-radius:999px; padding:3px 10px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>Tokenomics breakdown — enterprise FinOps-for-AI analysis (depth engine, slice 1)</h1>
+  <p class="note"><b>The answer to "why so few findings" — enterprise-grade, not a POC.</b> One audit
+    now produces an <b>abundant, granular, industry-standard</b> analysis of where every token and
+    dollar goes: the tokenomics vitals, a multi-dimensional breakdown, cost allocation
+    (showback/chargeback), unit economics, deterministic run-rate/forecast, and a data-coverage report —
+    and every inefficient slice becomes its own precise, dollar-quantified insight. Every number is
+    <b>exact arithmetic on a machine-verified rate card</b> — no model, no estimate — so it is
+    reproducible and reconciles to the penny against the provider invoice, which is exactly what an
+    enterprise finance/FinOps team requires and an LLM tool cannot do. <span class="samplebadge">◆ ILLUSTRATIVE FIGURES</span>
+    — shape only; the wired view renders live-computed exact numbers from your logs.</p>
+
+  <h2 class="section">The tokenomics vitals (exact)</h2>
+  <div class="canvas">
+    <div class="vitals">
+      <div class="vital"><div class="k">Monthly spend</div><div class="v">$12,480</div><div class="sub">30-day window, priced</div></div>
+      <div class="vital"><div class="k">Tokens</div><div class="v">1.94B</div><div class="sub">1.61B in · 0.33B out</div></div>
+      <div class="vital warn"><div class="k">Cache-hit rate</div><div class="v">6%</div><div class="sub">of cacheable input · low</div></div>
+      <div class="vital"><div class="k">Output : input</div><div class="v">1 : 4.9</div><div class="sub">output share of tokens</div></div>
+      <div class="vital warn"><div class="k">Cost / 1k output</div><div class="v">$0.038</div><div class="sub">blended · 2.1× your cheapest route</div></div>
+    </div>
+  </div>
+
+  <h2 class="section">Breakdown — by model / route / time / prompt size</h2>
+  <div class="tabs">
+    <span class="tab on">By model</span><span class="tab" style="opacity:.55">By route</span>
+    <span class="tab" style="opacity:.55">By hour of day</span><span class="tab" style="opacity:.55">By prompt-size bucket</span>
+  </div>
+  <p class="muted" style="margin:-6px 0 10px">Mockup: only <b>By model</b> is populated; in the wired
+    view each tab reloads the same table for that dimension (SSR, one live control — no dead tab).</p>
+  <div class="card">
+    <div style="overflow-x:auto">
+    <table class="bd" aria-label="Spend breakdown by model">
+      <thead><tr>
+        <th>Model</th><th class="r">Share</th><th class="r">Monthly $</th><th class="r">Calls</th>
+        <th class="r">Cache hit</th><th class="r">Out:in</th><th class="r">$/1k out</th><th></th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">claude-opus-4-8<div class="bar"><span style="width:71%"></span></div></td>
+          <td class="r">71%</td><td class="r">$8,860</td><td class="r">412k</td>
+          <td class="r cell-bad">3%</td><td class="r">1:6.2</td><td class="r">$0.050</td>
+          <td><span class="chip chip-bad">oversized + no cache</span></td>
+        </tr>
+        <tr>
+          <td class="name">gpt-5.6-luna<div class="bar"><span style="width:18%"></span></div></td>
+          <td class="r">18%</td><td class="r">$2,250</td><td class="r">1.1M</td>
+          <td class="r">44%</td><td class="r">1:2.1</td><td class="r">$0.019</td>
+          <td><span class="chip chip-ok">efficient</span></td>
+        </tr>
+        <tr>
+          <td class="name">claude-sonnet-5<div class="bar"><span style="width:11%"></span></div></td>
+          <td class="r">11%</td><td class="r">$1,370</td><td class="r">205k</td>
+          <td class="r cell-bad">9%</td><td class="r">1:3.4</td><td class="r">$0.031</td>
+          <td><span class="chip chip-bad">low cache</span></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted" style="margin-top:10px">Every cell is exact: <code>Σ cost_usd</code> over the slice,
+      priced per-row on the pinned rate card. On a connected (aggregate) source, route / hour /
+      prompt-size dimensions honestly show "requires per-request logs".</p>
+  </div>
+
+  <h2 class="section">Granular insights — each an exact, dollar-quantified line</h2>
+  <div class="insights">
+    <div class="insight">
+      <div class="top"><span class="t">claude-opus-4-8 runs 47% of calls that finish under 150 output tokens</span>
+        <span class="$">$3,120<span>/mo</span></span></div>
+      <p class="sum">Nearly half of your most expensive model's calls are short answers a cheaper model
+        handles identically. Routing just those calls to gpt-5.6-luna saves the exact difference at the
+        billed token counts.</p>
+    </div>
+    <div class="insight">
+      <div class="top"><span class="t">Route <code>support-bot</code> re-sends the same 3,400-token prompt uncached, 12k× </span>
+        <span class="$">$1,940<span>/mo</span></span></div>
+      <p class="sum">A stable instruction prefix is sent full-price on every call. Caching it (the prefix
+        is hash-identical) reclaims the read discount on the repeated span.</p>
+    </div>
+    <div class="insight info">
+      <div class="top"><span class="t">Peak-hour spend concentration: 08:00–10:00 UTC is 38% of spend on <code>rag</code></span>
+        <span class="$">$0<span>/mo — pointer</span></span></div>
+      <p class="sum">Not waste, but the highest-leverage window/route to optimize first — start here.</p>
+    </div>
+  </div>
+
+  <h2 class="section">Cost allocation — showback / chargeback (by team &amp; environment)</h2>
+  <div class="card">
+    <div style="overflow-x:auto">
+    <table class="bd" aria-label="Cost allocation by team">
+      <thead><tr><th>Team / cost-center</th><th>Env</th><th class="r">Share</th><th class="r">Monthly $</th><th class="r">Δ MoM</th><th class="r">$/1k out</th></tr></thead>
+      <tbody>
+        <tr><td class="name">search-platform</td><td>prod</td><td class="r">44%</td><td class="r">$5,490</td><td class="r cell-bad">+31%</td><td class="r">$0.047</td></tr>
+        <tr><td class="name">support-ai</td><td>prod</td><td class="r">28%</td><td class="r">$3,490</td><td class="r">+6%</td><td class="r">$0.022</td></tr>
+        <tr><td class="name">data-eng (batch)</td><td>prod</td><td class="r">17%</td><td class="r">$2,120</td><td class="r">−4%</td><td class="r">$0.015</td></tr>
+        <tr><td class="name">experiments</td><td>staging</td><td class="r">11%</td><td class="r">$1,380</td><td class="r cell-bad">+120%</td><td class="r">$0.061</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted" style="margin-top:10px">Attributed from your call <code>tag</code> (map tags → cost-centers
+      once). Untagged spend is its OWN row + surfaced in Data coverage below — never silently allocated,
+      so the numbers reconcile to the penny against your provider invoice.</p>
+  </div>
+
+  <h2 class="section">Unit economics (exact)</h2>
+  <div class="canvas"><div class="vitals">
+    <div class="vital"><div class="k">Cost / request</div><div class="v">$0.0203</div><div class="sub">616k requests</div></div>
+    <div class="vital"><div class="k">Cost / 1M input</div><div class="v">$4.12</div><div class="sub">blended</div></div>
+    <div class="vital"><div class="k">Cost / 1M output</div><div class="v">$21.30</div><div class="sub">blended</div></div>
+    <div class="vital"><div class="k">Cost / active route</div><div class="v">$1,040</div><div class="sub">12 tagged routes</div></div>
+    <div class="vital"><div class="k">Waste share</div><div class="v">14.2%</div><div class="sub">recoverable / spend</div></div>
+  </div></div>
+
+  <h2 class="section">Run-rate, forecast &amp; budget reference (deterministic projection)</h2>
+  <div class="canvas"><div class="vitals">
+    <div class="vital"><div class="k">Run-rate</div><div class="v">$13,900</div><div class="sub">trailing-7d annualised /mo</div></div>
+    <div class="vital"><div class="k">Projected month-end</div><div class="v">$14,600</div><div class="sub">MTD + trend</div></div>
+    <div class="vital"><div class="k">MoM growth</div><div class="v">+18%</div><div class="sub">vs last full month</div></div>
+    <div class="vital warn"><div class="k">vs budget reference</div><div class="v">+$2,600</div><div class="sub">over a $12k reference</div></div>
+    <div class="vital"><div class="k">If waste fixed</div><div class="v">$12,530</div><div class="sub">−14.2%</div></div>
+  </div></div>
+
+  <h2 class="section">Data coverage &amp; quality (enterprises trust completeness)</h2>
+  <div class="canvas"><div class="vitals">
+    <div class="vital"><div class="k">Spend priced</div><div class="v">99.2%</div><div class="sub">0.8% unpriced · 2 models named</div></div>
+    <div class="vital"><div class="k">Spend attributed</div><div class="v">91%</div><div class="sub">9% untagged · listed</div></div>
+    <div class="vital"><div class="k">Detector coverage</div><div class="v">100%</div><div class="sub">per-request · all detectors ran</div></div>
+    <div class="vital"><div class="k">Rate card</div><div class="v">verified</div><div class="sub">machine-checked, 3d ago</div></div>
+    <div class="vital"><div class="k">Reproducible</div><div class="v">byte-identical</div><div class="sub">same logs → same report</div></div>
+  </div></div>
+
+  <h2 class="section">Design decisions &amp; why this is the moat</h2>
+  <div class="callout"><b>Deterministic, not a model.</b> Every figure is <code>Σ cost_usd</code> /
+    token-count arithmetic on the machine-verified rate card — no LLM, no trained model, no estimate.
+    Same logs → byte-identical breakdown, every run. That reproducibility + FR-22 privacy (we never read
+    prompt text, only counts) is exactly what a customer's finance team can trust and a GPT-wrapper
+    competitor cannot match.</div>
+  <ul class="plain note">
+    <li><b>Many granular findings, not categories (founder ask).</b> One audit → a breakdown across 4
+      dimensions × N slices, and every inefficient slice becomes its own precise dollar line. The
+      dimensions multiply the finding surface without any estimation.</li>
+    <li><b>Savings stay 100% precise + disjoint.</b> Insight dollars reuse the SAME detector math
+      (D1/D2/… sliced by dimension), so a slice's $ never double-counts a detector finding — it's the
+      same money, attributed to where it lives. Informational slices (concentration, peak-hour) carry
+      $0 and say so.</li>
+    <li><b>Reachability (R-VERTICAL).</b> A "Breakdown" destination in the app (Monitor group), plus a
+      breakdown section in the report — reachable, not a dead widget.</li>
+    <li><b>Honest coverage.</b> Per-request dimensions (route / hour / prompt-size) need per-request
+      logs; a connected aggregate source labels them "requires per-request logs" (same law as D4–D9),
+      reinforcing why upload/SDK is the deep path.</li>
+    <li><b>Reconciles to the invoice + data-quality report.</b> % priced / % attributed / untagged /
+      unpriced are shown, so an enterprise trusts the numbers are COMPLETE, not cherry-picked — the
+      audit-grade property LLM tools can't offer.</li>
+    <li><b>X-02 respected.</b> The budget figure is a DISPLAY REFERENCE for variance only — informational,
+      never an enforcement gate on the customer's traffic (same posture as the existing forecast
+      overspend alert). No proxy, no policy enforcement, ever.</li>
+    <li><b>Plain-English + technical.</b> Each insight leads with the human sentence; the exact
+      token/rate arithmetic is the technical detail (the finding grammar we just shipped).</li>
+    <li><b>One designed delight.</b> The vitals strip: five exact numbers that let a founder feel their
+      whole tokenomics in one glance, with the two unhealthy ones in the waste colour.</li>
+  </ul>
+
+  <p class="note" style="margin-top:22px"><b>Mockup only — illustrative figures.</b> Numbers here show
+    the breakdown's SHAPE for a mid-size customer; the wired view computes them live and exactly from
+    the audited frame. This is slice 1 of the deterministic depth engine — statistical anomaly
+    detection and optimization what-ifs are the following slices.</p>
+</div>
+</body>
+</html>
