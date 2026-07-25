@@ -51,6 +51,7 @@ INACTIVE_ON_AGGREGATE: tuple[str, ...] = (
     "d6_chatty_loop",
     "d8_spend_concentration",  # needs per-request route tags
     "d9_ineffective_cache",  # aggregates carry no cache_write count
+    "d10_spend_anomaly",  # needs per-request daily spend (aggregate prices buckets itself)
 )
 UPGRADE_PATH_LINE = (
     "Requires per-request logs — upload a JSONL export or run the collector "

@@ -460,3 +460,50 @@ it under R-PIPELINE-UI-SEQ.
   gap more prominently so users choose the deep path. Stays DETERMINISTIC (X-04 —
   no LLM narrative); "dynamic" = data-driven per-route, not ML. Founder said: ship
   the guided-first-run rev (plain-English + upload-primary) FIRST, then this.
+
+- "SIX DETECTORS" COPY IS STALE (surfaced during the D10 anomaly slice,
+  2026-07-25). The engine now runs NINE detectors — d1-d6 (savings) + d8/d9/d10
+  (informational: concentration, ineffective-cache flip, spend anomaly) — but the
+  customer-facing copy still says "six detectors" in landing.html (x2),
+  app/_first_run.html, app/findings.html, static/tour.js, docs-site/concepts/how-it-
+  works.md and engineering/performance.md. Went stale when D8/D9 landed (PR #18) and
+  D10 makes it staler. NOT a mechanical find-replace: needs a deliberate messaging
+  decision that honestly distinguishes the six savings-finders (find avoidable
+  spend) from the informational insights (point you where to look), validated to the
+  ux gate — and it touches the just-retoned landing (#20), so it is its own small
+  slice, not folded into an unrelated detector build. No test asserts "six", so
+  nothing is broken today; this is an honesty/completeness refresh.
+
+- ANOMALY DEPTH-ENGINE — NEXT SLICES (after D10, 2026-07-25). D10 ships DAILY
+  within-audit spike detection. Natural follow-ups, each a clean deterministic
+  vertical slice: (a) CROSS-AUDIT DRIFT — compare this audit's tokenomics.json
+  vitals to the prior audit's (both now persisted) and flag efficiency REGRESSIONS
+  (cost-per-1k-output up, cache-hit down, waste-share up); like-to-like over time,
+  so precise; new finding/alert class; needs >=2 audits with the artifact (honest
+  first-audit empty state). (b) INTRA-DAY / FINER GRANULARITY — hourly buckets so a
+  single-day-dense upload (thousands of calls in one day) can still surface a spike
+  (D10 needs >=7 days today; a one-day log is honestly dormant). (c) SEED THE SAMPLE
+  with a multi-day planted spike so the first-run OUTPUT PREVIEW demonstrates the
+  anomaly capability (the committed waste-pack spans 3 days → D10 dormant on it, so
+  a new user does not see anomaly detection until they upload >=7 days; a seeded
+  sample would demo it — but changes the sample figures, which ripples to
+  test_guided_first_run / the preview, so it is a scoped follow-up, not a mid-slice
+  edit). (d) DAY-OF-WEEK / SEASONAL BASELINE (cold-reviewer note on D10,
+  2026-07-25): D10 uses a single window-wide median, so a LEGITIMATELY recurring
+  heavy day (a scheduled weekly batch) re-flags every occurrence — honest today (the
+  finding asks the user to VERIFY, and lists "a backfill" as an intended cause), but
+  a day-of-week / seasonal baseline (compare Sundays to Sundays) would stop
+  re-flagging a known pattern. All stay DETERMINISTIC (X-04), FR-22 counts-only.
+
+- INFORMATIONAL FINDINGS — SURFACE THE PER-INCIDENT FIGURE (ux-reviewer note on D10,
+  2026-07-25). Informational findings (D5/D8/D10) carry monthly_cost_impact_usd=0, so
+  the drawer headline no longer shows a misleading "$0.00" (fixed in the D10 slice: it
+  now shows an "Informational — no saving claimed" chip). But D10's genuinely useful
+  per-incident number (the spike day's excess $, the multiple) currently lives only in
+  the plain-English fix_text, not in a prominent structured slot, because FindingRow
+  persists only {route, severity, monthly_impact, confidence, fix_text, evidence} — NOT
+  the detector's detail{} dict. Follow-up: persist FindingRow.detail (a JSON column +
+  migration) so the drawer can render an informational finding's key figure (excess $,
+  multiple, spike day) prominently at depth (a)/(b) for BOTH audiences — a cross-cutting
+  display change across all informational detectors, hence its own small slice with a
+  ux pass, not folded into a detector build.
