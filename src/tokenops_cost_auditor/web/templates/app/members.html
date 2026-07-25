@@ -54,7 +54,7 @@
               <option value="{{ r }}" {% if r == m.role %}selected{% endif %}>{{ r }}</option>
               {% endfor %}
             </select>
-            {{ kit.button("Set") }}
+            {{ kit.button("Save role") }}
           </form>
           <form method="post" action="/settings/members/{{ m.id }}/revoke" class="inline-form"
                 data-confirm="Remove this member from the workspace? They lose access on their next request.">

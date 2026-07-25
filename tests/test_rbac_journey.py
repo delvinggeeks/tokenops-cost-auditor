@@ -89,6 +89,19 @@ class TestRenderedSurfacePerRole:
             assert 'aria-label="Revoke this connection"' not in page
             assert "managed by owners and admins" in page.lower()  # honest read-only note
 
+    def test_connect_wizard_surface_not_shown_to_non_managers(self, app: FastAPI) -> None:
+        # The gate-round caught this: the Connect BUTTON was hidden but the wizard PAGE
+        # rendered its credential form to anyone who navigated directly. A non-manager
+        # is now redirected to /sources (never sees the form); a manager gets it.
+        _seed(app)
+        c = TestClient(app)
+        for mgr in (OWNER, ADMIN):
+            r = c.get("/sources/connect/openai", headers=_hdr(mgr), follow_redirects=False)
+            assert r.status_code == 200
+        for ro in (MEMBER, VIEWER):
+            r = c.get("/sources/connect/openai", headers=_hdr(ro), follow_redirects=False)
+            assert r.status_code == 303 and r.headers["location"] == "/sources"
+
     def test_billing_is_owner_only(self, app: FastAPI) -> None:
         _seed(app)
         c = TestClient(app)

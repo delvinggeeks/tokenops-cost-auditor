@@ -92,7 +92,10 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
         # does. (Creating/revoking a connection stays owner-scoped below —
         # who-may-mutate is O-2 RBAC; the plan-limit count stays user-scoped
         # with billing.)
-        ws = active_workspace_id(session, user.id) if user else None
+        # user is always non-None here (get_or_create_user above) — the caller passed
+        # the current_user dependency, so they are at minimum the owner of their own
+        # workspace-of-one; no no-user path exists on this authenticated route.
+        ws = active_workspace_id(session, user.id)
         sources = (
             session.execute(
                 select(Source)
@@ -101,10 +104,8 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             )
             .scalars()
             .all()
-            if user
-            else []
         )
-        plan = user_plan(session, user.id) if user else "free"
+        plan = user_plan(session, user.id)
         active_count = sum(1 for s in sources if s.status == "active")
         from tokenops_cost_auditor.persistence.models import Device, IngestKey
 
@@ -116,8 +117,6 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             )
             .scalars()
             .all()
-            if user
-            else []
         )
         ingest_keys = (
             session.execute(
@@ -127,8 +126,6 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
             )
             .scalars()
             .all()
-            if user
-            else []
         )
         # Rendered in the APP shell now, not base.html: the designed sidebar
         # links here, so rendering the old shell navigated users out of the
@@ -151,28 +148,21 @@ def sources_page(request: Request, user_email: str = Depends(current_user)) -> H
                 # O-1b-1 + data-coherence: the workspace bar AND the freshness /
                 # 'nothing connected' state on this manual-render page too, so the
                 # Sources page and the dashboard tell the SAME story.
-                **(workspace_bar(session, user.id) if user else {}),
-                # Explicit defaults on the no-user path (cold O-COH f.3): the shell
-                # references these unconditionally — don't lean on Jinja's silent
-                # Undefined falsiness to hide the banner.
-                **(
-                    data_freshness(session, user.id)
-                    if user
-                    else {"freshness": "", "sources_disconnected": False, "data_as_of": ""}
-                ),
+                **workspace_bar(session, user.id),
+                **data_freshness(session, user.id),
                 # O-2 RBAC: this page renders manually (not via _shell_ctx), so inject
                 # the perm booleans here too, or the manage controls would vanish for
-                # everyone (incl. the owner). perms_context(None) is fail-closed.
-                **authz.perms_context(active_role(session, user.id) if user else None),
+                # everyone (incl. the owner).
+                **authz.perms_context(active_role(session, user.id)),
                 show_tour=False,
             )
         )
 
 
-@router.get("/connect/{provider}", response_class=HTMLResponse)
+@router.get("/connect/{provider}", response_class=HTMLResponse, response_model=None)
 def wizard_page(
     request: Request, provider: str, user_email: str = Depends(current_user)
-) -> HTMLResponse:
+) -> HTMLResponse | RedirectResponse:
     """The 3-step guided wizard (R-MAGIC-CONNECT §1)."""
     if provider not in PROVIDERS:
         raise HTTPException(status_code=404, detail="unknown provider")
@@ -180,6 +170,12 @@ def wizard_page(
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
         session.commit()
+        # O-2 RBAC: the connect WIZARD is a manage-sources surface — a member/viewer
+        # must not even SEE it (DoD criterion 2: never render a control a role can't
+        # use). Redirect to /sources, where they get the honest read-only note, rather
+        # than a credential form whose POST would 403 anyway.
+        if not authz.can(active_role(session, user.id), authz.Perm.MANAGE_SOURCES):
+            return RedirectResponse("/sources", status_code=303)
         plan = user_plan(session, user.id)
         limit = settings.plan_source_limits.get(plan, 0)
         # O-1: owner-only create-gate — counts the CALLER's active sources against

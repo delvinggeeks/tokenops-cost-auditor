@@ -216,8 +216,9 @@ def revoke_member(
         member = session.get(WorkspaceMember, member_id)
         if member is None or member.workspace_id != ws:
             raise HTTPException(status_code=404, detail="no such member in this workspace")
-        # never the owner (a workspace always keeps its owner), never yourself.
-        if member.role == "owner" or member.user_id == user.id:
+        # never the owner (can_manage_member encodes that — the matrix is the single
+        # source of truth), never yourself (no self-revoke).
+        if member.user_id == user.id or not authz.can_manage_member(role, member.role):
             raise HTTPException(status_code=400, detail="that member cannot be removed")
         removed = session.get(User, member.user_id)
         target = removed.email if removed else member.user_id
@@ -247,7 +248,8 @@ def set_member_role(
         member = session.get(WorkspaceMember, member_id)
         if member is None or member.workspace_id != ws:
             raise HTTPException(status_code=404, detail="no such member in this workspace")
-        if member.role == "owner" or member.user_id == user.id:
+        # never the owner (via can_manage_member — single source), never yourself.
+        if member.user_id == user.id or not authz.can_manage_member(role, member.role):
             raise HTTPException(status_code=400, detail="that member's role cannot be changed")
         if new_role not in authz.assignable_roles(role):
             raise HTTPException(status_code=400, detail="not a role you can assign")

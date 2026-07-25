@@ -59,6 +59,9 @@
   .note{font-size:12px;color:var(--muted);margin-top:var(--s1)}
   .legend{font-size:13px;color:var(--muted)}
   code{background:var(--chip);padding:1px 5px;border-radius:5px;font-size:12px}
+  .toggle button{transition:background .15s ease,border-color .15s ease}
+  /* R-DESIGN-ADDENDUM: honor reduced-motion — the toggle's only animation is off here. */
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 </style>
 </head>
 <body>
@@ -79,10 +82,10 @@
       </tr></thead>
       <tbody>
         <tr><td>View reports · dashboard · runs</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
-        <tr><td>Upload / run audits <span class="note">(debatable → member = yes)</span></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+        <tr><td>Upload / run audits <span class="note">(locked: member = yes)</span></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
         <tr><td>Manage sources (connect / revoke)</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
         <tr><td>Mint / revoke ingest &amp; device keys</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
-        <tr><td>Manage members (invite / revoke / set role) <span class="note">(debatable → admin = yes, not over owner)</span></td><td class="c yes">✓</td><td class="c yes">✓*</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Manage members (invite / revoke / set role) <span class="note">(locked: admin = yes, not over owner)</span></td><td class="c yes">✓</td><td class="c yes">✓*</td><td class="c no">—</td><td class="c no">—</td></tr>
         <tr><td>Billing / plan</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
         <tr><td>Delete workspace / transfer ownership</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
       </tbody>
@@ -192,7 +195,21 @@
 
   <p class="note">Mockup for the O-2 ux gate. Interactions are illustrative; the wired
     surface reuses <code>kit/_kit.html</code> and gates server-side at the route boundary
-    (fail-closed), so a hidden control can't be reached by POSTing directly.</p>
+    (fail-closed), so a hidden control can't be reached — the connect wizard itself
+    redirects a non-manager to <code>/sources</code>.</p>
+
+  <!-- R-DESIGN-ADDENDUM (charter checklist for a gated v1.5 surface):
+       • THE ONE DESIGNED DELIGHT: the "viewing as [role]" toggle re-renders all three
+         surfaces live, so the abstract permission matrix becomes something you FEEL —
+         a viewer's page visibly loses its controls as you click, teaching the R-ORG
+         "absent, not a 403-trap" rule in one gesture.
+       • WCAG AA CONTRAST: body ink #1a1c22 on #f7f8fa ≈ 15:1; muted #6b7280 on card
+         ≈ 5.0:1; each role badge pairs a tinted ground with a same-hue dark text
+         (owner #2540b5-on-#e7edff ≈ 7:1) — all ≥ AA for their text size. Dark theme
+         mirrors the pairings.
+       • PREFERS-REDUCED-MOTION: honored — the only transition (toggle hover) is
+         removed under the reduce query above. -->
+
 </div>
 
 <script>
