@@ -212,6 +212,14 @@ detectors:
     fix: "Make the cached prefix stable and ensure repeat calls reuse it within the cache TTL — or stop caching this route. Fewer writes, more reads."
     verify: "Your next audit shows more cache reads (or fewer writes) on this route, and its net cost flips to a saving."
     methodology_url: "/methodology/#d9-ineffective-cache"
+  d10_spend_anomaly:
+    plain: "One day's spend spiked far above your normal"
+    summary: "On at least one day, your LLM spend jumped well above what you normally spend in a day. A spike like that is usually a runaway job, a data backfill, a load test, or a job sent to the wrong, pricier model — sometimes intended, sometimes not. We flag it so you can check whether that money was meant to be spent, because these events tend to repeat."
+    technical: "D10 spend anomaly"
+    why: "Flagged when a day's spend is a robust statistical outlier — at least {d10_z_threshold} MADs above your median day AND at least {d10_spike_mult}x that median — measured over at least {d10_min_days} days. Robust statistics (median + MAD) so a spike cannot hide itself; both tests are scale-free, so a long audit never dilutes a real spike out of range. Compared against your own typical day. Informational — no dollar saving is claimed."
+    fix: "Confirm the spike was intended. If it was a runaway loop, a retry storm, or a job sent to the wrong (pricier) model, fix that job so it can't recur — and check the same day's pattern findings, which price the recoverable part."
+    verify: "Your next audit shows that day's spend back near your typical range, with no unexplained spike."
+    methodology_url: "/methodology/#d10-spend-anomaly"
 
 wizard:
   # Honest key framing (founder walkthrough 2026-07-22, verified against

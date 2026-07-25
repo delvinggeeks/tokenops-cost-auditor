@@ -20,6 +20,7 @@ from tokenops_cost_auditor.services.rules.d2_missing_cache import D2MissingCache
 from tokenops_cost_auditor.services.rules.d4_retry_storm import D4RetryStorm
 from tokenops_cost_auditor.services.rules.d8_spend_concentration import D8SpendConcentration
 from tokenops_cost_auditor.services.rules.d9_ineffective_cache import D9IneffectiveCache
+from tokenops_cost_auditor.services.rules.d10_spend_anomaly import D10SpendAnomaly
 from tokenops_cost_auditor.services.rules.findings import (
     Confidence,
     EvidenceRef,
@@ -127,6 +128,7 @@ class TestTRUL00Registry:
             "d6_chatty_loop",
             "d8_spend_concentration",
             "d9_ineffective_cache",
+            "d10_spend_anomaly",
         ]
 
 
@@ -876,3 +878,176 @@ class TestD9IneffectiveCache:
         # savings can never double-count on one route.
         frame = self._net_loss_frame()
         assert D2MissingCache().run(frame, ctx_for(frame)) == []
+
+
+class TestD10SpendAnomaly:
+    """D10 — deterministic temporal spend-anomaly detection (founder 2026-07-25,
+    "dynamic analysis based on logs"). Robust (median + MAD) daily-spike detection
+    vs the audit's own baseline; informational ($0 claimed). Rate-independent
+    goldens: daily spend is proportional to row count on identical rows, so the
+    flagged MULTIPLE (day / median) cancels the rate and is hand-derivable."""
+
+    # July, N days each with `n` identical claude-haiku rows; day `spike_day` gets
+    # `spike_n` rows (optionally a different model/route) — a clean spend series.
+    def _series(
+        self,
+        baseline_days: int,
+        n: int,
+        spike_day: int | None = None,
+        spike_n: int = 0,
+        spike_model: str = "claude-haiku-4-5",
+        spike_tag: str = "chat",
+        baseline_counts: list[int] | None = None,
+    ) -> pd.DataFrame:
+        rows: list[dict] = []
+        for d in range(1, baseline_days + 1):
+            count = baseline_counts[d - 1] if baseline_counts else n
+            for _ in range(count):
+                rows.append(
+                    {
+                        "ts": datetime(2026, 7, d, 12, tzinfo=UTC),
+                        "model": "claude-haiku-4-5",
+                        "tag": "chat",
+                        "prompt_tokens": 2000,
+                        "completion_tokens": 100,
+                    }
+                )
+        if spike_day is not None:
+            for _ in range(spike_n):
+                rows.append(
+                    {
+                        "ts": datetime(2026, 7, spike_day, 12, tzinfo=UTC),
+                        "model": spike_model,
+                        "tag": spike_tag,
+                        "prompt_tokens": 2000,
+                        "completion_tokens": 100,
+                    }
+                )
+        return synth_frame(rows)
+
+    def test_01_flags_spike_multiple_is_rate_independent_golden(self) -> None:
+        # 7 quiet days (2 rows each) + 1 day of 20 identical rows → the spike day
+        # is exactly 10x the median day, whatever the rate is (rows cancel).
+        frame = self._series(7, 2, spike_day=8, spike_n=20)
+        findings = D10SpendAnomaly().run(frame, ctx_for(frame))
+        assert len(findings) == 1
+        f = findings[0]
+        assert f.detector == "d10_spend_anomaly"
+        assert f.id == "D10-001"
+        assert f.monthly_cost_impact_usd == 0.0  # informational — never a claimed saving
+        assert f.confidence is Confidence.ESTIMATED
+        assert f.detail["day"] == "2026-07-08"
+        assert f.detail["multiple"] == pytest.approx(10.0)
+        assert f.severity is Severity.HIGH  # a 10x day is loud (deviation-scaled)
+        assert f.detail["robust_z"] is None  # flat baseline → MAD 0, z undefined
+        assert f.evidence and f.evidence[0].note == "spend spike"
+        assert "2026-07-08" in f.fix_text and "typical day" in f.fix_text
+
+    def test_02_attributes_the_top_driver_model_and_route(self) -> None:
+        # baseline is haiku/chat; the spike day is dominated by opus/batch.
+        frame = self._series(
+            7, 2, spike_day=8, spike_n=8, spike_model="claude-opus-4-8", spike_tag="batch"
+        )
+        f = D10SpendAnomaly().run(frame, ctx_for(frame))[0]
+        assert f.detail["model"] == "claude-opus-4-8"
+        assert f.detail["top_route"] == "batch"
+        assert "claude-opus-4-8" in f.fix_text and "batch" in f.fix_text
+
+    def test_03_dormant_below_min_days(self) -> None:
+        # 6 days with a spike: below the weekly baseline → silent, never guesses.
+        frame = self._series(6, 2, spike_day=6, spike_n=40)
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+    def test_04_silent_on_flat_spend(self) -> None:
+        # 10 identical days, no spike → nothing flagged (no false positive).
+        frame = self._series(10, 3)
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+    def test_05_robust_baseline_two_masking_spikes_a_mean_detector_would_miss(self) -> None:
+        # 8 quiet days + TWO big spike days (days 5 and 8). The two spikes inflate a
+        # mean+std scale so much that each spike's OWN mean/std z falls below the bar
+        # (they mask each other) — a mean-based detector MISSES them. median + MAD are
+        # unmoved, so D10 catches BOTH. This is the robustness the detector is built on.
+        frame = self._series(10, 1, baseline_counts=[1, 1, 1, 1, 50, 1, 1, 50, 1, 1])
+        findings = D10SpendAnomaly().run(frame, ctx_for(frame))
+        assert [f.detail["day"] for f in findings] == ["2026-07-05", "2026-07-08"]
+        # ...prove a mean+std detector would have MISSED them: the spike's mean/std
+        # z-score is below the same threshold the robust detector clears.
+        daily = frame.groupby(frame["ts"].dt.date)["cost_usd"].sum()
+        mean, std = float(daily.mean()), float(daily.std(ddof=0))
+        z_meanstd = (float(daily.max()) - mean) / std
+        assert z_meanstd < make_settings().d10_z_threshold
+
+    def test_06_z_gate_active(self) -> None:
+        # varied baseline (MAD>0) + spike fires by default; an unreachable z bar
+        # suppresses it — proving the statistical gate is wired.
+        frame = self._series(7, 2, spike_day=8, spike_n=12, baseline_counts=[2, 3, 2, 3, 2, 3, 2])
+        assert D10SpendAnomaly().run(frame, ctx_for(frame))  # default: flagged
+        tuned = make_settings(d10_z_threshold=1000.0)
+        assert D10SpendAnomaly().run(frame, ctx_for(frame, tuned)) == []
+
+    def test_07_multiple_gate_active(self) -> None:
+        # a day only 1.5x the median never clears the materiality bar (spike_mult=2).
+        frame = self._series(7, 2, spike_day=8, spike_n=3)  # day8 = 3 rows vs 2 = 1.5x
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+    def test_08_severity_scales_with_the_deviation_multiple(self) -> None:
+        # loudness is the deviation's OWN magnitude (x a typical day): >=10x HIGH,
+        # >=4x MED, else LOW — scale-free, NOT the monthly-USD scale the savings
+        # detectors use (an anomaly makes no monthly claim to scale).
+        hi = self._series(7, 2, spike_day=8, spike_n=20)  # 10x
+        md = self._series(7, 2, spike_day=8, spike_n=10)  # 5x
+        lo = self._series(7, 2, spike_day=8, spike_n=5)  # 2.5x
+        assert D10SpendAnomaly().run(hi, ctx_for(hi))[0].severity is Severity.HIGH
+        assert D10SpendAnomaly().run(md, ctx_for(md))[0].severity is Severity.MED
+        assert D10SpendAnomaly().run(lo, ctx_for(lo))[0].severity is Severity.LOW
+
+    def test_09_untagged_spike_flags_on_model_alone(self) -> None:
+        # a spike with no route tag still flags (driver = model), route is None.
+        frame = self._series(7, 2, spike_day=8, spike_n=20, spike_tag="")
+        f = D10SpendAnomaly().run(frame, ctx_for(frame))[0]
+        assert f.detail["top_route"] is None
+        assert "on route" not in f.fix_text
+
+    def test_10_two_spikes_number_chronologically(self) -> None:
+        frame = self._series(10, 2, baseline_counts=[2, 20, 2, 2, 2, 2, 20, 2, 2, 2])
+        findings = D10SpendAnomaly().run(frame, ctx_for(frame))
+        assert [f.id for f in findings] == ["D10-001", "D10-002"]
+        assert [f.detail["day"] for f in findings] == ["2026-07-02", "2026-07-07"]
+
+    def test_11_dormant_on_short_real_fixture(self, waste_pack: pd.DataFrame) -> None:
+        # the committed waste_pack spans 3 days — d10 must not fabricate a spike
+        # on it (keeps run_all's detector set at d1-d6 for that fixture).
+        assert D10SpendAnomaly().run(waste_pack, ctx_for(waste_pack)) == []
+
+    def test_12_empty_frame_is_silent(self) -> None:
+        frame = self._series(7, 1).iloc[0:0]  # a real priced frame, emptied to 0 rows
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+    def test_13_all_unpriced_rows_are_silent(self) -> None:
+        # every row is an unpriced model (NaN cost) → nothing to analyse, no crash.
+        frame = synth_frame(
+            [
+                {"ts": datetime(2026, 7, d, 12, tzinfo=UTC), "model": "made-up-model-xyz"}
+                for d in range(1, 9)
+            ]
+        )
+        assert frame["cost_usd"].isna().all()
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []
+
+    def test_14_degenerate_median_zero_is_silent(self) -> None:
+        # >half the days spent nothing (zero-token calls → $0) → median is 0, no
+        # baseline to deviate from → silent (guards the divide), never a crash.
+        rows = [
+            {"ts": datetime(2026, 7, d, 12, tzinfo=UTC), "prompt_tokens": 0, "completion_tokens": 0}
+            for d in range(1, 5)  # 4 zero-cost days
+        ] + [
+            {
+                "ts": datetime(2026, 7, d, 12, tzinfo=UTC),
+                "prompt_tokens": 2000,
+                "completion_tokens": 100,
+            }
+            for d in range(5, 8)  # 3 normal days
+        ]
+        frame = synth_frame(rows)
+        assert D10SpendAnomaly().run(frame, ctx_for(frame)) == []

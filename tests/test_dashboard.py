@@ -291,8 +291,9 @@ class TestHelpRegistry:
     def test_05_every_detector_has_the_full_triple(self) -> None:
         s = Settings(secret_key="k" * 64, database_url="sqlite://", _env_file=None)
         keys = help_registry.detector_keys()
-        # d1-d6 + d8_spend_concentration + d9_ineffective_cache (d7 is copilot seats)
-        assert len(keys) == 8
+        # d1-d6 + d8_spend_concentration + d9_ineffective_cache + d10_spend_anomaly
+        # (d7 is copilot seats, not a detector)
+        assert len(keys) == 9
         for key in keys:
             h = help_registry.detector(key, s)
             assert h.plain and h.why and h.fix and h.verify and h.methodology_url
