@@ -66,6 +66,23 @@ def latest_audit(session: Session, user_id: str) -> Audit | None:
     ).scalar_one_or_none()
 
 
+def recent_done_audits(session: Session, user_id: str, limit: int = 2) -> list[Audit]:
+    """The most recent `limit` DONE audits for the active workspace, newest first —
+    used for cross-audit trend comparison (drift). id is a deterministic tiebreak so
+    two audits sharing a created_at can never swap current/prior between page loads."""
+    ws = active_workspace_id(session, user_id)
+    return list(
+        session.execute(
+            select(Audit)
+            .where(Audit.workspace_id == ws, Audit.status == "done")
+            .order_by(Audit.created_at.desc(), Audit.id.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
+
+
 def has_live_feed(session: Session, user_id: str) -> bool:
     """True when the active workspace has something CURRENTLY connected that can
     bring in new usage — an active source, an unrevoked ingest key, or a linked

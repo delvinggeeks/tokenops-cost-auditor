@@ -2,6 +2,26 @@
 {% block title %}Breakdown — TokenOps Cost Auditor{% endblock %}
 {% block content %}
 {% import "kit/_kit.html" as kit %}
+{# Drift formatting — money by magnitude, rates as points; trend words carry the
+   verdict colour (role tokens inline, like the finding drawer). #}
+{% macro drift_val(m, v) -%}
+  {%- if m.kind == "rate" %}{{ "{:.0f}%".format(v * 100) }}
+  {%- elif v >= 1 %}${{ "{:,.2f}".format(v) }}
+  {%- else %}${{ "{:,.4f}".format(v) }}{% endif -%}
+{%- endmacro %}
+{% macro drift_change(m) -%}
+  {%- if m.kind == "rate" %}{{ "%+.0f"|format(m.delta * 100) }} pts
+  {%- elif m.prior == 0 %}new
+  {%- else %}{{ "%+.0f"|format(m.pct_change * 100) }}%{% endif -%}
+{%- endmacro %}
+{% macro drift_trend(m) -%}
+  {%- if m.direction == "better" %}<strong style="color: var(--verified)">improved</strong>
+  {%- elif m.direction == "worse" %}<strong style="color: var(--waste)">worse</strong>
+  {%- elif m.direction == "up" %}<span class="muted">↑ higher</span>
+  {%- elif m.direction == "down" %}<span class="muted">↓ lower</span>
+  {%- elif m.direction == "new" %}<span class="muted">new — no prior baseline</span>
+  {%- else %}<span class="muted">no change</span>{% endif -%}
+{%- endmacro %}
 <div class="grid">
 {% if not tk %}
   {# Honest empty state — no audit yet, or the audit's artifacts were purged
@@ -44,6 +64,50 @@
       <div class="w-4">{{ kit.stat("Cost / request", "$" ~ "{:,.4f}".format(tk.cost_per_request), meta="across all calls") }}</div>
     </div>
   </section>
+
+  {# ---- Cross-audit efficiency drift: the "vs your last audit" trend ---- #}
+  {% if drift %}
+  <section class="w-12" data-reveal>
+    <div class="widget-head"><h2>Trend vs your last audit</h2></div>
+    <p class="tells">How your unit economics — cost per request, cost per 1K output, and cache
+      efficiency — moved since your previous audit{% if drift_prior_date %} on
+      <strong>{{ drift_prior_date }}</strong>{% endif %}. Like-for-like over time, so a change is a real
+      trend, not the "which route is heavier" question. Spend is context (more spend can just mean more
+      usage); the efficiency metrics carry a verdict.</p>
+    {% if drift.regressions %}
+    <div class="since-here" role="status" style="border-color: var(--waste); margin-bottom: var(--s3);">
+      <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+      <span>Your unit economics are slipping since your last audit —
+        <strong>{{ drift.regressions | join(", ") }}</strong> moved the wrong way. Worth a look before it compounds.</span>
+    </div>
+    {% endif %}
+    {{ kit.table_open([
+         {"label": "Metric"}, {"label": "This audit", "cls": "money"},
+         {"label": "Last audit", "cls": "money"}, {"label": "Change", "cls": "money"},
+         {"label": "Trend"},
+       ]) }}
+      {% for m in drift.metrics %}
+        <tr>
+          <td>{{ m.label }}</td>
+          <td class="money">{{ drift_val(m, m.current) }}</td>
+          <td class="money">{{ drift_val(m, m.prior) }}</td>
+          <td class="money">{{ drift_change(m) }}</td>
+          <td>{{ drift_trend(m) }}</td>
+        </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+  </section>
+  {% else %}
+  <section class="w-12" data-reveal>
+    {{ kit.empty_state(
+         "No trend yet — this is your first priced audit",
+         "Run another audit and a “vs your last audit” trend appears here: we compare your exact
+          tokenomics across audits to show whether your AI spend is getting more or less efficient
+          over time.",
+         action_label="Upload another log", action_href="/upload",
+         alt_label="Connect a source", alt_href="/sources") }}
+  </section>
+  {% endif %}
 
   {# ---- Breakdown by model ---- #}
   <section class="widget w-12" data-reveal>
