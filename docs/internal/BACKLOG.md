@@ -460,3 +460,15 @@ it under R-PIPELINE-UI-SEQ.
   gap more prominently so users choose the deep path. Stays DETERMINISTIC (X-04 —
   no LLM narrative); "dynamic" = data-driven per-route, not ML. Founder said: ship
   the guided-first-run rev (plain-English + upload-primary) FIRST, then this.
+
+- CROSS-AUDIT DRIFT — FOLLOW-UPS (after the Breakdown "vs your last audit" slice,
+  2026-07-25). The drift view compares the four headline vitals across the two most
+  recent audits. Natural extensions, each a clean deterministic slice: (a) DRIFT
+  ALERTING — when an efficiency metric regresses beyond the material bar, surface it
+  through the existing alerts/daily-digest channel (observe-only, X-02 — never
+  enforcement) so a regression reaches the owner without them opening the page; (b)
+  PER-MODEL / PER-ROUTE DRIFT — drill the trend into which model or route drove the
+  regression (compare by_model / by_route slices across audits), not just the blended
+  vitals; (c) MULTI-AUDIT TRENDLINE — a sparkline over the last N audits rather than a
+  single prior comparison (needs a small history read). All stay DETERMINISTIC (X-04),
+  diffs of already-priced tokenomics.json figures, FR-22 counts-only.

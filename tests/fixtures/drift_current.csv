@@ -1,0 +1,5 @@
+ts,provider,model,prompt_tokens,completion_tokens,cached_tokens,tag
+2026-07-01T10:00:00Z,anthropic,claude-opus-4-8,2000,500,200,chat
+2026-07-02T10:00:00Z,anthropic,claude-opus-4-8,2000,500,200,chat
+2026-07-03T10:00:00Z,anthropic,claude-opus-4-8,2000,500,200,chat
+2026-07-04T10:00:00Z,anthropic,claude-opus-4-8,2000,500,200,chat

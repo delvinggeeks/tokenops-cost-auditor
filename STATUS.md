@@ -15,6 +15,45 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## CROSS-AUDIT DRIFT — Breakdown "vs your last audit" (2026-07-25) — founder "proceed as recommended next step" (the drift half of anomaly & drift)
+
+On branch `cross-audit-drift` off main (cf75687). Second half of the founder's chosen
+"anomaly & drift detection": after D10 within-audit spikes (PR #21, held for merge),
+this ships CROSS-AUDIT efficiency drift — the Breakdown page gains a "Trend vs your
+last audit" section comparing THIS audit's tokenomics vitals to the PRIOR audit's.
+services/dashboard/drift.py: PURE deterministic diff of two tokenomics.json artifacts
+(the exact figures the runner already wrote) — like-for-like over time, so a change is
+a real TREND, not the cross-sectional "which route is heavier" confound. Direction is
+judged ONLY where "good" is unambiguous: cost-per-request and cost-per-1k-output UP =
+worse, cache-hit DOWN = worse; monthly spend is CONTEXT with no verdict (more spend can
+just mean more usage — calling it a regression would be dishonest). A sub-5% change is
+"flat" (noise). A regression callout fires when any efficiency metric materially
+worsens. FILE MAP: +drift.py; metrics.recent_done_audits (2 most recent DONE audits,
+workspace-scoped); routes_dashboard._load_tokenomics helper + breakdown_page loads
+current+prior tk and computes drift (honest: needs BOTH artifacts — a pre-tokenomics.json
+audit yields no trend, never half a comparison; corrupt/missing → no 500);
+breakdown.html "Trend vs your last audit" kit-composed table (current/prior/change/trend,
+role-token verdict colours inline like the drawer) + regression callout + honest "run
+another audit" empty state. +tests/test_drift.py (6 pure: better/worse/flat/context/
+spend-down/prior-zero-guard, hand-derived deltas) + tests/test_drift_journey.py (two
+real audits → trend + regression renders; single audit → honest empty state) +
+tests/fixtures/drift_prior.csv (efficient) + drift_current.csv (worse). NO new estimator
+(diffs already-priced figures) → no golden owed. Deterministic, FR-22 counts-only.
+INDEPENDENT of PR #21 (needs only tokenomics.json from #19, already on main) — branched
+off main; STATUS/help text may conflict with #21 at merge (resolve keeping both, as #19→#20).
+GATE ROUND (spec PASS · vv PASS · ux/system PASS-WITH-NOTES · cold FAIL→fixed→re-run):
+cold f.1 (the real bug) → a money metric with prior==0 (a prior audit with $0 priced
+spend) was dishonestly flagged "worse"/regression; now prior==0 yields "new" (no
+percentage baseline → never a better/worse verdict, never a regression), matching the
+"new" the Change column already showed. cold f.2 → recent_done_audits gains an
+Audit.id.desc() tiebreak so equal-created_at audits never swap current/prior. cold f.3
++ vv → +test for money prior==0 (never a false regression) and the rate prior==0 test
+updated to "new". ux f.4 → the no-prior empty state is now kit.empty_state with a
+one-click action (Upload another log / Connect a source), consistent with the page's
+other empty state. ux f.5 → "unit economics" glossed on first use. system-tester note →
++workspace-isolation journey test (user B never sees user A's trend). drift.py stays
+100% covered; full suite green.
+
 ## PROXY-HEADERS FIX (2026-07-23) — the S-0 verify surfaced a pre-existing prod rate-limit gap
 
 The final S-0 security verify (PASS, no bypass) flagged an operational
