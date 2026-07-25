@@ -32,6 +32,7 @@ DEPTH_C_ORDER = ("why", "evidence", "fix", "verify", "methodology")
 class DetectorHelp:
     key: str
     plain: str  # headline depth — never a detector id
+    summary: str  # plain-English "what this means", common-man; leads the finding
     technical: str  # depth (c) only
     why: str  # thresholds already rendered from Settings
     fix: str
@@ -69,12 +70,21 @@ def detector(key: str, settings: Settings) -> DetectorHelp:
     return DetectorHelp(
         key=key,
         plain=entry["plain"],
+        summary=entry["summary"],
         technical=entry["technical"],
         why=_render_thresholds(str(entry["why"]), settings),
         fix=entry["fix"],
         verify=entry["verify"],
         methodology_url=entry["methodology_url"],
     )
+
+
+def detector_summary(key: str) -> str:
+    """The plain-English 'what this means' for a finding (no thresholds, so no
+    Settings needed). Common-man phrasing that LEADS the finding wherever it is
+    read — findings list, drawer, preview (founder walkthrough 2026-07-25)."""
+    entry = _raw()["detectors"].get(key)
+    return str(entry["summary"]) if entry else ""
 
 
 def detector_plain(key: str) -> str:

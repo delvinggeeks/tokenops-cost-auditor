@@ -435,3 +435,28 @@ it under R-PIPELINE-UI-SEQ.
   that's the wrong instruction — the right one is resume/upgrade. `paused` is not
   assigned anywhere in code today, so this is forward debt, not a live bug (cold
   O-COH f.4). When R-Q6 ships: branch the banner CTA on a paused-but-listed source.
+
+- PLAIN-ENGLISH PDF REPORT (fast-follow of guided-first-run rev 2, founder
+  walkthrough 2026-07-25). The in-app finding surfaces (Findings page, drawer,
+  dashboard, first-run preview) now LEAD with a plain-English `summary` + keep
+  the technical pointers. The downloadable PDF/web report (_report_body.html) does
+  NOT yet — it is render-only and services-layer (render_report_html passes only
+  the ReportModel; no web/help access), and the summary copy lives in the web help
+  registry. NOT a scope addition — the same founder feedback, split for a clean
+  layering fix: move the detector display copy (plain/summary) to a services-
+  accessible source (e.g. services/rules or a services copy module that web/help
+  reads), then carry it into the ReportModel at build time so web + PDF show the
+  same plain-English without a layering break. Until then the report shows the
+  finding id + fix_text as today.
+
+- MORE FINDINGS / RICHER DETECTION (founder-chosen follow-up, 2026-07-25). Founder
+  asked "why so few findings — it can be many, dynamic analysis." Root cause is
+  understood and now stated honestly in-product: per-request logs (upload/SDK) run
+  all 6 detectors PER ROUTE (many findings); connected provider usage APIs give
+  coarse day×model aggregates so only D1/D2/D3 run (fewer). NOT a bug. The
+  follow-up is to expand the analysis DEPTH: (a) more waste detectors (new
+  patterns) — each needs a money-math golden per CLAUDE.md rule 4; (b) richer
+  per-route / per-model breakdowns; (c) surface the aggregate-vs-per-request depth
+  gap more prominently so users choose the deep path. Stays DETERMINISTIC (X-04 —
+  no LLM narrative); "dynamic" = data-driven per-route, not ML. Founder said: ship
+  the guided-first-run rev (plain-English + upload-primary) FIRST, then this.

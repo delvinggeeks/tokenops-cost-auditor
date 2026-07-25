@@ -35,6 +35,107 @@ impact is bounded (per-key ingest fairness is unaffected — it keys on the
 bearer token, not IP; token entropy defeats guessing regardless), so this
 rides the next scheduled deploy rather than forcing an emergency one.
 
+## SHIPPED TO MAIN (2026-07-25) — founder "open PRs + merge both to main"
+
+Both slices merged via the GO-FORWARD PR flow (full CI: authorship·lint·type·
+docs·test·build all green). **PR #15 O-1b-3** (ce1a673) — CLOSES O-1. CI caught
+two real gate failures a locally exit-masked `pytest | tail` had hidden — a
+`{{ m.email }}` in a data-confirm (test_authority_laws) and a stale endpoints.md
+(MP-3 drift, the 3 new routes) — both fixed, re-verified with pytest's OWN exit
+code, re-gated green (LESSON reinforced in [[never-mask-pytest-exit]]: never trust
+a piped pytest's exit; capture `$?` un-piped). **PR #16 coherence** (a5424c8) —
+rebased onto O-1b-3, STATUS+traceability conflicts resolved keeping both. main is
+now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the prod
+deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
+(founder-chosen): guided first-run + output preview (punch-list #4/#5).
+
+## GUIDED FIRST RUN + OUTPUT PREVIEW (2026-07-25) — founder walkthrough punch-list #4/#5, "proceed guided-first-run"
+
+The first-run vertical (R-VERTICAL), on a branch off main. GOAL: a brand-new
+user (signed in, no source, no audit) met a grid of EMPTY widgets ($0.00, "No data
+yet") + a checklist + a tour — the product read as empty and they had to connect on
+faith. Now, ONLY in the true first-run state (no completed audit), that grid is
+replaced by (a) a GUIDED "start here" hero — the connect→audit→report arc as three
+steps, step 1 lit "YOU ARE HERE", both CTAs live (/upload, /sources) — and (b) an
+OUTPUT PREVIEW of REAL sample-engine output so they SEE the value before connecting.
+SHIPPED: **sample.sample_model** (memoised ReportModel — the FR-16 sample exposed
+structurally, no WeasyPrint); **metrics.first_run_preview** (headline savings/%/spend
++ impact-ranked top-4 findings, $0 rows excluded but honest n_findings kept;
+detector→plain mapped at RENDER via the help registry so the engine stays
+presentation-blind); **routes_dashboard**: first_run = `latest_audit is None`, the
+preview assembled only then and FileNotFoundError-degrades to the hero alone (never a
+500); **_first_run.html** (guided hero + SAMPLE-fenced preview composing the kit
+.ledger — the SAME findings table the real dashboard renders); dashboard.html
+first-run branch (pipeline spine always; hero+preview XOR the live grid); the
+getting-started checklist is SUPPRESSED in first run (the hero is the single
+next-action surface) and resumes after the first audit for review→apply→verify;
+wa-design.css `.fr-*` (estimate-palette fence, role-tokens only). HONESTY is
+load-bearing (the data-coherence lesson): the preview is fenced "SAMPLE — NOT YOUR
+DATA / nothing on this card is yours", uses the estimate palette NEVER verified-green,
+and VANISHES the moment a real audit completes so it never sits beside a user's own
+figures. **Real app figures** (the AUTHORITATIVE reproduction via the app's own
+construction — `get_settings()` reading .env + `PricingTable.load()`, per R-TOOLCHAIN):
+$0.89/mo · 11.7% · 5 findings on the committed sample (top-4 shown: d3 $0.50, d2 $0.25,
+d6 $0.10, d4 $0.05; d5 is $0.00). They are CONFIG- and rate-card-dependent — a hermetic
+test env (`_env_file=None`) computes different numbers ($2.24/29.5%/6), which is why the
+journey suite asserts the rendered page against `first_run_preview` LIVE, never a
+hardcoded literal. The preview + public /sample read the same settings+table so in any
+one deployment they can never disagree. PROCESS NOTES (mine): the ux gate on the
+mockup (BEFORE wiring, R-DESIGN) returned PASS-WITH-NOTES — all 4 actioned (5-vs-4
+findings coherence made explicit; money promoted to the display HERO; the one delight
+named; ribbon flex-wrap). Wiring then tripped THREE shipped laws the mockup's bespoke
+HTML didn't: the kit table-composition law (hand-rolled `<table>` → kit.table_open),
+the retired-serif law (R-LOOK-FINAL — `var(--serif)` banned → heavy sans for money
+prominence), and the CSS `served==source` parity test (edit design/ then cp to
+static). Test collateral fixed WITHOUT weakening intent (widgets that only render past
+first run get a completed-audit seed): test_dashboard zero-state + test_onboarding
+checklist (suppressed→resumes) + the verified-savings celebration + the daily-loop
+"Yesterday" tile (in production a connected source triggers an audit per
+R-LIVE-AUDIT, so daily data and a completed audit always coexist). Journey suite tests/test_guided_first_run.py green;
+HTML-escaping (`&#39;`) + line-wrap were assertion bugs, fixed by whitespace-normalize
++ escape. File-map delta: +services/report/sample.sample_model;
++metrics.first_run_preview; +templates/app/_first_run.html; +wa-design.css `.fr-*`
+(both copies); routes_dashboard passes first_run+preview; dashboard.html branch;
++tests/test_guided_first_run.py; +mockup guided-first-run.html; +traceability row. No
+pricing/estimator touch → CLAUDE.md rule 4 N/A. DEPENDS-DONE: O-1 stack (main).
+
+REV 2 (founder walkthrough on PR #17, 2026-07-25 — "not approved… connecting
+sources is the main feature but upload was highlighted… Findings/Report must be
+plain human english, a proper summary; each finding looks too complicated"):
+mockup NOT approved → revised + re-approved (AskUserQuestion: "wire it as shown",
+scope = "technical pointers ALONG WITH the plain-English summary, for both
+technical and common man"). SHIPPED on the same branch: (1) **First-run CTA
+emphasis.** Founder first said "connect is the main feature"; a follow-up ("why so
+few findings — can be many, dynamic analysis") surfaced the DEPTH mechanic and
+REVERSED it (AskUserQuestion "Upload/SDK primary (depth)"): per-request logs
+(upload/SDK) run all SIX detectors PER ROUTE → the most findings, so **Upload a log
+is the PRIMARY action** (btn-primary → /upload); connecting a provider is the
+SECONDARY automatic-daily path — provider usage APIs give only coarse day×model
+aggregates so just 3 of 6 detectors run and it finds less (aggregate.py
+INACTIVE_ON_AGGREGATE). The trade is stated honestly on the hero. "More detectors /
+richer per-route analysis" = a founder-chosen FOLLOW-UP, not this slice. (2)
+**Plain-English finding summaries** — a new `summary` field per detector in
+help_registry.yaml (common-man "what's happening + why it costs"; NO jargon/
+thresholds) + DetectorHelp.summary + help.detector_summary() + i18n
+kit.finding.summary "In plain English". Every finding now LEADS with the plain
+summary and KEEPS the technical pointers (detector id, thresholds, evidence) —
+both audiences, plain-first: finding **drawer** (summary prepended above the
+unchanged depth-c why→evidence→fix→verify, so R-CLARITY order + R-PERSONA jargon
+tests still hold), **Findings page** (summary sub-line under each title), **dashboard
+top-findings** widget, and the **first-run preview** (now plain-English cards:
+title + human summary + $, replacing the kit ledger — no table, so the kit-table
+law is N/A). Detector→summary mapped at render via the registry (engine stays
+presentation-blind). SCOPE CARVE-OUT (transparent): the downloadable **PDF report**
+is render-only + services-layer (render_report_html passes only the ReportModel,
+no help access), so plain-English there needs the detector copy moved to a
+services-accessible source — the explicit FAST-FOLLOW, not hacked in via a
+layering break. Tests: connect-is-primary CTA, preview shows every finding's plain
+title AND summary, drawer has "In plain English" leading + technical pointers still
+present. File-map delta (rev 2): +help.detector_summary + DetectorHelp.summary;
++summary in 6 detector entries; +i18n kit.finding.summary; drawer/findings/
+top_findings/first_run templates lead with summary; +wa-design.css .finding-plain/
+.finding-sub/.fr-find* (both copies). Gate round + PR update next.
+
 ## DATA COHERENCE + HONEST FRESHNESS (2026-07-24) — founder walkthrough: "no sources connected but overview/findings show old cache data, not real-time"
 
 Founder prod walkthrough (v1.9.0 = O-0) surfaced an HONESTY gap, not a cache bug:

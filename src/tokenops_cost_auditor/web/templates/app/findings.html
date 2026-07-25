@@ -48,7 +48,11 @@
           {# Headline depth: plain phrasing only — the detector id lives in the
              drawer at depth (c) (R-PERSONA jargon law). #}
           <tr>
-            <td>{{ it.plain }}</td>
+            <td>{{ it.plain }}
+              {# plain-English summary so the issue reads at a glance, not just a
+                 terse label (founder walkthrough 2026-07-25). #}
+              <div class="finding-sub">{{ help.detector_summary(it.detector) }}</div>
+            </td>
             <td><span class="sev sev-{{ it.severity }}">{{ it.severity_label }}</span></td>
             <td><span class="badge badge-{{ 'estimate' if it.confidence == 'estimated' else 'neutral' }}">
               {{ it.confidence_label }}</span></td>

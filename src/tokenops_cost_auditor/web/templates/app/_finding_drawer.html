@@ -19,6 +19,15 @@
     </div>
   </div>
 
+  {# Plain English FIRST (founder walkthrough 2026-07-25): a human summary of the
+     issue leads, so a non-technical reader understands it at a glance; the
+     technical pointers (thresholds, evidence, detector id) stay below for the
+     technical reader — both audiences, plain-first. #}
+  <div class="finding-plain">
+    <h3>{{ t("kit.finding.summary") }}</h3>
+    <p>{{ h.summary }}</p>
+  </div>
+
   {% call kit.finding_detail({"why": h.why, "fix": h.fix,
                               "fix_snippet": row.fix_text, "verify": h.verify}) %}
     {% if row.evidence_sample %}
