@@ -1,0 +1,162 @@
+#!/usr/bin/env python
+"""LE-4 — the adversarial gate round, run HEADLESS in CI (docs/09-SDLC §4/§6).
+
+The keystone of loop engineering: the gate agents that today are run BY HAND in the
+main thread are run here against the PR diff, each emits its TE-8 verdict, and the
+process exits non-zero if ANY returns FAIL — so a PR cannot pass the gate check on a
+FAIL verdict without a human. This turns "gated by discipline" into "gated by machine."
+
+Mechanism: for each required gate it invokes the pinned `claude` CLI headless
+(`claude -p ...`) with that agent's charter (`.claude/agents/<name>.md`) + the PR diff,
+captures the TE-8 verdict, and aggregates. Requires ANTHROPIC_API_KEY (founder-lane).
+
+Testable without the API: `--dry-run` mocks each agent's output so the harness's own
+logic — gate selection, diff capture, verdict parsing, aggregation, exit code, PR
+comment — is exercised in CI and unit tests. LIVE behaviour (a real agent call) needs
+the key + one validation run on a throwaway PR before this check is made required.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+# Gates that run on EVERY card (docs/09-SDLC §4). ux-reviewer is added when the diff
+# touches a customer-facing surface; architect/ops when it touches structure/infra.
+CORE_GATES = ("cold-reviewer", "spec-guard", "vv-engineer", "system-tester")
+UX_TRIGGER = ("web/templates/", "web/static/", "templates/app/", "landing")
+ARCHITECT_TRIGGER = ("services/", "persistence/models.py")
+OPS_TRIGGER = (".github/workflows/", "scripts/provision", "docker", "compose", "Caddyfile")
+
+AGENTS_DIR = Path(".claude/agents")
+# TE-8: "VERDICT (PASS | PASS-WITH-NOTES | FAIL)". Longest label first so PASS-WITH-NOTES
+# is never shadowed by a bare PASS match.
+_VERDICT_RE = re.compile(r"VERDICT\W{0,4}(PASS-WITH-NOTES|PASS|FAIL)", re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class GateResult:
+    agent: str
+    verdict: str  # PASS | PASS-WITH-NOTES | FAIL | NO-VERDICT
+    output: str
+
+
+def parse_verdict(text: str) -> str:
+    """Extract the TE-8 verdict from an agent's output; NO-VERDICT if none is emitted
+    (treated as a failure — a gate that did not conclude did not pass)."""
+    m = _VERDICT_RE.search(text or "")
+    if not m:
+        return "NO-VERDICT"
+    return m.group(1).upper().replace(" ", "-")
+
+
+def _changed_files(base: str) -> list[str]:
+    out = subprocess.run(
+        ["git", "diff", "--name-only", f"{base}...HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return [ln for ln in out.stdout.splitlines() if ln.strip()]
+
+
+def select_gates(changed: list[str]) -> list[str]:
+    """The gate set for THIS diff (docs/09-SDLC §4 — per card, not per D1-D14)."""
+    gates = list(CORE_GATES)
+    joined = "\n".join(changed)
+    if any(t in joined for t in UX_TRIGGER):
+        gates.append("ux-reviewer")
+    if any(t in joined for t in ARCHITECT_TRIGGER):
+        gates.append("architect")
+    if any(t in joined for t in OPS_TRIGGER):
+        gates.append("ops-engineer")
+    return gates
+
+
+def _diff(base: str) -> str:
+    out = subprocess.run(
+        ["git", "diff", f"{base}...HEAD"], capture_output=True, text=True, check=False
+    )
+    return out.stdout
+
+
+def _charter(agent: str) -> str:
+    path = AGENTS_DIR / f"{agent}.md"
+    return path.read_text(encoding="utf-8") if path.exists() else f"(no charter for {agent})"
+
+
+def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
+    """Invoke the pinned claude CLI headless as this gate agent over the PR diff.
+    Kept in one place so the exact CLI contract is easy to adjust after the first
+    live validation run (see module docstring)."""
+    prompt = (
+        f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
+        f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
+        "Obey TE-2 (diff + STATUS + your charter docs only), TE-6 (<=15 tool calls), "
+        "TE-11 (pinned `uv run` toolchain). End your reply with EXACTLY one line:\n"
+        "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
+        f"----- diff -----\n{diff_text[:200000]}\n"
+    )
+    proc = subprocess.run(
+        ["claude", "-p", prompt, "--output-format", "text"],
+        capture_output=True,
+        text=True,
+        timeout=900,
+        check=False,
+    )
+    return proc.stdout + ("\n" + proc.stderr if proc.returncode != 0 else "")
+
+
+def run_round(base: str, dry_run: bool, mock: dict[str, str] | None = None) -> list[GateResult]:
+    changed = _changed_files(base)
+    gates = select_gates(changed)
+    diff_text = "" if dry_run else _diff(base)
+    results: list[GateResult] = []
+    for agent in gates:
+        if dry_run:
+            out = (mock or {}).get(agent, "VERDICT: PASS")
+        else:
+            out = _run_agent_live(agent, diff_text, base)
+        results.append(GateResult(agent=agent, verdict=parse_verdict(out), output=out))
+    return results
+
+
+def to_comment(results: list[GateResult]) -> str:
+    lines = ["## Gate round (LE-4)", "", "| Gate | Verdict |", "|------|---------|"]
+    for r in results:
+        mark = {"PASS": "✅", "PASS-WITH-NOTES": "⚠️", "FAIL": "❌", "NO-VERDICT": "❓"}.get(
+            r.verdict, "❓"
+        )
+        lines.append(f"| {r.agent} | {mark} {r.verdict} |")
+    blocked = [r.agent for r in results if r.verdict in ("FAIL", "NO-VERDICT")]
+    lines += ["", ("**BLOCKED** — " + ", ".join(blocked)) if blocked else "**All gates cleared.**"]
+    return "\n".join(lines)
+
+
+def is_blocking(results: list[GateResult]) -> bool:
+    # FAIL or NO-VERDICT blocks; PASS-WITH-NOTES does not block the CHECK (its notes are
+    # resolved before Done per docs/09-SDLC §3, tracked on the PR, not by this gate).
+    return any(r.verdict in ("FAIL", "NO-VERDICT") for r in results)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="LE-4 gate round in CI")
+    ap.add_argument("--base", default="origin/main", help="diff base ref")
+    ap.add_argument("--dry-run", action="store_true", help="mock agents (no API); test the harness")
+    ap.add_argument("--comment-out", help="write the PR-comment markdown to this path")
+    args = ap.parse_args()
+
+    results = run_round(args.base, dry_run=args.dry_run)
+    comment = to_comment(results)
+    print(comment)
+    if args.comment_out:
+        Path(args.comment_out).write_text(comment, encoding="utf-8")
+    return 1 if is_blocking(results) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

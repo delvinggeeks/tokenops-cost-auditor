@@ -1,0 +1,68 @@
+# LE-4 — the adversarial gate round, in CI (docs/09-SDLC §4/§6).
+#
+# The keystone of loop engineering: the gate agents that today are run BY HAND in the
+# main thread run here on the PR diff (scripts/gate_round.py), each emits its TE-8
+# verdict, and the job FAILS if any returns FAIL — so no PR clears the gate check on a
+# FAIL verdict without a human. "Gated by discipline" becomes "gated by machine."
+#
+# ACTIVATION (honest, per docs/09-SDLC §6): the live agent round needs the founder-lane
+# ANTHROPIC_API_KEY repo secret AND one validation run on a throwaway PR to confirm the
+# `claude -p` contract before this check is made required. Until the key is set, only
+# the DRY-RUN step runs — it proves the harness executes in CI (gate selection, parsing,
+# aggregation, exit code) against real fixtures with no API call, and is always green.
+# The moment the key exists, the live step activates on every PR.
+name: gate-round
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: gate-round-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write # to post the verdict table as a PR comment
+
+jobs:
+  gate-round:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    env:
+      # secrets are not allowed directly in step `if:`; surface presence as a plain env.
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so BASE...HEAD resolves
+      - run: git fetch origin main --depth=1 || true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen --all-extras
+
+      # ALWAYS: prove the harness runs in CI — no API key needed. Fails only on a real
+      # harness defect (bad gate selection, parser regression, crash), never on verdicts.
+      - name: gate-round harness (dry-run — no API)
+        run: uv run python scripts/gate_round.py --base "$BASE" --dry-run
+
+      # LIVE: runs only once the founder adds ANTHROPIC_API_KEY. A FAIL/NO-VERDICT from
+      # any gate exits non-zero and fails this job → blocks the PR.
+      - name: install claude CLI
+        if: env.HAS_KEY == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: gate round (LIVE)
+        if: env.HAS_KEY == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python scripts/gate_round.py --base "$BASE" --comment-out gate-comment.md
+
+      - name: post verdicts to the PR
+        if: ${{ always() && env.HAS_KEY == 'true' && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f gate-comment.md ]; then
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file gate-comment.md
+          fi

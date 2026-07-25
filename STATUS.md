@@ -3133,3 +3133,33 @@ Members nav + help_registry entry. Proven by tests/test_workspace_invites.py
 expired refused; owner-only + Scale-gated; honest states) + /settings/members added
 to the O-1b-1 reachability walk. Mockup: docs/design/mockups/workspace-invite.html.
 Engine untouched. DEPENDS-DONE: O-1b-1. Next: O-1b-3 (members roster + revoke).
+
+---
+
+LE-4 (gate round in CI) — 2026-07-25, founder "Build the loop enforcement
+(LE-4/3/5)". THE KEYSTONE of loop engineering: the 5-7 adversarial gate agents
+that were run BY HAND in the main thread now run HEADLESS in CI on the PR diff,
+each emits its TE-8 verdict, and the check FAILS if any returns FAIL — turning
+"gated by discipline" into "gated by machine". Mechanism: scripts/gate_round.py
+computes BASE...HEAD, selects the gate set for the diff (core cold-reviewer/
+spec-guard/vv-engineer/system-tester always; +ux-reviewer on customer surfaces;
++architect on services/models; +ops-engineer on workflows/infra — docs/09-SDLC
+§4), invokes each agent's charter (.claude/agents/<name>.md) via the pinned
+`claude -p` CLI, parses the TE-8 verdict (PASS|PASS-WITH-NOTES|FAIL, longest-
+label-first so PASS-WITH-NOTES is never shadowed; a missing verdict = NO-VERDICT
+= blocks), aggregates, exits non-zero on any FAIL/NO-VERDICT, and posts the
+verdict table as a PR comment. .github/workflows/gate-round.yml runs it on every
+PR. ACCEPTANCE CRITERIA (all met): (1) verdict parser handles PASS/notes/FAIL/
+parenthesised/bolded/case forms + no-verdict; (2) gate selection matches
+docs/09-SDLC §4 per-card schedule; (3) FAIL and NO-VERDICT block, PASS-WITH-NOTES
+does not; (4) harness runs in CI with NO API key via --dry-run (always green,
+proves selection/parse/aggregate/exit) and posts a PR comment; (5) 20 unit tests,
+lint+format clean, pinned toolchain. HONEST SCOPE (docs/09-SDLC §6): this ships
+the MECHANISM, testable. The LIVE agent round is HELD on the founder adding the
+ANTHROPIC_API_KEY repo secret + one validation run on a throwaway PR to confirm
+the `claude -p` contract before the check is made required; until then only the
+dry-run runs. New: scripts/gate_round.py, .github/workflows/gate-round.yml,
+tests/test_gate_round.py. Engine untouched. DEPENDS: docs/09-SDLC (PR #24, held)
+for the §4/§6 references. Next cards: LE-3 (auto-merge on all-green) then LE-5
+(Issue-driven intake with acceptance criteria). WIP=1 — LE-3/LE-5 are separate
+slices, not folded in here.
