@@ -1,0 +1,69 @@
+# LE-5 robustness — close the linked issue(s) when a loop PR merges.
+#
+# WHY: GitHub's native `Closes #N` auto-close is UNRELIABLE for PRs merged by the
+# github-actions app via native auto-merge (LE-3). Observed twice (#37 via PR #41,
+# #38 via PR #42): GitHub PARSED the link correctly (`closingIssuesReferences` held
+# the issue) yet left the issue OPEN on merge. So make closure deterministic — read
+# GitHub's OWN parsed `closingIssuesReferences` (never a body regex, so we only ever
+# close issues GitHub itself linked as closing) and close them, clearing the loop
+# labels so a resolved issue never lingers as open+in-progress.
+name: loop-close-issues
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+  # `closingIssuesReferences` is a Pull Requests resource; an explicit permissions
+  # block sets every unlisted scope to `none`, so this read must be declared or the
+  # GraphQL call 403s and the step aborts under `set -euo pipefail`.
+  pull-requests: read
+
+jobs:
+  close-linked:
+    # Only on a real MERGE (a plain close resolves nothing).
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Close issues this PR resolved
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # GitHub's authoritative parse of the PR's closing keywords — not a regex.
+          data=$(gh api graphql -f query='
+            query($owner:String!,$name:String!,$pr:Int!){
+              repository(owner:$owner,name:$name){
+                pullRequest(number:$pr){
+                  closingIssuesReferences(first:50){ totalCount nodes{number state} }
+                }
+              }
+            }' -F owner="$OWNER" -F name="$NAME" -F pr="$PR")
+          total=$(echo "$data" \
+            | jq '.data.repository.pullRequest.closingIssuesReferences.totalCount')
+          # No silent truncation: if a PR ever links >50 issues, say so loudly.
+          if [ "$total" -gt 50 ]; then
+            echo "loop-close-issues: WARNING PR #$PR links $total issues; only the first 50 are processed."
+          fi
+          nums=$(echo "$data" \
+            | jq -r '.data.repository.pullRequest.closingIssuesReferences.nodes[]
+                     | select(.state=="OPEN") | .number')
+          if [ -z "$nums" ]; then
+            echo "loop-close-issues: PR #$PR has no open linked issues — nothing to do."
+            exit 0
+          fi
+          for n in $nums; do
+            echo "loop-close-issues: closing #$n (resolved by #$PR)"
+            gh issue close "$n" --repo "$REPO" --reason completed \
+              --comment "Resolved by #$PR (merged by the loop)."
+            # Clear the loop labels so it never lingers; tolerate their absence.
+            gh issue edit "$n" --repo "$REPO" \
+              --remove-label loop:in-progress --remove-label loop:ready || true
+          done

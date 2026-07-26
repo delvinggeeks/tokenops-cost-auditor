@@ -3464,3 +3464,14 @@ step 5 (DEPLOY) matches; `docs/DEVELOPMENT.md`'s ship-diagram (§6) now shows th
 founder-review→manual-dispatch→PRODUCTION path instead of an unqualified auto-promote. No
 workflow/code changes — `deploy.yml` already implements the founder-gated flow; CONTRIBUTING.md
 untouched (separate task, per issue scope).
+
+LOOP HARDENING (2026-07-26) — deterministic issue closure. The loop cleared its first
+two real tasks fully autonomously (#37→PR #41, #38→PR #42, both merged by github-actions),
+proving LE-5 build→gate→merge end to end. One reproducible gap surfaced: GitHub PARSED
+each PR's `Closes #N` (`closingIssuesReferences` held the issue) but did NOT close it on
+merge — a known failure mode for PRs merged by the github-actions app via native
+auto-merge. Fix: `.github/workflows/loop-close-issues.yml` runs on `pull_request: closed`,
+and on a real merge closes exactly the issues in GitHub's OWN `closingIssuesReferences`
+(never a body regex — it can only close what GitHub linked as closing) and clears the loop
+labels, so a resolved issue never lingers open+in-progress. Pinned by
+`tests/test_loop_driver.py::TestLoopCloseIssuesWorkflow`.
