@@ -99,6 +99,15 @@ pass rate:
 uv run python scripts/loop_status.py
 ```
 
+**Why auto-merge runs as LOOP_PAT.** `auto-merge.yml` enables GitHub's
+native auto-merge using the `LOOP_PAT` secret, never the default
+`GITHUB_TOKEN`. A merge attributed to the `github-actions` app hits
+GitHub's recursion guard, which suppresses every downstream workflow —
+`deploy.yml` (`on: push`) would not deploy staging and
+`loop-close-issues.yml` (`on: pull_request: closed`) would not fire.
+Arming auto-merge as the `LOOP_PAT` user attributes the merge to a real
+user, so the merge-push triggers deploy + close.
+
 ## More
 
 - Architecture & methods: [`docs/internal/PLATFORM.md`](docs/internal/PLATFORM.md)
