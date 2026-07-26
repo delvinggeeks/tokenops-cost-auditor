@@ -3437,3 +3437,17 @@ write) — REQUIRED so the agent's PR triggers CI/gate-round/auto-merge; OAuth t
 FIRST RUN should be a TRIVIAL issue to watch the full autonomous cycle before trusting real
 work. This PR labelled `auto-merge` (dogfood). Loop now COMPLETE: LE-1/3/4/5/6 built; LE-2
 deploy HELD on founder DEPLOY_* secrets.
+
+## Issue #37 — CONTRIBUTING documents the autonomous loop (2026-07-26) — LE-5's first live loop:ready run
+
+The trivial first run LE-5's STATUS entry called for: Issue #37 asked for a docs-only
+vertical slice, built here fully autonomously via loop-driver. Added a "The autonomous
+loop" section to CONTRIBUTING.md: the loop-task template → `loop:ready` label → gate round
+→ auto-merge flow; production stays founder-gated; the `LOOP_PAUSED` kill-switch
+(`gh variable set LOOP_PAUSED --body true/false`); the `uv run python scripts/loop_status.py`
+status command; and the discipline a `loop:ready` issue must meet (vertical slice, explicit
+acceptance criteria, the CI laws the gate enforces — authorship, X-01..X-05, FR-22,
+T-NFR-01, pinned toolchain). Proven: tests/test_contributing_docs.py asserts the section
+exists and names `loop:ready`, `LOOP_PAUSED`, and `loop_status.py` so the doc can't
+silently drift from the mechanism it describes. No loop workflows or scripts touched
+(out of scope per the issue).
