@@ -1,5 +1,8 @@
 # KANBAN — the whole platform, as cards (founder order 2026-07-23)
 
+> **Superseded for sequencing → `docs/internal/QUEUE.md`.** This board is stale (2026-07-24);
+> what to build next comes from QUEUE. Kept for historical card context only.
+
 The standing law behind every card: a card is DONE only when the uniform
 DoD held — tests per docs/05 pattern + traceability same commit + golden
 NOTES for money math + FR-22 tier tests + honesty-law rendering + gate
