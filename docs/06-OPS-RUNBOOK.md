@@ -269,15 +269,17 @@ The loop, with the tool that owns each step:
 4. GATE MECHANICALLY — CI on every push (ruff, mypy, suite, coverage
    gate, pricing age, STRICT pricing verification). Merges to main
    require CI green (branch protection).
-5. DEPLOY — CONTINUOUS DEPLOYMENT (LE-2, founder 2026-07-24): the `deploy`
-   workflow fires automatically on every merge to `main` and ships the
-   merged commit (SHA as the release id) — no human gate. It re-runs the
-   full chain + strict pricing verify on the exact ref, pre-deploy backup,
-   provision, external smoke, and AUTO-ROLLBACK to the previously deployed
-   tag (RELEASE_TAG in .env) when smoke fails, so prod self-heals unattended.
-   `workflow_dispatch(tag)` stays as the manual escape hatch (deploy/redeploy
-   an arbitrary tag); §2's manual path remains the fallback when GitHub is
-   unreachable.
+5. DEPLOY — STAGING-AUTO, PROD FOUNDER-GATED (founder ruling 2026-07-25,
+   authority: `docs/09-SDLC.md` §5): the `deploy` workflow fires
+   automatically on every merge to `main`, re-runs the full chain + strict
+   pricing verify on the merged SHA, and auto-deploys the commit to
+   STAGING with external smoke. **Production ships only on a manual
+   `workflow_dispatch`** the founder triggers after reviewing the rendered
+   staging pages — prod never auto-ships. Either path does pre-deploy
+   backup, provision, external smoke, and AUTO-ROLLBACK to the previously
+   deployed tag (RELEASE_TAG in .env) when smoke fails, so prod self-heals
+   unattended even on a founder-triggered run. §2's manual path remains the
+   fallback when GitHub is unreachable.
 6. VERIFY + RECORD — external healthz, CHANGELOG entry with the smoke
    result (§2 step 7), STATUS paragraph at the milestone gate.
 
