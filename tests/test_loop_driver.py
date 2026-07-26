@@ -71,6 +71,14 @@ class TestBuildPromptEncodesEveryLaw:
         assert "auto-merge" in p  # hand to LE-3
         assert "do NOT merge it yourself" in p and "never use --admin" in p
 
+    def test_warns_headless_single_pass_never_background_wait(self) -> None:
+        # The first live run failed here: the agent backgrounded its tests and yielded
+        # to "wait", but headless runs don't resume — the commit/PR never happened.
+        p = self._p()
+        assert "HEADLESS" in p
+        assert "ONE synchronous pass" in p
+        assert "NEVER background" in p
+
     def test_dry_run_returns_the_prompt_without_a_run(self) -> None:
         out = ld.run_agent(1, "t", "b", "e@x.com", dry_run=True)
         assert "autonomous build agent" in out
