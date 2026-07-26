@@ -35,3 +35,8 @@ class TestAutonomousLoopSection:
         section = self._section()
         for anchor in ("authorship", "X-01..X-05", "FR-22", "T-NFR-01"):
             assert anchor in section, f"missing CI-law anchor: {anchor}"
+
+    def test_documents_why_auto_merge_runs_as_loop_pat(self) -> None:
+        section = self._section()
+        assert "LOOP_PAT" in section
+        assert "recursion guard" in section
