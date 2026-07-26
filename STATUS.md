@@ -3488,3 +3488,30 @@ built that isn't a NOW task citing its FR/NFR; done = its 04 row updated same PR
 empty by design (frontier exhausted). docs/09-SDLC points to it; ROADMAP/KANBAN/PLAN/
 07-ROADMAP banner-redirected for sequencing (detail retained). BACKLOG kept as the idea
 parking lot the Law references.
+
+## Issue #45 — reconcile stale deploy/launch status to verified ground truth (2026-07-26) — LE-5 loop:ready run
+
+QUEUE.md and ROADMAP.md still called LE-2 continuous deploy HELD and branch protection an
+open founder action, from before those actually landed — the loop and any human reading
+either doc would work off a false "still blocked" picture. Re-verified each claim with its
+own probe before touching docs (not trusted from the issue blindly): `curl -sS
+https://staging.tokenops-cost-auditor.com/healthz` and the prod host both returned
+`{"ok":true,"db":true,...}` directly — decisive, since a DB-connected live response is
+only reachable through a deploy that used valid `DEPLOY_HOST`/`DEPLOY_DOMAIN`/
+`DEPLOY_SSH_KEY` secrets, matching `deploy.yml`'s own post-deploy smoke step. For branch
+protection: the `authorship`/`lint`/`type`/`test`/`docs` job names (ci.yml) and
+`gate-round` (gate-round.yml) exist in the checked-in workflows, and 5 PRs merged into
+`main` same-day (#40–#44) only through the gated auto-merge path, corroborating the
+required-checks list is enforced. Could NOT independently re-query the live GitHub
+Actions run history, environment secrets list, or the branch-protection API directly —
+this agent's token (LOOP_PAT, per the LE-5 activation note above) is scoped to
+contents+PR+issues only, by design, with no Actions/Environments/Secrets read access;
+those specific sub-claims are recorded as corroborated-by-behavior rather than
+API-confirmed, and a founder/admin-scoped token can re-run the exact `gh api
+.../branches/main/protection` / `gh secret list` / `gh run list` probes to double-check.
+Fixed: `docs/internal/QUEUE.md`'s BLOCKED section no longer lists LE-2 deploy or branch
+protection as blocked (states LIVE, only the founder-gated prod promotion remains);
+`docs/internal/ROADMAP.md` §3 and §4 — deploy secrets and branch protection moved to a
+new DONE/LIVE subsection with their probes cited, §4's remaining pending list re-verified
+line by line rather than copied forward. No workflow/code changes; `deploy.yml` untouched;
+§5 untouched; no prod promotion attempted (founder-only manual dispatch).

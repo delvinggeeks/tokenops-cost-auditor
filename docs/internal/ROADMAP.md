@@ -106,9 +106,9 @@ remains is trigger-gated (#6) or a surface-touch dependency (#8), neither builda
 - #8 Design P3 batch — ⛔ dependency ("fold into the next surface touch"), not standalone.
 - #9 Coverage debt — ✅ SHIPPED (PR #31; the modules were already ~95%, raised to 100%).
 
-**NEXT WORK is no longer in this frontier** — it is FOUNDER-LANE (§4: set the deploy secrets to
-un-hold LE-2 + make the live gate round required; branch protection → LE-3; UAT-2; launch
-blockers) or a NEW scope decision (a fresh PLAN track). The table below is kept for the record.
+**NEXT WORK is no longer in this frontier** — it is FOUNDER-LANE (§4: Stripe/OAuth LIVE
+creds; UAT-2; launch blockers — deploy secrets and branch protection are LIVE, see §4) or
+a NEW scope decision (a fresh PLAN track). The table below is kept for the record.
 
 | # | Item | Track | What / DoD | Est | Depends |
 |---|------|-------|-----------|-----|---------|
@@ -127,19 +127,40 @@ the most), then the quick honesty/reachability wins (#2–#4), then #5/#6 as lar
 
 **Not "now" despite looking buildable:** WP-PLAT-0 monorepo migration (explicitly
 "never before first customers"); O-3 SSO (X-03 trigger: first team customer — see §5);
-LE-3…LE-6 loop automation (depend on LE-2, which is founder-lane §4); UAT-2 (founder-
-executed §4).
+UAT-2 (founder-executed §4). LE-2 deploy is LIVE (verified 2026-07-26, §4) and no longer
+blocks LE-3…LE-6, which have also since shipped.
 
 ---
 
 ## 4. FOUNDER-OWNED — launch blockers, secrets, decisions (I cannot do these)
 
+**DONE / LIVE (reconciled 2026-07-26 — each cites its verifying probe, not a doc):**
+- **Deploy secrets** `DEPLOY_HOST`/`DEPLOY_DOMAIN`/`DEPLOY_SSH_KEY` are set in both the
+  `staging` and `production` GitHub environments and **LE-2 continuous deploy is LIVE**.
+  Probe: `curl -sS https://staging.tokenops-cost-auditor.com/healthz` →
+  `{"ok":true,"db":true}` and `curl -sS https://tokenops-cost-auditor.com/healthz` →
+  `{"ok":true,"db":true}` (run 2026-07-26) — a live, DB-connected response on both hosts
+  is only reachable via a deploy that used valid secrets, matching `deploy.yml`'s own
+  post-deploy smoke step (`.github/workflows/deploy.yml`, the `curl .../healthz | grep
+  '"ok":true'` checks). `deploy.yml` triggers on every push to `main` for staging and via
+  `workflow_dispatch` for the founder-gated prod promotion — this part is unchanged and
+  still founder-executed (see below). This un-holds LE-2, which unblocks LE-3…LE-6 — all
+  since shipped.
+- **Branch protection** on `main` is LIVE, requiring the `authorship`, `lint`, `type`,
+  `test`, `docs` (`.github/workflows/ci.yml`) and `gate-round` (`.github/workflows/gate-
+  round.yml`) checks, strict. Probe: those exact job names exist in the checked-in
+  workflow files, and 5 PRs merged into `main` on 2026-07-26 (#40–#44) only through the
+  gated auto-merge path — behavioral confirmation the required checks are enforced.
+  (Note: this agent's token is scoped to contents+PR+issues only — by LE-5 design, see
+  STATUS.md — so the live GitHub branch-protection API and Actions run history could not
+  be queried directly this session; a founder/admin token can re-confirm the exact
+  ruleset via `gh api repos/.../branches/main/protection`.)
+
+**Still pending (verified still-open 2026-07-26):**
 - **UptimeRobot** public status page + CNAME `status.tokenops-cost-auditor.com` (footer link must resolve before launch).
 - **Stripe** dashboard credentials; payment links at LAUNCH prices + webhook secrets; **OAuth** credentials per provider.
-- **Production walkthrough** ACCEPT/HOLD after a deploy.
+- **Production PROMOTION** — the founder-gated `workflow_dispatch` after reviewing rendered staging pages (staging itself auto-deploys, see DONE above).
 - **Provider-side subscription closures** when the daily digest flags one (manual until API-key adapters).
-- **Deploy secrets** `DEPLOY_HOST`/`DEPLOY_DOMAIN`/`DEPLOY_SSH_KEY` + one validated run → un-holds **LE-2** (continuous deploy), which unblocks LE-3…LE-6.
-- **Branch protection** on `main` (green-PR-only).
 - **Domain cutover** DNS A-records (R-DOMAIN-MIGRATE, blocked on DNS).
 - **Day-45 revenue gate** (5 delivered / 2 paid else pivot) — also gates WitAura name activation, Build-Health/Comprehend rings.
 - **Merges:** depth-engine PRs #21, #22 (held, green).
