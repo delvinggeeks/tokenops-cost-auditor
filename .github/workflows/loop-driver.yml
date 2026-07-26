@@ -39,6 +39,10 @@ jobs:
       vars.LOOP_PAUSED != 'true'
       && (github.event_name != 'issues' || github.event.label.name == 'loop:ready')
     timeout-minutes: 90
+    env:
+      # `secrets` is NOT allowed in a step `if:` (GitHub restriction) — surface the
+      # model-credential presence as a plain env, as gate-round.yml does.
+      HAS_MODEL: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +55,7 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code@2.1.220
       - name: run the autonomous build agent
         # Inert until the model credential exists (dry-run/tests still validate the driver).
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+        if: env.HAS_MODEL == 'true'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
