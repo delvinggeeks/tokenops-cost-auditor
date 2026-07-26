@@ -16,7 +16,9 @@ name: auto-merge
 
 on:
   pull_request:
-    types: [labeled, ready_for_review, synchronize, reopened]
+    # `opened` so a PR created WITH the label arms immediately (LE-6 robustness fix);
+    # `labeled` for the arm-an-open-PR flow; the rest re-arm after edits.
+    types: [opened, labeled, ready_for_review, synchronize, reopened]
 
 permissions:
   contents: write # to merge
@@ -29,9 +31,12 @@ concurrency:
 jobs:
   arm-auto-merge:
     runs-on: ubuntu-latest
-    # Only when the human opted THIS pr in, and it is a real (non-draft) PR.
+    # Arm only when: the loop is NOT paused (LE-6 kill-switch — set the LOOP_PAUSED repo
+    # variable to 'true' to halt ALL auto-merge instantly, honored here and everywhere);
+    # the human opted THIS pr in with the label; and it is a real (non-draft) PR.
     if: >-
-      contains(github.event.pull_request.labels.*.name, 'auto-merge')
+      vars.LOOP_PAUSED != 'true'
+      && contains(github.event.pull_request.labels.*.name, 'auto-merge')
       && github.event.pull_request.draft == false
     steps:
       - name: arm GitHub native auto-merge (squash)
