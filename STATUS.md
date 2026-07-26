@@ -3451,3 +3451,16 @@ T-NFR-01, pinned toolchain). Proven: tests/test_contributing_docs.py asserts the
 exists and names `loop:ready`, `LOOP_PAUSED`, and `loop_status.py` so the doc can't
 silently drift from the mechanism it describes. No loop workflows or scripts touched
 (out of scope per the issue).
+
+## Issue #38 — reconcile deploy-governance docs to founder-gated prod (2026-07-26) — LE-5 loop:ready run
+
+Several docs still described the pre-2026-07-25 auto-deploy-to-prod design after the founder
+reversed it (`docs/09-SDLC.md` §5: staging auto-deploys on merge, prod ships only on a
+founder-triggered manual `workflow_dispatch` after reviewing rendered staging pages). Fixed
+the drift, docs-only: `docs/internal/PLAN-LOOP-ENGINEERING.md`'s header, §0, the loop diagram's
+DEPLOY step, the LE-2 slice bullet, and §3's risk framing now all state staging-auto/
+prod-founder-gated and cite `docs/09-SDLC.md` §5 as authority; `docs/06-OPS-RUNBOOK.md` §10
+step 5 (DEPLOY) matches; `docs/DEVELOPMENT.md`'s ship-diagram (§6) now shows the staging→
+founder-review→manual-dispatch→PRODUCTION path instead of an unqualified auto-promote. No
+workflow/code changes — `deploy.yml` already implements the founder-gated flow; CONTRIBUTING.md
+untouched (separate task, per issue scope).

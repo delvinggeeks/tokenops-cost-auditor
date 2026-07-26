@@ -160,12 +160,17 @@ not merge. One slice = one branch = one PR.
 branch off main  →  build the slice  →  open a PR
    →  CI: authorship · ruff · mypy · pytest+coverage · pricing-verify · docs
    →  adversarial gate review  →  squash-merge (green only; main is protected)
-   →  auto-promote: deploy → STAGING → smoke → PRODUCTION
+   →  auto-deploy: deploy → STAGING → smoke
+   →  founder reviews rendered staging pages → manual `workflow_dispatch` → PRODUCTION
 ```
 
-Staging is the gate: **nothing reaches production that staging didn't prove.**
-The app-critical smoke checks (healthz, landing, auth, scheduler) are fatal;
-auxiliary surfaces that differ per environment are reported but non-fatal.
+Staging is auto-deployed on every merge; production is **founder-gated** — it
+ships only on a manual `workflow_dispatch` the founder triggers after
+reviewing the rendered staging pages. Nothing reaches production that staging
+didn't prove, and nothing reaches production unattended. Authority:
+[`docs/09-SDLC.md`](09-SDLC.md) §5. The app-critical smoke checks (healthz,
+landing, auth, scheduler) are fatal; auxiliary surfaces that differ per
+environment are reported but non-fatal.
 
 ### Commit + authorship rules
 - Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …), one concern each.
