@@ -97,3 +97,60 @@ class TestWorkflowValidity:
                 assert "secrets." not in str(job.get("if", "")), wf_path.name
                 for step in job.get("steps", []):
                     assert "secrets." not in str(step.get("if", "")), wf_path.name
+
+
+class TestLoopCloseIssuesWorkflow:
+    """LE-5 robustness: GitHub's native `Closes #N` auto-close proved UNRELIABLE for
+    app-merged PRs (#37/#38 both stayed open despite a parsed closing reference), so a
+    post-merge workflow closes the linked issue deterministically — from GitHub's OWN
+    `closingIssuesReferences`, never a body regex, so it can only close what GitHub
+    itself linked as closing."""
+
+    WF = Path(".github/workflows/loop-close-issues.yml")
+
+    def _yaml(self) -> dict:
+        import yaml
+
+        return yaml.safe_load(self.WF.read_text(encoding="utf-8"))
+
+    def test_exists_and_parses(self) -> None:
+        assert self.WF.exists()
+        assert self._yaml()  # valid YAML → not a 0s-invalid workflow
+
+    def test_triggers_on_pr_closed(self) -> None:
+        # PyYAML parses the `on:` key as the boolean True — accept either spelling.
+        wf = self._yaml()
+        triggers = wf.get(True, wf.get("on", {}))
+        assert "closed" in triggers["pull_request"]["types"]
+
+    def test_only_acts_on_a_real_merge(self) -> None:
+        job = self._yaml()["jobs"]["close-linked"]
+        assert "github.event.pull_request.merged == true" in str(job["if"])
+
+    def test_closes_from_githubs_own_parse_not_a_regex(self) -> None:
+        # The safety property: only issues GitHub linked as closing are ever closed.
+        text = self.WF.read_text(encoding="utf-8")
+        assert "closingIssuesReferences" in text
+        assert "gh issue close" in text
+
+    def test_clears_the_loop_labels(self) -> None:
+        text = self.WF.read_text(encoding="utf-8")
+        assert "--remove-label loop:in-progress" in text
+        assert "--remove-label loop:ready" in text
+
+    def test_has_issues_write_permission(self) -> None:
+        assert self._yaml()["permissions"]["issues"] == "write"
+
+    def test_declares_pull_requests_read(self) -> None:
+        # `closingIssuesReferences` is a Pull Requests resource; an explicit permissions
+        # block sets every unlisted scope to `none`, so without this the GraphQL call
+        # 403s and the step aborts on EVERY merge (gate-round caught this on PR #43).
+        assert self._yaml()["permissions"]["pull-requests"] == "read"
+
+    def test_no_silent_truncation_of_linked_issues(self) -> None:
+        # If a PR ever links more issues than the fetch window, say so loudly.
+        text = self.WF.read_text(encoding="utf-8")
+        assert "totalCount" in text and "WARNING" in text
+
+    def test_job_is_time_bounded(self) -> None:
+        assert self._yaml()["jobs"]["close-linked"]["timeout-minutes"] == 5
