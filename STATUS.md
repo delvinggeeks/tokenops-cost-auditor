@@ -3325,3 +3325,24 @@ report.html + pdf/report.html) renders each finding's plain headline + summary �
 serves both consumers; the report renders each finding's plain+summary). mypy + import-guard +
 all copy consumers (dashboard/explorer/journeys/first-run/wave4) + docs gates green. Held as a
 PR. Next: ROADMAP §3 #4 (landing "Works with" rider) then #7 (O-4 workspace settings).
+
+## O-4 WORKSPACE SETTINGS HOME (2026-07-26) — founder chose it (AskUserQuestion, after §3 #4 found already-done)
+
+ROADMAP §3 #7, unblocked now O-2 landed. An ORGANIZING surface (no new capability): gather
+the four scattered Account destinations into ONE tabbed settings home — General (today's
+/settings: workspace name, peer-benchmark consent, data/purge), Members (/settings/members,
+O-1/O-2 roster+invite+roles, RBAC unchanged), Sign-in (the auth methods — email magic link +
+Google/Microsoft/GitHub federations, with enterprise SSO as the future row), Audit log (the
+existing AuditLogEntry governance trail — who did what, counts/metadata only). The sidebar
+"Account" group collapses to a single "Settings"; Members stops being a separate nav item.
+ACCEPTANCE CRITERIA (SDLC §2 entry gate): (1) /settings is a tabbed home; each tab reachable
+by click; deep links (/settings/members etc.) still resolve and select the right tab; (2) NO
+capability change — same forms/actions, same RBAC (O-2 governs Members exactly as today; a
+member/viewer sees the roster read-only, Audit log is workspace-scoped); (3) Audit log surfaces
+real AuditLogEntry rows for the active workspace (FR-22 counts/metadata only, no prompt text);
+(4) Sign-in shows the caller's methods honestly (no dead SSO control — stated as future);
+(5) reachable end-to-end + the sidebar consolidation; (6) journey test walks every tab + the
+RBAC gating; (7) mockup-before-wiring + ux gate + gate round. MOCKUP: docs/design/mockups/
+o4-settings-home.html (interactive tabs, R-DESIGN-ADDENDUM documented). STATUS: mockup built;
+awaiting founder design-lock + ux gate before wiring. DEPENDS-DONE: O-2 (RBAC), O-1b (members),
+existing /settings + auditlog + federations. Engine untouched.

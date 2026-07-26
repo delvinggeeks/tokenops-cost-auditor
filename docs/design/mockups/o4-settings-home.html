@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O-4 — Workspace settings home (mockup)</title>
+<style>
+  /* Approximation of the app kit for the O-4 ux gate (three-second rule + R-DESIGN
+     checklist). Not pixel-parity — the wired surface reuses kit/_kit.html. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --ok:#0f9d58; --warn:#b45309; --danger:#c0392b; --chip:#eef1f6;
+    --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;}
+  }
+  :root[data-theme="light"]{--ink:#1a1c22;--bg:#f7f8fa;--card:#fff;--line:#e5e7eb;--muted:#6b7280;--accent:#3b5bdb;--chip:#eef1f6;}
+  :root[data-theme="dark"]{--ink:#e7e9ee;--bg:#12141a;--card:#191c23;--line:#2a2e37;--muted:#9aa1ad;--accent:#7d93f0;--chip:#22262f;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:900px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)} h2{font-size:16px;margin:0 0 var(--s2)}
+  h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 var(--s2)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  /* the tab spine — the whole point of O-4: four surfaces under one home */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 var(--s3);flex-wrap:wrap}
+  .tabs button{border:0;background:none;color:var(--muted);font:inherit;font-weight:600;
+    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+    transition:color .15s ease,border-color .15s ease}
+  .tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+  .muted{color:var(--muted)} .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--chip);font-size:12px;font-weight:600}
+  .badge.owner{background:#e7edff;color:#2540b5} .badge.ok{background:#e6f7ee;color:#0b7a43}
+  @media (prefers-color-scheme:dark){.badge.owner{background:#22305e;color:#a9bcff}.badge.ok{background:#12402a;color:#7fd6a3}}
+  .btn{display:inline-block;padding:6px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .field input,select{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .tells{color:var(--muted);font-size:13px;background:var(--chip);border-radius:8px;padding:10px 12px;margin:var(--s2) 0}
+  .panel{display:none} .panel.on{display:block}
+  .log time{color:var(--muted);font-variant-numeric:tabular-nums}
+  code{background:var(--chip);padding:1px 5px;border-radius:5px;font-size:12px}
+  @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Settings</h1>
+  <p class="sub">Everything about <strong>Acme Corp</strong> in one place — general, the
+    people who share it, how you sign in, and a log of what changed. One home instead of
+    four scattered nav items. No new capability; the same actions, gathered.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="general" aria-selected="true">General</button>
+    <button role="tab" data-tab="members" aria-selected="false">Members</button>
+    <button role="tab" data-tab="auth" aria-selected="false">Sign-in</button>
+    <button role="tab" data-tab="log" aria-selected="false">Audit log</button>
+  </div>
+
+  <!-- GENERAL -->
+  <section class="panel on" data-panel="general">
+    <div class="card">
+      <h2>Workspace</h2>
+      <div class="field" style="max-width:22em"><label for="wn">Name</label>
+        <div style="display:flex;gap:8px"><input id="wn" value="Acme Corp"><button class="btn">Save</button></div></div>
+      <p class="muted" style="font-size:13px;margin-top:var(--s2)">Plan <span class="badge">Scale</span> ·
+        3 of 5 connections used · <a href="#">Billing →</a> <span class="muted">(owner only)</span></p>
+    </div>
+    <div class="card">
+      <h2>Peer benchmarks</h2>
+      <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" checked>
+        <span>Include this workspace in anonymous peer benchmarks — powers the cross-customer
+          comparison every customer sees. Counts only, never prompts. Opt out any time.</span></label>
+    </div>
+    <div class="card">
+      <h2>Your data</h2>
+      <p class="muted" style="font-size:13px">Raw uploads auto-delete 30 days after each audit.
+        Delete everything now, or export it first. Counts and reports are kept; prompts were never stored.</p>
+      <p><button class="btn">Export my data</button> <button class="btn" style="color:var(--danger);border-color:var(--danger)">Delete raw uploads now</button></p>
+    </div>
+  </section>
+
+  <!-- MEMBERS (RBAC-aware, reuses O-2) -->
+  <section class="panel" data-panel="members">
+    <div class="card">
+      <h2>People in this workspace</h2>
+      <table>
+        <thead><tr><th>Person</th><th>Role</th><th>Joined</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>dana@acme.com <span class="muted">· you</span></td><td><span class="badge owner">owner</span></td><td>2026-06-01</td><td></td></tr>
+          <tr><td>lee@acme.com</td><td><select><option>admin</option><option>member</option><option>viewer</option></select></td><td>2026-06-14</td><td><button class="btn" style="color:var(--danger);border-color:var(--danger)">Remove</button></td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:12px;margin-top:var(--s2)">Governance controls (invite, set-role, remove)
+        show only for an owner/admin — the O-2 matrix, unchanged. A member/viewer sees the roster read-only.</p>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:var(--s2);flex-wrap:wrap">
+        <div class="field"><label>Invite by email</label><input placeholder="teammate@acme.com"></div>
+        <div class="field"><label>Role</label><select><option>member</option><option>admin</option><option>viewer</option></select></div>
+        <button class="btn primary">Send invite</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGN-IN (auth) -->
+  <section class="panel" data-panel="auth">
+    <div class="card">
+      <h2>How you sign in</h2>
+      <div class="row"><span>Email (magic link)</span><span class="muted">dana@acme.com <span class="badge ok">verified</span></span></div>
+      <div class="row"><span>Google</span><span class="muted">connected · dana@acme.com</span></div>
+      <div class="row"><span>Microsoft</span><span><button class="btn">Connect</button></span></div>
+      <div class="row"><span>GitHub</span><span><button class="btn">Connect</button></span></div>
+      <p class="tells">Sign in with any linked method; they all reach the same account. Enterprise SSO
+        (SAML/OIDC) is the R-ORG follow-on — it slots in here as another row when it ships.</p>
+    </div>
+  </section>
+
+  <!-- AUDIT LOG -->
+  <section class="panel" data-panel="log">
+    <div class="card">
+      <h2>Audit log</h2>
+      <p class="muted" style="font-size:13px">Who did what in this workspace — the governance trail
+        (existing <code>AuditLogEntry</code> data, surfaced here). Counts and metadata only.</p>
+      <table class="log">
+        <thead><tr><th>When (UTC)</th><th>Who</th><th>What</th></tr></thead>
+        <tbody>
+          <tr><td><time>2026-07-26 14:02</time></td><td>dana@acme.com</td><td>invited lee@acme.com as admin</td></tr>
+          <tr><td><time>2026-07-26 13:41</time></td><td>dana@acme.com</td><td>connected source · openai</td></tr>
+          <tr><td><time>2026-07-25 09:18</time></td><td>lee@acme.com</td><td>ran audit · 3f9c…0b5</td></tr>
+          <tr><td><time>2026-07-24 16:50</time></td><td>dana@acme.com</td><td>set role · sam@acme.com → viewer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="muted" style="font-size:12px">Mockup for the O-4 ux gate. The tabs gather EXISTING surfaces
+    (General = today's /settings, Members = /settings/members, Sign-in = the auth methods, Audit log =
+    AuditLogEntry) under one home; the sidebar "Account" group collapses to a single "Settings". No new
+    capability — same actions, one place. RBAC (O-2) governs Members exactly as today.</p>
+
+  <!-- R-DESIGN-ADDENDUM (charter checklist for a gated surface):
+       • THE ONE DESIGNED DELIGHT: the tab spine turns four scattered destinations into one calm home —
+         switching tabs keeps you oriented ("acting in Acme Corp") instead of bouncing across nav items.
+       • WCAG AA CONTRAST: ink #1a1c22 on #f7f8fa ≈ 15:1; muted #6b7280 on card ≈ 5:1; the selected-tab
+         accent underline pairs with ink text (not colour-only) so state survives greyscale. Dark theme mirrors it.
+       • PREFERS-REDUCED-MOTION: honored — the only transition (tab colour/underline) is removed under the reduce query. -->
+</div>
+<script>
+  const tabs = document.querySelectorAll('.tabs button');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.setAttribute('aria-selected', String(x === t)));
+    panels.forEach(p => p.classList.toggle('on', p.dataset.panel === t.dataset.tab));
+  }));
+</script>
+</body>
+</html>
