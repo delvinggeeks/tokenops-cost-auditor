@@ -1,20 +1,29 @@
 # PLAN-LOOP-ENGINEERING — the autonomous SDLC loop
 
-**Status: RULED (founder 2026-07-24).** "Any bugs or new requirements has to be
-clearly PR raised, implement, build, test and merge cleanly without any human
-gate, following clear discipline of vertical slices … the entire SDLC cycle in a
-loop, i.e. loop engineering." Founder decisions (AskUserQuestion 2026-07-24):
-**fully autonomous** driver · **continuous deployment** (auto-deploy to prod on
-merge) · **GitHub Issues** intake. Authorship stays the founder's, mechanically
-enforced (no AI header/footer anywhere — LE-1, shipped).
+**Status: RULED (founder 2026-07-24; deploy governance amended 2026-07-25).**
+"Any bugs or new requirements has to be clearly PR raised, implement, build,
+test and merge cleanly without any human gate, following clear discipline of
+vertical slices … the entire SDLC cycle in a loop, i.e. loop engineering."
+Founder decisions (AskUserQuestion 2026-07-24): **fully autonomous** driver ·
+**continuous deployment to staging, founder-gated promotion to prod** ·
+**GitHub Issues** intake. The 2026-07-25 ruling reversed the original
+auto-deploy-to-prod design: staging auto-deploys on every merge; production
+ships only on a manual `workflow_dispatch` the founder triggers after
+reviewing the rendered staging pages — authority is `docs/09-SDLC.md` §5.
+Authorship stays the founder's, mechanically enforced (no AI header/footer
+anywhere — LE-1, shipped).
 
 ## 0. What this is
 
 A self-driving software factory: a GitHub Issue (a bug or requirement) enters and
-comes out as a deployed, verified change — with **no human gate** at any step.
-The machine gates (CI + the adversarial agent gate round) are the ENTIRE quality
-and safety authority; there is no human reviewer. This is a deliberate,
-founder-ruled tradeoff — its honest risk and its containment are §3.
+comes out as a change implemented, gated, merged, and auto-deployed to
+staging — with **no human gate** from Issue to staging. The machine gates
+(CI + the adversarial agent gate round) are the ENTIRE quality and safety
+authority up to that point; there is no human reviewer. The one deliberate
+human gate in the loop is **production promotion**: the founder reviews the
+rendered staging pages, then triggers prod via manual `workflow_dispatch`
+(`docs/09-SDLC.md` §5, ruling 2026-07-25). This is a deliberate, founder-ruled
+tradeoff — its honest risk and its containment are §3.
 
 ## 1. The loop (one iteration)
 
@@ -28,8 +37,10 @@ founder-ruled tradeoff — its honest risk and its containment are §3.
               system-tester · ux-when-a-surface-changed), verdicts posted to the PR
 ⑥ PR          raised: template + gate verdicts + traceability, links the Issue
 ⑦ MERGE       AUTO-MERGE the moment every required check is green — no human click
-⑧ DEPLOY      on merge to main: backup → provision → external smoke → auto-rollback
-⑨ VERIFY+LOOP smoke green ⇒ close the Issue, update STATUS/traceability, next Issue
+⑧ DEPLOY      on merge to main: auto-deploy to STAGING (backup → provision →
+              external smoke → auto-rollback); PRODUCTION ships only on a
+              founder-triggered manual `workflow_dispatch` after staging review
+⑨ VERIFY+LOOP staging smoke green ⇒ close the Issue, update STATUS/traceability, next Issue
 ```
 
 ## 2. The build — vertical slices (each its own branch → PR, per the discipline)
@@ -40,14 +51,21 @@ founder-ruled tradeoff — its honest risk and its containment are §3.
   parallel required check. AC: a bad author or `Co-Authored-By` fails CI; honest
   prose that merely names the tools passes. DoD met (tested both ways, self-verifies).
 
-- **LE-2 — Continuous deployment.** `deploy.yml` also triggers on `push` to `main`
-  (keep workflow_dispatch as the manual escape hatch); the gate job re-runs the
-  full chain + `pricing_verify.py` on the merged SHA; deploy does backup →
-  provision → external smoke → auto-rollback to the prior tag; the deploy tag is
-  derived automatically (version file or `vYYYY.MM.DD-<sha>`). AC: a merge to main
-  auto-deploys to prod; a failed gate or smoke blocks/rolls back and never leaves
-  prod half-updated. DoD: workflow validated on a dry-run/staging path; runbook
-  §2 updated. FOUNDER-LANE: DEPLOY_HOST/DOMAIN/SSH_KEY secrets; enable the trigger.
+- **LE-2 — Continuous deployment (REDEFINED by founder ruling 2026-07-25:
+  staging-auto, prod founder-gated — see `docs/09-SDLC.md` §5, the
+  authority for this slice).** `deploy.yml` also triggers on `push` to
+  `main`; the gate job re-runs the full chain + `pricing_verify.py` on the
+  merged SHA; deploy does backup → provision → external smoke → auto-rollback
+  to the prior tag; the deploy tag is derived automatically (version file or
+  `vYYYY.MM.DD-<sha>`). A merge to `main` **auto-deploys to STAGING only**;
+  `deploy-production` is gated `if: github.event_name == 'workflow_dispatch'`
+  — the founder triggers it manually after reviewing the rendered staging
+  pages. **Prod never auto-ships.** AC: a merge to main auto-deploys to
+  staging; a failed gate or smoke blocks/rolls back and never leaves
+  staging or prod half-updated; prod only ships on a manual dispatch. DoD:
+  workflow validated on a dry-run/staging path; runbook §2 updated.
+  FOUNDER-LANE: DEPLOY_HOST/DOMAIN/SSH_KEY secrets; HELD pending those
+  secrets (per `docs/09-SDLC.md` §6).
 
 - **LE-3 — Auto-merge on green.** Branch protection on `main` requires the full
   check set (authorship · lint · type · test · coverage · docs · gate-round);
@@ -85,22 +103,29 @@ by hand via the branch→PR flow (the loop can't build itself yet); once LE-1..5
 live the loop **self-drives** every subsequent Issue, including LE-6 and all
 product work (O-1b-1/2/3 onward become Issues the loop implements).
 
-## 3. The honest risk + its containment (no-human-gate to prod)
+## 3. The honest risk + its containment (no-human-gate to staging; founder-gated prod)
 
-Fully autonomous + continuous deployment means: **a defect that passes every gate
-ships to production automatically.** There is no human catch. Containment, all
-machine-enforced:
+Fully autonomous merge + staging deploy means: **a defect that passes every gate
+ships to staging automatically.** There is no human catch before staging.
+Production is different: it ships only on the founder's manual
+`workflow_dispatch` after reviewing the rendered staging pages
+(`docs/09-SDLC.md` §5), so a defect reaching prod additionally requires that
+review to miss it. Containment, all machine-enforced up to staging, plus the
+founder review before prod:
 - The **agent gate round** (LE-4) is an ADVERSARIAL reviewer — cold-reviewer hunts
   the bug the tests can't (the O-1a sweep proved this catches missed-site classes);
   a FAIL blocks merge.
 - **CI laws**: authorship, FR-22 (no text), X-scope (no proxy/enforcement/RBAC-leak),
   the money law (`pricing_verify.py` — a wrong rate FAILS the build), coverage.
 - **Deploy safety**: pre-deploy backup, external smoke, **auto-rollback** to the
-  prior tag on any smoke failure — prod self-heals.
+  prior tag on any smoke failure — staging and prod both self-heal.
+- **Founder gate on prod**: the rendered staging pages are reviewed before the
+  manual dispatch; nothing reaches prod unattended.
 - **Kill-switch** (LE-6): `loop:paused` halts intake; a human can always stop it.
 - **Vertical slices**: small, reversible changes — a bad slice is one revert.
-The residual risk (a defect that fools every gate AND passes smoke) is the price
-of no human gate; it is bounded by backup + rollback + revert, never unrecoverable.
+The residual risk (a defect that fools every gate, passes staging smoke, AND
+survives founder review) is bounded by backup + rollback + revert, never
+unrecoverable.
 
 ## 4. Cross-cutting laws the loop never breaks
 
