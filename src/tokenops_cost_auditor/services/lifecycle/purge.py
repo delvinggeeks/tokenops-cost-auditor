@@ -96,5 +96,5 @@ def main() -> None:
     print(f"purge: {len(purged)} audit(s) purged: {', '.join(purged) or '-'}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - script entrypoint, exercised via ofelia
     main()

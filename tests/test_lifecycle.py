@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from test_runner import seed_audit
 from tokenops_cost_auditor.persistence.models import Audit, AuditLogEntry, CallAggregate
-from tokenops_cost_auditor.services.lifecycle.purge import purge_due
+from tokenops_cost_auditor.services.lifecycle.purge import purge_due, purge_one
 
 WINDOW_DAYS = 7
 
@@ -50,6 +50,15 @@ class TestTLIF01Selection:
             session.commit()
         with app.state.session_factory() as session:
             assert purge_due(session, WINDOW_DAYS) == [audit_id]
+
+    def test_purge_one_noops_when_nothing_to_delete(self, app: FastAPI) -> None:
+        """Coverage debt §3 #9: purge_one on an audit with no stored upload returns
+        False and stamps NOTHING — the admin route reaches it without pre-filtering, so
+        claiming a deletion that never happened would be a lie (V-D7 cold-review f.2)."""
+        audit = Audit(user_id="u", status="done")  # upload_path defaults to None
+        with app.state.session_factory() as session:
+            assert purge_one(session, audit) is False
+            assert audit.purged_at is None
 
     def test_already_purged_not_reselected(self, app: FastAPI) -> None:
         audit_id = seed_audit(app, "openai_small.jsonl", email="twice@example.com")
