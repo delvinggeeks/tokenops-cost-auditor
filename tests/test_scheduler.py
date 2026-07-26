@@ -141,3 +141,25 @@ class TestTick:
         assert stats["pull_errors"] == 1 and stats["pulled"] == 1
         assert stats["audited"] == 1
         assert ok is not None
+
+    def test_04_pull_ledger_failure_is_isolated(
+        self, session: Session, settings: Settings, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Coverage debt §3 #9: if RECORDING a pull failure itself fails, tick still
+        counts the error and never crashes — the nested best-effort handler that only
+        the exact 'ledger write also throws' path exercises (schedule.py:107-109)."""
+        import tokenops_cost_auditor.services.connectors.schedule as sch
+
+        add_source(session, settings)  # a due, never-pulled source
+
+        def boom_pull(*a: object, **k: object) -> None:
+            raise RuntimeError("provider 500")
+
+        def boom_ledger(*a: object, **k: object) -> None:
+            raise RuntimeError("ledger write failed too")
+
+        monkeypatch.setattr(sch, "run_pull", boom_pull)
+        monkeypatch.setattr(sch, "record_pull_failure", boom_ledger)
+        stats = tick(session, settings, PricingTable.load(), now=NOW)
+        assert stats["pull_errors"] == 1  # counted, not crashed
+        assert stats["pulled"] == 0
