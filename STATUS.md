@@ -3389,3 +3389,13 @@ agent via gh api): (1) enable repo "Allow auto-merge"; (2) add gate-round to the
 checks so a gate FAIL/NO-VERDICT actually BLOCKS merge (was advisory). docs/09-SDLC LE table
 updated (LE-3 shipped; LE-4 corrected to shipped-validated). LE-5 (issue driver) + LE-6
 (kill-switch/observability) remain the loop's last rungs. Held as a PR.
+
+## LE-3 ACTIVATED + gate-round now REQUIRED (2026-07-26)
+
+Applied via gh api (founder authorised "LE-3 + require gate-round"): repo allow_auto_merge=true;
+branch-protection required checks now [authorship, lint, type, test, docs, GATE-ROUND] — a gate
+FAIL/NO-VERDICT BLOCKS merge (was advisory). enforce_admins stays false = the founder keeps an
+override valve if a gate ever wedges. THIS PR is the LE-3 live demo: labelled `auto-merge`, it
+squash-merges itself the moment all six checks (incl. the ~13-min live gate round) go green — no
+human click. Loop status now: LE-1 authorship ✓, LE-3 auto-merge ✓, LE-4 gate-round ✓ (required),
+LE-2 deploy HELD (founder DEPLOY_* secrets), LE-5 issue-driver + LE-6 kill-switch NOT BUILT.
