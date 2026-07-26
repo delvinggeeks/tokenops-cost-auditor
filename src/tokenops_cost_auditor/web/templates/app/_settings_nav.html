@@ -1,0 +1,12 @@
+{# O-4: the settings-home tab spine — one home for General, Members, Developer,
+   Sign-in and Audit log. Server-rendered links (deep-linkable, works without JS);
+   the active tab is marked from the `settings_tab` context var each route passes.
+   RBAC is enforced WITHIN each tab (O-2), not here — every member may open Members
+   (roster) and Audit log; the governance controls gate inside per the matrix. #}
+<nav class="settings-tabs" aria-label="Settings sections">
+  <a href="/settings"{% if settings_tab == "general" %} aria-current="page"{% endif %}>General</a>
+  <a href="/settings/members"{% if settings_tab == "members" %} aria-current="page"{% endif %}>Members</a>
+  <a href="/settings/developer"{% if settings_tab == "developer" %} aria-current="page"{% endif %}>Developer</a>
+  <a href="/settings/sign-in"{% if settings_tab == "signin" %} aria-current="page"{% endif %}>Sign-in</a>
+  <a href="/settings/audit-log"{% if settings_tab == "auditlog" %} aria-current="page"{% endif %}>Audit log</a>
+</nav>

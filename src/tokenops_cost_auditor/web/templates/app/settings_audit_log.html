@@ -1,0 +1,30 @@
+{% extends "app/_shell.html" %}
+{% block title %}Audit log — Settings — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<h1 class="page-h1">Settings</h1>
+{% include "app/_settings_nav.html" %}
+<div class="grid">
+  {{ kit.surface_open(title="Audit log", icon="statement", span=12) }}
+    <p class="tells">What people in this workspace did — invites, roles, connections,
+      audits. Counts and metadata only; the log never held a prompt or a completion.</p>
+    {% if entries %}
+    {{ kit.table_open([{"label": "When (UTC)"}, {"label": "Who"}, {"label": "What"}]) }}
+      {% for e in entries %}
+      <tr>
+        <td><code>{{ e.ts.strftime("%Y-%m-%d %H:%M") }}</code></td>
+        <td>{{ e.actor }}</td>
+        <td>{{ e.action }}{% if e.subject %} · <span class="muted">{{ e.subject }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    {{ kit.empty_state("Nothing logged yet",
+         "Governance actions — invites, role changes, connecting a source, running an
+          audit — will show up here as people in this workspace do them.") }}
+    {% endif %}
+    <p class="counts-note">Scoped to this workspace by its current members. The log is
+      append-only — entries are never edited or removed.</p>
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}

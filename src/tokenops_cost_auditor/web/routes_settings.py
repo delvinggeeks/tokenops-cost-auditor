@@ -18,6 +18,7 @@ from tokenops_cost_auditor.persistence.repo import (
     active_workspace_id,
     get_or_create_user,
     get_or_create_workspace,
+    list_workspace_audit_log,
     set_active_workspace,
 )
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
@@ -90,8 +91,60 @@ def settings_page(
             purged=purged,
             closed=closed,
             show_tour=False,
+            settings_tab="general",  # O-4 settings-home tab spine
             **{k: v for k, v in ctx.items() if k != "plan"},
         )
+
+
+@router.get("/sign-in", response_class=HTMLResponse)
+def sign_in_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+    """O-4 Sign-in tab: how you reach this account. The email magic-link always works;
+    plus any federated methods the deployment has configured (Google/Microsoft/GitHub).
+    Federation is login-ONLY — there is no per-user 'connected' record — so we show the
+    AVAILABLE methods honestly, never a fake 'connected' badge or a dead control."""
+    from tokenops_cost_auditor.web.routes_auth import enabled_federations
+
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        ctx = _shell_ctx(session, request, user, "settings")
+    return _render(
+        request,
+        "app/settings_signin.html",
+        federations=enabled_federations(request.app.state.settings),
+        settings_tab="signin",
+        **{k: v for k, v in ctx.items() if k != "plan"},  # ctx supplies user_email
+    )
+
+
+@router.get("/audit-log", response_class=HTMLResponse)
+def audit_log_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
+    """O-4 Audit-log tab: the workspace governance trail — who did what. Surfaces the
+    existing append-only AuditLogEntry, scoped to the active workspace's members (the
+    log has no workspace_id; see repo.list_workspace_audit_log). Counts/metadata only
+    (FR-22): the log never held prompt or completion text."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        ws = active_workspace_id(session, user.id)
+        assert ws is not None
+        entries = [
+            {
+                "ts": e.ts,
+                "actor": e.actor,
+                "action": e.action.replace(".", " ").replace("_", " "),
+                "subject": e.subject,
+            }
+            for e in list_workspace_audit_log(session, ws)
+        ]
+        ctx = _shell_ctx(session, request, user, "settings")
+    return _render(
+        request,
+        "app/settings_audit_log.html",
+        entries=entries,
+        settings_tab="auditlog",
+        **{k: v for k, v in ctx.items() if k != "plan"},
+    )
 
 
 def plan_display(plan: str, settings: object) -> str:

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from tokenops_cost_auditor.persistence.models import (
     Audit,
+    AuditLogEntry,
     IdempotencyKey,
     User,
     Workspace,
@@ -215,6 +216,29 @@ def list_workspace_members(
         .order_by(owner_first, WorkspaceMember.created_at)
     ).all()
     return [(m, u) for m, u in rows]
+
+
+def list_workspace_audit_log(
+    session: Session, workspace_id: str, limit: int = 50
+) -> list[AuditLogEntry]:
+    """O-4 Audit-log tab: the governance trail for a workspace, most recent first.
+    AuditLogEntry has no workspace_id (a global append-only log keyed by the actor's
+    email), so this scopes by the workspace's CURRENT members' emails — 'what people
+    in this workspace did'. Honest and useful without a schema change; FR-22 holds by
+    construction (the log only ever stored counts/metadata, never prompt text)."""
+    emails = [u.email for _, u in list_workspace_members(session, workspace_id)]
+    if not emails:
+        return []
+    return list(
+        session.execute(
+            select(AuditLogEntry)
+            .where(AuditLogEntry.actor.in_(emails))
+            .order_by(AuditLogEntry.ts.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
 
 
 def find_idempotent_audit(session: Session, user_id: str, key: str) -> Audit | None:
