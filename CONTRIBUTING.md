@@ -54,6 +54,51 @@ uv run python scripts/pricing_verify.py
 Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …). One coherent concern
 per commit. No AI/co-author trailers (the authorship gate rejects them).
 
+## The autonomous loop
+
+Some cards are built by an autonomous agent instead of a person. To hand a
+task to it:
+
+1. Open a GitHub Issue using the **loop-task** template
+   (`.github/ISSUE_TEMPLATE/loop-task.yml`) — it asks for the user-facing
+   goal, the acceptance criteria, and what's out of scope.
+2. Add the **`loop:ready`** label. An agent picks it up, branches off `main`,
+   builds the slice end-to-end (code + tests + docs), and opens a PR.
+3. The **gate round** (the same adversarial review a human-built card gets)
+   reviews the PR's diff, and on a green verdict the PR **auto-merges**.
+4. Merging to `main` auto-deploys to **staging**. **Production is still
+   founder-gated** — a manual promotion after reviewing staging — the loop
+   never ships to prod on its own.
+
+A `loop:ready` issue must meet the same discipline as any other card:
+
+- It is a **modular vertical slice** — one end-to-end change a user can
+  reach, not a horizontal layer.
+- It states **explicit acceptance criteria** (the user job, the surfaces
+  touched, the tests that prove it, what's out of scope).
+- It stays inside the CI laws the gate round enforces: the **authorship**
+  law (no AI/co-author trailers), the **scope freeze** (`X-01..X-05`), the
+  **FR-22** privacy invariant (no prompt/completion text persisted), the
+  **engine boundary** (`T-NFR-01` — `services/rules`/`services/pricing` stay
+  network/LLM-free), and a **green pinned toolchain**
+  (`uv run ruff check . && uv run ruff format . && uv run mypy && uv run pytest -m 'not perf'`).
+
+**Kill-switch.** To halt all auto-merge instantly (loop-built or
+human-built):
+
+```bash
+gh variable set LOOP_PAUSED --body true    # halt
+gh variable set LOOP_PAUSED --body false   # resume
+```
+
+**Status.** To see whether the loop is paused, whether auto-merge and the
+gate round are enforced, which PRs are armed, and the recent gate-round
+pass rate:
+
+```bash
+uv run python scripts/loop_status.py
+```
+
 ## More
 
 - Architecture & methods: [`docs/internal/PLATFORM.md`](docs/internal/PLATFORM.md)
