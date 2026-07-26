@@ -84,6 +84,29 @@ pricing-verify · docs-drift. **Deploy:** backup → provision → smoke → aut
 
 The only items with NO unmet trigger and NO founder-lane dependency. Build top-down.
 
+**FRONTIER STATUS — COMPLETE (reconciled 2026-07-26).** Every buildable §3 item is shipped
+or was already-delivered-when-consolidated; the buildable-now queue is EXHAUSTED. What
+remains is trigger-gated (#6) or a surface-touch dependency (#8), neither buildable now.
+- #1 O-2 Roles/RBAC — ✅ SHIPPED (PR #26)
+- #2 View-report reachability — ✅ SHIPPED (PR #28)
+- #3 Report plain-English parity — ✅ SHIPPED (PR #29)
+- #4 Landing "Works with" — ✅ ALREADY DELIVERED. The 2026-07-24 "Works with your whole AI
+  stack" section already states all five providers plainly + the Cursor/Lovable/Figma truth;
+  #4 was a duplicate the consolidation captured after the fact.
+- #5 R-LANDING-2 rebuild — ✅ ALREADY DELIVERED. Shipped 2026-07-24/25: static/land/landing.js
+  (8.5KB, under the 15KB budget) + the land-pipe (animated pipeline), land-tour (product-tour
+  tabs + count-ups) and land-compare (comparison strip) sections + MOTION-SPECS.md C1–C9
+  (test_motion_specs.py binds them). #5 was consolidated the SAME day it shipped, so the
+  register captured it as outstanding by timing, not fact.
+- #6 M-FLY-2 (L2 shadow calibration) — ⛔ trigger-gated (needs n≥25 peer data) → see §5.
+- #7 O-4 Workspace settings home — ✅ SHIPPED (PR #30).
+- #8 Design P3 batch — ⛔ dependency ("fold into the next surface touch"), not standalone.
+- #9 Coverage debt — ✅ SHIPPED (PR #31; the modules were already ~95%, raised to 100%).
+
+**NEXT WORK is no longer in this frontier** — it is FOUNDER-LANE (§4: set the deploy secrets to
+un-hold LE-2 + make the live gate round required; branch protection → LE-3; UAT-2; launch
+blockers) or a NEW scope decision (a fresh PLAN track). The table below is kept for the record.
+
 | # | Item | Track | What / DoD | Est | Depends |
 |---|------|-------|-----------|-----|---------|
 | 1 | **O-2 Roles / RBAC** | ORG | `owner\|admin\|member\|viewer` matrix over PRODUCT actions (mint/revoke keys, manage billing, manage sources, view-vs-manage reports), enforced at the route boundary; engine role-blind. DoD: each role's rendered surface pinned — a viewer can't even SEE a control they can't use. Unblocks billing-visibility + member-mutates fail-closed since O-1. | 2–3d | O-1 (done) |
