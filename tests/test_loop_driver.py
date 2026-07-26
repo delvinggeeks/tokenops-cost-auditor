@@ -74,3 +74,18 @@ class TestBuildPromptEncodesEveryLaw:
     def test_dry_run_returns_the_prompt_without_a_run(self) -> None:
         out = ld.run_agent(1, "t", "b", "e@x.com", dry_run=True)
         assert "autonomous build agent" in out
+
+
+class TestWorkflowValidity:
+    def test_no_workflow_uses_secrets_in_an_if(self) -> None:
+        # GitHub FORBIDS the `secrets` context in an `if:` — it silently invalidates the
+        # ENTIRE workflow (0s startup failure). This bit loop-driver.yml on the first run;
+        # guard every workflow so it can't recur.
+        import yaml
+
+        for wf_path in Path(".github/workflows").glob("*.yml"):
+            wf = yaml.safe_load(wf_path.read_text(encoding="utf-8"))
+            for job in wf.get("jobs", {}).values():
+                assert "secrets." not in str(job.get("if", "")), wf_path.name
+                for step in job.get("steps", []):
+                    assert "secrets." not in str(step.get("if", "")), wf_path.name
