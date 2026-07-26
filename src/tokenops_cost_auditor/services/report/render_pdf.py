@@ -12,6 +12,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from tokenops_cost_auditor.services.report.model import ReportModel
+from tokenops_cost_auditor.services.rules import detector_copy
 
 TEMPLATES_DIR = Path(__file__).parents[2] / "web" / "templates"
 
@@ -22,7 +23,9 @@ _env = Environment(
 
 
 def render_report_html(report: ReportModel, template: str = "pdf/report.html") -> str:
-    return _env.get_template(template).render(report=report)
+    # §3 #3: `dcopy` is the SAME services-layer detector copy the in-app findings use,
+    # so the report's plain headline + summary match /findings word for word.
+    return _env.get_template(template).render(report=report, dcopy=detector_copy)
 
 
 def render_pdf(report: ReportModel, path: Path) -> Path:

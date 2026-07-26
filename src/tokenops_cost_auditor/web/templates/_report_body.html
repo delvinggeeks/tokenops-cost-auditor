@@ -148,6 +148,10 @@
       <span class="pill confidence">{{ f.confidence }}</span>
       <span class="finding-impact">${{ "%.4f"|format(f.monthly_cost_impact_usd) }}/month</span>
     </div>
+    {# §3 #3: plain headline + 'what this means' — the SAME words /findings shows,
+       from the shared services detector copy (dcopy). #}
+    <h3 class="finding-plain">{{ dcopy.plain(f.detector) }}</h3>
+    <p class="finding-summary">{{ dcopy.summary(f.detector) }}</p>
     <p class="fix">{{ f.fix_text }}</p>
     {% if f.evidence %}
     <details class="evidence">
