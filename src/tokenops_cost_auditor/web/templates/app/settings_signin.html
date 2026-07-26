@@ -1,0 +1,33 @@
+{% extends "app/_shell.html" %}
+{% block title %}Sign-in — Settings — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+<h1 class="page-h1">Settings</h1>
+{% include "app/_settings_nav.html" %}
+<div class="grid">
+  {{ kit.surface_open(title="How you sign in", icon="settings", span=12) }}
+    <p class="tells">Every method below reaches the same account —
+      <b>{{ user_email }}</b>. There are no passwords to manage.</p>
+    {{ kit.table_open([{"label": "Method"}, {"label": "Status"}]) }}
+      <tr>
+        <td>Email — magic link</td>
+        <td><span class="badge badge-verified">this account</span></td>
+      </tr>
+      {% for f in federations %}
+      <tr>
+        <td>{{ f.label }}</td>
+        <td class="muted">available — sign in with {{ f.label }} at the login screen</td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% if not federations %}
+    <p class="muted">Email magic-link is the only sign-in method configured for this
+      deployment.</p>
+    {% endif %}
+    <p class="counts-note">Federated sign-in verifies your address with the provider and
+      lands you on this same account — there's no separate password. Enterprise SSO
+      (SAML/OIDC) is the R-ORG follow-on and will appear here as another method the day
+      it ships — we don't show a control that doesn't work yet.</p>
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}
