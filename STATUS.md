@@ -3358,3 +3358,17 @@ active; sidebar collapsed; sign-in shows account + future-SSO; audit log surface
 tab). mypy + import-guard + CSS-parity + docs gates green; endpoints.md regenerated. DEPENDS-DONE:
 O-2 (RBAC), O-1b (members), existing /settings + auditlog + federations. Engine untouched. Held as a PR.
 Next: ROADMAP §3 #9 (coverage debt) or #5 (landing rebuild).
+
+## §3 #9 — coverage debt closed (2026-07-26) — founder "merge and continue with coverage debt"
+
+The ROADMAP's numbers (smtp 83.8% · purge 78.9% · schedule 84.8%) were STALE — intervening
+work had already lifted all three to ~95% (measured), above the 85% gate. Closed the last
+edge/error gaps to 100%: (a) smtp.py:56 — SmtpMailAdapter.workspace_invite (the invite mail's
+workspace subject + absolute accept link), test in test_auth.py::TestTMAIL01Smtp; (b) purge.py:57
+— purge_one no-ops (returns False, stamps nothing) when there's no stored upload, test in
+test_lifecycle.py (the admin route reaches it un-pre-filtered, V-D7); (c) schedule.py:107-109 —
+the NESTED best-effort handler where recording a pull failure ITSELF fails, tick still counts the
+error and never crashes, test in test_scheduler.py::TestTick. purge.py:100 (the __main__ script
+guard) excluded with `# pragma: no cover` — an ofelia entrypoint, untestable via import. Result:
+smtp/purge/schedule all 100%. No source behavior change (tests + one pragma). Held as a PR.
+Next: ROADMAP §3 #5 (landing rebuild) or #8 (design batch).

@@ -276,6 +276,18 @@ class TestTMAIL01Smtp:
         # walkthrough 2026-07-22)
         assert outbox[0]["from"] == "TokenOps Cost Auditor <audits@example.com>"
 
+    def test_workspace_invite_carries_the_workspace_and_absolute_link(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The invite mail is the invitee's only way in — the workspace name in the
+        subject and the absolute accept link are the whole job (coverage debt §3 #9)."""
+        outbox = install_fake_smtp(monkeypatch)
+        make_adapter().workspace_invite("mate@example.com", "/invite/accept?code=xyz", "Acme Corp")
+        sent = outbox[0]
+        assert "Acme Corp" in sent["subject"]
+        assert sent["to"] == "mate@example.com"
+        assert "https://audit.example.com/invite/accept?code=xyz" in str(sent["body"])
+
     def test_digest_subject_flags_alerts_only_when_present(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
