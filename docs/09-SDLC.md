@@ -2,7 +2,9 @@
 
 **Purpose.** ONE authoritative definition of how every unit of work is built, verified,
 and shipped — so the process is followed the same way for every requirement, new or old.
-This is the counterpart to `docs/internal/ROADMAP.md` (the "what"). Consolidated + RECONCILED
+This is the counterpart to `docs/internal/QUEUE.md` — the single ordered spine of WHAT to
+build next (it links `docs/01-REQUIREMENTS.md` + `docs/04-TRACEABILITY.md`; `ROADMAP.md`
+holds the reference detail). Consolidated + RECONCILED
 2026-07-25 from the process rules previously scattered across CLAUDE.md, KANBAN.md,
 PLAN-LOOP-ENGINEERING.md, 10-AGENT-HARNESS.md, PLAN.md §0, 05-TEST-PLAN, 06-OPS-RUNBOOK,
 CONTRIBUTING.md, DEVELOPMENT.md.
