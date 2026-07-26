@@ -3399,3 +3399,19 @@ override valve if a gate ever wedges. THIS PR is the LE-3 live demo: labelled `a
 squash-merges itself the moment all six checks (incl. the ~13-min live gate round) go green — no
 human click. Loop status now: LE-1 authorship ✓, LE-3 auto-merge ✓, LE-4 gate-round ✓ (required),
 LE-2 deploy HELD (founder DEPLOY_* secrets), LE-5 issue-driver + LE-6 kill-switch NOT BUILT.
+
+## LE-6 — kill-switch + loop observability (2026-07-26) — founder "approved proceed next" (safety before LE-5's autonomy)
+
+Built LE-6 BEFORE LE-5: a kill-switch for the automation just turned on is the responsible
+order (safety before more autonomy). KILL-SWITCH: the LOOP_PAUSED repo variable, honored in
+auto-merge.yml's job guard (`vars.LOOP_PAUSED != 'true'`) — `gh variable set LOOP_PAUSED --body
+true` halts ALL auto-merge instantly; a human can always stop the loop. OBSERVABILITY:
+scripts/loop_status.py — one screen showing paused?/auto-merge?/gate-round-required?/PRs armed/
+gate-round pass rate (pure render_status + gh-backed gather_state); live output verified against
+the real repo. Also fixed the LE-3 gotcha: auto-merge.yml now triggers on `opened` too, so a PR
+created WITH the label arms immediately (no re-apply). Proven: tests/test_loop_status.py (render
+signals) + tests/test_auto_merge_workflow.py (kill-switch in guard + opened trigger). This PR is
+labelled `auto-merge` — it self-merges through the loop it hardens (dogfood). Loop now: LE-1/3/4/6
+live; LE-2 deploy HELD (founder secrets); LE-5 autonomous issue-driver is the last, most
+governance-heavy rung (fully-autonomous issue→merge) — deserves deliberate design + founder
+alignment on the autonomy level before building.

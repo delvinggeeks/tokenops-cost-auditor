@@ -33,5 +33,13 @@ class TestAutoMergeWorkflowIsSafe:
     def test_it_triggers_when_a_label_is_added(self) -> None:
         assert "labeled" in _on(_wf())["pull_request"]["types"]
 
+    def test_a_pr_created_with_the_label_arms_immediately(self) -> None:
+        # LE-6 robustness: `opened` so create-with-label arms without a re-apply.
+        assert "opened" in _on(_wf())["pull_request"]["types"]
+
+    def test_the_kill_switch_gates_arming(self) -> None:
+        # LE-6: LOOP_PAUSED='true' halts ALL auto-merge, honored in the job guard.
+        assert "LOOP_PAUSED" in _wf()["jobs"]["arm-auto-merge"]["if"]
+
     def test_permissions_are_least_privilege(self) -> None:
         assert _wf()["permissions"] == {"contents": "write", "pull-requests": "write"}
