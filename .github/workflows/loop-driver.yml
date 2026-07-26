@@ -1,0 +1,61 @@
+# LE-5 — autonomous issue driver (docs/09-SDLC §6, PLAN-LOOP-ENGINEERING). When an Issue
+# is labelled `loop:ready` (or on the hourly sweep), the WRITE-enabled build agent
+# implements it end-to-end and opens a PR labelled `auto-merge`; the loop (LE-4 gate
+# round + LE-3 auto-merge + branch protection) reviews and ships it. Fully hands-off.
+#
+# HALT: set the LOOP_PAUSED repo variable to 'true' (LE-6 kill-switch) — no build starts.
+#
+# ACTIVATION (founder-lane, one-time — the loop is inert until all are set):
+#   * CLAUDE_CODE_OAUTH_TOKEN (or ANTHROPIC_API_KEY) — the agent's model access (already set).
+#   * LOOP_PAT — a fine-grained PAT (contents + pull-requests + issues: write). REQUIRED:
+#     a PR opened with the default GITHUB_TOKEN does NOT trigger the gate-round/CI/auto-merge
+#     workflows (GitHub's recursion guard), so the loop would stall. The PAT makes the
+#     agent's PR trigger the loop.
+#   * Labels `loop:ready` + `loop:in-progress` and the loop-task Issue template (in this PR).
+name: loop-driver
+
+on:
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: "17 * * * *" # hourly sweep — picks up any loop:ready issue the event missed
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: loop-driver # ONE build at a time — never two agents mutating the repo at once
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Kill-switch first; then, for the `issues` event, only the `loop:ready` label (the
+    # schedule/dispatch paths always enter and let the driver pick the top ready issue).
+    if: >-
+      vars.LOOP_PAUSED != 'true'
+      && (github.event_name != 'issues' || github.event.label.name == 'loop:ready')
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Check out with the PAT so the agent's push + PR trigger the downstream loop.
+          token: ${{ secrets.LOOP_PAT || secrets.GITHUB_TOKEN }}
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --frozen --all-extras
+      - name: install claude CLI (pinned, TE-11 ethos)
+        run: npm install -g @anthropic-ai/claude-code@2.1.220
+      - name: run the autonomous build agent
+        # Inert until the model credential exists (dry-run/tests still validate the driver).
+        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # The agent uses this for gh (issue edit + PR create) and git push. PAT so the
+          # PR triggers the loop; GITHUB_TOKEN fallback opens the PR but won't fire CI.
+          GH_TOKEN: ${{ secrets.LOOP_PAT || secrets.GITHUB_TOKEN }}
+        run: uv run python scripts/loop_driver.py "${{ vars.LOOP_AUTHOR_EMAIL || 'delving.geeks@gmail.com' }}"

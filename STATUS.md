@@ -3415,3 +3415,25 @@ labelled `auto-merge` — it self-merges through the loop it hardens (dogfood). 
 live; LE-2 deploy HELD (founder secrets); LE-5 autonomous issue-driver is the last, most
 governance-heavy rung (fully-autonomous issue→merge) — deserves deliberate design + founder
 alignment on the autonomy level before building.
+
+## LE-5 — autonomous issue driver (2026-07-26) — founder "fully hands-off LE-5, any loop:ready issue"
+
+The loop's capstone: label a GitHub Issue `loop:ready` → with NO human step the change is
+implemented, PR'd, gated, and merged. scripts/loop_driver.py: select_ready (FIFO, skips
+loop:in-progress) + build_prompt (the autonomous agent's instruction — encodes EVERY CI law
+so the agent builds to the same bar a human slice does: CLAUDE.md/SDLC, scope-freeze
+X-01..X-05, FR-22, T-NFR-01 engine boundary, R-VERTICAL slice, pinned toolchain green,
+AUTHORSHIP LAW = Lokesh only + NO AI trailer, open PR with "Closes #N" + label `auto-merge`,
+never self-merge/--admin, out-of-scope→BACKLOG) + run_agent (claude CLI, Read+Edit+Write+Bash,
+3600s). .github/workflows/loop-driver.yml: on issues[labeled]=loop:ready + hourly sweep +
+dispatch; LOOP_PAUSED kill-switch honored; concurrency=1 (never two agents at once);
+checks out + auths with LOOP_PAT so the agent's PR TRIGGERS the loop (a GITHUB_TOKEN PR does
+NOT fire downstream workflows — GitHub's recursion guard). .github/ISSUE_TEMPLATE/loop-task.yml
+(goal + acceptance criteria + scope). Labels loop:ready + loop:in-progress created. Proven:
+tests/test_loop_driver.py (select FIFO/skip-in-progress; build_prompt carries the issue + EVERY
+law incl. authorship/scope/vertical/toolchain/Closes/auto-merge/no-self-merge; dry-run).
+ACTIVATION (founder-lane): create a LOOP_PAT secret (fine-grained PAT: contents+PR+issues
+write) — REQUIRED so the agent's PR triggers CI/gate-round/auto-merge; OAuth token already set.
+FIRST RUN should be a TRIVIAL issue to watch the full autonomous cycle before trusting real
+work. This PR labelled `auto-merge` (dogfood). Loop now COMPLETE: LE-1/3/4/5/6 built; LE-2
+deploy HELD on founder DEPLOY_* secrets.
