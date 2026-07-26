@@ -1,0 +1,38 @@
+name: Loop task
+description: A task the autonomous loop (LE-5) builds end-to-end. Add the `loop:ready` label to start.
+title: "[loop] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        When you add the **`loop:ready`** label, the loop implements this with no human
+        step: branch → code → tests → docs → PR → gate round → auto-merge (prod stays
+        founder-gated). Halt anytime: set the `LOOP_PAUSED` repo variable to `true`.
+        Keep it a **vertical slice** — one end-to-end change a user can reach.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence — what a user can do after this ships.
+      placeholder: "A user can ..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Each becomes a test the loop must make pass.
+      placeholder: |
+        1. ...
+        2. ...
+        3. honest empty/error state for ...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of scope / notes
+      description: What NOT to build. The scope freeze (X-01..X-05) and all CI laws still govern.
+    validations:
+      required: false
