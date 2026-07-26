@@ -1,0 +1,46 @@
+# LE-3 — auto-merge on all-green (docs/09-SDLC §6). Completes the loop: a PR labelled
+# `auto-merge` is squash-merged AUTOMATICALLY the moment ALL required checks pass — no
+# human click. It uses GitHub's NATIVE auto-merge, so branch protection is fully
+# respected (nothing merges unless authorship + lint + type + test + docs — and, once
+# added, gate-round — are green) and it is cancellable at any time (remove the label or
+# `gh pr merge --disable-auto`).
+#
+# WHY LABEL-GATED (not default-on): the kill-switch/observability rung (LE-6) is not
+# built yet, so auto-merge is OPT-IN per PR — the safe MVP. Adding the `auto-merge`
+# label is the single, reversible act that arms it; default-on waits for LE-6.
+#
+# ACTIVATION (founder-lane, one-time): enable "Allow auto-merge" in
+# Settings → General → Pull Requests. Until then the enable call logs a clear message
+# and no-ops (the PR just waits for a manual merge, exactly as today).
+name: auto-merge
+
+on:
+  pull_request:
+    types: [labeled, ready_for_review, synchronize, reopened]
+
+permissions:
+  contents: write # to merge
+  pull-requests: write # to enable auto-merge
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  arm-auto-merge:
+    runs-on: ubuntu-latest
+    # Only when the human opted THIS pr in, and it is a real (non-draft) PR.
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'auto-merge')
+      && github.event.pull_request.draft == false
+    steps:
+      - name: arm GitHub native auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # --auto queues the merge; GitHub performs it only after every required
+          # status check is green. Branch protection is the gate, not this workflow.
+          gh pr merge "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --auto --squash --delete-branch \
+          || echo "::notice::auto-merge could not be armed — enable 'Allow auto-merge' in Settings → General (the PR still merges manually)."

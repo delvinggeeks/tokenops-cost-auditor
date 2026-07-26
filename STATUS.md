@@ -3372,3 +3372,20 @@ error and never crashes, test in test_scheduler.py::TestTick. purge.py:100 (the 
 guard) excluded with `# pragma: no cover` — an ofelia entrypoint, untestable via import. Result:
 smtp/purge/schedule all 100%. No source behavior change (tests + one pragma). Held as a PR.
 Next: ROADMAP §3 #5 (landing rebuild) or #8 (design batch).
+
+## LE-3 — auto-merge on all-green (2026-07-26) — founder "Finish the loop (LE-3 + require gate-round)"
+
+Completes the loop-engineering track's merge automation. .github/workflows/auto-merge.yml:
+on a PR labelled `auto-merge` (and non-draft), arms GitHub's NATIVE auto-merge (gh pr merge
+--auto --squash --delete-branch) — so the PR merges AUTOMATICALLY the moment every required
+check is green, no human click. Branch protection is the real gate (nothing merges unless
+authorship/lint/type/test/docs — and, once added, gate-round — pass); the workflow only
+QUEUES the merge. Label-gated = opt-in per PR (the safe MVP until LE-6's kill-switch allows
+default-on); removing the label or `gh pr merge --disable-auto` cancels it. Least-privilege
+(contents+pull-requests write). Proven: tests/test_auto_merge_workflow.py (label-gated +
+non-draft guard; native --auto so branch protection gates; triggers on labeled; least-priv
+perms). TWO FOUNDER-LANE ACTIVATIONS (both authorised by the direction choice, applied by the
+agent via gh api): (1) enable repo "Allow auto-merge"; (2) add gate-round to the required
+checks so a gate FAIL/NO-VERDICT actually BLOCKS merge (was advisory). docs/09-SDLC LE table
+updated (LE-3 shipped; LE-4 corrected to shipped-validated). LE-5 (issue driver) + LE-6
+(kill-switch/observability) remain the loop's last rungs. Held as a PR.
