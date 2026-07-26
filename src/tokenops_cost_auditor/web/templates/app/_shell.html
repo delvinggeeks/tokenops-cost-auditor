@@ -43,9 +43,9 @@
     </nav>
     <nav class="nav-group">
       <div class="label">Account</div>
-      {{ nav_item("settings", "i-settings", "Settings", "/settings") }}
-      {{ nav_item("members", "i-overview", "Members", "/settings/members") }}
-      {{ nav_item("developer", "i-source", "Developer", "/settings/developer") }}
+      {# O-4: Members, Developer, Sign-in and Audit log are now TABS inside Settings —
+         one home instead of scattered items. Settings stays lit across all of them. #}
+      <a href="/settings"{% if page in ["settings", "members", "developer", "signin", "auditlog"] %} aria-current="page"{% endif %}>{{ icon("i-settings") }}Settings</a>
       {{ nav_item("billing", "i-billing", "Billing", "/billing") }}
     </nav>
     <nav class="nav-group">

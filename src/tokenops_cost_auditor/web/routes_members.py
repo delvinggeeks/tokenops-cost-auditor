@@ -134,6 +134,7 @@ def members_page(request: Request, user_email: str = Depends(current_user)) -> H
             invited=request.query_params.get("invited"),
             removed=request.query_params.get("removed"),
             role_updated=request.query_params.get("role"),
+            settings_tab="members",  # O-4 settings-home tab spine
             **ctx,
         )
 

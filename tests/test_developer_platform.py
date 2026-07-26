@@ -247,10 +247,14 @@ class TestReachability:
         assert 'hx-post="/settings/developer/apps"' in html
         assert "read:audits" in html and "read:findings" in html
 
-    def test_sidebar_links_developer(self, app: FastAPI) -> None:
+    def test_developer_reachable_via_the_settings_home(self, app: FastAPI) -> None:
+        # O-4: Developer is now a TAB inside the Settings home, not a top-level sidebar
+        # item — so reachability is sidebar → Settings → Developer tab.
         grant(app)
-        html = TestClient(app).get("/dashboard", headers=HDR).text
-        assert 'href="/settings/developer"' in html
+        c = TestClient(app)
+        assert 'href="/settings"' in c.get("/dashboard", headers=HDR).text  # sidebar → Settings
+        settings = c.get("/settings", headers=HDR).text
+        assert 'href="/settings/developer"' in settings  # the tab spine links Developer
 
 
 # ------------------------------------------------------------- OAuth flow

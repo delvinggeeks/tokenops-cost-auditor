@@ -2,6 +2,8 @@
 {% block title %}Members — TokenOps Cost Auditor{% endblock %}
 {% block content %}
 {% import "kit/_kit.html" as kit %}
+<h1 class="page-h1">Settings</h1>
+{% include "app/_settings_nav.html" %}
 <div class="grid">
   {{ kit.surface_open(title="Members of " ~ workspace_name, icon="overview", span=12) }}
 

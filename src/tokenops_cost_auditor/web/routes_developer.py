@@ -129,6 +129,7 @@ def developer_home(request: Request, user_email: str = Depends(current_user)) ->
             apps=app_view,
             all_scopes=READ_SCOPES,
             page="developer",
+            settings_tab="developer",  # O-4 settings-home tab spine
             **ws_bar,
             **fresh,
             plan_name="Pro" if is_pro else "",

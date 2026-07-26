@@ -661,6 +661,21 @@ Settings Page.
 
 Responses: `200`, `422`
 
+## `GET /settings/audit-log`
+
+Audit Log Page.
+
+O-4 Audit-log tab: the workspace governance trail — who did what. Surfaces the
+existing append-only AuditLogEntry, scoped to the active workspace's members (the
+log has no workspace_id; see repo.list_workspace_audit_log). Counts/metadata only
+(FR-22): the log never held prompt or completion text.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /settings/benchmarks`
 
 Save Benchmark Pref.
@@ -866,6 +881,21 @@ Responses: `200`, `422`
 Purge Now.
 
 Delete every raw upload we still hold for this account, now.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `GET /settings/sign-in`
+
+Sign In Page.
+
+O-4 Sign-in tab: how you reach this account. The email magic-link always works;
+plus any federated methods the deployment has configured (Google/Microsoft/GitHub).
+Federation is login-ONLY — there is no per-user 'connected' record — so we show the
+AVAILABLE methods honestly, never a fake 'connected' badge or a dead control.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|
