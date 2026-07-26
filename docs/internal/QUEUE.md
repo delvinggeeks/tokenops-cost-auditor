@@ -29,8 +29,12 @@ exhausted (2026-07-26). Nothing is silently missing — verified by req↔trace 
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
-- **LE-2 continuous deploy** ← set `DEPLOY_HOST/DOMAIN/SSH_KEY`. (The only rung left; LE-1/3/4/5/6 shipped.)
-- Branch-protection · Stripe/OAuth creds · domain cutover · UAT-2 · pending rulings — full list: `ROADMAP §4`.
+- Stripe/OAuth LIVE creds · domain cutover · UAT-2 · pending rulings — full list: `ROADMAP §4`.
+- (LE-2 continuous deploy is LIVE, not blocked — staging auto-deploys on every merge to
+  `main`, verified `curl https://staging.tokenops-cost-auditor.com/healthz` →
+  `{"ok":true,"db":true}`, same for prod. Branch protection on `main` is also LIVE. The
+  only remaining deploy action is the founder-gated PROD **promotion** —
+  `workflow_dispatch` after reviewing rendered staging pages — see ROADMAP §4.)
 
 ## PARKED — trigger-gated, do NOT pull forward (ROADMAP §5)
 
