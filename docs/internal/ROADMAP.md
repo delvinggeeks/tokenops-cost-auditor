@@ -1,4 +1,7 @@
-# ROADMAP — Outstanding Work, single source of truth
+# ROADMAP — Outstanding Work (reference detail)
+
+> **Sequencing moved to `docs/internal/QUEUE.md`** — the small ordered spine agents work from.
+> This file keeps the §3/§4/§5 detail; *what to build next* comes from QUEUE, not here.
 
 **Purpose.** ONE place for every outstanding requirement + the process, so nothing is
 missed or diverted. Consolidated 2026-07-25 from a full sweep of all plan docs

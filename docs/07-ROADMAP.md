@@ -1,5 +1,8 @@
 # Roadmap — TokenOps
 
+> **Build sequence lives in `docs/internal/QUEUE.md`** (the ordered spine). This page is the
+> phase/narrative view; it does not drive what gets built next.
+
 ## Phase 1: Cost Auditor — 14-day build (parallel sales track mandatory)
 
 D1  Scaffold FROM SCRATCH in an empty repo (no templates, no

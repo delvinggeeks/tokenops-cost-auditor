@@ -1,5 +1,8 @@
 # PLAN.md — TokenOps Cost Auditor build plan (D1–D7 detailed, D8–D14 outline)
 
+> **Sequencing → `docs/internal/QUEUE.md`** (the ordered spine). This plan keeps the D1–D14
+> milestone detail + rulings; it is reference, not the next-task queue.
+
 Status: **APPROVED by founder 2026-07-17, with rulings recorded below.**
 Governing docs: docs/00–07, 09, 10. Gate protocol per docs/10-AGENT-HARNESS.md §3–4.
 Author: Lokesh Prasanna Kumar S. Date: 2026-07-17.

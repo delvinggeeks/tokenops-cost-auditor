@@ -3475,3 +3475,16 @@ and on a real merge closes exactly the issues in GitHub's OWN `closingIssuesRefe
 (never a body regex — it can only close what GitHub linked as closing) and clears the loop
 labels, so a resolved issue never lingers open+in-progress. Pinned by
 `tests/test_loop_driver.py::TestLoopCloseIssuesWorkflow`.
+
+WORK-SPINE CONSOLIDATION (2026-07-26) — one small ordered queue, agents work cleanly.
+Founder: "sequential breakdown from a single source of truth as vertical slices + small
+tasks; stop diverting/losing requirements; the doc must stay small (big = hallucination)."
+Measured first: req↔trace diff proved NOTHING is lost — 48/48 FR+NFR traced in docs/04 to
+real modules+tests (only X-03/X-05 lack rows: scope exclusions). Real cause of divergence
+was 16 competing planning docs with no single sequential spine. Fix: new lean
+docs/internal/QUEUE.md (~45 lines) — links (never copies) the sources (01 WHAT / 04 DONE /
+09 HOW), holds only the ordered NOW/BLOCKED/PARKED queue + the anti-divergence Law (nothing
+built that isn't a NOW task citing its FR/NFR; done = its 04 row updated same PR). NOW is
+empty by design (frontier exhausted). docs/09-SDLC points to it; ROADMAP/KANBAN/PLAN/
+07-ROADMAP banner-redirected for sequencing (detail retained). BACKLOG kept as the idea
+parking lot the Law references.
