@@ -30,6 +30,15 @@ class TestAutoMergeWorkflowIsSafe:
         assert "gh pr merge" in run and "--auto" in run  # queue, don't force
         assert "--squash" in run
 
+    def test_it_merges_as_the_loop_pat_so_downstream_workflows_trigger(self) -> None:
+        # CRITICAL: a merge under GITHUB_TOKEN is attributed to the github-actions app,
+        # and GitHub's recursion guard then suppresses deploy.yml (push) AND
+        # loop-close-issues.yml (pull_request: closed) - observed live on #41-#46 (staging
+        # left un-deployed, issues left open). Enabling auto-merge as the LOOP_PAT user
+        # makes the merge-push trigger them. Regressing to bare GITHUB_TOKEN re-breaks both.
+        env = _wf()["jobs"]["arm-auto-merge"]["steps"][0]["env"]
+        assert "LOOP_PAT" in env["GH_TOKEN"]
+
     def test_it_triggers_when_a_label_is_added(self) -> None:
         assert "labeled" in _on(_wf())["pull_request"]["types"]
 

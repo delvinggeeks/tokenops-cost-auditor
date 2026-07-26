@@ -3515,3 +3515,13 @@ protection as blocked (states LIVE, only the founder-gated prod promotion remain
 new DONE/LIVE subsection with their probes cited, §4's remaining pending list re-verified
 line by line rather than copied forward. No workflow/code changes; `deploy.yml` untouched;
 §5 untouched; no prod promotion attempted (founder-only manual dispatch).
+
+LE-3 RECURSION-GUARD FIX (2026-07-26) — the loop's own merges now trigger deploy + close.
+Verified defect: PRs #41-#46 were auto-merged by the github-actions app (GITHUB_TOKEN), and
+GitHub's recursion guard SUPPRESSED all downstream workflows — so deploy.yml (on: push) never
+deployed staging past #40 (da5f713a), and loop-close-issues.yml (on: pull_request: closed)
+never fired (#45 left open). Confirmed by mergedBy: #40 (human) deployed; #41-#46 (app) did
+not. Impact was latent (the un-deployed commits were docs/workflows, no app code) but real.
+Fix: auto-merge.yml enables auto-merge as the LOOP_PAT user (not GITHUB_TOKEN), so the
+eventual merge is attributed to a real user and the merge-push triggers deploy + close.
+Pinned by test_auto_merge_workflow::test_it_merges_as_the_loop_pat_so_downstream_workflows_trigger.

@@ -41,7 +41,15 @@ jobs:
     steps:
       - name: arm GitHub native auto-merge (squash)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CRITICAL: enable auto-merge as the LOOP_PAT user, NOT GITHUB_TOKEN. A merge
+          # attributed to the github-actions app (GITHUB_TOKEN) hits GitHub's recursion
+          # guard, which SUPPRESSES every downstream workflow — so deploy.yml (on: push)
+          # never deploys and loop-close-issues.yml (on: pull_request: closed) never
+          # fires. Observed live: PRs #41–#46 auto-merged by the app left staging
+          # un-deployed and their issues un-closed. Enabling as the PAT user attributes
+          # the eventual merge to a real user, so the merge-push DOES trigger deploy +
+          # close. Do NOT revert to GITHUB_TOKEN (same reason PR creation uses LOOP_PAT).
+          GH_TOKEN: ${{ secrets.LOOP_PAT || secrets.GITHUB_TOKEN }}
         run: |
           # --auto queues the merge; GitHub performs it only after every required
           # status check is green. Branch protection is the gate, not this workflow.
