@@ -139,8 +139,8 @@ assume automation that does not exist:
 |-------|---------|---------------|
 | LE-1 authorship gate | hard CI gate | **SHIPPED** (check_authorship in CI) |
 | LE-2 continuous deploy | auto-deploy on merge | **PARTIAL + REDEFINED** (staging-auto; prod manual) + **HELD on founder DEPLOY_* secrets** |
-| LE-3 auto-merge on green | `gh pr merge --auto` | **NOT BUILT** — merges are a manual squash |
-| LE-4 gate round in CI | headless agents fail a PR check | **NOT BUILT (keystone)** — the gate round is run BY HAND in the main thread; nothing in CI enforces a FAIL |
+| LE-3 auto-merge on green | `gh pr merge --auto` | **SHIPPED 2026-07-26** — `.github/workflows/auto-merge.yml` arms GitHub NATIVE auto-merge on any PR labelled `auto-merge` (branch protection is the gate). ACTIVATE: enable "Allow auto-merge" in repo Settings (one toggle). Label-gated until LE-6's kill-switch allows default-on. |
+| LE-4 gate round in CI | headless agents fail a PR check | **SHIPPED 2026-07-25, VALIDATED LIVE** (PR #25) — `scripts/gate_round.py` + `.github/workflows/gate-round.yml` run the gate agents headless on the founder's subscription and fail the check on any FAIL/NO-VERDICT. To ENFORCE at merge: add `gate-round` to branch-protection required checks (currently advisory — authorship/lint/type/test/docs are required, gate-round is not). |
 | LE-5 autonomous issue driver | GitHub Issues + `loop:*` labels + scheduler | **NOT BUILT** — intake is the human "proceed <id>" convention |
 | LE-6 observability + kill-switch | loop status + `loop:paused` | **NOT BUILT** |
 
