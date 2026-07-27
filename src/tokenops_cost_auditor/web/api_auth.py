@@ -23,6 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+import structlog
 from fastapi import Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -35,6 +36,8 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.web.api_scopes import parse_scopes
+
+log = structlog.get_logger("tokenops_cost_auditor.api_auth")
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,15 @@ def _session(request: Request) -> Session:
     return session
 
 
+def _bump_usage(row: ApiToken, now: datetime) -> None:
+    """R-PLATFORM slice 5: request count + last-used, counts only (FR-22).
+
+    Best-effort BY DESIGN: called from inside a try/except at every call
+    site, because metering must never turn a valid read into a 500."""
+    row.last_used_at = now
+    row.request_count += 1
+
+
 def resolve_read_bearer(request: Request, authorization: str | None) -> ReadPrincipal:
     """Authorization header -> ReadPrincipal, or 401. Stamps last_used_at."""
     if not authorization or not authorization.startswith("Bearer "):
@@ -73,7 +85,10 @@ def resolve_read_bearer(request: Request, authorization: str | None) -> ReadPrin
             ).scalar_one_or_none()
             if api_row is None:
                 raise HTTPException(status_code=401, detail="unknown or revoked API token")
-            api_row.last_used_at = now
+            try:
+                _bump_usage(api_row, now)
+            except Exception:  # best-effort (issue #59): metering never fails the call
+                log.warning("api_token.usage_bump_failed", token_id=api_row.id, exc_info=True)
             principal = ReadPrincipal(
                 api_row.user_id, frozenset(parse_scopes(api_row.scopes)), "api_token"
             )

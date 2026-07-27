@@ -16,6 +16,7 @@ import hashlib
 import re
 import secrets
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -28,7 +29,7 @@ from tokenops_cost_auditor.persistence.models import (
     Subscription,
     User,
 )
-from tokenops_cost_auditor.web import api_scopes
+from tokenops_cost_auditor.web import api_auth, api_scopes
 
 EMAIL = "dev-owner@example.com"
 OTHER = "other-owner@example.com"
@@ -234,6 +235,64 @@ class TestApiTokenJourney:
             200,
         )
         assert client.get("/api/v1/audits", headers=auth).status_code == 401
+
+
+# ------------------------------------------------------ usage metering (#59)
+
+
+class TestUsageMetering:
+    """Issue #59 (R-PLATFORM slice 5): per-key request count + last-used."""
+
+    def test_each_read_increments_the_tokens_request_count(self, app: FastAPI) -> None:
+        uid = grant(app)
+        seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        auth = {"Authorization": f"Bearer {token}"}
+        for _ in range(3):
+            assert client.get("/api/v1/audits", headers=auth).status_code == 200
+        with app.state.session_factory() as session:
+            row = session.execute(select(ApiToken)).scalar_one()
+            assert row.request_count == 3
+            assert row.last_used_at is not None
+
+    def test_fresh_token_shows_honest_never_used_and_zero(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        mint_token(client, ["read:audits"])
+        html = client.get("/settings/developer", headers=HDR).text
+        assert "never" in html
+        with app.state.session_factory() as session:
+            row = session.execute(select(ApiToken)).scalar_one()
+            assert row.request_count == 0 and row.last_used_at is None
+
+    def test_developer_page_renders_request_counts(self, app: FastAPI) -> None:
+        uid = grant(app)
+        seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        client.get("/api/v1/audits", headers={"Authorization": f"Bearer {token}"})
+        html = client.get("/settings/developer", headers=HDR).text
+        assert "Requests" in html  # column header
+        assert ">1<" in html  # the one read landed
+
+    def test_metering_failure_never_fails_the_read(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A raising metering path still returns the normal API response —
+        recording usage is best-effort by design (issue #59 AC-3)."""
+        uid = grant(app)
+        seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+
+        def boom(row: object, now: object) -> None:
+            raise RuntimeError("metering backend unavailable")
+
+        monkeypatch.setattr(api_auth, "_bump_usage", boom)
+        resp = client.get("/api/v1/audits", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 200  # the read itself is unaffected
+        assert len(resp.json()["audits"]) == 1
 
 
 # ------------------------------------------------------------ reachability
