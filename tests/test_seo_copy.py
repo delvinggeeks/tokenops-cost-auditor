@@ -13,6 +13,11 @@ Two layers:
     app/ (authenticated) and kit/ (component preview) at the source level, so a
     new public page or a new meta/OG field can't slip past this test without a
     live route being wired up for it.
+
+A third layer, TestComparisonStrip, pins the landing comparison strip's honest
+category framing (R-CATEGORY §2, R-NAME-SEO §4, R-COMPETITIVE-LEARN §3): the
+strip names CATEGORIES only, never vendor products, and states the GPU/training-
+compute scope boundary plainly rather than hiding it.
 """
 
 from __future__ import annotations
@@ -133,3 +138,81 @@ class TestEveryPublicTemplateSource:
             og_description = _meta_content(html, "property", "og:description")
             if og_description is not None:
                 assert_tokenops_qualified(og_description, f"{rel} og:description")
+
+
+COMPARE_SECTION_RE = re.compile(r'<section class="land-compare".*?</section>', re.S)
+
+# A short denylist of competitor product/vendor brand names — the strip must
+# name categories (FinOps platforms, gateways, ...) never these. Not
+# exhaustive; covers the well-known names in the categories this strip
+# actually names (FinOps platforms, gateways/proxies, observability).
+VENDOR_DENYLIST = (
+    "CloudZero",
+    "Kubecost",
+    "Apptio",
+    "Datadog",
+    "New Relic",
+    "Honeycomb",
+    "LiteLLM",
+    "Portkey",
+    "Helicone",
+    "LangSmith",
+    "Braintrust",
+    "OpenAI",
+    "Anthropic",
+)
+
+
+class TestComparisonStrip:
+    """R-CATEGORY §2 / R-NAME-SEO §4 / R-COMPETITIVE-LEARN §3 — the landing
+    comparison strip names honest categories (never vendors), frames FinOps
+    platforms by their real cost (tagging programs + enterprise contracts)
+    against TokenOps' self-serve answer, and states the GPU-scope boundary
+    plainly rather than hiding it."""
+
+    CATEGORY_LABELS = (
+        "FinOps platforms",
+        "Consultancy audits",
+        "Gateways",
+        "Observability",
+        "TokenOps",
+    )
+
+    def _compare_section(self, app: FastAPI) -> str:
+        html = TestClient(app).get("/").text
+        m = COMPARE_SECTION_RE.search(html)
+        assert m, "landing page has no land-compare section"
+        return m.group(0)
+
+    def test_every_category_label_renders(self, app: FastAPI) -> None:
+        section = self._compare_section(app)
+        for label in self.CATEGORY_LABELS:
+            assert label in section, f"comparison strip is missing category {label!r}"
+
+    def test_finops_row_states_the_tagging_and_contract_cost(self, app: FastAPI) -> None:
+        section = self._compare_section(app)
+        row_match = re.search(r"FinOps platforms.*?</tr>", section, re.S)
+        assert row_match, "no FinOps platforms row in the comparison strip"
+        row = row_match.group(0)
+        row_lower = row.lower()
+        assert "tagging" in row_lower, "FinOps platforms row must name the tagging-program cost"
+        assert "contract" in row_lower, (
+            "FinOps platforms row must name the enterprise-contract cost"
+        )
+
+    def test_tokenops_row_states_self_serve_contrast(self, app: FastAPI) -> None:
+        section = self._compare_section(app)
+        row_match = re.search(r"compare-us.*?</tr>", section, re.S)
+        assert row_match, "no compare-us (TokenOps) row in the comparison strip"
+        row = row_match.group(0)
+        assert "self-serve" in row.lower(), "TokenOps row must state the self-serve contrast"
+
+    def test_gpu_scope_boundary_is_stated_near_the_strip(self, app: FastAPI) -> None:
+        section = self._compare_section(app)
+        assert "GPU" in section, "no GPU-scope boundary line near the comparison strip"
+        assert "out of scope" in section.lower(), "GPU-scope line must state the boundary plainly"
+
+    def test_no_vendor_brand_name_in_the_strip(self, app: FastAPI) -> None:
+        section = self._compare_section(app)
+        for vendor in VENDOR_DENYLIST:
+            assert vendor not in section, f"comparison strip names a vendor brand: {vendor!r}"
