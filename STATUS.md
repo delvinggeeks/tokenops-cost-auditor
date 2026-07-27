@@ -3626,3 +3626,19 @@ source level — including oauth consent/error, the web + PDF report, and invite
 which need auth/session/oauth-request setup to reach live — so a future public page or a new
 meta/OG field can't ship an unqualified "TokenOps" without a live route being wired for this
 test. docs/04-TRACEABILITY.md row added. Engine untouched (templates-only change).
+
+R-CATEGORY §2 / R-NAME-SEO §4 / R-COMPETITIVE-LEARN §3 — comparison strip category framing
+(Issue #64, 2026-07-27). Enriched the landing comparison strip (`landing.html` `.land-compare`)
+with the honest category framing from three rulings, categories only, never vendor product
+names: added the missing rows (FinOps platforms, Consultancy audits, Observability) alongside
+the existing Model routers / Gateways &amp; proxies / TokenOps rows. The FinOps-platforms row
+names its real cost — a tagging program and an enterprise contract — against the TokenOps row's
+self-serve, zero-integration, evidence-cited contrast. A new `hero-note`-styled line under the
+table states the GPU-scope boundary plainly rather than hiding it: managed API token spend is
+audited, GPU/training-compute cost is out of scope, a different audit. Copy-only; no new page,
+no rename, no engine change. Guarded by NEW tests/test_seo_copy.py::TestComparisonStrip: every
+category label renders through the real `/` route; the FinOps-platforms row names both
+tagging and contract; the TokenOps row names self-serve; the GPU-scope line renders inside the
+strip section; a short vendor-brand denylist (CloudZero, Kubecost, Apptio, Datadog, New Relic,
+Honeycomb, LiteLLM, Portkey, Helicone, LangSmith, Braintrust, OpenAI, Anthropic) confirms none
+appear in the strip. docs/04-TRACEABILITY.md row added.
