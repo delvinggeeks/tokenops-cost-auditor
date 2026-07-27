@@ -64,6 +64,17 @@
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
       a single full audit of a log file, no subscription.
       {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}</p>
+    {# Issue #74: Standard Checkout for the one-shot INR purchase only — USD
+       stays on the existing Stripe hosted link, unchanged, no CTA here yet. #}
+    {% if currency == "INR" %}
+      {% if razorpay_configured %}
+        <button type="button" class="btn btn-primary" id="rzp-oneshot-btn"
+                data-email="{{ user_email }}">Buy one-time audit</button>
+        <p id="rzp-oneshot-status" class="muted" style="margin-top: var(--s1);"></p>
+      {% else %}
+        <p class="muted" style="margin-top: var(--s1);">Checkout opens once billing is switched on.</p>
+      {% endif %}
+    {% endif %}
     <div class="provenance">Prices are shown in dollars everywhere; your card is
       billed in your country's currency, chosen at checkout. One subscription
       per account.</div>
@@ -76,4 +87,80 @@
   {{ kit.surface_close() }}
   {% endif %}
 </div>
+{% endblock %}
+{% block scripts %}
+{% if can_view_billing and currency == "INR" and razorpay_configured %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+(function () {
+  var btn = document.getElementById("rzp-oneshot-btn");
+  var statusEl = document.getElementById("rzp-oneshot-status");
+  if (!btn) return;
+
+  function setStatus(msg, isError) {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.classList.toggle("error", !!isError);
+  }
+
+  function openCheckout(order) {
+    var rzp = new Razorpay({
+      key: order.key_id,
+      amount: order.amount,
+      currency: order.currency,
+      order_id: order.order_id,
+      name: "TokenOps Cost Auditor",
+      description: "One-time audit",
+      prefill: { email: btn.dataset.email || "" },
+      handler: function (response) {
+        fetch("/billing/razorpay/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(response).toString(),
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            btn.disabled = false;
+            if (res.ok) {
+              setStatus("Payment received — your credit lands as soon as the payment confirms. Refresh to see it.");
+            } else {
+              setStatus("We could not verify that payment. If you were charged, contact support.", true);
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            setStatus("We could not verify that payment. If you were charged, contact support.", true);
+          });
+      },
+      modal: {
+        ondismiss: function () {
+          btn.disabled = false;
+          setStatus("Payment didn't complete — nothing was charged. You can try again.", true);
+        },
+      },
+    });
+    rzp.on("payment.failed", function () {
+      btn.disabled = false;
+      setStatus("Payment didn't complete — nothing was charged. You can try again.", true);
+    });
+    rzp.open();
+  }
+
+  btn.addEventListener("click", function () {
+    btn.disabled = true;
+    setStatus("Opening checkout…");
+    fetch("/billing/razorpay/order", { method: "POST" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("order-create failed");
+        return r.json();
+      })
+      .then(openCheckout)
+      .catch(function () {
+        btn.disabled = false;
+        setStatus("Could not start checkout — try again in a moment.", true);
+      });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

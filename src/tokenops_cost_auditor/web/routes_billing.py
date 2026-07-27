@@ -3,23 +3,43 @@
 Shows the plan, what it costs in BOTH currencies (R-Q11), and the state of
 any outstanding payment in plain words. No card is ever collected for Free.
 
-Checkout itself is a provider-hosted link — we never see card details.
+Subscription checkout is a provider-hosted link — we never see card details.
+The one-shot INR audit (Issue #74) uses Razorpay Standard Checkout instead:
+an order is created server-side (`POST /razorpay/order`), the client opens
+the checkout.js modal against it, and the modal's signed callback is checked
+server-side (`POST /razorpay/verify`) for UX only — the `order.paid` webhook
+(api/routes_webhooks.py) is what actually grants the credit (B1).
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from tokenops_cost_auditor.api.routes_upload import current_user
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import active_role, get_or_create_user
 from tokenops_cost_auditor.services.geo import resolver as geo
-from tokenops_cost_auditor.services.payments import plans, subscriptions
+from tokenops_cost_auditor.services.payments import plans, razorpay_orders, subscriptions
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 
 router = APIRouter(prefix="/billing", tags=["billing"])
+
+# Issue #74: the modal is an iframe served from checkout.razorpay.com and it
+# calls back to api.razorpay.com — without these the modal cannot load. Set
+# only on the billing page (the one surface that opens it), not app-wide.
+RAZORPAY_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; "
+    "frame-src 'self' https://checkout.razorpay.com; "
+    "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "font-src 'self'"
+)
 
 STATUS_WORDS = {
     subscriptions.ACTIVE: "Everything is up to date.",
@@ -76,6 +96,9 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             # per-plan checkout: each paid plan carries ITS OWN link, so the
             # tier the customer picks is the tier they pay for (readiness audit)
             checkout_links={k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS},
+            # Issue #74: Razorpay Standard Checkout for the one-shot INR audit
+            # — honest disabled state when the test key isn't configured.
+            razorpay_configured=bool(settings.razorpay_key_id and settings.razorpay_key_secret),
             now=datetime.now(UTC),
             show_tour=False,
             # ctx's plan feeds the topbar badge; billing.html itself reads
@@ -90,4 +113,66 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             response.set_cookie(
                 "ccy", currency, max_age=365 * 86400, httponly=False, samesite="lax"
             )
+        response.headers["Content-Security-Policy"] = RAZORPAY_CSP
         return response
+
+
+@router.post("/razorpay/order")
+def create_razorpay_order(
+    request: Request, user_email: str = Depends(current_user)
+) -> JSONResponse:
+    """Issue #74 step 1: create the Razorpay order server-side BEFORE the
+    checkout modal opens — a payment with no order_id auto-refunds."""
+    settings = request.app.state.settings
+    if not (settings.razorpay_key_id and settings.razorpay_key_secret):
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        session.commit()
+        # O-2 RBAC: billing is an owner-only action, same gate as the plan table.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only the workspace owner can buy an audit",
+        )
+        user_id = user.id
+    try:
+        order = razorpay_orders.create_order(
+            settings.razorpay_key_id,
+            settings.razorpay_key_secret,
+            settings.one_shot_inr,
+            receipt=f"oneshot-{user_id}-{uuid4().hex[:12]}",
+            email=user_email,
+        )
+    except razorpay_orders.OrderCreateError as exc:
+        raise HTTPException(status_code=502, detail="payment provider error") from exc
+    return JSONResponse(
+        {
+            "order_id": order["order_id"],
+            "amount": order["amount"],
+            "currency": order["currency"],
+            "key_id": settings.razorpay_key_id,
+        }
+    )
+
+
+@router.post("/razorpay/verify")
+def verify_razorpay_payment(
+    request: Request,
+    razorpay_order_id: str = Form(...),
+    razorpay_payment_id: str = Form(...),
+    razorpay_signature: str = Form(...),
+    user_email: str = Depends(current_user),
+) -> JSONResponse:
+    """Issue #74 step 3/4: the modal handler's payload, checked for
+    authenticity — UX only (B1). A mismatch is a clear failure (B4); a match
+    never itself grants the credit (the order.paid webhook does — B1/B3)."""
+    settings = request.app.state.settings
+    if not settings.razorpay_key_secret:
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    ok = razorpay_orders.verify_order_signature(
+        settings.razorpay_key_secret, razorpay_order_id, razorpay_payment_id, razorpay_signature
+    )
+    if not ok:
+        raise HTTPException(status_code=400, detail="payment signature could not be verified")
+    return JSONResponse({"status": "verified"})
