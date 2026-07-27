@@ -370,6 +370,32 @@ class TestSdkJsDocs:
         assert "fr-22" in body
 
 
+class TestGithubActionDocs:
+    """R-PLATFORM slice 6: the GitHub Action page — usage, inputs, the endpoints + scopes
+    it calls — in the nav, so it can't drift."""
+
+    GHA = (DOCS / "api/github-action.md").read_text(encoding="utf-8")
+
+    def test_in_nav(self) -> None:
+        assert "api/github-action.md" in (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+
+    def test_documents_usage_and_inputs(self) -> None:
+        assert "delvinggeeks/tokenops-cost-auditor/action@" in self.GHA
+        for inp in ("read-token", "base-url", "fail-on-severity"):
+            assert inp in self.GHA, inp
+
+    def test_documents_the_real_endpoints_and_scopes(self) -> None:
+        for path in ("/api/v1/audits", "/api/v1/audits/{id}/findings"):
+            assert path in self.GHA, path
+        for scope in ("read:audits", "read:findings"):
+            assert scope in self.GHA, scope
+
+    def test_states_read_only_fr22(self) -> None:
+        body = re.sub(r"\s+", " ", self.GHA).lower()
+        assert "read-only" in body
+        assert "fr-22" in body
+
+
 class TestWebhooksDocs:
     """Issue #56 — outbound webhooks: register, payload schema, and the HMAC
     verification snippet, in the nav and consistent with the real headers."""

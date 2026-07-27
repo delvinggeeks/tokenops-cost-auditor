@@ -1,0 +1,19 @@
+{
+  "name": "tokenops-cost-auditor-action",
+  "version": "0.1.0",
+  "description": "GitHub Action for TokenOps Cost Auditor.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --noEmit && node --test --experimental-strip-types src/main.test.ts",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3"
+  }
+}
