@@ -90,19 +90,29 @@ class TestOneCurrencyPerView:
         page = client.get("/?ccy=INR").text
         assert page.count("Launch price for the first 200 subscribers") == 1  # Pro only
 
-    def test_indian_locale_defaults_to_the_inr_view(self, client: TestClient) -> None:
-        page = client.get("/", headers={"Accept-Language": "en-IN,en;q=0.9"}).text
+    def test_cf_ipcountry_header_resolves_inr_on_first_paint(self, client: TestClient) -> None:
+        """Issue #68: server-side geo replaces the old browser guessing — a
+        first-time visitor with no cookie and no explicit toggle still gets
+        the right currency, from ONE header, on the FIRST request."""
+        page = client.get("/", headers={"CF-IPCountry": "IN"}).text
         assert "$4.99/mo" in page and "$19/mo" not in page
 
-    def test_timezone_detection_drives_the_currency_cookie(self, client: TestClient) -> None:
-        """Walkthrough fix: Accept-Language lies (Indian browsers ship en-US)
-        so region detection rides the browser CLOCK — India is one timezone.
-        The detection script must be on the page, and the server must honor
-        the cookie it sets, even under an en-US locale."""
+    def test_cf_ipcountry_header_resolves_usd(self, client: TestClient) -> None:
+        page = client.get("/", headers={"CF-IPCountry": "US"}).text
+        assert "$19/mo" in page and "$4.99/mo" not in page
+
+    def test_no_signal_defaults_to_usd(self, client: TestClient) -> None:
+        """No CF-IPCountry header, no geoip db configured, no cookie, no
+        toggle — the safe default is USD, never a guess."""
         page = client.get("/").text
-        assert "Asia/Kolkata" in page  # the early detection script
+        assert "$19/mo" in page and "$4.99/mo" not in page
+
+    def test_ccy_cookie_persists_a_prior_explicit_choice(self, client: TestClient) -> None:
+        """The cookie is only ever written by an explicit `?ccy=` toggle
+        (routes_pages sets it); once set, it persists across visits even
+        under a header that would otherwise say the opposite region."""
         client.cookies.set("ccy", "INR")
-        inr = client.get("/", headers={"Accept-Language": "en-US,en;q=0.9"}).text
+        inr = client.get("/", headers={"CF-IPCountry": "US"}).text
         assert "$4.99/mo" in inr and "$19/mo" not in inr
 
     def test_explicit_toggle_beats_the_detection_cookie_and_persists(

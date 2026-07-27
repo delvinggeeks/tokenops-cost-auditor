@@ -3664,3 +3664,34 @@ unconfigured. tests/test_pricing_final.py::TestConfigOnlyLaw's repo-wide inline-
 tests/test_seo_copy.py's template-source sweep both cover the new template automatically;
 `/pricing` was also added to test_seo_copy's `TestPublicRoutesRendered.PAGES`. Engine untouched
 (web/templates only); docs/04-TRACEABILITY.md row added.
+
+Server-side geo detection — IP→country, zero cost (Issue #68, 2026-07-27). India→INR ($4.99)
+was only reachable via a browser timezone-cookie JS or a hand-typed `?ccy=INR`; a first-time
+non-India-timezone visitor never saw it. Built NEW `services/geo/resolver.py::country_for_request`
+— a trusted proxy header (`CF-IPCountry`, configurable via `geo_country_header`, set by
+Cloudflare's free tier) first, else a GeoIP lookup via `maxminddb` on the real client IP
+(`X-Forwarded-For`'s first hop, else `request.client.host`) against a DB-IP Lite Country `.mmdb`
+(free, CC-BY, no license key) IF `geoip_db_path` is configured and the file exists, else `None` —
+never throws; a miss always falls through to USD. `services/payments/plans.pick_currency`/
+`viewer_currency` swap `accept_language: str` for `country: str | None` at the SAME precedence
+slot (explicit `?ccy` toggle > persisted toggle cookie > server-side geo > USD), wired at all
+four render sites: `routes_pages.landing`/`pricing_page`, `routes_billing.billing_page`,
+`routes_alerts.alerts_page`. RIPPED OUT the browser guessing it replaces: the timezone→cookie
+`<script>` in `_public_shell.html` and the `"-in" in accept_language` branch in `pick_currency`
+— the explicit `?ccy` toggle is untouched and still overrides everything. Config: `geo_country_header`
+(default `CF-IPCountry`) + `geoip_db_path` (default `""`) in `config.py` + `.env.example`;
+`maxminddb` added to `pyproject.toml`. `scripts/provision.sh` gained step 4d: downloads the free
+DB-IP Lite Country db to `./geoip/` on the host every provision run (a live bind mount —
+`docker-compose.yml` sets `GEOIP_DB_PATH=/geoip/dbip-country-lite.mmdb` directly, mirroring the
+existing `PRICING_OVERLAY_PATH` pattern) — zero founder step; a failed/absent download leaves
+`GEOIP_DB_PATH` pointing at a file that doesn't exist, which the resolver treats as a clean miss
+(header path keeps working, deploy never fails on it). Guarded by NEW tests/test_geo.py
+(`TestHeaderPath`: `CF-IPCountry` IN/US, no-signal→`None`, Cloudflare's `"XX"` unknown sentinel
+treated as a miss, configurable header name; `TestGeoipDbPath`: mocked-reader country resolution,
+`X-Forwarded-For` first-hop precedence over the proxy's own `client.host`, header-wins-over-db,
+missing/corrupt db file degrades to `None` not a crash, a reader exception on a malformed IP is a
+miss) + updated tests/test_pricing_final.py::TestOneCurrencyPerView (a REAL render of `/` under
+`CF-IPCountry: IN` shows `$4.99/mo` on first paint with no cookie, `US` shows `$19/mo`, no-signal
+defaults to USD, the `ccy` cookie still persists a prior explicit toggle — replaces the removed
+Accept-Language/timezone-JS tests). Engine untouched (T-NFR-01 — `services/geo` is outside
+`services/rules`/`services/pricing`); docs/04-TRACEABILITY.md row added.

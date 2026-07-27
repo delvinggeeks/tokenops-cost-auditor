@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from tokenops_cost_auditor.api.routes_upload import EMAIL_RE
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.services.geo import resolver as geo
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
@@ -67,7 +68,7 @@ def landing(request: Request) -> HTMLResponse:
     ccy_param = request.query_params.get("ccy")
     currency = plans.pick_currency(
         ccy_param,
-        request.headers.get("accept-language", ""),
+        geo.country_for_request(request, settings),
         request.cookies.get("ccy"),
     )
     with request.app.state.session_factory() as db:
@@ -118,7 +119,7 @@ def pricing_page(request: Request) -> HTMLResponse:
             session,
             user_id,
             ccy_param,
-            request.headers.get("accept-language", ""),
+            geo.country_for_request(request, settings),
             request.cookies.get("ccy"),
         )
         launch = plans.launch_open(session, settings, currency)
