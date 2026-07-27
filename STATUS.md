@@ -15,6 +15,39 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## GET /api/v1/audits/{id} — audit summary object (2026-07-27) — Issue #72, `loop:ready`
+
+Developers could create/list audits and read findings, but there was no single call for the
+audit's OWN summary (totals, cost, counts, scope, timing) — they'd scrape it from the HTML
+report or stitch `/audits` + `/audits/{id}/findings` together. SHIPPED: NEW
+`GET /api/v1/audits/{audit_id}` in `web/routes_api_read.py`, alongside the existing
+`list_audits`/`list_findings` handlers — SAME `read:audits`-scoped `ReadPrincipal` dependency
+and `active_workspace_id` tenancy check as `GET /api/v1/audits`, no new auth path invented.
+Returns `id, status, scope_label, created_at, completed_at,
+totals{calls, input_tokens, output_tokens, total_tokens, estimated_cost_usd}, model_count,
+finding_count`. Totals are summed from the audit's own `CallAggregate` rows (calls/
+prompt_tokens/completion_tokens, distinct `model` for `model_count`); `estimated_cost_usd`
+reads straight off `Audit.total_spend_usd` — the exact figure the downloadable report shows,
+not a parallel recomputation. `scope_label` reuses the existing `Audit.provider_mix` column
+(e.g. `"anthropic"`) rather than inventing a new derivation. An audit that hasn't reached
+`status="done"` yet has no `CallAggregate` rows written (the runner only writes them at
+completion), so the summary comes back with honestly zeroed/`null` totals and its real
+in-progress `status` — never a 500. Cross-workspace id → 404 (same existence-oracle-closed
+rule as `/findings`); a token missing `read:audits` → 403. FR-22: counts/dollars/metadata
+only — no prompt/completion text exists to return, asserted at the response-shape level.
+Tests: NEW `tests/test_developer_platform.py::TestGetAuditSummary` — a REAL upload→run
+pipeline audit (`waste_pack_anthropic.jsonl`) whose summary totals are independently
+cross-checked against its own `CallAggregate` rows AND the report.json's `total_spend_usd`
+(not literals); cross-tenant 404; missing-scope 403; an incomplete (`status="running"`)
+audit returns zeroed/null totals never 500; FR-22 response-shape check (exact key set, no
+prompt/completion/content substrings). `docs-site/api/reference.md` gained a "Get an audit's
+summary" section; `docs-site/api/endpoints.md` regenerated via `scripts/export_openapi.py`
+(`--check` clean); `tests/test_docs_site.py::TestApiReferenceAccuracy` REQUIRED_V1_ENDPOINTS
+gained the new route. No SDK method this slice (out of scope per the issue — a Python/JS SDK
+`getAudit()` wrapper is a fast-follow). Engine untouched (T-NFR-01 — this lives entirely in
+`web/`). Full pinned toolchain green (`ruff check`/`ruff format`/`mypy`/`pytest -m 'not perf'`).
+docs/04-TRACEABILITY.md row added (R-PLATFORM slice 7).
+
 ## CCY TOGGLE — visible USD|INR override on /pricing + /billing (2026-07-27) — Issue #70, `loop:ready`
 
 #68 taught the server to auto-detect region (IP→country) but left a visitor who wants the

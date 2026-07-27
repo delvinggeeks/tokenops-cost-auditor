@@ -13,17 +13,21 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import re
 import secrets
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from test_runner import seed_audit as seed_pipeline_audit
 from tokenops_cost_auditor.persistence.models import (
     ApiToken,
     Audit,
+    CallAggregate,
     FindingRow,
     OAuthApp,
     Subscription,
@@ -235,6 +239,135 @@ class TestApiTokenJourney:
             200,
         )
         assert client.get("/api/v1/audits", headers=auth).status_code == 401
+
+
+# --------------------------------------------- GET /api/v1/audits/{id} (#72)
+
+
+class TestGetAuditSummary:
+    """Issue #72: the audit's own summary object — totals, cost, counts, scope,
+    timing. Same read:audits scope + tenancy path as GET /api/v1/audits."""
+
+    def test_summary_matches_a_real_run_totals(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+
+        with app.state.session_factory() as session:
+            audit = session.get(Audit, audit_id)
+            assert audit is not None
+            aggregates = list(
+                session.scalars(select(CallAggregate).where(CallAggregate.audit_id == audit_id))
+            )
+            expected_finding_count = len(
+                list(session.scalars(select(FindingRow).where(FindingRow.audit_id == audit_id)))
+            )
+        assert expected_finding_count > 0  # fixture yields findings
+        expected_calls = sum(a.calls for a in aggregates)
+        expected_in = sum(a.prompt_tokens for a in aggregates)
+        expected_out = sum(a.completion_tokens for a in aggregates)
+        expected_models = len({a.model for a in aggregates})
+
+        assert body["id"] == audit_id
+        assert body["status"] == "done"
+        assert body["scope_label"] == audit.provider_mix == "anthropic"
+        assert body["created_at"] is not None
+        assert body["completed_at"] is not None
+        assert body["totals"]["calls"] == expected_calls
+        assert body["totals"]["input_tokens"] == expected_in
+        assert body["totals"]["output_tokens"] == expected_out
+        assert body["totals"]["total_tokens"] == expected_in + expected_out
+        assert body["totals"]["estimated_cost_usd"] == audit.total_spend_usd
+        assert body["model_count"] == expected_models
+        assert body["finding_count"] == expected_finding_count
+
+        # cost figure matches what the downloadable report shows (same source)
+        report_path = Path(app.state.settings.report_dir) / audit_id / "report.json"
+        report = json.loads(report_path.read_text())
+        assert body["totals"]["estimated_cost_usd"] == report["summary"]["total_spend_usd"]
+
+    def test_other_tenant_audit_summary_is_404(self, app: FastAPI) -> None:
+        grant(app)
+        other = grant(app, email=OTHER)
+        their_audit = seed_audit(app, other)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        r = client.get(
+            f"/api/v1/audits/{their_audit}", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert r.status_code == 404  # existence oracle closed, same as /findings
+
+    def test_scope_enforced_403_without_audits_scope(self, app: FastAPI) -> None:
+        uid = grant(app)
+        audit_id = seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:findings"])  # NOT read:audits
+        r = client.get(f"/api/v1/audits/{audit_id}", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 403
+        assert r.json()["error"]["code"] == "forbidden"
+
+    def test_incomplete_audit_returns_partial_totals_never_500(self, app: FastAPI) -> None:
+        uid = grant(app)
+        with app.state.session_factory() as session:
+            audit = Audit(user_id=uid, status="running")
+            session.add(audit)
+            session.commit()
+            audit_id = audit.id
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "running"
+        assert body["completed_at"] is None
+        assert body["totals"] == {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "estimated_cost_usd": None,
+        }
+        assert body["model_count"] == 0
+        assert body["finding_count"] == 0
+
+    def test_fr22_shape_counts_and_dollars_only(self, app: FastAPI) -> None:
+        uid = grant(app)
+        audit_id = seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        blob = resp.text.lower()
+        assert "prompt" not in blob and "completion" not in blob and "content" not in blob
+        body = resp.json()
+        assert set(body) == {
+            "id",
+            "status",
+            "scope_label",
+            "created_at",
+            "completed_at",
+            "totals",
+            "model_count",
+            "finding_count",
+        }
+        assert set(body["totals"]) == {
+            "calls",
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
+            "estimated_cost_usd",
+        }
 
 
 # ------------------------------------------------------ usage metering (#59)
