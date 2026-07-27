@@ -9,6 +9,13 @@
   {{ kit.surface_open(title="Your plan: " ~ current.name, icon="billing", span=12) }}
     <p class="tells">What this tells you: what you are on, what it costs, and
       whether anything needs your attention.</p>
+    {% if checkout_message %}
+      {# Issue #77: honest post-redirect state only — the checkout.session.completed
+         webhook is the sole credit-grant authority, never this page. #}
+      <p><span class="badge {{ 'badge-verified' if checkout_status == 'success' else 'badge-neutral' }}">
+        {{ 'payment received' if checkout_status == 'success' else 'checkout cancelled' }}</span>
+        {{ checkout_message }}</p>
+    {% endif %}
     {% if status_words %}
       <p><span class="badge {{ 'badge-neutral' if status == 'active' else 'badge-estimate' }}">
         {{ status | replace("_", " ") }}</span> {{ status_words }}</p>
@@ -64,13 +71,23 @@
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
       a single full audit of a log file, no subscription.
       {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}</p>
-    {# Issue #74: Standard Checkout for the one-shot INR purchase only — USD
-       stays on the existing Stripe hosted link, unchanged, no CTA here yet. #}
+    {# Issue #74/#77: the one-shot audit checkout — INR via Razorpay's
+       checkout.js modal, USD via a Stripe Checkout Session (server creates the
+       session; the button is a plain form POST that gets a 303 redirect
+       straight to checkout.stripe.com — no embedded JS, no CSP change). #}
     {% if currency == "INR" %}
       {% if razorpay_configured %}
         <button type="button" class="btn btn-primary" id="rzp-oneshot-btn"
                 data-email="{{ user_email }}">Buy one-time audit</button>
         <p id="rzp-oneshot-status" class="muted" style="margin-top: var(--s1);"></p>
+      {% else %}
+        <p class="muted" style="margin-top: var(--s1);">Checkout opens once billing is switched on.</p>
+      {% endif %}
+    {% else %}
+      {% if stripe_configured %}
+        <form method="post" action="/billing/stripe/checkout" style="margin-top: var(--s1);">
+          {{ kit.button("Buy one-time audit", variant="primary") }}
+        </form>
       {% else %}
         <p class="muted" style="margin-top: var(--s1);">Checkout opens once billing is switched on.</p>
       {% endif %}
