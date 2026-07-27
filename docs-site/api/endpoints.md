@@ -424,6 +424,24 @@ client JS. Fulfilment happens on the checkout.session.completed webhook
 
 Responses: `200`, `422`
 
+## `POST /billing/stripe/subscription`
+
+Create Stripe Subscription.
+
+Issue #81: create the recurring USD Checkout Session server-side, then
+a full-page 303 redirect to Stripe's hosted checkout page — same hosted-
+redirect idiom as `/stripe/checkout`, no iframe, no client JS. The plan
+amount comes from OUR pricing config (services/payments/plans.py), never a
+dashboard figure — the price-integrity rail. Activation happens on the
+customer.subscription.created webhook (api/routes_webhooks.py); this
+endpoint never itself activates the plan.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /breakdown`
 
 Breakdown Page.

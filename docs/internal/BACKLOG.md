@@ -528,3 +528,7 @@ it under R-PIPELINE-UI-SEQ.
   creates a fresh plan+subscription per checkout; moving an already-subscribed account
   between Pro and Scale mid-cycle is cancel-and-resubscribe, not an in-place swap. A
   proper upgrade/downgrade path (prorated or next-cycle) is a follow-up slice.
+
+- STRIPE SUBSCRIPTION UPGRADE/DOWNGRADE (Issue #81 noted follow-up). Same limitation as
+  the Razorpay row above, now also true of the recurring USD Checkout Session: mid-cycle
+  Pro↔Team moves are cancel-and-resubscribe, not an in-place swap.
