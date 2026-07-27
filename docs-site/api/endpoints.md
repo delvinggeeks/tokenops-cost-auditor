@@ -132,6 +132,21 @@ Create Audit.
 
 Responses: `201`, `422`
 
+## `GET /api/v1/audits/{audit_id}`
+
+Get Audit.
+
+One of the caller's audits — its own summary (totals, cost, counts,
+scope, timing). Counts and dollars only (FR-22); a not-yet-complete audit
+returns its partial totals with `status` reflecting that, never a 500.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `Authorization` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /api/v1/audits/{audit_id}/findings`
 
 List Findings.

@@ -269,6 +269,7 @@ class TestApiReferenceAccuracy:
         ("POST", "/api/v1/ingest"),
         ("POST", "/api/v1/audits"),
         ("GET", "/api/v1/audits"),
+        ("GET", "/api/v1/audits/{audit_id}"),
         ("GET", "/api/v1/audits/{audit_id}/status"),
         ("GET", "/api/v1/audits/{audit_id}/findings"),
     )
