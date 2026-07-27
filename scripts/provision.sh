@@ -129,6 +129,22 @@ else
     echo "WARNING: uv or mkdocs.yml missing on deploy machine — docs.$DOMAIN will 404"
 fi
 
+echo "== [4d] geoip: DB-IP Lite Country db (Issue #68 — free, CC-BY, no license key) =="
+"${SSH[@]}" bash -s <<GEOIP
+set -euo pipefail
+cd "$APP_DIR"
+mkdir -p geoip
+month="\$(date -u +%Y-%m)"
+url="https://download.db-ip.com/free/dbip-country-lite-\$month.mmdb.gz"
+if curl -fsSL "\$url" -o geoip/dbip-country-lite.mmdb.gz; then
+    gunzip -f geoip/dbip-country-lite.mmdb.gz
+    chmod a+rX geoip geoip/dbip-country-lite.mmdb
+    echo "geoip db installed: geoip/dbip-country-lite.mmdb (\$month release)"
+else
+    echo "WARNING: DB-IP Lite fetch failed (\$url) — GEOIP_DB_PATH will find no file; the CF-IPCountry header path still resolves region on its own" >&2
+fi
+GEOIP
+
 echo "== [5/6] compose up + migrations (runbook §2 steps 4-5) =="
 "${SSH[@]}" bash -s <<UP
 set -euo pipefail

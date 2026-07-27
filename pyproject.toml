@@ -21,6 +21,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "cryptography>=49.0.0",
     "httpx>=0.28.1",
+    "maxminddb>=2.6.3",
 ]
 
 [dependency-groups]
@@ -83,7 +84,7 @@ ignore_missing_imports = true
 
 # no bundled type stubs; stub packages would be new deps (R-DEPS: ask first)
 [[tool.mypy.overrides]]
-module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*", "yaml", "weasyprint", "weasyprint.*"]
+module = ["pandas", "pandas.*", "pyarrow", "pyarrow.*", "yaml", "weasyprint", "weasyprint.*", "maxminddb"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
