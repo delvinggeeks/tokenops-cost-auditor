@@ -1,0 +1,36 @@
+# Validates the JS/TS SDK (sdk/js) — a separate Node toolchain from the Python app,
+# so it only runs when the SDK changes. Not (yet) a required check; it proves the
+# published package typechecks, tests, and builds.
+name: sdk-js
+
+on:
+  pull_request:
+    paths:
+      - "sdk/js/**"
+      - ".github/workflows/sdk-js.yml"
+  push:
+    branches: [main]
+    paths:
+      - "sdk/js/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: typecheck (strict)
+        run: npm run typecheck
+      - name: unit tests
+        run: node --test --experimental-strip-types src/index.test.ts
+      - name: build (emits dist)
+        run: npm run build
