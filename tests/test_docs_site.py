@@ -302,6 +302,48 @@ class TestApiReferenceAccuracy:
             )
 
 
+class TestMcpDocs:
+    """Issue #54 AC-5: the MCP server page — install, client config, the two
+    read tools, in the nav — and it can't drift from the real tool set."""
+
+    MCP = (DOCS / "api/mcp.md").read_text(encoding="utf-8")
+
+    def test_in_nav(self) -> None:
+        mk = (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+        assert "api/mcp.md" in mk
+
+    def test_documents_the_token_env_var_and_command(self) -> None:
+        from tokenops_cost_auditor.mcp.server import SERVER_ENV, TOKEN_ENV
+
+        assert TOKEN_ENV in self.MCP
+        assert SERVER_ENV in self.MCP
+        assert "tokenops-cost-auditor mcp" in self.MCP
+        assert "python -m tokenops_cost_auditor.mcp" in self.MCP.replace('"', "")
+
+    def test_documents_both_client_configs(self) -> None:
+        assert "Claude Desktop" in self.MCP and "Cursor" in self.MCP
+        assert "mcpServers" in self.MCP
+
+    def test_tool_table_matches_the_real_tool_set(self) -> None:
+        from tokenops_cost_auditor.mcp.server import TOOLS
+
+        names = {t["name"] for t in TOOLS}
+        assert names == {"list_audits", "list_findings"}
+        for name in names:
+            assert f"`{name}`" in self.MCP
+        for scope in ("read:audits", "read:findings"):
+            assert f"`{scope}`" in self.MCP
+
+    def test_states_read_only_no_write_tools(self) -> None:
+        body = re.sub(r"\s+", " ", self.MCP)
+        assert "read-only" in body
+        assert "Write tools" in body and "None" in body
+
+    def test_states_fr22_counts_only(self) -> None:
+        body = re.sub(r"\s+", " ", self.MCP)
+        assert "counts and dollars only" in body.lower() or "counts-only" in body.lower()
+
+
 class TestDeveloperGettingStartedAndTutorial:
     """Issue #52 ACs 1 and 4: a <=5-step minimal integration, and a runnable
     send->poll->read tutorial, both reachable from the docs nav."""
