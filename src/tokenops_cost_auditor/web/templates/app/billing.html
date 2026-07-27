@@ -69,9 +69,18 @@
                   <small class="muted">Checkout opens once billing is switched on.</small>
                 {% endif %}
               {% else %}
-                {# per-plan link: the button charges for THIS tier, not a shared one #}
-                {% set pay_link = checkout_links.get(p.key) %}
-                {% if pay_link %}{{ kit.button("Pay for " ~ p.name, href=pay_link, variant="primary") }}
+                {# Issue #81: recurring USD Pro/Team subscribe via a dynamic
+                   Stripe Checkout Session (mode=subscription) — a plain form
+                   POST that gets a 303 redirect straight to Stripe's hosted
+                   page (no embedded JS, no CSP change), same idiom as the
+                   one-shot USD flow. The session amount is built server-side
+                   from OUR config, so it can never drift from what's shown
+                   here (price-integrity rail). #}
+                {% if stripe_configured %}
+                  <form method="post" action="/billing/stripe/subscription" style="display:inline">
+                    <input type="hidden" name="plan" value="{{ p.key }}">
+                    {{ kit.button("Subscribe to " ~ p.name, variant="primary") }}
+                  </form>
                 {% else %}
                   <small class="muted">Checkout opens once billing is switched on.</small>
                 {% endif %}

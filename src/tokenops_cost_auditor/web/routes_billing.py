@@ -27,6 +27,14 @@ signed callback is checked server-side (`POST /razorpay/subscription/
 verify`) for UX only — the ALREADY-EXISTING `subscription.activated`
 webhook + `subscriptions.apply_event` (api/routes_webhooks.py, WP-6) is what
 actually activates the plan (B1), unchanged by this slice.
+
+The recurring USD Pro/Team subscription (Issue #81) mirrors the one-shot
+USD flow instead: `POST /stripe/subscription` creates a Checkout Session
+(mode=subscription, inline `price_data` built from OUR pricing config) then
+303-redirects straight to Stripe's hosted page — no iframe, no client JS,
+same idiom as `/stripe/checkout`. The existing `customer.subscription.created`
+webhook + `subscriptions.apply_event` (api/routes_webhooks.py, WP-6) is the
+sole activation authority, unchanged by this slice.
 """
 
 from __future__ import annotations
@@ -45,6 +53,7 @@ from tokenops_cost_auditor.services.payments import (
     razorpay_orders,
     razorpay_subscriptions,
     stripe_checkout,
+    stripe_subscriptions,
     subscriptions,
 )
 from tokenops_cost_auditor.web import authz
@@ -128,9 +137,6 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             cohort_size=settings.launch_cohort_size,
             one_shot=plans.one_shot_display(settings, currency),
             one_shot_billed=plans.one_shot_billed_note(settings, currency),
-            # per-plan checkout: each paid plan carries ITS OWN link, so the
-            # tier the customer picks is the tier they pay for (readiness audit)
-            checkout_links={k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS},
             # Issue #74: Razorpay Standard Checkout for the one-shot INR audit
             # — honest disabled state when the test key isn't configured.
             razorpay_configured=bool(settings.razorpay_key_id and settings.razorpay_key_secret),
@@ -336,5 +342,51 @@ def create_stripe_checkout(
             email=user_email,
         )
     except stripe_checkout.CheckoutCreateError as exc:
+        raise HTTPException(status_code=502, detail="payment provider error") from exc
+    return RedirectResponse(url=checkout["url"], status_code=303)
+
+
+@router.post("/stripe/subscription")
+def create_stripe_subscription(
+    request: Request,
+    plan: str = Form(...),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """Issue #81: create the recurring USD Checkout Session server-side, then
+    a full-page 303 redirect to Stripe's hosted checkout page — same hosted-
+    redirect idiom as `/stripe/checkout`, no iframe, no client JS. The plan
+    amount comes from OUR pricing config (services/payments/plans.py), never a
+    dashboard figure — the price-integrity rail. Activation happens on the
+    customer.subscription.created webhook (api/routes_webhooks.py); this
+    endpoint never itself activates the plan."""
+    settings = request.app.state.settings
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    plan_key = plan.strip().lower()
+    catalogue_plan = plans.get(settings, plan_key)
+    if plan_key not in plans.PAID_PLANS or not catalogue_plan.usd:
+        raise HTTPException(status_code=400, detail="unknown plan")
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # O-2 RBAC: same owner-only gate as the one-shot checkout routes,
+        # checked BEFORE the commit (cold-reviewer #75 shape).
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only the workspace owner can manage the subscription",
+        )
+        session.commit()
+    base = settings.public_base_url
+    try:
+        checkout = stripe_subscriptions.create_session(
+            settings.stripe_secret_key,
+            catalogue_plan.usd,
+            catalogue_plan.name,
+            plan_key,
+            success_url=f"{base}/billing?checkout=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{base}/billing?checkout=cancelled",
+            email=user_email,
+        )
+    except stripe_subscriptions.CheckoutCreateError as exc:
         raise HTTPException(status_code=502, detail="payment provider error") from exc
     return RedirectResponse(url=checkout["url"], status_code=303)
