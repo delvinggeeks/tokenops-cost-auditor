@@ -16,10 +16,11 @@ from fastapi.responses import RedirectResponse
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.obs.ratelimit import limiter
-from tokenops_cost_auditor.persistence.repo import get_or_create_user
+from tokenops_cost_auditor.persistence.repo import active_role, get_or_create_user
 from tokenops_cost_auditor.services.copilot.report import run_seat_audit
 from tokenops_cost_auditor.services.copilot.seats import DEFAULT_IDLE_DAYS, DEFAULT_SEAT_RATE_USD
 from tokenops_cost_auditor.services.report.signer import sign_report_url
+from tokenops_cost_auditor.web import authz
 
 log = structlog.get_logger("tokenops_cost_auditor.copilot")
 
@@ -53,6 +54,14 @@ def upload_seats(
 
     with request.app.state.session_factory() as session:
         user = get_or_create_user(session, user_email)
+        # O-2 RBAC: a seat audit IS an audit run — gate it exactly like the twin
+        # POST /api/v1/audits (routes_upload.create_audit). Without this a viewer
+        # bypassed the run-audits gate on this route (the connect-wizard bug class).
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.RUN_AUDITS,
+            detail="a viewer can view reports but can't run audits",
+        )
         session.commit()
         try:
             audit_id = run_seat_audit(

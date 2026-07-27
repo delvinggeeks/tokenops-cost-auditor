@@ -40,6 +40,11 @@ router = APIRouter(prefix="/api/v1", tags=["audits"])
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 CHUNK = 1024 * 1024
+# The X-User-Email dev/test shim is enabled ONLY for these exact envs (fail-closed
+# ALLOWLIST, not `!= "prod"`): a misnamed or typo'd env ("production", "staging", "")
+# now REFUSES the impersonation header instead of silently opening it. Prod + staging
+# + any unknown env are closed; only local dev and the test suite carry the shim.
+_TEST_AUTH_ENVS = frozenset({"dev", "test"})
 
 
 def _session(request: Request) -> Session:
@@ -48,14 +53,15 @@ def _session(request: Request) -> Session:
 
 
 def current_user(request: Request, x_user_email: str | None = Header(default=None)) -> str:
-    """FR-17: magic-link session cookie wins; X-User-Email is a NON-PROD dev/test
-    shim only (refused in prod)."""
+    """FR-17: magic-link session cookie wins; X-User-Email is a dev/test shim only,
+    enabled ONLY for the `_TEST_AUTH_ENVS` allowlist (fail-closed — prod, staging, and
+    any unknown/misnamed env refuse it, so a typo can never open impersonation)."""
     settings: Settings = request.app.state.settings
     email = resolve_session(request, settings.secret_key, settings.session_ttl_days)
     if email:
         request.state.user_email = email  # NFR-12 rate-limit key
         return email
-    if settings.app_env != "prod" and x_user_email and EMAIL_RE.match(x_user_email):
+    if settings.app_env in _TEST_AUTH_ENVS and x_user_email and EMAIL_RE.match(x_user_email):
         request.state.user_email = x_user_email.lower()
         return x_user_email.lower()
     raise HTTPException(status_code=401, detail="authentication required")
