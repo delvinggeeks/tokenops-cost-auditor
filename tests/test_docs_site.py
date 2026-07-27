@@ -344,6 +344,42 @@ class TestMcpDocs:
         assert "counts and dollars only" in body.lower() or "counts-only" in body.lower()
 
 
+class TestWebhooksDocs:
+    """Issue #56 — outbound webhooks: register, payload schema, and the HMAC
+    verification snippet, in the nav and consistent with the real headers."""
+
+    WH = (DOCS / "api/webhooks.md").read_text(encoding="utf-8")
+
+    def test_in_nav(self) -> None:
+        mk = (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+        assert "api/webhooks.md" in mk
+
+    def test_documents_the_real_headers_and_event(self) -> None:
+        from tokenops_cost_auditor.services.webhooks.dispatcher import (
+            EVENT_AUDIT_COMPLETED,
+            EVENT_HEADER,
+            SIGNATURE_HEADER,
+        )
+
+        assert SIGNATURE_HEADER in self.WH
+        assert EVENT_HEADER in self.WH
+        assert EVENT_AUDIT_COMPLETED in self.WH
+
+    def test_has_a_verification_code_snippet(self) -> None:
+        assert "hmac.new(" in self.WH
+        assert "hmac.compare_digest(" in self.WH
+
+    def test_states_fr22_no_text(self) -> None:
+        body = re.sub(r"\s+", " ", self.WH).lower()
+        assert "prompt" in body and "completion" in body
+        assert "fr-22" in body
+
+    def test_states_best_effort_no_retry_queue(self) -> None:
+        body = re.sub(r"\s+", " ", self.WH).lower()
+        assert "best-effort" in body
+        assert "never delays or blocks the audit" in body
+
+
 class TestDeveloperGettingStartedAndTutorial:
     """Issue #52 ACs 1 and 4: a <=5-step minimal integration, and a runnable
     send->poll->read tutorial, both reachable from the docs nav."""

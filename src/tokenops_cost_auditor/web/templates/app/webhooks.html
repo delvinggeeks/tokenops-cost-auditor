@@ -1,0 +1,94 @@
+{% extends "app/_shell.html" %}
+{% block title %}Webhooks — TokenOps Cost Auditor{% endblock %}
+{% block content %}
+{% import "kit/_kit.html" as kit %}
+{#
+  R-PLATFORM slice 3 (S-5): outbound audit.completed events. Observe-and-notify
+  only — X-01/X-02 SAFE, never in the request path, never enforces anything on
+  the customer's LLM traffic. O-2: the list is visible to every role; add/remove
+  controls render only for owner/admin (mirrors sources.html exactly).
+#}
+<h1 class="page-h1">Settings</h1>
+{% include "app/_settings_nav.html" %}
+<p class="purpose-line">{{ purpose }}</p>
+
+<div class="grid">
+  {{ kit.surface_open(title="Webhook endpoints", icon="method", span=12) }}
+    <p class="tells">We POST a signed <code>audit.completed</code> event to every active
+      endpoint the moment an audit finishes — counts and dollars only, never a prompt or
+      completion (FR-22). Verify the <code>X-TokenOps-Signature</code> header before you
+      trust a delivery — see the <a href="{{ docs_url }}/api/webhooks/"
+      target="_blank" rel="noopener">webhooks guide →</a></p>
+
+    {% if endpoints %}
+    {{ kit.table_open([
+         {"label": "URL"}, {"label": "Status"}, {"label": "Added"},
+         {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
+       ]) }}
+      {% for e in endpoints %}
+      <tr>
+        <td><code>{{ e.url }}</code></td>
+        <td><span class="pill">active</span></td>
+        <td>{{ e.created_at.strftime("%Y-%m-%d") }}</td>
+        <td class="row-actions">
+          {% if can_manage_sources %}
+          <form method="post" action="/settings/webhooks/{{ e.id }}/delete" class="inline-form"
+                data-confirm="Remove this webhook? Deliveries to it stop immediately and our copy of the signing secret is deleted.">
+            {{ kit.icon_action("Remove this webhook", "trash", danger=True) }}
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    <p class="muted">No webhooks yet — add one to get notified the moment an audit completes.</p>
+    {% endif %}
+
+    {% if can_manage_sources %}
+    <form hx-post="/settings/webhooks" hx-target="#webhook-secret" hx-swap="innerHTML"
+          style="margin-top: var(--s2);">
+      <div style="display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap;">
+        <input name="url" type="url" placeholder="https://your-server.example/tokenops-webhook"
+               maxlength="2000" style="max-width: 28em; flex:1" aria-label="Webhook URL" required>
+        <button class="btn btn-primary" type="submit">Add webhook</button>
+      </div>
+      <p class="muted addbar-note">The signing secret is shown once; removing a webhook
+        deletes our copy the moment you click.</p>
+    </form>
+    <div id="webhook-secret" aria-live="polite"></div>
+    {% else %}
+    <p class="muted">Webhooks are managed by owners and admins — you're seeing them read-only.</p>
+    {% endif %}
+  {{ kit.surface_close() }}
+
+  {{ kit.surface_open(title="Recent deliveries", icon="clock", span=12) }}
+    {% if deliveries %}
+    {{ kit.table_open([
+         {"label": "Endpoint"}, {"label": "Event"}, {"label": "Result"}, {"label": "When"},
+       ]) }}
+      {% for d in deliveries %}
+      <tr>
+        <td><code>{{ d.endpoint_url }}</code></td>
+        <td>{{ d.event }}</td>
+        <td>
+          {% if d.status_code and d.status_code < 300 %}
+            <span class="pill">{{ d.status_code }} ok</span>
+          {% elif d.status_code %}
+            <span class="pill">{{ d.status_code }}</span>
+          {% else %}
+            <span class="pill">no response</span>
+          {% endif %}
+        </td>
+        <td>{{ d.attempted_at.strftime("%Y-%m-%d %H:%M UTC") }}</td>
+      </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    <p class="muted">No deliveries yet — this fills in after your next completed audit.</p>
+    {% endif %}
+    <p class="counts-note">One best-effort attempt per audit, per endpoint — there is no
+      retry queue yet. A missed delivery never blocks or delays the audit itself.</p>
+  {{ kit.surface_close() }}
+</div>
+{% endblock %}

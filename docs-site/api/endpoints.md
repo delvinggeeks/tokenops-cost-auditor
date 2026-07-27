@@ -903,6 +903,41 @@ AVAILABLE methods honestly, never a fake 'connected' badge or a dead control.
 
 Responses: `200`, `422`
 
+## `GET /settings/webhooks`
+
+Webhooks Page.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/webhooks`
+
+Create Webhook.
+
+Register an outbound endpoint. The signing secret is shown ONCE here;
+unlike a credential we only ever verify, we must keep it (plaintext) to
+sign every future delivery — see WebhookEndpoint's docstring.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/webhooks/{endpoint_id}/delete`
+
+Delete Webhook.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `endpoint_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /settings/workspace/rename`
 
 Rename Workspace.
