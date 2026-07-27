@@ -108,6 +108,55 @@ class TestLiveInvocationIsCrashSafe:
         assert captured["timeout"] == gr.AGENT_TIMEOUT_S == 1200
 
 
+class TestLooksTruncated:
+    """A verdict-only reply (no findings) is a truncated agent response, not a verdict."""
+
+    def test_bare_verdict_is_truncated(self) -> None:
+        assert gr._looks_truncated("VERDICT: FAIL") is True
+        assert gr._looks_truncated("  VERDICT: PASS-WITH-NOTES  \n") is True
+        assert gr._looks_truncated("") is True
+
+    def test_substantive_review_is_not_truncated(self) -> None:
+        assert gr._looks_truncated("1. bug at foo.py:2 — x\n\nVERDICT: FAIL") is False
+
+    def test_harness_no_verdict_string_is_not_retried(self) -> None:
+        # deterministic timeout/crash strings carry no verdict token + are long enough —
+        # retrying a crash is pointless, so they must read as substantive here.
+        assert gr._looks_truncated("[harness] cold-reviewer ... — NO-VERDICT.") is False
+
+
+class TestTruncatedVerdictRetries:
+    def test_retry_recovers_a_substantive_verdict(self, monkeypatch) -> None:
+        calls = {"n": 0}
+
+        def fake_cli(agent: str, prompt: str) -> str:
+            calls["n"] += 1
+            return "VERDICT: FAIL" if calls["n"] == 1 else "1. real finding foo.py:2\nVERDICT: PASS"
+
+        monkeypatch.setattr(gr, "_invoke_cli", fake_cli)
+        out = gr._run_agent_live("cold-reviewer", "diff", "main")
+        assert calls["n"] == 2  # retried exactly once
+        assert gr.parse_verdict(out) == "PASS"
+
+    def test_persistent_truncation_becomes_no_verdict_not_a_bare_fail(self, monkeypatch) -> None:
+        monkeypatch.setattr(gr, "_invoke_cli", lambda a, p: "VERDICT: FAIL")
+        out = gr._run_agent_live("cold-reviewer", "diff", "main")
+        assert gr.parse_verdict(out) == "NO-VERDICT"
+        assert "Re-run" in out
+
+    def test_substantive_first_reply_is_not_retried(self, monkeypatch) -> None:
+        calls = {"n": 0}
+
+        def fake_cli(agent: str, prompt: str) -> str:
+            calls["n"] += 1
+            return "1. finding foo.py:9 — x\nVERDICT: PASS-WITH-NOTES"
+
+        monkeypatch.setattr(gr, "_invoke_cli", fake_cli)
+        out = gr._run_agent_live("vv-engineer", "diff", "main")
+        assert calls["n"] == 1  # no wasted retry
+        assert gr.parse_verdict(out) == "PASS-WITH-NOTES"
+
+
 class TestSelectGates:
     def test_core_only_for_docs_and_scripts(self) -> None:
         gates = gr.select_gates(["docs/09-SDLC.md", "scripts/foo.py", "tests/test_foo.py"])

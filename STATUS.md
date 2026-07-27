@@ -3805,3 +3805,17 @@ test skipped unless `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are in the env, prov
 test key really works against api.razorpay.com when present). B5 (a `callback_url`
 fallback for iframe-blocked browsers) parked to `docs/internal/BACKLOG.md` per the
 issue. docs/04-TRACEABILITY.md row added.
+
+**Post-#74 hardening (cold-reviewer #75 findings + recurring gate flake).** #74 merged
+as PASS-WITH-NOTES; the re-run's cold-reviewer caught a REAL bug the mocked tests hid:
+`create_razorpay_order` built a 53-char Razorpay `receipt` (`oneshot-{user_id:32}-…`),
+but Razorpay caps `receipt` at 40 — every LIVE order would 400. Fixed to
+`1x-{user_id[:8]}-{uuid:12}` (24 chars) + a `receipt[:40]` clamp in `create_order`
+(defense-in-depth), and the mocked-boundary test now asserts `receipt`≤40 so it can't
+regress. Also moved `authz.ensure(MANAGE_BILLING)` BEFORE the `session.commit()` so a
+non-owner attempt leaves no orphan user row (RBAC-before-write). Separately, hardened
+`scripts/gate_round.py`: the cold-reviewer twice (#69, #75) returned a bare `VERDICT:
+FAIL` with no findings — a truncated response, not a valid TE-8 verdict, that blocked a
+clean merge. `_run_agent_live` now retries a verdict-only reply once and, if it recurs,
+records an honest NO-VERDICT "re-run" reason instead of a misleading FAIL (can never
+mask a real FAIL — those carry findings). docs/04 row added.

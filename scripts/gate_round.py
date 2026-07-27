@@ -134,28 +134,28 @@ def agent_model(agent: str) -> str:
 _ALLOWED_TOOLS = "Read,Grep,Glob,Bash"
 
 
-def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
-    """Invoke the pinned claude CLI headless as this gate agent over the PR diff.
-    Kept in one place so the exact CLI contract is easy to adjust after the first
-    live validation run (see module docstring). `--model` is forced from the charter
-    so the gate round stays on Sonnet (TE-5) regardless of the runner's default tier.
-    A crash/timeout/missing-CLI maps to NO-VERDICT (which blocks) rather than tearing
-    down the whole round with a bare traceback and no comment (cold-reviewer finding)."""
-    truncated = len(diff_text) > DIFF_CAP
-    marker = f" (TRUNCATED — first {DIFF_CAP} chars only; coverage is partial)" if truncated else ""
-    prompt = (
-        f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
-        f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
-        "Obey TE-2 (diff + STATUS + your charter docs only), TE-6 (<=15 tool calls), "
-        "TE-11 (pinned `uv run` toolchain). "
-        "The FULL test suite, lint and type-check ALREADY run as REQUIRED CI checks that "
-        "gate this merge independently — do NOT re-run the whole suite here (it will "
-        "exhaust your time budget and record a NO-VERDICT). Validate the DIFF: if a test "
-        "run helps, execute ONLY the changed/added test files (`uv run pytest <those "
-        "files> -q`) and reason about the rest. End your reply with EXACTLY one line:\n"
-        "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
-        f"----- diff{marker} -----\n{diff_text[:DIFF_CAP]}\n"
-    )
+def _looks_truncated(out: str) -> bool:
+    """True when an agent's output is ONLY a verdict token (or empty) — no findings.
+
+    A real gate review always carries reasoning/findings beyond the single TE-8 verdict
+    line; the charter requires numbered file:line findings for any non-clean verdict. A
+    bare `VERDICT: FAIL` with nothing else is a truncated/errored model response, seen
+    intermittently from cold-reviewer (PRs #69, #75) — NOT a valid verdict, and it must
+    not be able to block a merge on emptiness. Worth exactly one retry. The deterministic
+    `[harness] … NO-VERDICT.` strings carry no verdict token and are long enough to read
+    as substantive here, so they are never retried (a timeout/crash retry is pointless)."""
+    body = (out or "").strip()
+    if not body:
+        return True
+    without_verdict = _VERDICT_RE.sub("", body).strip()
+    return len(without_verdict) < 20
+
+
+def _invoke_cli(agent: str, prompt: str) -> str:
+    """One headless `claude -p` call as this gate agent. A crash/timeout/missing-CLI maps
+    to NO-VERDICT (which blocks) rather than tearing down the whole round with a bare
+    traceback and no comment (cold-reviewer finding). `--model` is forced from the charter
+    so the round stays on Sonnet (TE-5) regardless of the runner's default tier."""
     try:
         proc = subprocess.run(
             [
@@ -184,6 +184,40 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
         return f"[harness] {agent} invocation failed ({type(exc).__name__}) — NO-VERDICT."
     # No VERDICT token in an error tail => parse_verdict returns NO-VERDICT (blocks).
     return proc.stdout + ("\n" + proc.stderr if proc.returncode != 0 else "")
+
+
+def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
+    """Invoke this gate agent over the PR diff, retrying ONCE if the first response is a
+    truncated verdict-only reply (see `_looks_truncated`). Kept in one place so the exact
+    CLI contract is easy to adjust after the first live validation run (module docstring)."""
+    truncated = len(diff_text) > DIFF_CAP
+    marker = f" (TRUNCATED — first {DIFF_CAP} chars only; coverage is partial)" if truncated else ""
+    prompt = (
+        f"You are the {agent} gate. Follow this charter exactly:\n\n{_charter(agent)}\n\n"
+        f"Review ONLY the changes in this PR: `git diff {base}...HEAD` (shown below). "
+        "Obey TE-2 (diff + STATUS + your charter docs only), TE-6 (<=15 tool calls), "
+        "TE-11 (pinned `uv run` toolchain). "
+        "The FULL test suite, lint and type-check ALREADY run as REQUIRED CI checks that "
+        "gate this merge independently — do NOT re-run the whole suite here (it will "
+        "exhaust your time budget and record a NO-VERDICT). Validate the DIFF: if a test "
+        "run helps, execute ONLY the changed/added test files (`uv run pytest <those "
+        "files> -q`) and reason about the rest. End your reply with EXACTLY one line:\n"
+        "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
+        f"----- diff{marker} -----\n{diff_text[:DIFF_CAP]}\n"
+    )
+    out = _invoke_cli(agent, prompt)
+    if _looks_truncated(out):
+        # A verdict-only reply is not a review — one retry on the same clean diff (what a
+        # human re-run of the gate does today). If it recurs, surface an honest NO-VERDICT
+        # reason rather than a misleading bare FAIL, so the block says "re-run", not a lie.
+        retry = _invoke_cli(agent, prompt)
+        if not _looks_truncated(retry):
+            return retry
+        return (
+            f"[harness] {agent} returned a verdict with no findings twice — truncated "
+            "agent response, recorded as NO-VERDICT. Re-run the gate round."
+        )
+    return out
 
 
 def run_round(base: str, dry_run: bool, mock: dict[str, str] | None = None) -> list[GateResult]:
