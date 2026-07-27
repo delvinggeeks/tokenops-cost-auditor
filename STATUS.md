@@ -3642,3 +3642,25 @@ tagging and contract; the TokenOps row names self-serve; the GPU-scope line rend
 strip section; a short vendor-brand denylist (CloudZero, Kubecost, Apptio, Datadog, New Relic,
 Honeycomb, LiteLLM, Portkey, Helicone, LangSmith, Braintrust, OpenAI, Anthropic) confirms none
 appear in the strip. docs/04-TRACEABILITY.md row added.
+
+R-PRICING-PAGE — dedicated /pricing page (Issue #66, 2026-07-27). `/pricing` 404'd; the only
+pricing surface was landing's inline plans section, which mixes launch/list/anchor numbers in
+one flow. Built a NEW `GET /pricing` route (`routes_pages.py::pricing_page`) + `pricing.html`
+template rendering the SAME `services/payments/plans` catalogue and `plans.viewer_currency`/
+`plans.launch_open` logic landing/billing already use — no reimplementation, no price VALUE
+change. Each plan (Free/Pro/Scale) shows ONE effective price for the viewer's region; the
+launch-cohort note and India billed-in-rupees note render exactly as they do on landing/billing;
+one-off audit ($500/₹20,000/$199 India) is a separate, clearly labeled block instead of crammed
+into the plan-cards flow. Per-plan checkout CTA is config-gated via `settings.checkout_link`
+with the same honest "Checkout opens once billing is switched on." note as `/billing` when a
+link is absent — never an invented link. Reachable: `_public_shell.html` nav + footer "Pricing"/
+"Plans" links now point at `/pricing` (were `/#plans`), and a new "See full pricing →" CTA sits
+in landing's plans section. Landing's inline pricing section itself is UNCHANGED (out of scope
+per the issue — simplifying it to a link-only teaser is a separate slice). Guarded by NEW
+tests/test_pricing_page.py: USD and INR effective-price rendering off the catalogue (not
+literals), a no-jumble plan-card count, launch-note counts matching config, the currency toggle,
+the one-shot price, nav+landing-CTA reachability, and checkout-link honesty both configured and
+unconfigured. tests/test_pricing_final.py::TestConfigOnlyLaw's repo-wide inline-price sweep and
+tests/test_seo_copy.py's template-source sweep both cover the new template automatically;
+`/pricing` was also added to test_seo_copy's `TestPublicRoutesRendered.PAGES`. Engine untouched
+(web/templates only); docs/04-TRACEABILITY.md row added.

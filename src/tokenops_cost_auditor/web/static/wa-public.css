@@ -260,6 +260,14 @@
 .close-early { max-width: 480px; margin: var(--s4) auto 0; padding-top: var(--s3);
   border-top: 1px solid var(--rule); }
 
+/* dedicated pricing page (issue #66) — reuses the plan-cards/plancard
+   furniture above; this is layout only, no new price literal. */
+.pricing-page { padding: var(--s2) 0 var(--s6); }
+.pricing-head { margin-bottom: var(--s4); }
+.pricing-head h1 { font: 680 34px var(--sans); letter-spacing: -0.02em; margin: var(--s1) 0 var(--s2); }
+.plans-oneshot-section { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--rule); }
+.plans-oneshot-section h2 { font: 640 20px var(--sans); margin: 0 0 var(--s1); }
+
 @media (max-width: 860px) {
   .hero-grid, .stat-cards, .gov-grid, .plan-cards { grid-template-columns: 1fr; }
   .pipe { grid-template-columns: 1fr; }
