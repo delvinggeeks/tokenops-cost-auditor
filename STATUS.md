@@ -3546,3 +3546,18 @@ real POST /api/v1/audits that RUNS the pipeline → asserts status=done + valid_
 findings>0 (real output) → /dashboard renders → /billing checkout STATE (config-aware:
 asserts the Pay button when payment links are set, else the honest "switched on" dead-state).
 A genuine break in signup/audit/report/checkout now FAILS CI instead of shipping green.
+
+R-PLATFORM SLICE 2 — MCP SERVER (Issue #54, 2026-07-27). Shipped `tokenops-cost-auditor mcp`
+(also `python -m tokenops_cost_auditor.mcp`): a stdio JSON-RPC MCP server so Claude Desktop/
+Cursor/etc. can query TokenOps without leaving the editor. Design decision: it is a thin
+urllib client over the EXISTING read API (`GET /api/v1/audits`, `GET /api/v1/audits/{id}/
+findings`), authenticated with the same `TOKENOPS_COST_AUDITOR_TOKEN` bearer convention the
+docs already teach — not an in-process caller of routes_api_read — so tenancy/scope
+enforcement stays exactly where it already lives (web/api_auth) and is never duplicated
+client-side; a scope-denied or missing/invalid token just surfaces the server's own error
+text as an MCP `isError` tool result. Two read-only tools this slice (`list_audits`,
+`list_findings`), no write tools per PLAN-SDK S-3. Docs: docs-site/api/mcp.md (install +
+Claude Desktop/Cursor config + tool table), mkdocs nav. Pinned by tests/test_mcp.py (wire
+contract: tools/list shape, tools/call happy path, missing-token/401/403/404 all fail clean,
+unknown tool/method are JSON-RPC errors, full stdio round trip) + tests/test_docs_site.py::
+TestMcpDocs. Engine untouched (mcp/ sits outside services/rules + services/pricing).

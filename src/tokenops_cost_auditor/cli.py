@@ -164,11 +164,22 @@ def main(argv: list[str] | None = None) -> int:
     audit_cmd.add_argument("file", type=Path, help="OpenAI/Anthropic JSONL or generic CSV")
     audit_cmd.add_argument("--out", type=Path, default=Path("report.pdf"), help="PDF output path")
     audit_cmd.add_argument("--json", type=Path, default=None, help="also write report JSON here")
+    sub.add_parser(
+        "mcp",
+        help=(
+            "run the MCP server over stdio (Claude Desktop, Cursor, ...) — reads "
+            "TOKENOPS_COST_AUDITOR_TOKEN for auth"
+        ),
+    )
     args = parser.parse_args(argv)
     if args.command == "link":
         return _cmd_link(args.code, args.server)
     if args.command == "ship":
         return _cmd_ship(args.source, args.cron)
+    if args.command == "mcp":
+        from tokenops_cost_auditor.mcp.server import main as mcp_main
+
+        return mcp_main()
 
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
     table = PricingTable.load()

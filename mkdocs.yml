@@ -93,6 +93,7 @@ nav:
       - Getting started: api/getting-started.md
       - Reference: api/reference.md
       - Build your first integration: api/tutorial.md
+      - MCP server: api/mcp.md
       - Endpoints: api/endpoints.md
   - Reports:
       - Reading a report: report/reading-a-report.md
