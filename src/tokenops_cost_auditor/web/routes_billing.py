@@ -128,20 +128,25 @@ def create_razorpay_order(
         raise HTTPException(status_code=503, detail="checkout not switched on")
     with _session(request) as session:
         user = get_or_create_user(session, user_email)
-        session.commit()
         # O-2 RBAC: billing is an owner-only action, same gate as the plan table.
+        # Authorize BEFORE committing, so a non-owner attempt leaves no orphan user
+        # row — the flushed user rolls back when the session closes (cold-reviewer #75).
         authz.ensure(
             active_role(session, user.id),
             authz.Perm.MANAGE_BILLING,
             detail="only the workspace owner can buy an audit",
         )
+        session.commit()
         user_id = user.id
     try:
         order = razorpay_orders.create_order(
             settings.razorpay_key_id,
             settings.razorpay_key_secret,
             settings.one_shot_inr,
-            receipt=f"oneshot-{user_id}-{uuid4().hex[:12]}",
+            # Razorpay caps `receipt` at 40 chars — the old oneshot-{user_id:32}-{uuid}
+            # form was 53 and would 400 every live order (cold-reviewer #75). Keep it
+            # short + unique; notes.email carries identity for reconciliation.
+            receipt=f"1x-{user_id[:8]}-{uuid4().hex[:12]}",
             email=user_email,
         )
     except razorpay_orders.OrderCreateError as exc:
