@@ -170,3 +170,25 @@ class TestFailClosedMutations:
             files={"file": ("logs.jsonl", io.BytesIO(F1_BYTES), "application/jsonl")},
         )
         assert rm.status_code != 403
+
+    def test_viewer_cannot_run_a_copilot_seat_audit(self, app: FastAPI) -> None:
+        # A Copilot seat upload IS an audit run — the RUN_AUDITS gate must hold on
+        # /copilot/seats too, not only its twin /api/v1/audits (loophole hunt 2026-07-27:
+        # this route had no authz.ensure — a viewer could bypass the run gate).
+        _seed(app)
+        c = TestClient(app)
+        rv = c.post(
+            "/copilot/seats",
+            headers=_hdr(VIEWER),
+            files={"file": ("seats.json", io.BytesIO(b"[]"), "application/json")},
+            follow_redirects=False,
+        )
+        assert rv.status_code == 403
+        # a member (RUN_AUDITS granted) is NOT blocked by the role gate.
+        rm = c.post(
+            "/copilot/seats",
+            headers=_hdr(MEMBER),
+            files={"file": ("seats.json", io.BytesIO(b"[]"), "application/json")},
+            follow_redirects=False,
+        )
+        assert rm.status_code != 403
