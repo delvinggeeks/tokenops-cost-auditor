@@ -3769,3 +3769,39 @@ miss) + updated tests/test_pricing_final.py::TestOneCurrencyPerView (a REAL rend
 defaults to USD, the `ccy` cookie still persists a prior explicit toggle — replaces the removed
 Accept-Language/timezone-JS tests). Engine untouched (T-NFR-01 — `services/geo` is outside
 `services/rules`/`services/pricing`); docs/04-TRACEABILITY.md row added.
+
+Razorpay Standard Checkout for the one-shot INR audit (Issue #74, 2026-07-27). The
+one-time audit purchase was sold via a hosted payment LINK, so `razorpay_key_id`/
+`razorpay_key_secret` were dead config — never exercised end to end. Replaced the INR
+one-shot purchase with the verified Standard Checkout flow: NEW `services/payments/
+razorpay_orders.py::create_order` (httpx `POST /v1/orders`, HTTP Basic Auth
+`key_id:key_secret`, amount in paise, `notes.email` — the order MUST be created
+server-side first, since a payment with no `order_id` auto-refunds) + `verify_order_
+signature` (HMAC-SHA256 of `"{order_id}|{payment_id}"` with `key_secret`, checked
+against the checkout.js modal handler's callback). `services/payments/razorpay_link.py`
+gained `OrderWebhookEvent`/`parse_order_event` for `order.paid`/`payment.captured`/
+`payment.failed`, on the SAME FR-27 signature+timestamp rails as the existing
+`payment_link.paid` parser. The webhook is the SOLE credit-grant authority (B1 — the
+handler-payload signature check is UX only and never itself grants); the grant is
+idempotent on `Payment.ref == order_id` (B3), so `order.paid` and a same-order
+`payment.captured` (different event ids) or a re-delivered `order.paid` collapse to
+exactly one credit — layered on top of the existing event-id dedup table.
+`payment.failed` is an honest no-credit state (B4), never a 500. NEW `web/routes_
+billing.py` routes: `POST /billing/razorpay/order` (O-2 `MANAGE_BILLING`-gated, 503
+"checkout not switched on" when key/secret unset) + `POST /billing/razorpay/verify`.
+`billing_page` now sets a `Content-Security-Policy` header allowing `checkout.razorpay.
+com` (script-src/frame-src) and `api.razorpay.com` (connect-src) — the checkout modal
+is an iframe and needs it; scoped to the billing page only, not app-wide, to avoid any
+risk to the rest of the product's inline styles/scripts. `templates/app/billing.html`
+gained a "Buy one-time audit" button for INR viewers only (USD stays on the existing
+Stripe hosted link — a later mirror, out of scope here), wired to `checkout.razorpay.
+com/v1/checkout.js`, with honest disabled/failure/dismiss states. Guarded by NEW
+tests/test_razorpay_checkout.py (order-create request shape against a mocked httpx
+boundary; real-HMAC signature verify valid/tampered; the full create-order→handler-
+verify→signed-webhook journey proving the WEBHOOK grants the credit and it reflects in
+a real upload unlock; idempotency across handler+redelivered-webhook and across
+order.paid+payment.captured; the disabled honest state; a `@pytest.mark.integration`
+test skipped unless `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are in the env, proving the
+test key really works against api.razorpay.com when present). B5 (a `callback_url`
+fallback for iframe-blocked browsers) parked to `docs/internal/BACKLOG.md` per the
+issue. docs/04-TRACEABILITY.md row added.
