@@ -183,6 +183,84 @@ with a `422` naming the field.
 
 ---
 
+## Run an audit (upload)
+
+`POST /api/v1/audits`
+
+The paid, one-shot twin of [Send usage](#send-usage): upload a whole export
+file and it runs the full six-detector audit once, instead of streaming
+records as your process makes calls. This is the same endpoint the
+dashboard's upload page calls.
+
+**Auth is different here** — not the ingest key. It authenticates with your
+**signed-in session cookie** (magic-link sign-in), because it's the API
+twin of a browser action, not a headless-integration path. If you're
+scripting outside a browser, [Send usage](#send-usage) (the ingest key)
+is almost always the right endpoint instead.
+
+Two gates apply before the file is even read:
+
+- **Payment gate (FR-18)** — an unconsumed paid credit must exist on your
+  account, or you get a `402` back with payment links; the credit is
+  claimed atomically the moment the audit is created (never double-spent by
+  two concurrent uploads).
+- **Role gate** — running an audit spends a run, which every role except
+  **viewer** may do. A viewer gets a `403`.
+
+### Request
+
+`multipart/form-data` with one field:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | file | ✅ | one of `.jsonl`, `.json`, `.csv` — the same three formats the [quickstart](../quickstart.md#option-upload-a-log-file) documents |
+
+Up to **200 MB**. Send an `Idempotency-Key` header to make retries safe —
+identical to [Send usage](#send-usage)'s idempotency contract.
+
+=== "curl"
+
+    ```bash
+    curl -X POST https://tokenops-cost-auditor.com/api/v1/audits \
+      -H "Cookie: session=$TOKENOPS_COST_AUDITOR_SESSION" \
+      -H "Idempotency-Key: audit-2026-07-24-a" \
+      -F "file=@usage_export.jsonl"
+    ```
+
+=== "Python (requests)"
+
+    ```python
+    import os, requests
+
+    resp = requests.post(
+        "https://tokenops-cost-auditor.com/api/v1/audits",
+        cookies={"session": os.environ["TOKENOPS_COST_AUDITOR_SESSION"]},
+        headers={"Idempotency-Key": "audit-2026-07-24-a"},
+        files={"file": open("usage_export.jsonl", "rb")},
+        timeout=60,
+    )
+    print(resp.json())   # {"audit_id": "...", "replayed": False}
+    ```
+
+### Responses
+
+| Status | Body | Meaning |
+|---|---|---|
+| `201` | `{"audit_id":"…","replayed":false}` | accepted; the audit is queued/running |
+| `200` | `{"audit_id":"…","replayed":true}` | this `Idempotency-Key` was already processed |
+| `400` | [error envelope](#errors) | unsupported file extension, or the file is empty/unparseable |
+| `401` | error envelope | no valid session |
+| `402` | error envelope | no unconsumed paid credit — the body includes payment links |
+| `403` | error envelope | a viewer role tried to run an audit |
+| `413` | error envelope | file exceeds the 200MB upload limit |
+| `429` | error envelope | rate limit exceeded (10/minute) |
+
+A signed-in browser (`Accept: text/html`) is redirected to the progress page
+instead of receiving JSON — the API contract above applies to every other
+client.
+
+---
+
 ## Check audit status
 
 `GET /api/v1/audits/{audit_id}/status`
@@ -448,6 +526,9 @@ excepted):
 }
 ```
 
+Quote the `request_id` when you contact support; it ties your error to our
+logs. Quick reference, then the full catalog below:
+
 | HTTP | `code` | When |
 |---|---|---|
 | 400 | `bad_request` | malformed request |
@@ -460,8 +541,89 @@ excepted):
 | 429 | `rate_limited` | slow down |
 | 500 | `internal_error` | our side — the `request_id` is your reference |
 
-Quote the `request_id` when you contact support; it ties your error to our
-logs.
+### Error catalog — trigger and fix
+
+#### 400 `bad_request`
+
+**Triggers:** [Run an audit](#run-an-audit-upload)'s `file` has an
+unsupported extension (only `.jsonl`, `.json`, `.csv` are accepted), or the
+file is empty/unparseable as any of the three formats.
+**Fix:** check the extension and that the file has at least one row/record;
+the message names exactly what was expected.
+
+#### 401 `unauthorized`
+
+**Triggers:** [Send usage](#send-usage) got no `Authorization` header, a
+header that isn't `Bearer ik_…`, or an ingest key that's unknown/revoked;
+[Run an audit](#run-an-audit-upload) and [Check audit status](#check-audit-status)
+got no valid session cookie; [Read your data](#read-your-data) got no
+`Authorization: Bearer rt_…`/`at_…` or an unknown/revoked/expired one.
+**Fix:** mint a fresh key/token — see [Authentication](#authentication) —
+and confirm you're sending the exact `Bearer <prefix>_…` scheme for the
+endpoint you're calling; the three credential kinds (`ik_`, `rt_`, `at_`)
+are not interchangeable.
+
+#### 402 `payment_required`
+
+**Triggers:** [Send usage](#send-usage) — your subscription lapsed, so
+ingest pauses until it resumes; [Run an audit](#run-an-audit-upload) — no
+unconsumed paid credit exists yet.
+**Fix:** the response body carries the payment link(s) (Stripe/Razorpay) —
+pay, then retry the exact same request; an `Idempotency-Key` makes that
+retry safe.
+
+#### 403 `forbidden`
+
+**Triggers:** two distinct causes, both fail-closed. (1) [Read your
+data](#read-your-data) — a valid read/OAuth token that's missing the
+specific scope the endpoint needs (`read:audits` or `read:findings`); a
+token can do only what its scopes list. (2) [Run an audit](#run-an-audit-upload) —
+a **viewer** role tried to spend a run; every other role may.
+**Fix:** for (1), mint a token with the missing scope under **Developer →
+API tokens**; for (2), have an owner/admin/member run the audit instead — a
+viewer's role can't be escalated by retrying.
+
+#### 404 `not_found`
+
+**Triggers:** an audit id that doesn't exist **or** belongs to a different
+account/workspace — both return the identical `404`, never a `403`, so a
+token can't use the error to probe which ids exist; a tampered, expired, or
+already-consumed report link ([Retrieve a report](#retrieve-a-report)).
+**Fix:** double-check the id came from your own [List audits](#list-audits)
+response; for report links, request a fresh one — links expire after 30 days
+and cannot be renewed by editing the token.
+
+#### 413 `payload_too_large`
+
+**Triggers:** [Send usage](#send-usage) — a batch over 5,000 records;
+[Run an audit](#run-an-audit-upload) — a file over 200MB.
+**Fix:** split the batch/file (per-week slices work well for large log
+exports) and send multiple requests/audits instead of one oversized one.
+
+#### 422 `validation_error`
+
+**Triggers:** [Send usage](#send-usage) only — a record carries a field
+outside the counts-only contract (`prompt`, `messages`, `content`, …), is
+missing/empty on a required field, or has a value outside the documented
+type/range (see [the field table](#send-usage) and
+[the counts-only contract](#the-counts-only-contract)).
+**Fix:** the message names the offending record index and field —
+fix that field; never retry unmodified, since the same record will fail
+again identically.
+
+#### 429 `rate_limited`
+
+**Triggers:** you're over a limit — see [Rate limits](#rate-limits)
+(`POST /api/v1/ingest` 60/minute per key plus a per-IP abuse ceiling;
+`POST /api/v1/audits` 10/minute).
+**Fix:** back off and retry; the response carries a `Retry-After` header —
+wait at least that long before your next attempt.
+
+#### 500 `internal_error`
+
+**Triggers:** a failure on our side, not yours.
+**Fix:** retry once; if it persists, contact support with the `request_id`
+from the envelope — it's your reference into our logs.
 
 ---
 
