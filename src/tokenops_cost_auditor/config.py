@@ -192,6 +192,14 @@ class Settings(BaseSettings):
     # Display (NFR-11: USD internal; INR display via fixed configurable rate)
     inr_per_usd_display: float = 90.0
 
+    # Server-side geo (Issue #68): IP -> country, zero cost, no key. Replaces
+    # the browser timezone-cookie/Accept-Language guessing. A trusted
+    # front-door header wins (Cloudflare's free tier sets this); the mmdb
+    # path is the fallback when not fronted by Cloudflare (provision.sh
+    # downloads the free DB-IP Lite Country db with no license key needed).
+    geo_country_header: str = "CF-IPCountry"
+    geoip_db_path: str = ""
+
     # ---- v1.5 MONITOR (PLAN-V15 §0 rulings) ----
     # Plans (R-PRICING-FINAL-2, founder-ratified 2026-07-22): dual-market
     # structure — global USD via Stripe, India INR via Razorpay, prices ONLY

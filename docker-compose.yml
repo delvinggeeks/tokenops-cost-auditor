@@ -23,10 +23,15 @@ services:
       # R-LIVE-PRICING: keep the auto-priced overlay on the persistent reports
       # volume so a deploy/recreate never wipes it (founder incident 2026-07-22).
       PRICING_OVERLAY_PATH: /data/reports/.ops/prices.auto.yaml
+      # Issue #68: free DB-IP Lite Country db, host-fetched by provision.sh
+      # (4d) into ./geoip — a live bind mount, so a fresh download appears to
+      # the running app with no restart. Absent file = header-only geo (safe).
+      GEOIP_DB_PATH: /geoip/dbip-country-lite.mmdb
     volumes:
       - uploads:/data/uploads
       - reports:/data/reports
       - backups:/backups:ro # digest reads dump age only (runbook §3)
+      - ./geoip:/geoip:ro # provision.sh 4d; empty dir = GeoIP DB absent, header path still works
     expose:
       - "8000"
     depends_on:

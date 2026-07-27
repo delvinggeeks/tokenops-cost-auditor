@@ -24,6 +24,7 @@ from tokenops_cost_auditor.persistence.repo import (
 )
 from tokenops_cost_auditor.services.alerts import dispatch
 from tokenops_cost_auditor.services.alerts.rules import RULE_LABELS, RULES
+from tokenops_cost_auditor.services.geo import resolver as geo
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
@@ -112,7 +113,7 @@ def alerts_page(request: Request, user_email: str = Depends(current_user)) -> HT
             session,
             user.id,
             request.query_params.get("ccy"),
-            request.headers.get("accept-language", ""),
+            geo.country_for_request(request, settings),
             request.cookies.get("ccy"),
         )
         ctx = _shell_ctx(session, request, user, "alerts")

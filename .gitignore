@@ -25,6 +25,7 @@ dist/
 uploads/
 reports/
 backups/
+geoip/
 *.dump
 
 # Gate handoff artifacts (generated per sweep)

@@ -181,26 +181,27 @@ def provider_for_currency(currency: str) -> str:
 
 
 def pick_currency(
-    ccy_param: str | None, accept_language: str = "", ccy_cookie: str | None = None
+    ccy_param: str | None, country: str | None = None, ccy_cookie: str | None = None
 ) -> str:
     """Which price set a VIEWER sees (checkout still decides by billing
-    country). Precedence: explicit toggle choice > the detection cookie >
-    locale hint > USD. The cookie is set client-side from the browser's
-    TIMEZONE (Asia/Kolkata) — walkthrough 2026-07-22 found the locale hint
-    useless in practice: most Indian browsers ship with en-US, so an Indian
-    visitor saw dollars. India is a single timezone; the clock doesn't lie."""
+    country). Precedence: explicit toggle choice > the persisted toggle
+    cookie > server-side geo (Issue #68: IP -> country via services/geo,
+    resolved on the caller's request) > USD. This replaces the old browser
+    guessing — a timezone-cookie JS and an Accept-Language sniff — both
+    client-side heuristics; server-side IP geolocation is verifiable truth
+    on the FIRST request, at zero cost."""
     if ccy_param and ccy_param.upper() in CURRENCIES:
         return ccy_param.upper()
     if ccy_cookie and ccy_cookie.upper() in CURRENCIES:
         return ccy_cookie.upper()
-    return "INR" if "-in" in accept_language.lower() else "USD"
+    return currency_for_country(country)
 
 
 def viewer_currency(
     session: Session,
     user_id: str | None,
     ccy_param: str | None,
-    accept_language: str = "",
+    country: str | None = None,
     ccy_cookie: str | None = None,
 ) -> str:
     """One rule for every signed-in surface: a subscribed account sees its
@@ -216,7 +217,7 @@ def viewer_currency(
         )
         if sub is not None and (sub.currency or "").upper() in CURRENCIES:
             return str(sub.currency).upper()
-    return pick_currency(ccy_param, accept_language, ccy_cookie)
+    return pick_currency(ccy_param, country, ccy_cookie)
 
 
 def cohort_used(session: Session, currency: str) -> int:
