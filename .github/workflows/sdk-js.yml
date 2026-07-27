@@ -1,17 +1,18 @@
-# Validates the JS/TS SDK (sdk/js) — a separate Node toolchain from the Python app,
-# so it only runs when the SDK changes. Not (yet) a required check; it proves the
-# published package typechecks, tests, and builds.
-name: sdk-js
+# Validates the JS/TS packages (sdk/js, action) — a Node toolchain separate from the
+# Python app, so it only runs when those packages change. Not (yet) a required check.
+name: js-packages
 
 on:
   pull_request:
     paths:
       - "sdk/js/**"
+      - "action/**"
       - ".github/workflows/sdk-js.yml"
   push:
     branches: [main]
     paths:
       - "sdk/js/**"
+      - "action/**"
 
 permissions:
   contents: read
@@ -19,9 +20,13 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: ["sdk/js", "action"]
     defaults:
       run:
-        working-directory: sdk/js
+        working-directory: ${{ matrix.pkg }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +36,6 @@ jobs:
       - name: typecheck (strict)
         run: npm run typecheck
       - name: unit tests
-        run: node --test --experimental-strip-types src/index.test.ts
-      - name: build (emits dist)
+        run: npm test
+      - name: build
         run: npm run build
