@@ -3561,3 +3561,32 @@ Claude Desktop/Cursor config + tool table), mkdocs nav. Pinned by tests/test_mcp
 contract: tools/list shape, tools/call happy path, missing-token/401/403/404 all fail clean,
 unknown tool/method are JSON-RPC errors, full stdio round trip) + tests/test_docs_site.py::
 TestMcpDocs. Engine untouched (mcp/ sits outside services/rules + services/pricing).
+
+R-PLATFORM SLICE 3 — OUTBOUND WEBHOOKS (Issue #56, 2026-07-27). A workspace registers a URL
+under Settings → Webhooks (O-2 `MANAGE_SOURCES` gate, mirroring routes_sources.py exactly:
+the list is visible to every role, add/remove controls render only for owner/admin, a forged
+POST fail-closes 403); on audit completion (hooked right after the existing `mail.report_ready`
+call in `AuditRunner._pipeline`, migration 022 adds `webhook_endpoints` + `webhook_deliveries`)
+we POST a signed `audit.completed` event to every active endpoint in that workspace. Design
+decision: `services/webhooks/base.sign` mirrors the INBOUND `verify_signature` already in
+`api/routes_webhooks.py` (raw HMAC-SHA256 hex digest of the exact body bytes) so the scheme is
+symmetric and a receiver's verification code reads like our own inbound checks — sent as
+`X-TokenOps-Signature` + `X-TokenOps-Event` headers. `WebhookEndpoint.secret` is stored
+PLAINTEXT (not a one-way hash like every other credential in this codebase) because, unlike a
+token we only ever verify, we must hold it to sign every future delivery; it is never
+re-rendered after the shown-once creation response, and revoke NULLs it. Delivery is
+best-effort by construction: `WebhookDispatcher` (`services/webhooks/dispatcher.py`) catches
+its own exceptions, so a dead endpoint or network error can never fail the audit it reports on
+— one attempt, a 5s timeout, the status recorded either way (no durable retry queue, out of
+scope per the issue, noted for a later scaling slice). Payload is FR-22-clean by construction:
+audit_id/workspace_id/status/total_spend_usd/projected_spend_usd/savings_pct/finding_count/
+findings[{detector,severity,monthly_usd}] — never a prompt or completion. Docs:
+docs-site/api/webhooks.md (payload schema + an `hmac.compare_digest` verification snippet),
+mkdocs nav. Pinned by tests/test_webhooks_journey.py (real add-endpoint route → real audit run
+→ captured delivery body/headers independently re-verified against the shown-once secret →
+FR-22 marker-absence check → WebhookDelivery row → the Settings page shows the endpoint and
+"200 ok"; a raising transport records a null status_code and the audit still reaches
+status=done; RBAC: controls absent for a member + honest note, forged add/delete 403s) +
+tests/test_docs_site.py::TestWebhooksDocs. Engine untouched (services/webhooks sits outside
+services/rules + services/pricing, T-NFR-01 intact). X-01/X-02 SAFE throughout — observe-and-
+notify only, never in the request path, never enforces anything on the customer's LLM traffic.

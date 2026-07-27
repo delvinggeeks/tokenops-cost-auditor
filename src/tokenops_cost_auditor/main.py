@@ -32,6 +32,7 @@ from tokenops_cost_auditor.services.payments.razorpay_link import RazorpayLinkAd
 from tokenops_cost_auditor.services.payments.stripe_link import StripeLinkAdapter
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.runner import AuditRunner
+from tokenops_cost_auditor.services.webhooks.dispatcher import WebhookDispatcher
 from tokenops_cost_auditor.web import i18n
 from tokenops_cost_auditor.web.routes_admin import router as admin_router
 from tokenops_cost_auditor.web.routes_alerts import router as alerts_router
@@ -52,6 +53,7 @@ from tokenops_cost_auditor.web.routes_runs import router as runs_router
 from tokenops_cost_auditor.web.routes_settings import router as settings_router
 from tokenops_cost_auditor.web.routes_sources import router as sources_router
 from tokenops_cost_auditor.web.routes_statements import router as statements_router
+from tokenops_cost_auditor.web.routes_webhooks import router as webhook_settings_router
 
 log = structlog.get_logger("tokenops_cost_auditor")
 
@@ -129,6 +131,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.stripe = StripeLinkAdapter(
         settings.stripe_payment_link_url, settings.stripe_webhook_secret
     )
+    app.state.webhooks = WebhookDispatcher(app.state.engine)  # R-PLATFORM slice 3 (S-5)
     app.mount(
         "/static",
         StaticFiles(directory=Path(__file__).parent / "web" / "static"),
@@ -172,6 +175,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         table=app.state.pricing_table,
         engine=app.state.engine,
         mail=app.state.mail,
+        webhooks=app.state.webhooks,
     )
     app.state.limiter = limiter
     app.middleware("http")(request_id_middleware)
@@ -212,6 +216,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(settings_router)  # account/data controls (v1.5 WP-5)
     app.include_router(members_router)  # O-1b-2 workspace invites + accept (R-ORG)
     app.include_router(billing_router)  # plans + dunning state (v1.5 WP-6)
+    app.include_router(webhook_settings_router)  # outbound audit.completed (R-PLATFORM slice 3)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limited(request: Request, exc: Exception) -> Response:
