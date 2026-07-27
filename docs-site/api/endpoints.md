@@ -595,6 +595,17 @@ Requires BOTH the client_secret (confidential client) and the PKCE verifier.
 
 Responses: `200`, `422`
 
+## `GET /pricing`
+
+Pricing Page.
+
+Dedicated, clean pricing page (issue #66): the SAME plan config and
+currency/launch logic as landing/billing, rendered without the landing's
+mixed launch/list/anchor jumble — one effective price per plan, per
+region. Display-only: no price values change here.
+
+Responses: `200`
+
 ## `GET /r/{token}`
 
 Web Report.

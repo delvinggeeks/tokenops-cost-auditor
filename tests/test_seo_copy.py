@@ -59,7 +59,16 @@ def assert_tokenops_qualified(value: str, where: str) -> None:
 class TestPublicRoutesRendered:
     """The easily-reachable public routes, hit for real through the app."""
 
-    PAGES = ("/", "/sample", "/legal/terms", "/legal/privacy", "/legal/dpa", "/login", "/signup")
+    PAGES = (
+        "/",
+        "/pricing",
+        "/sample",
+        "/legal/terms",
+        "/legal/privacy",
+        "/legal/dpa",
+        "/login",
+        "/signup",
+    )
 
     def test_every_page_title_is_qualified(self, app: FastAPI) -> None:
         client = TestClient(app)
