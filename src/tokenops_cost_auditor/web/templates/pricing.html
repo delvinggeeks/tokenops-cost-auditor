@@ -1,0 +1,68 @@
+{% extends "_public_shell.html" %}
+{# Dedicated /pricing page (issue #66) — the SAME price config as landing's
+   plans section (services/payments/plans, R-PRICING-FINAL-2), rendered as
+   ONE clear effective price per plan per region instead of a mixed
+   launch/list/anchor jumble. Display-only: no price VALUE changes here.
+   R-NAME-SEO §2: title/meta/og pair "TokenOps" with a qualifier. #}
+{% block title %}Pricing — TokenOps Cost Auditor{% endblock %}
+{% block head %}
+  <meta name="description" content="TokenOps Cost Auditor pricing: Free, Pro and Scale plans plus a one-off audit — one clear AI spend audit price per plan, region-aware, in dollars everywhere.">
+  <meta property="og:title" content="Pricing — TokenOps Cost Auditor">
+  <meta property="og:description" content="One clear AI spend audit price per plan, region-aware — start free with one audit, no card.">
+  <meta property="og:url" content="{{ base_url }}/pricing">
+  <meta property="og:type" content="website">
+{% endblock %}
+{% block content %}
+<div class="pricing-page">
+  <section class="pricing-head">
+    <p class="sched">Pricing</p>
+    <h1>One clear price, per plan.</h1>
+    <p class="plans-qualify">Free to start — one full audit, no card. Pro and
+      Scale add scheduled audits and more connected sources.</p>
+    <p class="plans-ccy" aria-label="Regional pricing">
+      {% if currency == "INR" %}
+      <strong>India pricing</strong> · <a href="/pricing?ccy=USD">Global pricing</a>
+      {% else %}
+      <strong>Global pricing</strong> · <a href="/pricing?ccy=INR">India pricing</a>
+      {% endif %}
+    </p>
+  </section>
+
+  <div class="plan-cards">
+    {% for p in catalogue %}
+    {% set p_launch = launch_open and p.has_launch(currency) %}
+    <div class="plancard{{ ' plancard-hi' if p.key == 'pro' else '' }}">
+      <h3>{{ p.name }}</h3>
+      <div class="plancard-price money">{{ p.display(currency, launch=p_launch) if p.usd else "No card, ever" }}</div>
+      {% if p.usd and p_launch %}
+      <p class="plancard-launch">{{ p.launch_note(currency, cohort_size) }}</p>
+      {% endif %}
+      {% if p.billed_note(currency, launch=p_launch) %}
+      <p class="plancard-gate">{{ p.billed_note(currency, launch=p_launch) }}</p>
+      {% endif %}
+      <p>{{ p.blurb }}</p>
+      {% if p.gate_line(currency) %}<p class="plancard-gate">{{ p.gate_line(currency) }}</p>{% endif %}
+      {% if p.usd %}
+        {% set pay_link = checkout_links.get(p.key) %}
+        {% if pay_link %}
+        <a class="btn{{ ' btn-primary' if p.key == 'pro' else '' }}" href="{{ pay_link }}">Subscribe to {{ p.name }}</a>
+        {% else %}
+        <p class="plancard-gate">Checkout opens once billing is switched on.</p>
+        <a class="btn" href="/signup">Start free</a>
+        {% endif %}
+      {% else %}
+        <a class="btn{{ ' btn-primary' if p.key == 'pro' else '' }}" href="/signup">Start free</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <section class="plans-oneshot-section">
+    <h2>Prefer a one-off audit?</h2>
+    <p class="plans-oneshot"><strong>One-off audit:</strong> {{ one_shot }} —
+      a single full audit of a log file, no subscription.
+      {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}
+      For enterprises, <a href="/legal/terms">terms here</a>.</p>
+  </section>
+</div>
+{% endblock %}

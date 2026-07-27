@@ -99,6 +99,50 @@ def landing(request: Request) -> HTMLResponse:
     return response
 
 
+@router.get("/pricing", response_class=HTMLResponse)
+def pricing_page(request: Request) -> HTMLResponse:
+    """Dedicated, clean pricing page (issue #66): the SAME plan config and
+    currency/launch logic as landing/billing, rendered without the landing's
+    mixed launch/list/anchor jumble — one effective price per plan, per
+    region. Display-only: no price values change here."""
+    settings = request.app.state.settings
+    email = session_email(request)
+    ccy_param = request.query_params.get("ccy")
+    with request.app.state.session_factory() as session:
+        # rendering a page must not write (mirrors upload_page): a signed-in
+        # visitor's user row already exists from their magic-link session.
+        user_id = get_or_create_user(session, email).id if email else None
+        # R-PRICING-FINAL-2: a subscribed account sees its own billing
+        # currency; everyone else gets the viewer pick (toggle honoured).
+        currency = plans.viewer_currency(
+            session,
+            user_id,
+            ccy_param,
+            request.headers.get("accept-language", ""),
+            request.cookies.get("ccy"),
+        )
+        launch = plans.launch_open(session, settings, currency)
+    catalogue = plans.catalogue(settings)
+    response = _render(
+        request,
+        "pricing.html",
+        catalogue=[catalogue[k] for k in plans.ALL_PLANS],
+        one_shot=plans.one_shot_display(settings, currency),
+        one_shot_billed=plans.one_shot_billed_note(settings, currency),
+        currency=currency,
+        launch_open=launch,
+        cohort_size=settings.launch_cohort_size,
+        # per-plan checkout: config-gated, honest "not switched on" note when
+        # a link is absent (same law as /billing — never a shared fallback).
+        checkout_links={k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS},
+        user_email=email,
+    )
+    if ccy_param and currency != request.cookies.get("ccy"):
+        # an explicit toggle choice persists across pages and visits
+        response.set_cookie("ccy", currency, max_age=365 * 86400, httponly=False, samesite="lax")
+    return response
+
+
 @router.post("/early-access", response_class=HTMLResponse)
 @limiter.limit("5/minute")  # same family as auth endpoints (NFR-03)
 def early_access_signup(request: Request, email: str = Form(...)) -> HTMLResponse:
