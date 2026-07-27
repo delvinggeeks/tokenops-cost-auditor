@@ -95,6 +95,11 @@ class Settings(BaseSettings):
 
     stripe_webhook_secret: str = ""
     stripe_payment_link_url: str = ""
+    # Issue #77: USD one-shot Checkout Session — HTTP Basic Auth username. Accepts
+    # EITHER a secret key (sk_test_...) or a restricted key (rk_test_...) scoped to
+    # Checkout Sessions (Stripe's current best-practice — used identically, no
+    # `sk_` assumption anywhere in the code). Empty = "checkout not switched on".
+    stripe_secret_key: str = ""
 
     # Mail (env-gated, FR-20) — unset SMTP_HOST = log-only adapter
     smtp_host: str = ""

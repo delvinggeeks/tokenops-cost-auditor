@@ -3819,3 +3819,27 @@ FAIL` with no findings — a truncated response, not a valid TE-8 verdict, that 
 clean merge. `_run_agent_live` now retries a verdict-only reply once and, if it recurs,
 records an honest NO-VERDICT "re-run" reason instead of a misleading FAIL (can never
 mask a real FAIL — those carry findings). docs/04 row added.
+
+Stripe Checkout Session for the one-shot USD audit (Issue #77, 2026-07-27). Mirror of
+#74 for the USD path: the one-time audit purchase was sold via a static hosted payment
+LINK, so `stripe_secret_key` was dead config. NEW `services/payments/stripe_checkout.
+py::create_session` (httpx `POST /v1/checkout/sessions`, HTTP Basic Auth with the API
+key as username/`""` password — accepts a secret `sk_test_` key OR a restricted
+`rk_test_` key identically, form-encoded body, `unit_amount` in cents). The webhook
+side needed NO new code: `checkout.session.completed` was already parsed by the
+existing `StripeLinkAdapter`/`_credit` path (event-id-deduped, FR-27) from an earlier
+slice, so this is pure session-creation + wiring, reusing that grant path unchanged.
+NEW `web/routes_billing.py` `POST /billing/stripe/checkout` — creates the session
+server-side first, then a 303 redirect straight to Stripe's hosted checkout page (no
+iframe, no client JS, no CSP change); O-2 `MANAGE_BILLING`-gated before the commit
+(same RBAC-before-write shape as the #75 fix), 503 "checkout not switched on" when the
+key is unset. `templates/app/billing.html` gained a "Buy one-time audit" button for
+non-INR (USD) viewers — a plain form POST, not JS — plus honest post-redirect banners
+for `?checkout=success` (never grants anything itself — the webhook is the sole
+authority) and `?checkout=cancelled`. Guarded by NEW tests/test_stripe_checkout.py
+(session-create request shape against a mocked httpx boundary incl. the restricted-key
+case; the full create-session→signed-webhook journey proving the WEBHOOK grants the
+credit and it reflects in a real upload unlock; a bad signature grants nothing;
+idempotency on a re-delivered event id; the disabled/cancelled/success honest states;
+a `@pytest.mark.integration` test skipped unless `STRIPE_SECRET_KEY` is in the env).
+docs/04-TRACEABILITY.md row added.

@@ -9,6 +9,14 @@ an order is created server-side (`POST /razorpay/order`), the client opens
 the checkout.js modal against it, and the modal's signed callback is checked
 server-side (`POST /razorpay/verify`) for UX only — the `order.paid` webhook
 (api/routes_webhooks.py) is what actually grants the credit (B1).
+
+The one-shot USD audit (Issue #77) mirrors this with a Stripe Checkout
+Session instead of the old static payment link: `POST /stripe/checkout`
+creates the session server-side then 303-redirects the browser straight to
+Stripe's hosted page (no iframe, no client JS). Fulfilment happens on the
+`checkout.session.completed` webhook (api/routes_webhooks.py, unchanged) —
+never on the success_url redirect, since a user can reach that URL without
+paying.
 """
 
 from __future__ import annotations
@@ -17,12 +25,17 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.repo import active_role, get_or_create_user
 from tokenops_cost_auditor.services.geo import resolver as geo
-from tokenops_cost_auditor.services.payments import plans, razorpay_orders, subscriptions
+from tokenops_cost_auditor.services.payments import (
+    plans,
+    razorpay_orders,
+    stripe_checkout,
+    subscriptions,
+)
 from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 
@@ -78,6 +91,17 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             request.cookies.get("ccy"),
         )
         launch = plans.launch_open(session, settings, currency)
+        # Issue #77: honest post-redirect state. Never grants anything here — the
+        # checkout.session.completed webhook is the sole authority; a user can
+        # reach success_url without having actually paid.
+        checkout_status = request.query_params.get("checkout")
+        checkout_message = {
+            "success": (
+                "Payment received — your credit lands as soon as Stripe confirms "
+                "it. Refresh to see it."
+            ),
+            "cancelled": "Checkout cancelled — nothing was charged.",
+        }.get(checkout_status or "", "")
         ctx = _shell_ctx(session, request, user, "billing")
         response = _render(
             request,
@@ -99,6 +123,11 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             # Issue #74: Razorpay Standard Checkout for the one-shot INR audit
             # — honest disabled state when the test key isn't configured.
             razorpay_configured=bool(settings.razorpay_key_id and settings.razorpay_key_secret),
+            # Issue #77: Stripe Checkout Session for the one-shot USD audit —
+            # honest disabled state when the API key isn't configured.
+            stripe_configured=bool(settings.stripe_secret_key),
+            checkout_status=checkout_status,
+            checkout_message=checkout_message,
             now=datetime.now(UTC),
             show_tour=False,
             # ctx's plan feeds the topbar badge; billing.html itself reads
@@ -181,3 +210,38 @@ def verify_razorpay_payment(
     if not ok:
         raise HTTPException(status_code=400, detail="payment signature could not be verified")
     return JSONResponse({"status": "verified"})
+
+
+@router.post("/stripe/checkout")
+def create_stripe_checkout(
+    request: Request, user_email: str = Depends(current_user)
+) -> RedirectResponse:
+    """Issue #77: create the Stripe Checkout Session server-side, then a
+    full-page 303 redirect to Stripe's hosted checkout page — no iframe, no
+    client JS. Fulfilment happens on the checkout.session.completed webhook
+    (api/routes_webhooks.py); this endpoint never itself grants a credit."""
+    settings = request.app.state.settings
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # O-2 RBAC: same owner-only gate as the plan table and the Razorpay
+        # order-create route, checked BEFORE the commit (cold-reviewer #75).
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only the workspace owner can buy an audit",
+        )
+        session.commit()
+    base = settings.public_base_url
+    try:
+        checkout = stripe_checkout.create_session(
+            settings.stripe_secret_key,
+            settings.one_shot_usd,
+            success_url=f"{base}/billing?checkout=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{base}/billing?checkout=cancelled",
+            email=user_email,
+        )
+    except stripe_checkout.CheckoutCreateError as exc:
+        raise HTTPException(status_code=502, detail="payment provider error") from exc
+    return RedirectResponse(url=checkout["url"], status_code=303)
