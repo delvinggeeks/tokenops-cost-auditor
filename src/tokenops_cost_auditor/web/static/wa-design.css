@@ -906,3 +906,14 @@ input.field-inline:focus-visible { outline: 2px solid var(--accent); outline-off
   margin-bottom: -1px; white-space: nowrap; }
 .settings-tabs a:hover { color: var(--ink); }
 .settings-tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* Issue #70: visible USD|INR toggle on /pricing + /billing (kit.ccy_toggle).
+   Locked (subscribed) accounts render .ccy-toggle-locked instead — static
+   text, never a control that looks live but silently won't switch. */
+.ccy-toggle { display: inline-flex; align-items: center; border: 1px solid var(--rule);
+  border-radius: 999px; overflow: hidden; font-size: 13px; margin: 0 0 var(--s3); }
+.ccy-toggle .seg { padding: 5px 14px; text-decoration: none; color: var(--ink-soft); }
+.ccy-toggle a.seg:hover { color: var(--ink); background: var(--surface-tint); }
+.ccy-toggle .seg.active { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.ccy-toggle-locked { font-size: 13px; color: var(--ink-soft); margin: 0 0 var(--s3); }
+.ccy-toggle-locked strong { color: var(--ink); }
