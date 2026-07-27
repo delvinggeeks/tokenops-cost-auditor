@@ -115,28 +115,25 @@ class TestPerPlanCheckout:
         Base.metadata.create_all(application.state.engine)
         return application
 
-    def test_each_plan_links_to_its_own_checkout(self, tmp_path) -> None:
-        app = self._app(
-            tmp_path,
-            stripe_payment_link_pro="https://pay.example/PRO",
-            stripe_payment_link_team="https://pay.example/TEAM",
-        )
+    def test_each_plan_posts_its_own_subscription_form(self, tmp_path) -> None:
+        # Issue #81: USD Pro/Team subscribe via a dynamic Stripe Checkout
+        # Session, not a static per-plan link — the tier the form posts is
+        # the tier the form's hidden `plan` field names, never a shared link.
+        app = self._app(tmp_path, stripe_secret_key="sk_test_x")
         try:
             page = TestClient(app).get("/billing", headers={"X-User-Email": "c@example.com"}).text
-            # the Pro row's button must carry the PRO link, Scale's the TEAM link —
-            # never a single shared link (that was the bug: wrong tier charged)
-            assert "https://pay.example/PRO" in page
-            assert "https://pay.example/TEAM" in page
-            assert page.count("https://pay.example/PRO") == 1
+            assert page.count('action="/billing/stripe/subscription"') == 2
+            assert 'name="plan" value="pro"' in page
+            assert 'name="plan" value="team"' in page
         finally:
             app.state.engine.dispose()
 
-    def test_a_plan_without_a_link_shows_not_switched_on_not_a_wrong_link(self, tmp_path) -> None:
-        app = self._app(tmp_path, stripe_payment_link_pro="https://pay.example/PRO")
+    def test_no_stripe_key_shows_not_switched_on_not_a_form(self, tmp_path) -> None:
+        app = self._app(tmp_path)
         try:
             page = TestClient(app).get("/billing", headers={"X-User-Email": "c@example.com"}).text
-            assert "https://pay.example/PRO" in page  # Pro configured
-            assert "Checkout opens once billing is switched on." in page  # Scale not
+            assert 'action="/billing/stripe/subscription"' not in page
+            assert "Checkout opens once billing is switched on." in page
         finally:
             app.state.engine.dispose()
 

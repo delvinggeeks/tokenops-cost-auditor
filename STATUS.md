@@ -3882,3 +3882,40 @@ asserts `total_count`≤100 (real bound, not just equality-with-the-constant). T
 py3.14 (requires-python >=3.14), ENFORCED by ruff (parenthesizing is reverted by `ruff
 format`), imports clean under the pinned toolchain; documented in the module docstring so
 it stops being re-flagged.
+
+Stripe Subscriptions checkout for recurring USD Pro/Team (Issue #81, 2026-07-27). Last
+payment slice: mirror of #77 (one-shot USD) for the RECURRING Pro/Team plans — the last
+piece was a static hosted payment LINK, so a subscriber's card was never charged the
+exact plan figure the plans page showed. NEW `services/payments/stripe_subscriptions.
+py::create_session` (httpx `POST /v1/checkout/sessions`, `mode=subscription`, an inline
+`price_data` line item with `recurring[interval]=month`, `unit_amount` in cents built
+from OUR pricing config `plans.py::Plan.usd` — the price-integrity rail, never a
+dashboard number). The subtlety verified against Stripe's Checkout+Billing docs:
+session-level `metadata` lives on the Session object, but the `customer.subscription.
+created` webhook payload IS the Subscription object — only `subscription_data[metadata]`
+propagates onto it, and its keys must be `email`/`plan` (not `user_email`) to match
+exactly what the pre-existing `StripeLinkAdapter.parse_subscription_event` reads off the
+subscription's metadata. Getting the key wrong would silently default every purchase to
+"pro", under-granting Team — a dedicated test pins the exact key. The webhook + state
+machine needed NO new code at all: `STRIPE_SUB_EVENTS`, `stripe_link.parse_subscription_
+event`, `subscriptions.apply_event` and the dunning ladder (all WP-6) already existed and
+are reused completely unchanged — `customer.subscription.created` remains the sole
+activation authority (B1). NEW `web/routes_billing.py` `POST /billing/stripe/
+subscription` (creates the session server-side first then a 303 redirect straight to
+Stripe's hosted page — no iframe, no client JS, no CSP change, same idiom as `/stripe/
+checkout`; O-2 `MANAGE_BILLING`-gated before the commit per the #75 RBAC-before-write
+shape; 503 when the key is unset; 400 on an unknown/unpriced plan). `templates/app/
+billing.html` — USD Pro/Team rows now POST a plain form (hidden `plan` field) to the new
+endpoint instead of the old static per-plan hosted link; INR untouched (Razorpay subs
+from #79/#80). The now-dead `checkout_links` context var removed from the billing route
+(still used by the public `/pricing` page, unchanged, out of scope) — two tests in
+tests/test_readiness_wave1.py that pinned the OLD static-link UI were updated to assert
+the new dynamic-form UI instead. Guarded by NEW tests/test_stripe_subscriptions.py
+(session-create request shape incl. `subscription_data[metadata]` keys against a mocked
+httpx boundary, for both tiers — the price-integrity rail; the full create-session→
+signed-webhook→activated-and-reflected-as-"current" journey; bad signature activates
+nothing; idempotency on a re-delivered event id; disabled/configured/cancelled/already-
+subscribed honest states; a `@pytest.mark.integration` test skipped unless
+`STRIPE_SECRET_KEY` is in the env). Mid-cycle plan upgrade/downgrade parked to
+`docs/internal/BACKLOG.md` (cancel-and-resubscribe only this slice, per the issue).
+docs/04-TRACEABILITY.md row added.
