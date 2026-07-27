@@ -222,6 +222,20 @@ class TestOrderCreate:
         assert payload["currency"] == "INR"
         assert payload["amount"] == 2000000  # INR 20,000 -> paise
         assert payload["notes"]["email"] == BUYER
+        # Regression (cold-reviewer #75): Razorpay caps `receipt` at 40 chars — the old
+        # 53-char form 400'd every live order; the mocked boundary hid it. Assert it now.
+        assert 0 < len(payload["receipt"]) <= 40, payload["receipt"]
+
+    def test_receipt_is_clamped_to_40_chars(self) -> None:
+        # Defense-in-depth (cold-reviewer #75): even an over-long receipt from a future
+        # caller must never exceed Razorpay's 40-char cap in the outgoing payload.
+        fake = MagicMock()
+        fake.post.return_value = MagicMock(status_code=200, json=lambda: {"id": "order_X"})
+        razorpay_orders.create_order(
+            RZP_KEY_ID, RZP_KEY_SECRET, 20000.0, receipt="x" * 80, email=BUYER, client=fake
+        )
+        payload = fake.post.call_args.kwargs["json"]
+        assert len(payload["receipt"]) == 40
 
     def test_order_create_error_surfaces_502(self, rclient: TestClient) -> None:
         fake_client = MagicMock()

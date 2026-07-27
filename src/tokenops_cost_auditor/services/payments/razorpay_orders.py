@@ -50,7 +50,10 @@ def create_order(
     payload = {
         "amount": amount_paise,
         "currency": "INR",
-        "receipt": receipt,
+        # Razorpay caps `receipt` at 40 chars; a longer value 400s the live API
+        # (cold-reviewer #75). Callers send a short receipt — clamp as a safety net so
+        # no future caller can silently break a real order on this formatting detail.
+        "receipt": receipt[:40],
         "notes": {"email": email},
     }
     if client is not None:
