@@ -260,3 +260,74 @@ class TestApiReferenceAccuracy:
         assert "/oauth/authorize" in body and "/oauth/token" in body
         assert "PKCE" in body and "code_challenge_method=S256" in body
         assert "single-use" in body  # the auth-code single-use guarantee
+
+    # Issue #52 AC-6: the current developer-facing /api/v1 surface, one row
+    # per (method, path) — kept in sync with the ISSUE's declared list, not
+    # every /api/v1 route (device-collector link/ship is a separate surface
+    # out of this slice's scope).
+    REQUIRED_V1_ENDPOINTS = (
+        ("POST", "/api/v1/ingest"),
+        ("POST", "/api/v1/audits"),
+        ("GET", "/api/v1/audits"),
+        ("GET", "/api/v1/audits/{audit_id}/status"),
+        ("GET", "/api/v1/audits/{audit_id}/findings"),
+    )
+
+    def test_12_every_current_v1_endpoint_documented_by_method(self, app) -> None:
+        """Doc-coverage guard, VERB-aware: unlike test_06 (which only checks a
+        bare path is documented somewhere), this pins that reference.md names
+        each endpoint as 'METHOD path' — so a new method landing on an
+        existing path (e.g. POST /api/v1/audits alongside GET /api/v1/audits)
+        can't silently ship undocumented (Issue #52 acceptance criterion 6)."""
+
+        def walk(routes):
+            for r in routes:
+                orig = getattr(r, "original_router", None)
+                if orig is not None:
+                    yield from walk(orig.routes)
+                    continue
+                p = getattr(r, "path", None)
+                methods = getattr(r, "methods", None) or set()
+                if p:
+                    for m in methods - {"HEAD", "OPTIONS"}:
+                        yield m, p
+
+        real = set(walk(app.routes))
+        for method, path in self.REQUIRED_V1_ENDPOINTS:
+            assert (method, path) in real, (
+                f"{method} {path} is not a real route — the coverage list is stale"
+            )
+            assert f"{method} {path}" in self.REF, (
+                f"reference.md does not document '{method} {path}'"
+            )
+
+
+class TestDeveloperGettingStartedAndTutorial:
+    """Issue #52 ACs 1 and 4: a <=5-step minimal integration, and a runnable
+    send->poll->read tutorial, both reachable from the docs nav."""
+
+    GETTING_STARTED = (DOCS / "api/getting-started.md").read_text(encoding="utf-8")
+    TUTORIAL = (DOCS / "api/tutorial.md").read_text(encoding="utf-8")
+
+    def test_both_pages_in_nav(self) -> None:
+        mk = (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+        assert "api/getting-started.md" in mk
+        assert "api/tutorial.md" in mk
+
+    def test_getting_started_is_five_steps_or_fewer(self) -> None:
+        steps = re.findall(r"^## \d+\. ", self.GETTING_STARTED, flags=re.MULTILINE)
+        assert 1 <= len(steps) <= 5, (
+            f"getting-started.md has {len(steps)} numbered steps — AC-1 caps it at 5"
+        )
+
+    def test_getting_started_mints_a_key_and_calls_ingest(self) -> None:
+        assert "Mint an ingest key" in self.GETTING_STARTED
+        assert "/api/v1/ingest" in self.GETTING_STARTED
+        assert "https://tokenops-cost-auditor.com" in self.GETTING_STARTED
+
+    def test_tutorial_walks_send_poll_read(self) -> None:
+        body = re.sub(r"\s+", " ", self.TUTORIAL)
+        assert "/api/v1/ingest" in body
+        assert "/api/v1/audits" in body
+        assert "findings" in body and "status" in body
+        assert '=== "curl"' in self.TUTORIAL and '=== "Python"' in self.TUTORIAL
