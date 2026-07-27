@@ -47,18 +47,19 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
         catalogue = plans.catalogue(settings)
         current = ent["plan"]
         status = str(ent["status"])
-        # R-PRICING-FINAL-2: a subscribed account sees its own billing
-        # currency; everyone else gets the viewer pick (toggle honoured).
-        currency = plans.viewer_currency(
-            session,
-            user.id,
-            request.query_params.get("ccy"),
+        ccy_param = request.query_params.get("ccy")
+        # R-PRICING-FINAL-2 / Issue #70: a subscribed account is LOCKED to its
+        # own billing currency (honesty rail — no live-looking toggle for
+        # them); everyone else gets the viewer pick (toggle honoured).
+        locked = plans.locked_currency(session, user.id)
+        currency = locked or plans.pick_currency(
+            ccy_param,
             geo.country_for_request(request, settings),
             request.cookies.get("ccy"),
         )
         launch = plans.launch_open(session, settings, currency)
         ctx = _shell_ctx(session, request, user, "billing")
-        return _render(
+        response = _render(
             request,
             "app/billing.html",
             catalogue=[catalogue[k] for k in plans.ALL_PLANS],
@@ -67,6 +68,7 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             status_words=STATUS_WORDS.get(status, ""),
             read_only=bool(ent["read_only"]),
             currency=currency,
+            currency_locked=locked is not None,
             launch_open=launch,
             cohort_size=settings.launch_cohort_size,
             one_shot=plans.one_shot_display(settings, currency),
@@ -81,3 +83,11 @@ def billing_page(request: Request, user_email: str = Depends(current_user)) -> H
             # an empty badge (seen on the page, not in review).
             **ctx,
         )
+        if locked is None and ccy_param and currency != request.cookies.get("ccy"):
+            # an explicit toggle choice persists across pages and visits — the
+            # same behaviour /pricing and / already give an unsubscribed
+            # viewer (Issue #70: billing was the one surface missing it).
+            response.set_cookie(
+                "ccy", currency, max_age=365 * 86400, httponly=False, samesite="lax"
+            )
+        return response

@@ -197,6 +197,34 @@ def pick_currency(
     return currency_for_country(country)
 
 
+def locked_currency(session: Session, user_id: str | None) -> str | None:
+    """The currency a CURRENTLY SUBSCRIBED account is locked to, or None for
+    everyone else — the honesty rail behind the visible toggle (Issue #70):
+    a subscribed viewer must see their billing currency as a fact, never a
+    control that looks live but silently won't switch.
+
+    A CANCELLED subscription row survives (lifecycle never deletes it) but
+    the account is back on Free, so it must NOT read as locked — only an
+    active/past_due/read_only subscription locks the toggle. (Compares the
+    literal "cancelled" rather than importing subscriptions.CANCELLED:
+    services/payments/subscriptions already imports this module, so the
+    reverse import would cycle.)
+    """
+    if user_id is None:
+        return None
+    # O-1b: billing follows the ACTIVE workspace (members inherit — founder
+    # Q3 ruling), so the displayed currency is the workspace's subscription
+    # currency, matching entitlements.
+    sub = session.scalar(
+        select(Subscription).where(
+            Subscription.workspace_id == active_workspace_id(session, user_id)
+        )
+    )
+    if sub is not None and sub.status != "cancelled" and (sub.currency or "").upper() in CURRENCIES:
+        return str(sub.currency).upper()
+    return None
+
+
 def viewer_currency(
     session: Session,
     user_id: str | None,
@@ -206,17 +234,9 @@ def viewer_currency(
 ) -> str:
     """One rule for every signed-in surface: a subscribed account sees its
     own billing currency; everyone else gets the viewer pick."""
-    if user_id is not None:
-        # O-1b: billing follows the ACTIVE workspace (members inherit — founder
-        # Q3 ruling), so the displayed currency is the workspace's subscription
-        # currency, matching entitlements.
-        sub = session.scalar(
-            select(Subscription).where(
-                Subscription.workspace_id == active_workspace_id(session, user_id)
-            )
-        )
-        if sub is not None and (sub.currency or "").upper() in CURRENCIES:
-            return str(sub.currency).upper()
+    locked = locked_currency(session, user_id)
+    if locked is not None:
+        return locked
     return pick_currency(ccy_param, country, ccy_cookie)
 
 

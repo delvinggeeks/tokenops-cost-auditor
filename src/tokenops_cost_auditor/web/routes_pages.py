@@ -113,11 +113,11 @@ def pricing_page(request: Request) -> HTMLResponse:
         # rendering a page must not write (mirrors upload_page): a signed-in
         # visitor's user row already exists from their magic-link session.
         user_id = get_or_create_user(session, email).id if email else None
-        # R-PRICING-FINAL-2: a subscribed account sees its own billing
-        # currency; everyone else gets the viewer pick (toggle honoured).
-        currency = plans.viewer_currency(
-            session,
-            user_id,
+        # R-PRICING-FINAL-2 / Issue #70: a subscribed account is LOCKED to its
+        # own billing currency (honesty rail — no live-looking toggle for
+        # them); everyone else gets the viewer pick (toggle honoured).
+        locked = plans.locked_currency(session, user_id)
+        currency = locked or plans.pick_currency(
             ccy_param,
             geo.country_for_request(request, settings),
             request.cookies.get("ccy"),
@@ -131,6 +131,7 @@ def pricing_page(request: Request) -> HTMLResponse:
         one_shot=plans.one_shot_display(settings, currency),
         one_shot_billed=plans.one_shot_billed_note(settings, currency),
         currency=currency,
+        currency_locked=locked is not None,
         launch_open=launch,
         cohort_size=settings.launch_cohort_size,
         # per-plan checkout: config-gated, honest "not switched on" note when
@@ -138,7 +139,7 @@ def pricing_page(request: Request) -> HTMLResponse:
         checkout_links={k: settings.checkout_link(currency, k) for k in plans.PAID_PLANS},
         user_email=email,
     )
-    if ccy_param and currency != request.cookies.get("ccy"):
+    if locked is None and ccy_param and currency != request.cookies.get("ccy"):
         # an explicit toggle choice persists across pages and visits
         response.set_cookie("ccy", currency, max_age=365 * 86400, httponly=False, samesite="lax")
     return response
