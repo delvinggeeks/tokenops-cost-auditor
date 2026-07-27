@@ -193,7 +193,7 @@
   {% if ingest_keys %}
   {{ kit.table_open([
        {"label": "Key"}, {"label": "Label"}, {"label": "Created"},
-       {"label": "Last used"},
+       {"label": "Requests"}, {"label": "Last used"},
        {"label": '<span class="sr-only">Actions</span>'|safe, "cls": "row-actions"},
      ]) }}
     {% for k in ingest_keys %}
@@ -201,6 +201,7 @@
       <td><code>ik_{{ k.id[:6] }}…</code></td>
       <td><b>{{ k.label }}</b></td>
       <td>{{ k.created_at.strftime("%Y-%m-%d") }}</td>
+      <td>{{ "{:,}".format(k.request_count) }}</td>
       <td>{{ k.last_used_at.strftime("%Y-%m-%d %H:%M UTC") if k.last_used_at else "never — nothing shipped yet" }}</td>
       <td class="row-actions">
         {{ kit.icon_action("View usage", "eye", href="/explore?source=" ~ k.id) }}

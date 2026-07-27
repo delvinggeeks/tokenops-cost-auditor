@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import re
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from tokenops_cost_auditor.persistence.models import Audit, IngestKey, Subscription, User
+from tokenops_cost_auditor.web import routes_ingest
 
 EMAIL = "sdk-owner@example.com"
 
@@ -273,3 +275,58 @@ class TestRateAndDsnHardening:
         assert _ingest_rate_key(req(None)).startswith("ip:")  # no token → IP
         assert _ingest_rate_key(req("Bearer sk-not-ours")).startswith("ip:")  # wrong prefix → IP
         assert _INGEST_IP_LIMIT.endswith("/minute")  # the abuse ceiling exists
+
+
+class TestUsageMetering:
+    """Issue #59 (R-PLATFORM slice 5): per-key request count + last-used."""
+
+    def test_12_each_post_increments_the_keys_request_count(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+        for _ in range(3):
+            resp = client.post(
+                "/api/v1/ingest",
+                json={"records": RECORDS},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert resp.status_code == 201
+        with app.state.session_factory() as session:
+            row = session.execute(select(IngestKey)).scalar_one()
+            assert row.request_count == 3
+            assert row.last_used_at is not None
+
+    def test_13_fresh_key_shows_honest_zero_never_used(self, app: FastAPI) -> None:
+        grant(app)
+        client = TestClient(app)
+        mint(client)
+        with app.state.session_factory() as session:
+            row = session.execute(select(IngestKey)).scalar_one()
+            assert row.request_count == 0 and row.last_used_at is None
+        sources = client.get("/sources", headers=HDR)
+        assert "never — nothing shipped yet" in sources.text
+
+    def test_14_metering_failure_never_fails_the_ingest(
+        self, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A raising metering path still returns the normal API response —
+        recording usage is best-effort by design (issue #59 AC-3)."""
+        grant(app)
+        client = TestClient(app)
+        token = mint(client)
+
+        def boom(key: object) -> None:
+            raise RuntimeError("metering backend unavailable")
+
+        monkeypatch.setattr(routes_ingest, "_bump_usage", boom)
+        resp = client.post(
+            "/api/v1/ingest",
+            json={"records": RECORDS},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 201  # the ingest itself is unaffected
+        body = resp.json()
+        assert body["records"] == len(RECORDS)
+        with app.state.session_factory() as session:
+            audit = session.get(Audit, body["audit_id"])
+            assert audit is not None and audit.status == "done"

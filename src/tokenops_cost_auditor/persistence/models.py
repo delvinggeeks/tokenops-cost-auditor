@@ -490,6 +490,11 @@ class IngestKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # R-PLATFORM slice 5: usage VISIBILITY, not enforcement (X-01/X-02 unchanged
+    # — never gates traffic). One cheap UPDATE per request alongside
+    # last_used_at; no per-day bucket table this slice (see routes_ingest /
+    # api_auth for the best-effort write that can never fail the API call).
+    request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
 class ApiToken(Base):
@@ -512,6 +517,8 @@ class ApiToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # R-PLATFORM slice 5: request count alongside last_used_at — see IngestKey.
+    request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
 class OAuthApp(Base):

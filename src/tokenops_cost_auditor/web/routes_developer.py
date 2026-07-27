@@ -105,6 +105,7 @@ def developer_home(request: Request, user_email: str = Depends(current_user)) ->
                 "scopes": parse_scopes(t.scopes),
                 "created_at": t.created_at,
                 "last_used_at": t.last_used_at,
+                "request_count": t.request_count,
             }
             for t in tokens
         ]

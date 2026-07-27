@@ -115,6 +115,15 @@ def _session(request: Request) -> Session:
     return session
 
 
+def _bump_usage(key: IngestKey) -> None:
+    """R-PLATFORM slice 5: request count + last-used, counts only (FR-22).
+
+    Best-effort BY DESIGN — called from inside a try/except, because
+    metering must never turn a successful ingest into a failed one."""
+    key.last_used_at = utcnow()
+    key.request_count += 1
+
+
 def _validate_record(idx: int, record: object) -> dict[str, Any]:
     """FR-22 door: strict allowlist, bounded scalars, loud refusals."""
     if not isinstance(record, dict):
@@ -247,7 +256,10 @@ def ingest(
         audit.upload_path = str(dest)
         if idempotency_key:
             session.add(IdempotencyKey(user_id=key.user_id, key=idempotency_key, audit_id=audit.id))
-        key.last_used_at = utcnow()
+        try:
+            _bump_usage(key)
+        except Exception:  # best-effort (issue #59): metering never fails the call
+            log.warning("ingest_key.usage_bump_failed", key_id=key.id, exc_info=True)
         auditlog.append(session, f"ingest-key:{key.label}", "ingest.received", audit.id)
         session.commit()
         audit_id = audit.id
