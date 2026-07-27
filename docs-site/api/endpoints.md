@@ -377,6 +377,21 @@ never itself grants the credit (the order.paid webhook does — B1/B3).
 
 Responses: `200`, `422`
 
+## `POST /billing/stripe/checkout`
+
+Create Stripe Checkout.
+
+Issue #77: create the Stripe Checkout Session server-side, then a
+full-page 303 redirect to Stripe's hosted checkout page — no iframe, no
+client JS. Fulfilment happens on the checkout.session.completed webhook
+(api/routes_webhooks.py); this endpoint never itself grants a credit.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /breakdown`
 
 Breakdown Page.
