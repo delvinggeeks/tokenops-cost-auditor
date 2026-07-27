@@ -94,6 +94,7 @@ nav:
       - Reference: api/reference.md
       - Build your first integration: api/tutorial.md
       - MCP server: api/mcp.md
+      - JS/TS SDK: api/sdk-js.md
       - Webhooks: api/webhooks.md
       - Endpoints: api/endpoints.md
   - Reports:

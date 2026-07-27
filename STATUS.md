@@ -3590,3 +3590,12 @@ status=done; RBAC: controls absent for a member + honest note, forged add/delete
 tests/test_docs_site.py::TestWebhooksDocs. Engine untouched (services/webhooks sits outside
 services/rules + services/pricing, T-NFR-01 intact). X-01/X-02 SAFE throughout — observe-and-
 notify only, never in the request path, never enforces anything on the customer's LLM traffic.
+
+R-PLATFORM SLICE 4 — JS/TS SDK (2026-07-27). The official TypeScript SDK (sdk/js): counts-only
+BY CONSTRUCTION (UsageRecord has no prompt/completion text field — FR-22), two credentials /
+two capabilities (ingest key writes usage, read token reads audits+findings), zero runtime deps
+(platform fetch). Built by hand — cross-ecosystem, the loop's pinned toolchain is Python-only:
+verified locally with tsc strict typecheck + node --test (4 tests) + tsc build (dist/index.js +
+.d.ts). New .github/workflows/sdk-js.yml (setup-node) validates it on any PR touching sdk/js.
+Docs: docs-site/api/sdk-js.md + mkdocs nav. Mirrors the Python SDK's laws (observe-only,
+X-01/X-02 safe). Python app toolchain unaffected (ruff/mypy/pytest all green).
