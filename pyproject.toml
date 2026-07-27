@@ -92,6 +92,7 @@ testpaths = ["tests"]
 addopts = "-q"
 markers = [
     "perf: nightly performance tests (T-PERF-01, excluded from the default run)",
+    "integration: hits a real third-party sandbox API; skipped unless the provider's test-key env vars are set",
 ]
 filterwarnings = [
     # third-party: starlette testclient's httpx deprecation — not actionable here

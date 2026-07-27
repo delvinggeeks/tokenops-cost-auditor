@@ -518,3 +518,8 @@ it under R-PIPELINE-UI-SEQ.
   multiple, spike day) prominently at depth (a)/(b) for BOTH audiences — a cross-cutting
   display change across all informational detectors, hence its own small slice with a
   ux pass, not folded into a detector build.
+
+- RAZORPAY CALLBACK_URL FALLBACK (B5, Issue #74 noted follow-up). The Standard Checkout
+  modal is an iframe; browsers that block third-party iframes (Instagram/FB Messenger/UC
+  in-app browsers) can't complete it. Razorpay's `callback_url` redirect-based fallback
+  covers those; not built this slice (the modal path covers standard browsers).

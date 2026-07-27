@@ -350,6 +350,33 @@ Billing Page.
 
 Responses: `200`, `422`
 
+## `POST /billing/razorpay/order`
+
+Create Razorpay Order.
+
+Issue #74 step 1: create the Razorpay order server-side BEFORE the
+checkout modal opens — a payment with no order_id auto-refunds.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /billing/razorpay/verify`
+
+Verify Razorpay Payment.
+
+Issue #74 step 3/4: the modal handler's payload, checked for
+authenticity — UX only (B1). A mismatch is a clear failure (B4); a match
+never itself grants the credit (the order.paid webhook does — B1/B3).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /breakdown`
 
 Breakdown Page.
