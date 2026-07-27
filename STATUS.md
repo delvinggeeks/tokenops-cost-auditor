@@ -3599,3 +3599,14 @@ verified locally with tsc strict typecheck + node --test (4 tests) + tsc build (
 .d.ts). New .github/workflows/sdk-js.yml (setup-node) validates it on any PR touching sdk/js.
 Docs: docs-site/api/sdk-js.md + mkdocs nav. Mirrors the Python SDK's laws (observe-only,
 X-01/X-02 safe). Python app toolchain unaffected (ruff/mypy/pytest all green).
+
+R-PLATFORM SLICE 6 — GitHub Action (2026-07-27). action/ — a node20 GitHub Action that posts
+the latest completed audit's findings (ranked by monthly $) to $GITHUB_STEP_SUMMARY, with an
+optional fail-on-severity gate. Dependency-free (platform fetch + node:fs), READ-ONLY via a
+read token, calls only GET /api/v1/audits + /audits/{id}/findings (no new server capability),
+observe-only X-01/X-02 safe, FR-22 (counts/$/metadata, never text). run(deps) is DI-testable
+(injected fetch/env/writeSummary/fail) + entry-guarded; dist/main.js is COMMITTED (Actions run
+dist directly — root .gitignore un-ignores action/dist). sdk-js.yml generalized to a matrix
+over [sdk/js, action]. docs-site/api/github-action.md + nav + TestGithubActionDocs + docs/04
+traceability row. Built by hand (cross-ecosystem, in parallel to the loop's #59 metering slice
+so neither blocks the other). Verified: tsc strict + node --test (3) + build; Python unaffected.

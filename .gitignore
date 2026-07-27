@@ -12,6 +12,9 @@ coverage.json
 coverage.xml
 htmlcov/
 dist/
+# ...except the GitHub Action's build — GitHub runs action/dist/main.js directly (no install).
+!action/dist/
+!action/dist/**
 
 # Secrets & environment — never commit (.env.example is the template)
 .env

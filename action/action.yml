@@ -1,0 +1,21 @@
+name: "TokenOps Cost Auditor"
+description: "Post your latest LLM-spend audit findings to the GitHub job summary, and optionally fail on high-severity waste."
+author: "TokenOps"
+branding:
+  icon: "dollar-sign"
+  color: "green"
+inputs:
+  read-token:
+    description: "A read token (rt_…) with read:audits + read:findings scopes."
+    required: true
+  base-url:
+    description: "API origin (defaults to the hosted instance)."
+    required: false
+    default: "https://tokenops-cost-auditor.com"
+  fail-on-severity:
+    description: 'Fail the job if a finding at/above this severity exists: "low" | "medium" | "high". Empty = never fail.'
+    required: false
+    default: ""
+runs:
+  using: "node20"
+  main: "dist/main.js"
