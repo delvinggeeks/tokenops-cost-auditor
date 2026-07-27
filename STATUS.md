@@ -3610,3 +3610,19 @@ dist directly — root .gitignore un-ignores action/dist). sdk-js.yml generalize
 over [sdk/js, action]. docs-site/api/github-action.md + nav + TestGithubActionDocs + docs/04
 traceability row. Built by hand (cross-ecosystem, in parallel to the loop's #59 metering slice
 so neither blocks the other). Verified: tsc strict + node --test (3) + build; Python unaffected.
+
+R-NAME-SEO §2 — the SEO/copy law (Issue #62, 2026-07-27). Audited every public (signed-out)
+template for a bare "TokenOps" in title/meta-description/og:title/og:description — everything
+already carried a qualifier ("Cost Auditor", "AI", "LLM", "spend", "cost") except one:
+landing.html's og:title read "TokenOps Cost Auditor — by WitAura", which the FR-only allowlist
+technically permitted (it already contains "Cost Auditor") but read as the bare brand name plus
+attribution rather than an AI/LLM-cost sell, so it is now "TokenOps Cost Auditor — AI spend
+audits, by WitAura" — same meaning, an explicit qualifier beyond the brand name itself. Copy-only,
+no rename, no new page. Guarded by NEW tests/test_seo_copy.py: TestPublicRoutesRendered hits the
+real routes (/, /sample, /legal/*, /login, /signup) through TestClient and pins the landing
+description/og:title/og:description fields specifically; TestEveryPublicTemplateSource sweeps
+every template outside app/ (authenticated, out of scope) and kit/ (component preview) at the
+source level — including oauth consent/error, the web + PDF report, and invite/verify-confirm,
+which need auth/session/oauth-request setup to reach live — so a future public page or a new
+meta/OG field can't ship an unqualified "TokenOps" without a live route being wired for this
+test. docs/04-TRACEABILITY.md row added. Engine untouched (templates-only change).
