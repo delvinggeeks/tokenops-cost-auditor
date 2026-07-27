@@ -391,3 +391,35 @@ class TestSessionCookieFlags:
         Base.metadata.create_all(prod_app.state.engine)
         resp = self._login(prod_app)
         assert "Secure" in resp.headers["set-cookie"]
+
+    def test_test_auth_shim_is_a_failclosed_allowlist(self, tmp_path: Path) -> None:
+        """Hardening (loophole hunt 2026-07-27): the X-User-Email dev/test shim is a
+        fail-closed ALLOWLIST ({dev,test}), NOT `!= "prod"`. A misnamed/staging/blank env
+        must REFUSE the impersonation header (401), never silently open it."""
+        from tokenops_cost_auditor.config import Settings
+        from tokenops_cost_auditor.main import create_app
+        from tokenops_cost_auditor.persistence.models import Base
+
+        for env, shim_open in (
+            ("staging", False),  # a real non-prod deployment must NOT carry the shim
+            ("production", False),  # a typo for "prod" must NOT open it (the old `!= prod` bug)
+            ("qa", False),  # any unknown env is refused
+            ("dev", True),
+            ("test", True),
+        ):
+            settings = Settings(
+                app_env=env,
+                secret_key="p" * 64,
+                database_url=f"sqlite:///{tmp_path / ((env or 'blank') + '.db')}",
+                upload_dir=tmp_path / "u",
+                report_dir=tmp_path / "r",
+                backup_dir=tmp_path / "b",
+                _env_file=None,
+            )
+            a = create_app(settings)
+            Base.metadata.create_all(a.state.engine)
+            r = TestClient(a).get("/api/v1/audits/x/status", headers={"X-User-Email": "x@y.com"})
+            if shim_open:
+                assert r.status_code != 401, f"{env!r} should accept the dev/test shim"
+            else:
+                assert r.status_code == 401, f"{env!r} must refuse the impersonation header"

@@ -3525,3 +3525,15 @@ not. Impact was latent (the un-deployed commits were docs/workflows, no app code
 Fix: auto-merge.yml enables auto-merge as the LOOP_PAT user (not GITHUB_TOKEN), so the
 eventual merge is attributed to a real user and the merge-push triggers deploy + close.
 Pinned by test_auto_merge_workflow::test_it_merges_as_the_loop_pat_so_downstream_workflows_trigger.
+
+SECURITY HARDENING (2026-07-27) — loophole hunt + fixes. An adversarial hunt across
+auth/session/RBAC/tenancy/FR-22 found the core layer SOUND (magic-link signed + single-use,
+no privilege escalation, workspace-scoped reads, admin fail-closed, no prompt-text leak).
+Two loopholes closed: (1) POST /copilot/seats ran an audit with NO authz.ensure(RUN_AUDITS)
+— a viewer bypassed the run-audits gate that its twin POST /api/v1/audits enforces (the
+connect-wizard bug class); added the matching gate. (2) the X-User-Email dev/test shim was
+gated only by `app_env != "prod"` — a typo'd or staging env would open FULL impersonation;
+now a fail-closed allowlist `_TEST_AUTH_ENVS = {dev, test}` so staging/`production`/unknown
+refuse it. Pinned by test_rbac_journey::test_viewer_cannot_run_a_copilot_seat_audit and
+test_auth::test_test_auth_shim_is_a_failclosed_allowlist. NOTE (flagged, not changed):
+/copilot/seats is also unmetered (no payment_gate) — a business decision under money discipline.
