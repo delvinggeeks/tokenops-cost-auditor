@@ -46,6 +46,7 @@ from tokenops_cost_auditor.services.report.signer import sign_report_url
 from tokenops_cost_auditor.services.rules.base import DetectorContext
 from tokenops_cost_auditor.services.rules.findings import Finding, observed_days
 from tokenops_cost_auditor.services.rules.registry import DETECTORS, run_all
+from tokenops_cost_auditor.services.webhooks.base import WebhookPort
 
 log = structlog.get_logger("tokenops_cost_auditor.runner")
 
@@ -78,6 +79,7 @@ class AuditRunner:
     table: PricingTable
     engine: Engine
     mail: MailPort
+    webhooks: WebhookPort
 
     def wait_for_slot(self, timeout_s: float = 3600.0, poll_s: float = 0.1) -> bool:
         """NFR-13 admission: block while processing count >= cap."""
@@ -271,9 +273,41 @@ class AuditRunner:
                 audit_id,
                 {"findings": len(findings), "unpriced_models": len(unpriced)},
             )
+            # captured here (still attached) rather than read off `audit` after
+            # the session closes below — plain locals need no ORM session.
+            workspace_id = audit.workspace_id
+            audit_status = audit.status
+            total_spend_usd = audit.total_spend_usd
+            projected_spend_usd = audit.projected_spend_usd
+            savings_pct = audit.savings_pct
             session.commit()
         token = sign_report_url(self.settings.secret_key, audit_id)
         self.mail.report_ready(user_email, f"/r/{token}")  # FR-15 signed link
+        if workspace_id is not None:
+            # R-PLATFORM slice 3 (S-5): FR-22-clean — counts/dollars only, never
+            # prompt/completion text. Best-effort by construction (WebhookDispatcher
+            # swallows its own failures) so a delivery problem can never fail an
+            # already-completed audit.
+            self.webhooks.dispatch_audit_completed(
+                workspace_id,
+                {
+                    "audit_id": audit_id,
+                    "workspace_id": workspace_id,
+                    "status": audit_status,
+                    "total_spend_usd": total_spend_usd,
+                    "projected_spend_usd": projected_spend_usd,
+                    "savings_pct": savings_pct,
+                    "finding_count": len(findings),
+                    "findings": [
+                        {
+                            "detector": f.detector,
+                            "severity": f.severity,
+                            "monthly_usd": f.monthly_cost_impact_usd,
+                        }
+                        for f in findings
+                    ],
+                },
+            )
         log.info("runner.done", audit_id=audit_id, findings=len(findings))
 
     def _fail(self, audit_id: str, user_safe_message: str) -> None:

@@ -301,6 +301,41 @@ class WebhookEvent(Base):
     __table_args__ = (UniqueConstraint("provider", "event_id", name="uq_webhook_provider_event"),)
 
 
+class WebhookEndpoint(Base):
+    """R-PLATFORM slice 3 (S-5): a workspace-registered outbound delivery
+    target. `secret` signs every `audit.completed` POST (HMAC-SHA256) — unlike
+    a credential we only ever verify (ApiToken/IngestKey token_hash), WE must
+    hold this material to sign each delivery, so it is stored plaintext, never
+    logged or re-rendered after creation. Revoke NULLs the secret and flips
+    `active` (authority law), keeping the row so WebhookDelivery history
+    survives removal."""
+
+    __tablename__ = "webhook_endpoints"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    secret: Mapped[str | None] = mapped_column(String(80))
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WebhookDelivery(Base):
+    """R-PLATFORM slice 3: one best-effort delivery attempt (no durable retry
+    queue — a later SCALING slice), so the UI can show recent status honestly."""
+
+    __tablename__ = "webhook_deliveries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    endpoint_id: Mapped[str] = mapped_column(
+        ForeignKey("webhook_endpoints.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event: Mapped[str] = mapped_column(String(40), nullable=False)
+    status_code: Mapped[int | None] = mapped_column(Integer)  # None = request never completed
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class IdempotencyKey(Base):
     __tablename__ = "idempotency_keys"  # FR-26; purged with upload lifecycle
 

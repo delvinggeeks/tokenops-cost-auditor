@@ -42,6 +42,8 @@ destinations:
     purpose: "Invite teammates into this workspace and see who's still pending."
   billing:
     purpose: "See your plan, invoices and payment method."
+  webhooks:
+    purpose: "Get a signed notification the moment an audit completes — wire it into CI, Slack, or your own systems."
   detectors:
     purpose: "Read exactly what each detector looks for and the thresholds it uses."
   methodology:
