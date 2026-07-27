@@ -3537,3 +3537,12 @@ now a fail-closed allowlist `_TEST_AUTH_ENVS = {dev, test}` so staging/`producti
 refuse it. Pinned by test_rbac_journey::test_viewer_cannot_run_a_copilot_seat_audit and
 test_auth::test_test_auth_shim_is_a_failclosed_allowlist. NOTE (flagged, not changed):
 /copilot/seats is also unmetered (no payment_gate) — a business decision under money discipline.
+REAL E2E JOURNEY TEST (2026-07-27) — closed the false-confidence gap. tests/test_journeys.py
+only SEEDS an Audit row + checks rendering; it never walked the runtime, so the checkout
+dead-end passed CI green and reached the founder ("breaks somewhere / losing info"). New
+tests/test_e2e_real_journey.py walks the ACTUAL new-customer flow with NO X-User-Email shim:
+real magic-link signup (/auth/signin-link → capture link → /auth/verify) → paid credit →
+real POST /api/v1/audits that RUNS the pipeline → asserts status=done + valid_pct=100 +
+findings>0 (real output) → /dashboard renders → /billing checkout STATE (config-aware:
+asserts the Pay button when payment links are set, else the honest "switched on" dead-state).
+A genuine break in signup/audit/report/checkout now FAILS CI instead of shipping green.
