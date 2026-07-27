@@ -17,6 +17,16 @@ Stripe's hosted page (no iframe, no client JS). Fulfilment happens on the
 `checkout.session.completed` webhook (api/routes_webhooks.py, unchanged) —
 never on the success_url redirect, since a user can reach that URL without
 paying.
+
+The recurring INR Pro/Team subscription (Issue #79) replaces the old static
+hosted payment LINK with a real Razorpay Subscription: `POST /razorpay/
+subscription` creates the plan (amount built from OUR pricing config — the
+price-integrity rail) + subscription server-side, the client opens the
+checkout.js modal against the returned `subscription_id`, and the modal's
+signed callback is checked server-side (`POST /razorpay/subscription/
+verify`) for UX only — the ALREADY-EXISTING `subscription.activated`
+webhook + `subscriptions.apply_event` (api/routes_webhooks.py, WP-6) is what
+actually activates the plan (B1), unchanged by this slice.
 """
 
 from __future__ import annotations
@@ -33,6 +43,7 @@ from tokenops_cost_auditor.services.geo import resolver as geo
 from tokenops_cost_auditor.services.payments import (
     plans,
     razorpay_orders,
+    razorpay_subscriptions,
     stripe_checkout,
     subscriptions,
 )
@@ -206,6 +217,88 @@ def verify_razorpay_payment(
         raise HTTPException(status_code=503, detail="checkout not switched on")
     ok = razorpay_orders.verify_order_signature(
         settings.razorpay_key_secret, razorpay_order_id, razorpay_payment_id, razorpay_signature
+    )
+    if not ok:
+        raise HTTPException(status_code=400, detail="payment signature could not be verified")
+    return JSONResponse({"status": "verified"})
+
+
+@router.post("/razorpay/subscription")
+def create_razorpay_subscription(
+    request: Request,
+    plan: str = Form(...),
+    user_email: str = Depends(current_user),
+) -> JSONResponse:
+    """Issue #79 step 1: create the plan + subscription server-side BEFORE
+    the checkout modal opens. The plan amount comes from OUR pricing config
+    (services/payments/plans.py), never a dashboard figure — the
+    price-integrity rail: the charged amount always equals the displayed
+    price."""
+    settings = request.app.state.settings
+    if not (settings.razorpay_key_id and settings.razorpay_key_secret):
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    plan_key = plan.strip().lower()
+    catalogue_plan = plans.get(settings, plan_key)
+    if plan_key not in plans.PAID_PLANS or not catalogue_plan.inr:
+        raise HTTPException(status_code=400, detail="unknown plan")
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # O-2 RBAC: same owner-only gate as the one-shot checkout routes,
+        # checked BEFORE the commit (cold-reviewer #75 shape).
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only the workspace owner can manage the subscription",
+        )
+        session.commit()
+    try:
+        created_plan = razorpay_subscriptions.create_plan(
+            settings.razorpay_key_id,
+            settings.razorpay_key_secret,
+            catalogue_plan.name,
+            catalogue_plan.inr,
+        )
+        subscription = razorpay_subscriptions.create_subscription(
+            settings.razorpay_key_id,
+            settings.razorpay_key_secret,
+            str(created_plan["plan_id"]),
+            user_email,
+            plan_key,
+        )
+    except (
+        razorpay_subscriptions.PlanCreateError,
+        razorpay_subscriptions.SubscriptionCreateError,
+    ) as exc:
+        raise HTTPException(status_code=502, detail="payment provider error") from exc
+    return JSONResponse(
+        {
+            "subscription_id": subscription["subscription_id"],
+            "key_id": settings.razorpay_key_id,
+        }
+    )
+
+
+@router.post("/razorpay/subscription/verify")
+def verify_razorpay_subscription(
+    request: Request,
+    razorpay_payment_id: str = Form(...),
+    razorpay_subscription_id: str = Form(...),
+    razorpay_signature: str = Form(...),
+    user_email: str = Depends(current_user),
+) -> JSONResponse:
+    """Issue #79 step 3/4: the subscription modal handler's payload, checked
+    for authenticity — UX only (B1). ⚠️ payment_id|subscription_id order —
+    the OPPOSITE of the one-time order's order_id|payment_id (razorpay-node
+    issue #124). A match never itself activates the plan — the
+    subscription.activated webhook does (reused, unchanged)."""
+    settings = request.app.state.settings
+    if not settings.razorpay_key_secret:
+        raise HTTPException(status_code=503, detail="checkout not switched on")
+    ok = razorpay_subscriptions.verify_sub_signature(
+        settings.razorpay_key_secret,
+        razorpay_payment_id,
+        razorpay_subscription_id,
+        razorpay_signature,
     )
     if not ok:
         raise HTTPException(status_code=400, detail="payment signature could not be verified")

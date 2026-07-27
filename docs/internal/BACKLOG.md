@@ -523,3 +523,8 @@ it under R-PIPELINE-UI-SEQ.
   modal is an iframe; browsers that block third-party iframes (Instagram/FB Messenger/UC
   in-app browsers) can't complete it. Razorpay's `callback_url` redirect-based fallback
   covers those; not built this slice (the modal path covers standard browsers).
+
+- RAZORPAY SUBSCRIPTION UPGRADE/DOWNGRADE (Issue #79 noted follow-up). This slice only
+  creates a fresh plan+subscription per checkout; moving an already-subscribed account
+  between Pro and Scale mid-cycle is cancel-and-resubscribe, not an in-place swap. A
+  proper upgrade/downgrade path (prorated or next-cycle) is a follow-up slice.

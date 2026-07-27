@@ -55,11 +55,26 @@
               <span class="badge badge-verified">current</span>
               {% if not p.usd %}<small class="muted">No card required</small>{% endif %}
             {% elif p.usd %}
-              {# per-plan link: the button charges for THIS tier, not a shared one #}
-              {% set pay_link = checkout_links.get(p.key) %}
-              {% if pay_link %}{{ kit.button("Pay for " ~ p.name, href=pay_link, variant="primary") }}
+              {% if currency == "INR" %}
+                {# Issue #79: INR Pro/Scale subscribe via a real Razorpay
+                   Subscription (checkout.js modal against subscription_id)
+                   instead of the old static hosted link — the plan amount
+                   is built server-side from OUR config, so it can never
+                   drift from what's shown here (price-integrity rail). #}
+                {% if razorpay_configured %}
+                  <button type="button" class="btn btn-primary rzp-sub-btn"
+                          data-plan="{{ p.key }}" data-plan-name="{{ p.name }}"
+                          data-email="{{ user_email }}">Subscribe</button>
+                {% else %}
+                  <small class="muted">Checkout opens once billing is switched on.</small>
+                {% endif %}
               {% else %}
-                <small class="muted">Checkout opens once billing is switched on.</small>
+                {# per-plan link: the button charges for THIS tier, not a shared one #}
+                {% set pay_link = checkout_links.get(p.key) %}
+                {% if pay_link %}{{ kit.button("Pay for " ~ p.name, href=pay_link, variant="primary") }}
+                {% else %}
+                  <small class="muted">Checkout opens once billing is switched on.</small>
+                {% endif %}
               {% endif %}
             {% else %}
               <small class="muted">No card required</small>
@@ -68,6 +83,9 @@
         </tr>
       {% endfor %}
     {{ kit.table_close() }}
+    {% if currency == "INR" and razorpay_configured %}
+      <p id="rzp-sub-status" class="muted" style="margin-top: var(--s1);"></p>
+    {% endif %}
     <p style="margin-top: var(--s2);"><strong>One-off audit:</strong> {{ one_shot }} —
       a single full audit of a log file, no subscription.
       {% if one_shot_billed %}{{ one_shot_billed }}{% endif %}</p>
@@ -176,6 +194,85 @@
         btn.disabled = false;
         setStatus("Could not start checkout — try again in a moment.", true);
       });
+  });
+})();
+</script>
+{# Issue #79: recurring INR Pro/Scale — the same checkout.js idiom as the
+   one-shot flow above, but opened against a subscription_id (not an
+   order_id) and verified on the opposite payment_id|subscription_id
+   signature order. One listener per Subscribe button, since each row
+   charges for its OWN tier (mirrors the per-plan hosted-link honesty rule
+   this replaces). #}
+<script>
+(function () {
+  var statusEl = document.getElementById("rzp-sub-status");
+
+  function setStatus(msg, isError) {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.classList.toggle("error", !!isError);
+  }
+
+  function openCheckout(btn, sub) {
+    var rzp = new Razorpay({
+      key: sub.key_id,
+      subscription_id: sub.subscription_id,
+      name: "TokenOps Cost Auditor",
+      description: (btn.dataset.planName || "Subscription") + " subscription",
+      prefill: { email: btn.dataset.email || "" },
+      handler: function (response) {
+        fetch("/billing/razorpay/subscription/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(response).toString(),
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            btn.disabled = false;
+            if (res.ok) {
+              setStatus("Payment received — your plan updates as soon as the subscription confirms. Refresh to see it.");
+            } else {
+              setStatus("We could not verify that payment. If you were charged, contact support.", true);
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            setStatus("We could not verify that payment. If you were charged, contact support.", true);
+          });
+      },
+      modal: {
+        ondismiss: function () {
+          btn.disabled = false;
+          setStatus("Subscription didn't complete — nothing was charged. You can try again.", true);
+        },
+      },
+    });
+    rzp.on("payment.failed", function () {
+      btn.disabled = false;
+      setStatus("Subscription didn't complete — nothing was charged. You can try again.", true);
+    });
+    rzp.open();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".rzp-sub-btn"), function (btn) {
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      setStatus("Opening checkout…");
+      fetch("/billing/razorpay/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ plan: btn.dataset.plan }).toString(),
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error("subscription-create failed");
+          return r.json();
+        })
+        .then(function (sub) { openCheckout(btn, sub); })
+        .catch(function () {
+          btn.disabled = false;
+          setStatus("Could not start checkout — try again in a moment.", true);
+        });
+    });
   });
 })();
 </script>
