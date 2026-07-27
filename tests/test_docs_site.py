@@ -344,6 +344,32 @@ class TestMcpDocs:
         assert "counts and dollars only" in body.lower() or "counts-only" in body.lower()
 
 
+class TestSdkJsDocs:
+    """R-PLATFORM slice 4: the JS/TS SDK page — install, both credentials, the real
+    endpoints + scopes it calls, counts-only — in the nav, so it can't drift."""
+
+    SDK = (DOCS / "api/sdk-js.md").read_text(encoding="utf-8")
+
+    def test_in_nav(self) -> None:
+        assert "api/sdk-js.md" in (REPO / "mkdocs.yml").read_text(encoding="utf-8")
+
+    def test_install_and_both_credentials(self) -> None:
+        assert "npm install tokenops-cost-auditor" in self.SDK
+        assert "ingestKey" in self.SDK and "readToken" in self.SDK
+        assert "ik_" in self.SDK and "rt_" in self.SDK
+
+    def test_documents_the_real_endpoints_and_scopes(self) -> None:
+        for path in ("/api/v1/ingest", "/api/v1/audits", "/api/v1/audits/{id}/findings"):
+            assert path in self.SDK, path
+        for scope in ("read:audits", "read:findings"):
+            assert scope in self.SDK, scope
+
+    def test_states_counts_only_fr22(self) -> None:
+        body = re.sub(r"\s+", " ", self.SDK).lower()
+        assert "counts-only" in body or "counts only" in body
+        assert "fr-22" in body
+
+
 class TestWebhooksDocs:
     """Issue #56 — outbound webhooks: register, payload schema, and the HMAC
     verification snippet, in the nav and consistent with the real headers."""
