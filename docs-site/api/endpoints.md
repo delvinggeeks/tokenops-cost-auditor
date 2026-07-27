@@ -363,6 +363,38 @@ checkout modal opens — a payment with no order_id auto-refunds.
 
 Responses: `200`, `422`
 
+## `POST /billing/razorpay/subscription`
+
+Create Razorpay Subscription.
+
+Issue #79 step 1: create the plan + subscription server-side BEFORE
+the checkout modal opens. The plan amount comes from OUR pricing config
+(services/payments/plans.py), never a dashboard figure — the
+price-integrity rail: the charged amount always equals the displayed
+price.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /billing/razorpay/subscription/verify`
+
+Verify Razorpay Subscription.
+
+Issue #79 step 3/4: the subscription modal handler's payload, checked
+for authenticity — UX only (B1). ⚠️ payment_id|subscription_id order —
+the OPPOSITE of the one-time order's order_id|payment_id (razorpay-node
+issue #124). A match never itself activates the plan — the
+subscription.activated webhook does (reused, unchanged).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /billing/razorpay/verify`
 
 Verify Razorpay Payment.
