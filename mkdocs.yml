@@ -90,7 +90,9 @@ nav:
       - Data handling: concepts/data-handling.md
   - API:
       - Overview: api/overview.md
+      - Getting started: api/getting-started.md
       - Reference: api/reference.md
+      - Build your first integration: api/tutorial.md
       - Endpoints: api/endpoints.md
   - Reports:
       - Reading a report: report/reading-a-report.md
