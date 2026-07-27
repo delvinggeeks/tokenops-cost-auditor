@@ -43,6 +43,7 @@ class TestPricingPageRendersOneEffectivePricePerPlan:
     def test_currency_toggle_is_a_real_link(self, client: TestClient) -> None:
         usd = client.get("/pricing").text
         assert "/pricing?ccy=INR" in usd
+        assert 'class="seg active"' in usd
         inr = client.get("/pricing?ccy=INR").text
         assert "/pricing?ccy=USD" in inr
 
@@ -50,6 +51,35 @@ class TestPricingPageRendersOneEffectivePricePerPlan:
         page = client.get("/pricing").text
         assert "$500" in page
         assert "one-off audit" in page.lower() or "One-off audit" in page
+
+
+class TestPricingPageCurrencyToggle:
+    """Issue #70 — the visible USD|INR toggle: clicking it sets the `ccy`
+    cookie so the choice persists (the honesty rail /pricing already had via
+    `?ccy` didn't reach a second page load without the cookie); `?ccy` still
+    wins over the cookie (unchanged precedence)."""
+
+    def test_toggle_click_redraws_money_and_sets_the_cookie(self, client: TestClient) -> None:
+        response = client.get("/pricing?ccy=INR")
+        assert response.status_code == 200
+        assert response.cookies.get("ccy") == "INR"
+        assert "$4.99/mo" in response.text  # Pro launch, India value — a real render
+
+    def test_cookie_persists_the_choice_on_a_later_visit_with_no_param(
+        self, client: TestClient
+    ) -> None:
+        first = client.get("/pricing?ccy=INR")
+        assert first.cookies.get("ccy") == "INR"
+        second = client.get("/pricing")  # no ?ccy — the cookie must carry it
+        assert "$4.99/mo" in second.text
+        assert "$19/mo" not in second.text
+
+    def test_explicit_param_still_wins_over_the_cookie(self, client: TestClient) -> None:
+        client.get("/pricing?ccy=INR")  # persist INR
+        back_to_usd = client.get("/pricing?ccy=USD")
+        assert back_to_usd.cookies.get("ccy") == "USD"
+        assert "$19/mo" in back_to_usd.text
+        assert "$4.99/mo" not in back_to_usd.text
 
 
 class TestPricingPageReachability:

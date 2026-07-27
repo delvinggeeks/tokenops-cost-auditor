@@ -30,6 +30,7 @@ from tokenops_cost_auditor.persistence.models import (
     User,
     WebhookEvent,
 )
+from tokenops_cost_auditor.persistence.repo import active_workspace_id, get_or_create_user
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.payments.subscriptions import (
     ACTIVE,
@@ -415,6 +416,79 @@ class TestBillingPage:
         page = TestClient(app).get("/billing", headers={"X-User-Email": EMAIL}).text
         assert "Nothing was deleted" in page
         assert "Your plan: Free" in page
+
+
+class TestBillingCurrencyToggle:
+    """Issue #70 — the visible USD|INR toggle on /billing: it sets the `ccy`
+    cookie so the choice persists (billing was the one surface still missing
+    that, since the removed timezone-cookie JS used to do it); a currently
+    SUBSCRIBED account is locked to its own billing currency and must see
+    static text, never a control that looks live but silently won't switch."""
+
+    def test_toggle_click_redraws_money_and_sets_the_cookie(self, app: FastAPI) -> None:
+        response = TestClient(app).get("/billing?ccy=INR", headers={"X-User-Email": EMAIL})
+        assert response.status_code == 200
+        assert response.cookies.get("ccy") == "INR"
+        assert "$4.99" in response.text  # a real render, not a literal
+
+    def test_cookie_persists_the_choice_on_a_later_visit_with_no_param(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        first = client.get("/billing?ccy=INR", headers={"X-User-Email": EMAIL})
+        assert first.cookies.get("ccy") == "INR"
+        second = client.get("/billing", headers={"X-User-Email": EMAIL})  # no ?ccy
+        assert "$4.99" in second.text
+
+    def test_explicit_param_still_wins_over_the_cookie(self, app: FastAPI) -> None:
+        client = TestClient(app)
+        client.get("/billing?ccy=INR", headers={"X-User-Email": EMAIL})  # persist INR
+        back_to_usd = client.get("/billing?ccy=USD", headers={"X-User-Email": EMAIL})
+        assert back_to_usd.cookies.get("ccy") == "USD"
+        assert "$4.99" not in back_to_usd.text
+
+    def test_subscribed_account_sees_locked_currency_not_a_live_toggle(self, app: FastAPI) -> None:
+        with app.state.session_factory() as session:
+            user = get_or_create_user(session, EMAIL)
+            session.commit()
+            ws_id = active_workspace_id(session, user.id)
+            session.add(
+                Subscription(
+                    user_id=user.id,
+                    workspace_id=ws_id,
+                    provider="razorpay",
+                    plan="pro",
+                    status=ACTIVE,
+                    currency="INR",
+                )
+            )
+            session.commit()
+        # a stray ?ccy=USD (or a cookie) must NOT override a subscriber's own
+        # billing currency — the lock wins over both.
+        page = TestClient(app).get("/billing?ccy=USD", headers={"X-User-Email": EMAIL}).text
+        assert "$4.99" in page  # still India pricing — the subscription's currency
+        assert 'class="ccy-toggle-locked"' in page
+        assert 'class="ccy-toggle"' not in page
+        assert "billed in INR on your plan" in page
+
+    def test_cancelled_subscription_does_not_lock_the_toggle(self, app: FastAPI) -> None:
+        with app.state.session_factory() as session:
+            user = get_or_create_user(session, EMAIL)
+            session.commit()
+            ws_id = active_workspace_id(session, user.id)
+            session.add(
+                Subscription(
+                    user_id=user.id,
+                    workspace_id=ws_id,
+                    provider="stripe",
+                    plan="free",
+                    status=CANCELLED,
+                    currency="USD",
+                )
+            )
+            session.commit()
+        # back on Free after cancellation — the toggle works again, not locked
+        page = TestClient(app).get("/billing?ccy=INR", headers={"X-User-Email": EMAIL}).text
+        assert "$4.99" in page
+        assert 'class="ccy-toggle-locked"' not in page
 
 
 class TestPlanHelpers:

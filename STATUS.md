@@ -15,6 +15,47 @@ read this instead of exploring the repo.
    fixed, exceptions: none. GO." Design deep-audit round closed; deploy
    authorized and founder-observed.
 
+## CCY TOGGLE — visible USD|INR override on /pricing + /billing (2026-07-27) — Issue #70, `loop:ready`
+
+#68 taught the server to auto-detect region (IP→country) but left a visitor who wants the
+OTHER currency with no visible control — the `?ccy` precedence existed but nothing SET it
+in the UI once the old timezone-cookie JS was ripped out. SHIPPED: a compact two-option
+`kit.ccy_toggle` macro (`kit/_kit.html`) — a live segmented "USD $ | INR ₹" control on
+`/pricing` and `/billing`'s plans section; clicking a currency navigates with `?ccy=` and
+the server sets the `ccy` cookie on THAT response so the choice persists to the next page
+with no `?ccy` needed. `/billing` was the one of the three render sites (landing/pricing/
+billing) that #68 wired for READING the cookie but never for SETTING it — folded in here.
+
+HONESTY RAIL (the point of the issue): a currently subscribed account is locked to its
+subscription's billing currency and must see STATIC text — "USD $ — billed in USD on your
+plan." — never a control that looks live but silently won't switch. NEW
+`plans.locked_currency(session, user_id) -> str | None`, extracted from `viewer_currency`
+(now a thin wrapper over it) so routes can also use it to pick the template's rendering
+mode. IMPROVISED FIX folded into the same slice (R-IMPROVISE — an honesty gap found while
+building, not parked): the old `viewer_currency` locked ANY account with a Subscription row
+regardless of status, including CANCELLED ones — invisible before (a cancelled account's
+toggle silently no-op'd, unnoticed), but about to become a VISIBLE lie the moment a static
+"billed in X on your plan" note renders for someone who isn't actually being billed.
+`locked_currency` now excludes `status == "cancelled"` (compared as a literal to avoid a
+plans↔subscriptions import cycle) — a cancelled account reverts to a live, working toggle.
+
+`?ccy` still wins over the cookie and over geo — precedence from #68/#69 is unchanged.
+No price VALUE changed. FILE MAP: `services/payments/plans.py` (+`locked_currency`,
+`viewer_currency` refactored); `web/routes_pages.py::pricing_page` + `web/routes_billing.py
+::billing_page` (compute `locked`, pass `currency_locked`, set the cookie honestly —
+skipped when locked); `web/templates/kit/_kit.html` (+`ccy_toggle` macro); `pricing.html` +
+`app/billing.html` (old inline "India pricing · toggle-link" markup replaced by the shared
+macro — ONE place both screens say the same thing the same way); `wa-design.css`
+`.ccy-toggle`/`.ccy-toggle-locked` (both the served copy and `docs/design/wa-design.css`
+source, design-asset parity). Tests: tests/test_pricing_page.py::TestPricingPageCurrencyToggle
+(toggle click redraws real catalogue money + sets the cookie; cookie persists on a later
+request with no `?ccy`; explicit `?ccy` overrides a prior cookie) + tests/test_subscriptions.py
+::TestBillingCurrencyToggle (same three for `/billing` + a subscribed account sees the
+locked static note and never the live markup even against a stray `?ccy` + a CANCELLED
+subscription is confirmed NOT locked). Full suite green (`ruff`/`ruff format`/`mypy`/
+`pytest -m 'not perf'`), coverage gate green (services 96.4%, coster.py + findings.py
+100%). docs/04-TRACEABILITY.md row added.
+
 ## PROCESS FIX — the experience gate + staging-review-before-prod (2026-07-25) — founder "why are these issues reaching prod despite spec/gates/CI-CD?"
 
 ROOT CAUSE (honest): the pipeline is strong on CORRECTNESS (spec + 5-agent gates + CI +

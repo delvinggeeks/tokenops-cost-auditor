@@ -12,6 +12,7 @@
   <meta property="og:url" content="{{ base_url }}/pricing">
   <meta property="og:type" content="website">
 {% endblock %}
+{% import "kit/_kit.html" as kit %}
 {% block content %}
 <div class="pricing-page">
   <section class="pricing-head">
@@ -19,13 +20,7 @@
     <h1>One clear price, per plan.</h1>
     <p class="plans-qualify">Free to start — one full audit, no card. Pro and
       Scale add scheduled audits and more connected sources.</p>
-    <p class="plans-ccy" aria-label="Regional pricing">
-      {% if currency == "INR" %}
-      <strong>India pricing</strong> · <a href="/pricing?ccy=USD">Global pricing</a>
-      {% else %}
-      <strong>Global pricing</strong> · <a href="/pricing?ccy=INR">India pricing</a>
-      {% endif %}
-    </p>
+    {{ kit.ccy_toggle("/pricing", currency, currency_locked) }}
   </section>
 
   <div class="plan-cards">

@@ -323,3 +323,25 @@
     {%- for _ in range(lines) %}<span class="skel-line"></span>{% endfor %}
   </div>
 {% endmacro %}
+
+{# ---------------------------------------------------------- CurrencyToggle #}
+{% macro ccy_toggle(base_path, currency, locked=False) %}
+  {# Issue #70: ONE toggle for /pricing + /billing, so both screens say the
+     same thing the same way. A subscribed viewer is LOCKED — the honesty
+     rail forbids a control that looks live but silently won't switch, so
+     locked renders static text, never a link. #}
+  {%- if locked %}
+  <p class="ccy-toggle-locked" aria-label="Billing currency">
+    <strong>{{ "USD $" if currency == "USD" else "INR ₹" }}</strong>
+    <span class="muted">— billed in {{ currency }} on your plan.</span>
+  </p>
+  {%- else %}
+  <div class="ccy-toggle" role="group" aria-label="Currency">
+    {%- if currency == "USD" %}
+    <span class="seg active" aria-current="true">USD $</span><a class="seg" href="{{ base_path }}?ccy=INR">INR ₹</a>
+    {%- else %}
+    <a class="seg" href="{{ base_path }}?ccy=USD">USD $</a><span class="seg active" aria-current="true">INR ₹</span>
+    {%- endif %}
+  </div>
+  {%- endif %}
+{% endmacro %}
