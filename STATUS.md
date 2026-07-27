@@ -3525,3 +3525,13 @@ not. Impact was latent (the un-deployed commits were docs/workflows, no app code
 Fix: auto-merge.yml enables auto-merge as the LOOP_PAT user (not GITHUB_TOKEN), so the
 eventual merge is attributed to a real user and the merge-push triggers deploy + close.
 Pinned by test_auto_merge_workflow::test_it_merges_as_the_loop_pat_so_downstream_workflows_trigger.
+
+REAL E2E JOURNEY TEST (2026-07-27) — closed the false-confidence gap. tests/test_journeys.py
+only SEEDS an Audit row + checks rendering; it never walked the runtime, so the checkout
+dead-end passed CI green and reached the founder ("breaks somewhere / losing info"). New
+tests/test_e2e_real_journey.py walks the ACTUAL new-customer flow with NO X-User-Email shim:
+real magic-link signup (/auth/signin-link → capture link → /auth/verify) → paid credit →
+real POST /api/v1/audits that RUNS the pipeline → asserts status=done + valid_pct=100 +
+findings>0 (real output) → /dashboard renders → /billing checkout STATE (config-aware:
+asserts the Pay button when payment links are set, else the honest "switched on" dead-state).
+A genuine break in signup/audit/report/checkout now FAILS CI instead of shipping green.
