@@ -11,6 +11,12 @@ Issue #74 (Standard Checkout): `order.paid` / `payment.captured` /
 FR-27 tolerance rails — these are the AUTHORITATIVE source of truth for the
 one-shot credit grant (B1); the handler-payload signature check in
 services/payments/razorpay_orders.py is UX-only and never itself grants.
+
+NOTE on `except ValueError, KeyError, TypeError:` below (NOT a bug, do not
+"fix"): unparenthesized multi-exception `except` is valid PEP 758 syntax on
+Python 3.14 (this project's pinned floor, requires-python >=3.14) and is the
+form `ruff` (target-version py314) ENFORCES — parenthesizing it is reverted by
+`ruff format`. It parses/imports cleanly under the pinned toolchain (TE-11).
 """
 
 from __future__ import annotations

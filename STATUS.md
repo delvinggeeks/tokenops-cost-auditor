@@ -3843,3 +3843,42 @@ credit and it reflects in a real upload unlock; a bad signature grants nothing;
 idempotency on a re-delivered event id; the disabled/cancelled/success honest states;
 a `@pytest.mark.integration` test skipped unless `STRIPE_SECRET_KEY` is in the env).
 docs/04-TRACEABILITY.md row added.
+
+Razorpay Subscriptions checkout for recurring INR Pro/Scale (Issue #79, 2026-07-27).
+Mirror of #74 for the RECURRING plans: the INR Pro/Scale subscription was sold via a
+static hosted payment LINK, so a subscriber's card was never charged the exact plan
+figure the plans page showed. NEW `services/payments/razorpay_subscriptions.py` —
+`create_plan` (httpx `POST /v1/plans`, `item.amount` built from OUR pricing config
+`plans.py::Plan.inr` in paise — the price-integrity rail, never a dashboard number) +
+`create_subscription` (`POST /v1/subscriptions` against that `plan_id`, `total_count=
+1200` ongoing, `notes.email`/`notes.plan`) + `verify_sub_signature`. The signature
+gotcha (verified against razorpay.com's subscriptions integration guide): the
+concatenation order is `payment_id|subscription_id` — payment_id FIRST — the OPPOSITE
+of the one-time order's `order_id|payment_id`; razorpay-node issue #124 is exactly this
+mixup, so a dedicated test builds a signature in the wrong (one-time) order and asserts
+it is REJECTED. The webhook + state machine needed NO new code at all: `RAZORPAY_SUB_
+EVENTS`, `razorpay_link.parse_subscription_event`, `subscriptions.apply_event` and the
+dunning ladder (all WP-6) already existed and are reused completely unchanged —
+`subscription.activated` remains the sole activation authority (B1), the handler-payload
+verify is UX/auth only. NEW `web/routes_billing.py` `POST /billing/razorpay/subscription`
+(creates plan+subscription server-side first, O-2 `MANAGE_BILLING`-gated before the
+commit per the #75 RBAC-before-write shape, 503 when keys are unset, 400 on an unknown
+plan) + `POST /billing/razorpay/subscription/verify`. `templates/app/billing.html` —
+INR Pro/Scale rows now open the checkout.js modal against a `subscription_id` instead
+of the old hosted link (one Subscribe button per plan); USD untouched (Stripe subs is
+Slice D, out of scope). CSP reused unchanged from #74. Guarded by NEW tests/
+test_razorpay_subscriptions.py (plan-amount price-integrity assertions for both tiers
+against a mocked httpx boundary; the signature-order guard test; the full create-sub→
+handler-verify→signed-webhook→activated-and-reflected-as-"current" journey; tampered
+signature activates nothing; disabled/configured/already-subscribed honest states; a
+`@pytest.mark.integration` test skipped unless the env keys are set). Mid-cycle plan
+upgrade/downgrade parked to `docs/internal/BACKLOG.md` (cancel-and-resubscribe only
+this slice, per the issue). docs/04-TRACEABILITY.md row added.
+Gate-round #80 fixes (cold-reviewer): `TOTAL_COUNT` 1200→**100** — Razorpay caps a
+MONTHLY plan's `total_count` at 100; the mocked boundary hid it and every live
+subscription-create would have 4xx'd (same class as #75's receipt-40 bug). The test now
+asserts `total_count`≤100 (real bound, not just equality-with-the-constant). The
+`except ValueError, KeyError, TypeError:` flag was a FALSE POSITIVE — valid PEP 758 on
+py3.14 (requires-python >=3.14), ENFORCED by ruff (parenthesizing is reverted by `ruff
+format`), imports clean under the pinned toolchain; documented in the module docstring so
+it stops being re-flagged.
