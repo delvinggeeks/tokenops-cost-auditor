@@ -362,6 +362,27 @@ dollars only.
 }
 ```
 
+### Get an audit's summary
+
+`GET /api/v1/audits/{audit_id}` · scope `read:audits`
+
+Returns one audit's own summary — totals, cost, counts, scope, and timing. An
+audit that isn't yours is a `404` (never a `403`), same as findings below. An
+audit that hasn't finished yet returns its honest partial totals with
+`status` reflecting that (never a `500`).
+
+```json
+{
+  "id": "…", "status": "done", "scope_label": "anthropic",
+  "created_at": "2026-07-24T10:00:00Z", "completed_at": "2026-07-24T10:02:00Z",
+  "totals": {
+    "calls": 1200, "input_tokens": 900000, "output_tokens": 300000,
+    "total_tokens": 1200000, "estimated_cost_usd": 42.5
+  },
+  "model_count": 3, "finding_count": 3
+}
+```
+
 ### List findings
 
 `GET /api/v1/audits/{audit_id}/findings` · scope `read:findings`

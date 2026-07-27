@@ -1,6 +1,7 @@
 """Read API (S-6, R-SDK-PLATFORM) — the READ half of the platform.
 
 GET /api/v1/audits                    (scope read:audits)
+GET /api/v1/audits/{id}                (scope read:audits)
 GET /api/v1/audits/{id}/findings      (scope read:findings)
 
 Every response is COUNTS AND DOLLARS ONLY (FR-22): audit status, token counts,
@@ -20,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 
-from tokenops_cost_auditor.persistence.models import Audit, FindingRow
+from tokenops_cost_auditor.persistence.models import Audit, CallAggregate, FindingRow
 from tokenops_cost_auditor.persistence.repo import active_workspace_id
 from tokenops_cost_auditor.web.api_auth import ReadPrincipal, require_read_scope
 
@@ -82,6 +83,51 @@ def list_audits(
             for a in rows
         ]
     return JSONResponse(status_code=200, content={"audits": audits})
+
+
+@router.get("/audits/{audit_id}")
+def get_audit(
+    request: Request,
+    audit_id: str,
+    principal: Annotated[ReadPrincipal, Depends(_needs_audits)],
+) -> JSONResponse:
+    """One of the caller's audits — its own summary (totals, cost, counts,
+    scope, timing). Counts and dollars only (FR-22); a not-yet-complete audit
+    returns its partial totals with `status` reflecting that, never a 500."""
+    with request.app.state.session_factory() as session:
+        audit = session.get(Audit, audit_id)
+        # Tenant isolation: outside the principal's active workspace (or absent)
+        # is an identical 404 — no existence oracle across workspaces (O-1).
+        if audit is None or audit.workspace_id != active_workspace_id(session, principal.user_id):
+            raise HTTPException(status_code=404, detail="audit not found")
+        calls, input_tokens, output_tokens, model_count = session.execute(
+            select(
+                func.coalesce(func.sum(CallAggregate.calls), 0),
+                func.coalesce(func.sum(CallAggregate.prompt_tokens), 0),
+                func.coalesce(func.sum(CallAggregate.completion_tokens), 0),
+                func.count(func.distinct(CallAggregate.model)),
+            ).where(CallAggregate.audit_id == audit_id)
+        ).one()
+        finding_count = session.scalar(
+            select(func.count(FindingRow.id)).where(FindingRow.audit_id == audit_id)
+        )
+        body = {
+            "id": audit.id,
+            "status": audit.status,
+            "scope_label": audit.provider_mix or "",
+            "created_at": audit.created_at.isoformat() if audit.created_at else None,
+            "completed_at": audit.report_ready_at.isoformat() if audit.report_ready_at else None,
+            "totals": {
+                "calls": int(calls),
+                "input_tokens": int(input_tokens),
+                "output_tokens": int(output_tokens),
+                "total_tokens": int(input_tokens) + int(output_tokens),
+                "estimated_cost_usd": audit.total_spend_usd,
+            },
+            "model_count": int(model_count),
+            "finding_count": int(finding_count or 0),
+        }
+    return JSONResponse(status_code=200, content=body)
 
 
 @router.get("/audits/{audit_id}/findings")
