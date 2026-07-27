@@ -3874,3 +3874,11 @@ signature activates nothing; disabled/configured/already-subscribed honest state
 `@pytest.mark.integration` test skipped unless the env keys are set). Mid-cycle plan
 upgrade/downgrade parked to `docs/internal/BACKLOG.md` (cancel-and-resubscribe only
 this slice, per the issue). docs/04-TRACEABILITY.md row added.
+Gate-round #80 fixes (cold-reviewer): `TOTAL_COUNT` 1200→**100** — Razorpay caps a
+MONTHLY plan's `total_count` at 100; the mocked boundary hid it and every live
+subscription-create would have 4xx'd (same class as #75's receipt-40 bug). The test now
+asserts `total_count`≤100 (real bound, not just equality-with-the-constant). The
+`except ValueError, KeyError, TypeError:` flag was a FALSE POSITIVE — valid PEP 758 on
+py3.14 (requires-python >=3.14), ENFORCED by ruff (parenthesizing is reverted by `ruff
+format`), imports clean under the pinned toolchain; documented in the module docstring so
+it stops being re-flagged.

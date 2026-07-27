@@ -36,9 +36,11 @@ PLANS_URL = "https://api.razorpay.com/v1/plans"
 SUBSCRIPTIONS_URL = "https://api.razorpay.com/v1/subscriptions"
 
 # The subscription runs until cancelled (dunning ladder or customer request),
-# not for a fixed term — Razorpay still requires a total_count, so this picks
-# a bound far past any realistic subscription lifetime (100 years, monthly).
-TOTAL_COUNT = 1200
+# not for a fixed term — Razorpay still requires a total_count. Razorpay CAPS
+# total_count by period (monthly → 100; a larger value 4xxs every live create —
+# cold-reviewer #80). 100 monthly cycles ≈ 8.3 years is our practical "ongoing"
+# bound; renewal past that re-subscribes.
+TOTAL_COUNT = 100  # Razorpay's max for a monthly plan
 
 
 class SupportsPost(Protocol):

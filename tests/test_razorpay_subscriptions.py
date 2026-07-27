@@ -185,6 +185,10 @@ class TestPlanAndSubscriptionCreate:
         assert sub_payload["notes"]["email"] == BUYER
         assert sub_payload["notes"]["plan"] == "pro"
         assert sub_payload["total_count"] == razorpay_subscriptions.TOTAL_COUNT
+        # Regression (cold-reviewer #80): Razorpay caps a MONTHLY plan's total_count at
+        # 100 — a larger value 4xxs every live subscription-create. Assert the real bound,
+        # not just equality with the constant (which a bad constant would pass).
+        assert 0 < sub_payload["total_count"] <= 100
 
     def test_team_amount_matches_config(self, rclient: TestClient) -> None:
         resp, fake_client = _create_subscription_via_route(rclient, plan="team")
