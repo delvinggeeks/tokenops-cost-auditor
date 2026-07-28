@@ -73,6 +73,11 @@ re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 - **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
   components + sequence diagrams covering read API, payments, orgs, flywheel
   (architect-gated per its charter — D6/D13-style pass).
+- **T-D4 · FR-42** perf-claims reconcile — `docs-site/engineering/performance.md` says
+  "all six detectors" (3×) with no era caveat while nine ship; FR-42 acceptance requires
+  the caveat now and a nine-detector re-time on the measured machine to retire it
+  (caught by the 2026-07-28 global law-6 audit — the FR landed with its acceptance
+  already unmet and no slice).
 
 **R-MODEL-FACTORY (founder 2026-07-28) — formalized as FR-34..FR-38 (docs/01 §H) with
 HLD §8 + LLD §9 design deltas, per R-REQ-PIPELINE (docs/09 §9).** The learning lifecycle gets its own FACTORY: a
