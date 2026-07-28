@@ -518,6 +518,36 @@ class TestSchemaSelfAudit:
     def test_no_schema_violations(self) -> None:
         assert export.schema_violations() == []
 
+    def test_off_pattern_detector_warns_never_silently_drops(
+        self, app: FastAPI, settings: Settings, caplog
+    ) -> None:
+        """cold-review #97 f.1: a detector name outside the dN_* convention is
+        excluded from fire rates WITH a warning naming it — never silently."""
+        with app.state.session_factory() as session:
+            uid, wsid = _seed_workspace(session, "offpattern@example.com", opt_in=True)
+            audit_id = _seed_done_audit(session, uid, wsid, when=PERIOD_DT)
+            session.add(
+                FindingRow(
+                    audit_id=audit_id,
+                    finding_id="X-000",
+                    detector="exotic_new_detector",
+                    route=None,
+                    severity="low",
+                    monthly_impact_usd=1.0,
+                    confidence="estimated",
+                    fix_text="n/a",
+                    evidence_sample=[],
+                )
+            )
+            session.commit()
+            audits = list(
+                session.execute(select(Audit).where(Audit.workspace_id == wsid)).scalars()
+            )
+            with caplog.at_level("WARNING"):
+                feats = export._features(session, settings, audits)
+        assert "exotic_new_detector" in caplog.text
+        assert all(rate == 0.0 for rate in feats.detector_fire_rates.values())
+
     def test_detector_keys_pin_the_registry(self) -> None:
         """export.py may not import the engine (T-FLY-07/R-F4), so its
         DETECTOR_KEYS is a literal — THIS test is where the literal meets
