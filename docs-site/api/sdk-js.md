@@ -40,6 +40,13 @@ if (audit.status === "done") {
 
 const summary = await client.getAudit(audit_id);        // one audit's own summary
 console.log(`${summary.totals.calls} calls, $${summary.totals.estimated_cost_usd} — ${summary.finding_count} findings`);
+
+const { breakdown, unavailable_reason } = await client.getBreakdown(audit_id); // tokenomics
+if (breakdown) {
+  console.log(`$${breakdown.monthly_spend_usd}/mo, ${breakdown.by_model.length} models`);
+} else {
+  console.log(`no breakdown: ${unavailable_reason}`);
+}
 ```
 
 ## Errors
@@ -56,6 +63,7 @@ for example a read token missing a scope raises a `403`. See the
 | `listAudits()` | read token (`read:audits`) | `GET /api/v1/audits` |
 | `listFindings(id)` | read token (`read:findings`) | `GET /api/v1/audits/{id}/findings` |
 | `getAudit(id)` | read token (`read:audits`) | `GET /api/v1/audits/{id}` |
+| `getBreakdown(id)` | read token (`read:audits`) | `GET /api/v1/audits/{id}/breakdown` |
 | `waitForAudit(id)` | read token | polls `List audits` |
 
 The Python SDK and the raw HTTP contract are in the [reference](reference.md).

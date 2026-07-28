@@ -57,6 +57,40 @@ export interface AuditSummary {
   finding_count: number;
 }
 
+/** One dimension value (a model, or a route/tag) with its exact economics. */
+export interface BreakdownSlice {
+  name: string;
+  calls: number;
+  monthly_usd: number;
+  share: number;
+  cache_hit_rate: number;
+  out_in_ratio: number;
+  cost_per_1k_out: number;
+}
+
+/** The audit's tokenomics breakdown — vitals, per-model/per-route allocation, coverage. */
+export interface AuditTokenomics {
+  monthly_spend_usd: number;
+  tokens_in: number;
+  tokens_out: number;
+  tokens_cached: number;
+  cache_hit_rate: number;
+  out_in_ratio: number;
+  cost_per_1k_out: number;
+  cost_per_request: number;
+  by_model: BreakdownSlice[];
+  by_route: BreakdownSlice[];
+  pct_priced: number;
+  pct_attributed: number;
+}
+
+/** GET /api/v1/audits/{id}/breakdown response — `breakdown` is null when unavailable. */
+export interface AuditBreakdownResponse {
+  audit_id: string;
+  breakdown: AuditTokenomics | null;
+  unavailable_reason: string | null;
+}
+
 export interface Finding {
   detector: string;
   severity: string;
@@ -134,6 +168,18 @@ export class TokenOps {
     if (!this.readToken) throw new Error("getAudit requires a readToken (rt_…)");
     const path = `/api/v1/audits/${encodeURIComponent(auditId)}`;
     return this.request<AuditSummary>("GET", path, this.readToken);
+  }
+
+  /**
+   * The audit's tokenomics breakdown (vitals, per-model/per-route cost allocation,
+   * data coverage) — the whole response, INCLUDING `unavailable_reason` (do not
+   * unwrap to just `breakdown`, or a caller loses "no data, and here's why").
+   * Requires `read:audits`.
+   */
+  async getBreakdown(auditId: string): Promise<AuditBreakdownResponse> {
+    if (!this.readToken) throw new Error("getBreakdown requires a readToken (rt_…)");
+    const path = `/api/v1/audits/${encodeURIComponent(auditId)}/breakdown`;
+    return this.request<AuditBreakdownResponse>("GET", path, this.readToken);
   }
 
   /** Findings for one audit, ranked by monthly $ impact. Requires `read:findings`. */

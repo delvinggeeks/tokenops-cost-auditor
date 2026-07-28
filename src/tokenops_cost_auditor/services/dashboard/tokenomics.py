@@ -13,8 +13,10 @@ against hand-derived values. Engine-pure: no network/LLM (T-NFR-01 spirit).
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
@@ -124,3 +126,18 @@ def compute(priced: pd.DataFrame) -> Tokenomics:
         pct_priced=_rate(len(rows), n_total),  # share of REQUESTS we could price
         pct_attributed=_rate(tagged_cost, total_cost),  # share of SPEND carrying a tag
     )
+
+
+def load_artifact(report_dir: str | Path, audit_id: str) -> dict[str, object] | None:
+    """The exact tokenomics.json the runner wrote for an audit, or None when it is
+    absent/corrupt/purged (FR-21) — honest empty state, never a raise. Shared by
+    the HTML `/breakdown` page and the read API so both surfaces agree on when a
+    breakdown "exists" (single loader, no drift)."""
+    path = Path(report_dir) / audit_id / "tokenomics.json"
+    if not path.exists():
+        return None
+    try:
+        data: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
+        return data
+    except json.JSONDecodeError, OSError:
+        return None

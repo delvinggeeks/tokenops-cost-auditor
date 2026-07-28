@@ -12,7 +12,6 @@ methodology, in that fixed order (R-CLARITY §1).
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -38,6 +37,7 @@ from tokenops_cost_auditor.persistence.repo import (
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
+from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
 from tokenops_cost_auditor.web import help as help_registry
@@ -606,17 +606,12 @@ def replay_tour(request: Request, user_email: str = Depends(current_user)) -> Re
 
 def _load_tokenomics(report_dir: str | Path, audit: Audit | None) -> dict[str, object] | None:
     """The exact tokenomics.json the runner wrote for an audit, or None when it is
-    absent/corrupt/purged (FR-21) — an honest empty state, never a 500 (cold gate)."""
+    absent/corrupt/purged (FR-21) — an honest empty state, never a 500 (cold gate).
+    Delegates to the shared loader (`services/dashboard/tokenomics.load_artifact`)
+    so the HTML page and the read API can't disagree on when a breakdown exists."""
     if audit is None:
         return None
-    path = Path(report_dir) / audit.id / "tokenomics.json"
-    if not path.exists():
-        return None
-    try:
-        data: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
-        return data
-    except json.JSONDecodeError, OSError:
-        return None
+    return tokenomics_svc.load_artifact(report_dir, audit.id)
 
 
 @router.get("/breakdown", response_class=HTMLResponse)
