@@ -1,5 +1,8 @@
 # LE-3 — auto-merge on all-green (docs/09-SDLC §6). Completes the loop: a PR labelled
-# `auto-merge` is squash-merged AUTOMATICALLY the moment ALL required checks pass — no
+# `auto-merge` is rebase-merged AUTOMATICALLY the moment ALL required checks pass — no
+# (rebase, not squash, since 2026-07-28: squash rewrote the author to the GitHub account
+# and appended a Co-authored-by trailer — violating rule 6 on every merged commit while
+# the pre-merge authorship gate stayed green. Rebase keeps the branch commit verbatim.)
 # human click. It uses GitHub's NATIVE auto-merge, so branch protection is fully
 # respected (nothing merges unless authorship + lint + type + test + docs — and, once
 # added, gate-round — are green) and it is cancellable at any time (remove the label or
@@ -39,7 +42,7 @@ jobs:
       && contains(github.event.pull_request.labels.*.name, 'auto-merge')
       && github.event.pull_request.draft == false
     steps:
-      - name: arm GitHub native auto-merge (squash)
+      - name: arm GitHub native auto-merge (rebase — clean-authorship law)
         env:
           # CRITICAL: enable auto-merge as the LOOP_PAT user, NOT GITHUB_TOKEN. A merge
           # attributed to the github-actions app (GITHUB_TOKEN) hits GitHub's recursion
@@ -55,5 +58,5 @@ jobs:
           # status check is green. Branch protection is the gate, not this workflow.
           gh pr merge "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
-            --auto --squash --delete-branch \
+            --auto --rebase --delete-branch \
           || echo "::notice::auto-merge could not be armed — enable 'Allow auto-merge' in Settings → General (the PR still merges manually)."

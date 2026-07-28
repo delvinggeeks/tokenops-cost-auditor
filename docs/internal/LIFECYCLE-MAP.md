@@ -42,19 +42,19 @@ Status: ✅ shipped · 📋 registered/spec'd (trigger named) · 🚫 forbidden 
 | Behaviour lens v1 — shape chips + fix-first copy on breakdown + read API | P2 | 🟡 T-F3 | R-MODEL-FACTORY | QUEUE CANDIDATES |
 | **PROVE (owner persona)** | | | | |
 | Savings Statement — VERIFIED headline only, provenance stamps, honest empty | P5 | ✅ | R-Q9 + R-STMT-MONTH | `services/statements/build.py` (`verified_usd`, "only called verified…") |
-| Cross-audit drift (browser) | P5 | ✅ | docs/04 | `services/dashboard/drift`; API surface 🟡 (parked by #85) |
+| Cross-audit drift (browser) | P5 | ✅ | docs/04 | `services/dashboard/drift`; API surface 📋 ← programmatic-access request (R-SCOPE-STOP) |
 | Per-finding realized delta → statement | P5 | 🟡 T-F4 | R-MODEL-FACTORY | scope-check first — may collapse into R-Q9 machinery |
 | Dogfood self-audit (32.5%) | P5 | ✅ | WP-SELF | self-audit ledger + CI drift gate |
 | **ALLOCATE** | | | | |
 | by_model / by_route $ allocation + `pct_attributed` honesty | P5 | ✅ | docs/04 | `services/dashboard/tokenomics.py` |
 | Showback export for finance (tag/route cost CSV) | P5 | 🟡 | registered 2026-07-28 | QUEUE CANDIDATES |
 | Per-agent / per-task / per-chain attribution | P5 | 📋 | R-AGENTIC-DIMENSIONS | ← T4 build (semconv agent spans) |
-| Chargeback models (cost-center owners, internal billing) | P5 | ❓ | none | founder call: register or reject |
+| Chargeback models (cost-center owners, internal billing) | P5 | 🚫 rejected-for-now | founder 2026-07-28 | revisit on first customer pull; showback FR-38 covers the finance need |
 | **GOVERN (our product, never their traffic)** | | | | |
 | Workspaces, 4-role RBAC, scoped read tokens, INSERT-only auditlog, FR-22, API rate limits | P4 | ✅ | R-ORG, FR-21/22, NFR-03 | `services/lifecycle/auditlog.py` et al. |
 | SSO · SCIM · IAM CRUD / service accounts / custom roles | P4 | 📋 | R-IAM, O-3 | ← first team customer (SSO); design registered |
 | **PLATFORM (enabler)** | | | | |
 | Read API (audits, audit, findings, breakdown) + OAuth + JS SDK read methods | — | ✅ | R-PLATFORM S-6 | #72/#83/#86; docs-site regenerated gate |
-| MCP server (list_audits, list_findings) | — | ✅ | S-3 | `mcp/server.py:45`; get_audit/get_breakdown parity 🟡 |
-| savings / sources read endpoints | — | 🟡 | pre-registered by #83 | QUEUE CANDIDATES |
+| MCP server (list_audits, list_findings) | — | ✅ | S-3 | `mcp/server.py:45`; parity tools 📋 ← programmatic-access request (R-SCOPE-STOP) |
+| savings / sources read endpoints | — | 📋 | pre-registered by #83 | ← programmatic-access request (R-SCOPE-STOP, QUEUE PARKED) |
 | OTel GenAI + FOCUS standards adoption | — | 📋 recorded law | R-STANDARDS | implemented at T4 build, not before |

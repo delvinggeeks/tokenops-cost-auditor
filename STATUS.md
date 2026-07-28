@@ -3963,3 +3963,10 @@ T-D1/D2/D3 docs-maintenance candidates. Found + recorded, awaiting founder: auth
 defect (LE-3 squash rewrites author + adds trailer; 65 commits since 07-24 violate rule 6;
 pre-merge gate structurally blind to it) and the unrecorded R-SCOPE-STOP ruling — both now in
 QUEUE BLOCKED ① – ⑤ with the sequencing/naming/chargeback decisions. Commits a3207b0, 3351f6f.
+
+2026-07-28 (same session, rulings round): founder resolved ①②④⑤ via in-session decision
+round — T-D3 into NOW; R-SCOPE-STOP recorded as PARKED trigger (API/agent surfaces ← first
+programmatic-access request); chargeback rejected-for-now; auto-merge flipped squash→rebase
+(clean-authorship law — squash was rewriting author + adding a trailer on every merged
+commit; repo allow_rebase_merge verified true). Open: ③ factory repo name (blocks T-F1 only).
+T-D3 filed as a loop:ready issue this session.

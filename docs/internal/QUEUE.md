@@ -34,8 +34,13 @@ scope — R-PLATFORM (API-first platform + enterprise: SDKs, MCP, SSO/SCIM), R-O
 (workspaces/RBAC), R-IAM, and the payments pivot to real Standard Checkout. The frontier is
 **open again**, and is now tracked by RULING, not by FR count.
 
-_T-P8 SHIPPED 2026-07-28 — #86 merged (endpoint + SDK + docs/04 row, gates green). NOW is
-empty again; the founder sequences the next slice from CANDIDATES._
+_T-P8 SHIPPED 2026-07-28 — #86 merged (endpoint + SDK + docs/04 row, gates green)._
+
+- `T-D3 · QUEUE law 5 (process) · BACKLOG/ROADMAP prune — re-verify all ~30 BACKLOG items +
+  ROADMAP overlaps against shipped reality: shipped → delete (docs/04 owns it) · superseded
+  → delete with one-line note · live → one line + trigger. Known-stale pair to fix:
+  "API keys / programmatic access" (S-6 shipped it), "Orgs/SSO (X-03 stands)" (relaxed by
+  R-ORG) · trace: docs-only PR → gate round · sequenced by founder 2026-07-28`
 
 > Each task lands here as one line:
 > `T-<id> · FR-xx | R-RULING · <vertical-slice one-liner> · trace: <module>→<test>`
@@ -45,11 +50,6 @@ empty again; the founder sequences the next slice from CANDIDATES._
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
-- **MCP `get_audit` parity** — `mcp/server.py` `TOOLS` carries only `list_audits`/`list_findings`,
-  while the read API and the JS SDK both expose the per-audit summary (verified 2026-07-28).
-- **MCP `get_breakdown`** — the agent surface for T-P8's endpoint (parked by #85).
-- **`GET /api/v1/savings`, `GET /api/v1/sources`** — pre-registered as "separate later slices" by #83.
-- **Cross-audit drift over the API** — `services/dashboard/drift` is browser-only (parked by #85).
 - **T-F5 · FR-38** showback export for finance — tag/route cost CSV an owner can hand to accounting; the
   allocation math (`tokenomics.by_route`, `pct_attributed`) is shipped, only the export
   surface is missing (registered 2026-07-28 from the pillar-map gap analysis).
@@ -60,11 +60,6 @@ re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 - **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
   components + sequence diagrams covering read API, payments, orgs, flywheel
   (architect-gated per its charter — D6/D13-style pass).
-- **T-D3 BACKLOG/ROADMAP prune (the decompose-and-shrink slice, law 5)** — re-verify all
-  ~30 BACKLOG items + ROADMAP overlaps against shipped reality: shipped → delete (docs/04
-  owns it) · superseded → delete with a one-line note · live → keep one line + its trigger.
-  Two proven stale 2026-07-28: "API keys / programmatic access" (S-6 shipped it) and
-  "Orgs/SSO (X-03 stands)" (X-03 relaxed by R-ORG; workspaces/RBAC shipped).
 
 **R-MODEL-FACTORY (founder 2026-07-28) — formalized as FR-34..FR-38 (docs/01 §H) with
 HLD §8 + LLD §9 design deltas, per R-REQ-PIPELINE (docs/09 §9).** The learning lifecycle gets its own FACTORY: a
@@ -93,16 +88,11 @@ gets its first shipped surfaces. Slices:
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
 - Stripe/OAuth LIVE creds · domain cutover · UAT-2 · pending rulings — full list: `ROADMAP §4`.
-- **Pending rulings 2026-07-28 (recorded here so they exist outside chat):**
-  ① NOW sequencing order (all CANDIDATES wait on this) · ② R-SCOPE-STOP — a chat-session
-  ruling ("halt the platform read-API track until a programmatic-access request exists")
-  that was never recorded; record as a PARKED trigger or discard · ③ factory repo name
-  (blocks T-F1 only) · ④ chargeback models — register as FR or reject (LIFECYCLE-MAP ❓
-  row) · ⑤ **authorship-squash defect**: LE-3 squash-merge rewrites the author to the
-  GitHub account + appends a Co-authored-by trailer — every auto-merged commit since
-  2026-07-24 (65 by `92fa403`) violates rule 6 while the pre-merge gate passes (it checks
-  the branch, not the squash). Fix = flip auto-merge to rebase (repo settings permitting)
-  ± history rewrite — founder decision.
+- **Pending rulings 2026-07-28 — RESOLVED same day (founder, in-session):** ① T-D3
+  sequenced into NOW · ② R-SCOPE-STOP recorded as a PARKED trigger · ④ chargeback REJECTED
+  for now (revisit on customer pull; LIFECYCLE-MAP row updated) · ⑤ auto-merge flipped to
+  rebase (squash rewrote author + added trailer). Still open: **③ factory repo name**
+  (blocks T-F1 only).
 - **Payments real-key testing (2026-07-28).** All four checkout slices are merged (#75 one-time
   INR, #80 INR subs, #78 one-time USD, #82 USD subs) and are code-complete + test-guarded, but
   each endpoint honestly 503s "checkout not switched on" until its keys are set. Founder lane:
@@ -122,6 +112,9 @@ Each fires on a named customer/demand event. Pulling one forward without its tri
 - M-FLY-2 calibration ← n≥25 peer data · D7 export detector ← day-45 · (full list: `ROADMAP §5`)
 - L1 peer benchmarks ← n≥10 opted-in workspaces · L3 predictive ← n≥50 + 6mo history
   (docs/12 §Stage-3) · T5 gateway + L4 policy ← first in-VPC-blocking enterprise deal
+- **R-SCOPE-STOP (recorded 2026-07-28, ruled from chat):** further read-API/agent surfaces —
+  MCP `get_audit`/`get_breakdown` parity, `GET /api/v1/savings`, `GET /api/v1/sources`,
+  drift-over-API — ← first programmatic-access request from a real customer
 
 ## Superseded for SEQUENCING → this file
 
