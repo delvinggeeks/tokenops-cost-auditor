@@ -332,3 +332,6 @@ follow-ups from that build and the depth-engine detour:
   runs one CallAggregate + one FindingRow query per workspace plus one artifact read per
   audit — linear and fine at k=10, worth batching by audit_id across the whole cohort
   before it isn't.
+- CODE-TOUR STOPS FOR DASHBOARD/ALERTS/COPILOT/COLLECTOR (T-D1 #99 kept to the five
+  registered areas; trigger: the first TEACH session that reaches one of those modules,
+  or the next CODE-TOUR touch).

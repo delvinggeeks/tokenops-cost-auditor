@@ -1,0 +1,99 @@
+"""T-D1 tests — docs-drift tripwire for docs/internal/CODE-TOUR.md.
+
+CODE-TOUR.md is the WP-COMPREHEND reading guide: a founder walks it top to
+bottom and trusts every path, symbol, and detector count it cites. These
+tests fail the moment the tour drifts from the code it describes — a moved
+file, a renamed function, a shipped detector the tour never mentions, or a
+stale "six detectors" claim creeping back into src/. They do NOT check
+docs-site/ (that is T-D4's scope).
+"""
+
+import re
+from pathlib import Path
+
+REPO = Path(__file__).parents[1]
+CODE_TOUR = REPO / "docs/internal/CODE-TOUR.md"
+SRC = REPO / "src/tokenops_cost_auditor"
+
+PATH_TOKEN_RE = re.compile(r"`([^`]+)`")
+PATH_PREFIX_RE = re.compile(r"^(src|tests|docs|scripts|sdk|data)/")
+SYMBOL_CALL_RE = re.compile(r"`([A-Za-z_][\w.]*)\(\)`")
+DETECTOR_COUNT_RE = re.compile(r"the (\w+) detectors")
+SIX_DETECTOR_RE = re.compile(r"six[- ]detector", re.IGNORECASE)
+
+DETECTOR_COUNT_WORDS = {
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+}
+
+
+def _cited_repo_paths(text: str) -> list[str]:
+    tokens = PATH_TOKEN_RE.findall(text)
+    return [t for t in tokens if PATH_PREFIX_RE.match(t) or t == "docker-compose.yml"]
+
+
+def _cited_symbol_names(text: str) -> list[str]:
+    return [call.split(".")[-1] for call in SYMBOL_CALL_RE.findall(text)]
+
+
+class TestCodeTourDrift:
+    def test_every_cited_repo_path_exists(self) -> None:
+        text = CODE_TOUR.read_text(encoding="utf-8")
+        missing = []
+        for token in _cited_repo_paths(text):
+            rel = token[:-1] if token.endswith("/") else token
+            if not (REPO / rel).exists():
+                missing.append(token)
+        assert not missing, f"CODE-TOUR.md cites repo paths that do not exist: {missing}"
+
+    def test_every_cited_symbol_resolves(self) -> None:
+        text = CODE_TOUR.read_text(encoding="utf-8")
+        names = sorted(set(_cited_symbol_names(text)))
+        corpus = "\n".join(p.read_text(encoding="utf-8") for p in SRC.rglob("*.py"))
+        missing = [name for name in names if f"def {name}(" not in corpus]
+        assert not missing, (
+            f"CODE-TOUR.md cites symbols with no matching `def` under "
+            f"src/tokenops_cost_auditor: {missing}"
+        )
+
+    def test_detector_count_word_matches_registry(self) -> None:
+        """A detector shipping (d11, d12, ...) without CODE-TOUR.md's "the
+        <word> detectors" line being touched fails this test: the word and
+        the registry length are asserted equal, so the tour update is not
+        optional decoration — it is part of the detector's DoD.
+        """
+        text = CODE_TOUR.read_text(encoding="utf-8")
+        match = DETECTOR_COUNT_RE.search(text)
+        assert match is not None, "CODE-TOUR.md no longer contains a 'the <word> detectors' claim"
+        word = match.group(1)
+        assert word in DETECTOR_COUNT_WORDS, (
+            f"CODE-TOUR.md detector-count word {word!r} has no number mapping"
+        )
+
+        from tokenops_cost_auditor.services.rules.registry import DETECTORS
+
+        assert DETECTOR_COUNT_WORDS[word] == len(DETECTORS), (
+            f"CODE-TOUR.md says 'the {word} detectors' "
+            f"({DETECTOR_COUNT_WORDS[word]}) but registry.DETECTORS has "
+            f"{len(DETECTORS)} entries — a detector shipped or was removed "
+            "without the tour being updated"
+        )
+
+
+class TestCountFreeDetectorClaims:
+    def test_no_literal_six_detector_claims_in_src(self) -> None:
+        """Pins the count-free docstring fix (sdk/__init__.py,
+        web/routes_ingest.py): no source file may hard-code a "six
+        detectors" figure that goes stale every time a detector ships.
+        """
+        offenders = [
+            str(path.relative_to(REPO))
+            for path in SRC.rglob("*.py")
+            if SIX_DETECTOR_RE.search(path.read_text(encoding="utf-8"))
+        ]
+        assert not offenders, f"stale 'six-detector' claim(s) found in: {offenders}"
