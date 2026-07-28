@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-F5 — Breakdown showback CSV export (mockup, FR-38)</title>
+<style>
+  /* Approximation of the app kit for the T-F5 ux gate (three-second rule +
+     R-DESIGN checklist). Not pixel-parity — the wired surface reuses
+     kit/_kit.html (button macro, .ledger table) and wa-design.css tones. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --verified:#0f9d58; --verified-bg:#e9f7ef;
+    --waste:#c0392b; --waste-bg:#fbeeec; --estimate:#b45309; --estimate-bg:#fdf3e7;
+    --chip:#eef1f6; --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;--verified-bg:#12291c;--waste-bg:#2e1a17;
+      --estimate-bg:#2b2113;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)} h2{font-size:17px;margin:0}
+  .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--accent);font-weight:700;margin:var(--s4) 0 var(--s2);
+    border-top:2px dashed var(--line);padding-top:var(--s3)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  .muted{color:var(--muted)}
+  .widget-head{display:flex;align-items:center;justify-content:space-between;
+    gap:var(--s2);margin-bottom:var(--s2);flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  td.money,th.money{text-align:right;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto}
+  .btn-quiet{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;
+    border-radius:8px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-weight:600;text-decoration:none;font-size:13.5px;
+    white-space:nowrap}
+  .btn-quiet:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-quiet svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;
+    fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .csv{background:var(--chip);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    overflow-x:auto;white-space:pre;color:var(--ink)}
+  .csv .hdr{color:var(--accent);font-weight:700}
+  .csv .com{color:var(--muted);font-style:italic}
+  .filehint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  .note{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;
+    background:var(--card);font-size:13.5px;color:var(--muted);margin:var(--s2) 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Breakdown — showback CSV export (T-F5 · FR-38)</h1>
+  <p class="sub">Mockup for the ux gate, BEFORE wiring (R-DESIGN). This is an OWNER-depth
+    surface (docs/12 COPY LAW: money-verified framing — the file is the same exact
+    arithmetic the page shows, handed to accounting). The affordance is one quiet button
+    on the shipped “By route (cost allocation)” widget; every dollar figure and all
+    existing copy on the page are byte-untouched. Three states below, plus the absence
+    rule.</p>
+
+  <!-- ============================================================ STATE 1 -->
+  <div class="demo-label">State 1 · Owner (MANAGE_BILLING) — the affordance, on the shipped by-route widget</div>
+
+  <div class="card">
+    <div class="widget-head">
+      <h2>By route (cost allocation)</h2>
+      <a class="btn-quiet" href="#">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+        Download showback CSV
+      </a>
+    </div>
+    <p class="filehint" style="margin:0 0 var(--s2)">Showback = the allocation file accounting
+      uses to bill AI spend back to teams. Same figures as this page, exact to the byte —
+      visible to workspace owners only. <em>(ux f.1: trust claim VISIBLE text, never
+      hover-only — mobile owners get no tooltip.)</em></p>
+    <p class="muted" style="margin-top:0">Attributed from your call <code>tag</code>. Untagged spend is
+      its own row — never silently allocated, so the numbers stay honest. <em>(existing line,
+      unchanged — table below abbreviated, byte-untouched by this slice)</em></p>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Route</th><th class="money">Monthly $</th><th class="money">Share</th>
+        <th class="money">Calls</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>agent-runner</td><td class="money">$612.40</td><td class="money">48%</td><td class="money">8,102</td></tr>
+        <tr><td>checkout-search</td><td class="money">$228.11</td><td class="money">18%</td><td class="money">2,940</td></tr>
+        <tr><td>(untagged)</td><td class="money">$95.20</td><td class="money">7%</td><td class="money">220</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:var(--s2)">What the file contains (not a page — the download itself)</h2>
+    <div class="csv"><span class="hdr">dimension,name,calls,monthly_usd,share,pct_attributed_caveat</span>
+model,claude-sonnet-5,8102,612.4013882352941,0.4766911764705882,82% of spend carries a route tag
+model,claude-haiku-4-5,3160,323.3108823529412,0.2516470588235294,82% of spend carries a route tag
+route,agent-runner,8102,612.4013882352941,0.4766911764705882,82% of spend carries a route tag
+route,checkout-search,2940,228.1102941176470,0.1775588235294117,82% of spend carries a route tag
+route,(untagged),220,95.20147058823529,0.0741029411764705,82% of spend carries a route tag</div>
+    <p class="filehint">Filename <code>showback-1a2b3c4d.csv</code> · figures are the artifact's
+      exact bytes (the page rounds for reading; the file never rounds, so it reconciles to the
+      audit goldens byte-for-byte) · the attribution caveat rides on EVERY row — the coverage
+      honesty travels with the file, not just the page · counts, names and dollars only, no
+      prompt/completion text exists anywhere in the source artifact (FR-22 by construction).</p>
+    <p class="filehint">Dimensions are <code>model</code> and <code>route</code> — route IS the
+      tag allocation (<code>by_route</code> groups by your call <code>tag</code>; FR-38's
+      “tag/route/model” names that provenance, not a third grouping — ux f.3 resolved: adding a
+      third dimension would be new allocation math, out of this slice's scope).</p>
+  </div>
+
+  <!-- ============================================================ STATE 2 -->
+  <div class="demo-label">State 2 · Member / analyst — no affordance at all (O-2: billing is owner-only)</div>
+
+  <div class="card">
+    <div class="widget-head">
+      <h2>By route (cost allocation)</h2>
+      <!-- deliberately NOTHING here: a control a role cannot use is never shown
+           disabled — it is absent (the kit's RBAC idiom, same as Billing nav).
+           The route itself 403s for these roles; the page is otherwise identical. -->
+    </div>
+    <p class="muted" style="margin-top:0">Attributed from your call <code>tag</code>. Untagged spend is
+      its own row — never silently allocated, so the numbers stay honest.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Route</th><th class="money">Monthly $</th><th class="money">Share</th>
+        <th class="money">Calls</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>agent-runner</td><td class="money">$612.40</td><td class="money">48%</td><td class="money">8,102</td></tr>
+        <tr><td>checkout-search</td><td class="money">$228.11</td><td class="money">18%</td><td class="money">2,940</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ============================================================ STATE 3 -->
+  <div class="demo-label">State 3 · Empty allocation — header + one honest comment line, never a fabricated zero-table</div>
+
+  <div class="card">
+    <h2 style="margin-bottom:var(--s2)">The file when nothing could be allocated (LLD §9.5 verbatim)</h2>
+    <div class="csv"><span class="hdr">dimension,name,calls,monthly_usd,share,pct_attributed_caveat</span>
+<span class="com"># nothing to allocate — none of this audit's requests could be priced</span></div>
+    <p class="filehint">The artifact exists but holds no priced spend (all-unpriced upload).
+      Accounting gets an unambiguous “nothing this period”, never an empty grid that reads
+      as a broken export.</p>
+  </div>
+
+  <!-- ============================================================ ABSENCE -->
+  <div class="demo-label">Absence rule · No artifact — the affordance absents itself with the table it exports</div>
+
+  <div class="note">A coarse connected-source audit, a not-yet-run account, or an FR-21-purged
+    audit has no <code>tokenomics.json</code> — the by-route widget already shows its shipped
+    honest empty state (T-F3), and the download button simply never renders there (nothing to
+    export = no control). A direct URL hit in those states is an honest 404, never an empty 200
+    that accounting could mistake for a real file.</div>
+
+  <p class="muted" style="font-size:13px">Kit composition: the button is the shipped
+    <code>kit.button</code> quiet variant in the existing <code>widget-head</code> — no new
+    component, no new tone. Green stays reserved for verified dollars; a download control
+    makes no money claim, so it is quiet, not green. R-DESIGN-ADDENDUM delight (ux f.2,
+    stated explicitly): NONE claimed on the page — this is a utility control and the page's
+    delight budget stays with what already owns it; the designed care lives in the FILE
+    (the coverage caveat riding every row, so the honesty survives the handoff to a
+    spreadsheet). “Showback” is glossed in visible text at first use (ux f.4).</p>
+</div>
+</body>
+</html>

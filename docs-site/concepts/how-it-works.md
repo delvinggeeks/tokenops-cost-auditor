@@ -47,6 +47,16 @@ from connected usage APIs are never classified — aggregate buckets have no
 per-request rows, and the lens says so instead of guessing.
 <!-- src: FR-36; services/dashboard/shapes.py; docs/12 INTENT LAW -->
 
+**Show back.** The Breakdown page allocates spend by model and by route (your
+call `tag`), and a workspace owner can download that allocation as a showback
+CSV — the file accounting uses to bill AI spend back to teams. Its figures are
+the audit artifact's exact bytes (the page rounds for reading; the file never
+rounds), and the spend-attribution coverage caveat rides on every row, so the
+honesty survives the handoff into a spreadsheet. Owner-only (billing
+permission); when nothing could be priced the file says so in one comment line
+instead of shipping an empty grid.
+<!-- src: FR-38; LLD §9.5; services/dashboard/showback.py; O-2 RBAC -->
+
 **Report.** All numbers are assembled once into a single report model, then
 rendered three ways from that one source: deterministic JSON, the private web
 report, and the PDF. The renderers never recompute anything — what you read in

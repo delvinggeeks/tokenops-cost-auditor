@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,9 +38,11 @@ from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.dashboard import shapes as shapes_svc
+from tokenops_cost_auditor.services.dashboard import showback as showback_svc
 from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_sources import user_plan
 from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
@@ -691,6 +693,38 @@ def breakdown_page(request: Request, user_email: str = Depends(current_user)) ->
             show_tour=False,
             **ctx,
         )
+
+
+@router.get("/breakdown/showback.csv")
+def breakdown_showback_csv(request: Request, user_email: str = Depends(current_user)) -> Response:
+    """FR-38 showback export — the by-model/by-route allocation as a finance-grade
+    CSV, figures byte-identical to the tokenomics artifact (LLD §9.5). O-2 RBAC:
+    owner-only (MANAGE_BILLING), the same gate as billing — the page hides the
+    affordance from other roles AND the route refuses them (defense in depth)."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # Authorize BEFORE committing, so a non-owner attempt leaves no orphan
+        # user row (the routes_billing idiom).
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only the workspace owner can download the showback CSV",
+        )
+        session.commit()
+        report_dir = request.app.state.settings.report_dir
+        audits = metrics.recent_done_audits(session, user.id, 1)
+        audit = audits[0] if audits else None
+        tk = _load_tokenomics(report_dir, audit)
+    if audit is None or tk is None:
+        # No audit yet, a coarse connected source (no per-request rows → no
+        # artifact), or an FR-21-purged artifact: nothing to export is an honest
+        # 404, never an empty 200 accounting could mistake for a real (zero) file.
+        raise HTTPException(status_code=404, detail="the latest audit has no tokenomics artifact")
+    return Response(
+        content=showback_svc.render_csv(tk),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="showback-{audit.id[:8]}.csv"'},
+    )
 
 
 @router.get("/guide", response_class=HTMLResponse)
