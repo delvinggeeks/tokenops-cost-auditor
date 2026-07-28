@@ -93,6 +93,16 @@ gets its first shipped surfaces. Slices:
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
 - Stripe/OAuth LIVE creds · domain cutover · UAT-2 · pending rulings — full list: `ROADMAP §4`.
+- **Pending rulings 2026-07-28 (recorded here so they exist outside chat):**
+  ① NOW sequencing order (all CANDIDATES wait on this) · ② R-SCOPE-STOP — a chat-session
+  ruling ("halt the platform read-API track until a programmatic-access request exists")
+  that was never recorded; record as a PARKED trigger or discard · ③ factory repo name
+  (blocks T-F1 only) · ④ chargeback models — register as FR or reject (LIFECYCLE-MAP ❓
+  row) · ⑤ **authorship-squash defect**: LE-3 squash-merge rewrites the author to the
+  GitHub account + appends a Co-authored-by trailer — every auto-merged commit since
+  2026-07-24 (65 by `92fa403`) violates rule 6 while the pre-merge gate passes (it checks
+  the branch, not the squash). Fix = flip auto-merge to rebase (repo settings permitting)
+  ± history rewrite — founder decision.
 - **Payments real-key testing (2026-07-28).** All four checkout slices are merged (#75 one-time
   INR, #80 INR subs, #78 one-time USD, #82 USD subs) and are code-complete + test-guarded, but
   each endpoint honestly 503s "checkout not switched on" until its keys are set. Founder lane:
