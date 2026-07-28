@@ -58,14 +58,16 @@ copy + pre-feature and coarse-depth honest states, verbatim API passthrough + sd
 types, docs/04 FR-36 row split out of the design span. T-F5 is next per the NOW order;
 T-F4's scope-check may now run._
 
+- **T-F5 · FR-38** — Issue #92 — showback CSV export: `dimension,name,calls,monthly_usd,
+  share,pct_attributed_caveat` per LLD §9.5, figures verbatim from `tokenomics.json`,
+  route + `/breakdown` affordance behind O-2 `MANAGE_BILLING`, honest empty/404 states ·
+  trace: `services/dashboard` serializer + `routes_dashboard`→`test_showback` + journey.
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
-- **T-F5 · FR-38** showback export for finance — tag/route cost CSV an owner can hand to accounting; the
-  allocation math (`tokenomics.by_route`, `pct_attributed`) is shipped, only the export
-  surface is missing (registered 2026-07-28 from the pillar-map gap analysis).
 - **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
   Part 2 lacks stops for platform API / orgs / payments / flywheel / statements; verify
   every stop against the current tree (registered 2026-07-28; entry point `docs/README.md`
