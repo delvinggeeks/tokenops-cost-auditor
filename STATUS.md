@@ -4009,3 +4009,12 @@ Registered per R-REQ-PIPELINE: FR-39..42 (docs/01 §I), T-E1..E5 in QUEUE PARKED
 no dates), LIFECYCLE-MAP enterprise-deploy section. Zero build authorized. Reconcile notes:
 the ruling's "docs/13-LIFECYCLE-MAP" = docs/internal/LIFECYCLE-MAP.md; perf page's "all six
 detectors" label is stale vs nine shipped — re-measure gap flagged inside FR-42.
+
+2026-07-28 (rule-6 absolute, founder-executed): history rewrite completed — 67 commits in
+7a8d344^..HEAD rewritten (61 violating: author/committer normalized to Lokesh Prasanna
+Kumar S, Co-authored-by/AI lines stripped; 6 clean commits reparented), 8 recorded SHAs
+remapped in STATUS (07-27 precedent), force-push under temporarily-lifted protection,
+protection restored (verified: force=false, 6 checks intact), remote verified by
+scripts/check_authorship.py: 439/439 clean. Tags untouched (all in clean prefix). Forward
+path already guarded by the rebase auto-merge flip. WitAura ownership noted; product name
+stays TokenOps (R-NAME-SEO).
