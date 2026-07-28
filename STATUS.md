@@ -3919,3 +3919,14 @@ subscribed honest states; a `@pytest.mark.integration` test skipped unless
 `STRIPE_SECRET_KEY` is in the env). Mid-cycle plan upgrade/downgrade parked to
 `docs/internal/BACKLOG.md` (cancel-and-resubscribe only this slice, per the issue).
 docs/04-TRACEABILITY.md row added.
+
+Issue #83 (fast-follow to #72): `sdk/js` gained `getAudit(auditId)` — wraps the existing
+`GET /api/v1/audits/{id}` with the read token (`read:audits`) and returns the parsed
+`AuditSummary` body DIRECTLY, no envelope (unlike `listAudits`/`listFindings`, which unwrap
+`.audits`/`.findings`). No new server capability, no auth change, no money-math touched
+(`estimated_cost_usd` passes straight through). New `AuditSummary` interface mirrors the
+route's real response shape exactly. Tests added to sdk/js/src/index.test.ts (fixture is a
+byte-for-byte copy of the real `get_audit` body; missing-readToken-throws-before-fetch;
+404 → `TokenOpsError.status === 404`; auditId URL-encoding) and
+tests/test_docs_site.py::TestSdkJsDocs (getAudit + its endpoint documented).
+docs-site/api/sdk-js.md and docs/04-TRACEABILITY.md (slice-7 row) updated in this commit.

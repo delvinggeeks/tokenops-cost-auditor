@@ -48,6 +48,91 @@ test("listFindings uses the read token and returns the array", async () => {
   assert.equal(findings[0]?.detector, "oversized_model");
 });
 
+test("getAudit GETs /api/v1/audits/{id} and returns the summary directly, no envelope", async () => {
+  let seen: { url: string; init: RequestInit } | undefined;
+  // Byte-for-byte copy of the real get_audit response body shape (routes_api_read.py).
+  const fixture = {
+    id: "aud_1",
+    status: "done",
+    scope_label: "openai,anthropic",
+    created_at: "2026-07-24T10:00:00Z",
+    completed_at: "2026-07-24T10:05:00Z",
+    totals: {
+      calls: 42,
+      input_tokens: 1000,
+      output_tokens: 250,
+      total_tokens: 1250,
+      estimated_cost_usd: 3.75,
+    },
+    model_count: 2,
+    finding_count: 5,
+  };
+  const client = new TokenOps({
+    readToken: "rt_test",
+    fetch: mockFetch(200, fixture, (url, init) => {
+      seen = { url, init };
+    }),
+  });
+  const audit = await client.getAudit("aud_1");
+  assert.ok(seen);
+  assert.match(seen.url, /\/api\/v1\/audits\/aud_1$/);
+  assert.equal((seen.init.headers as Record<string, string>).Authorization, "Bearer rt_test");
+  assert.equal(audit.id, "aud_1");
+  assert.equal(audit.status, "done");
+  assert.equal(audit.scope_label, "openai,anthropic");
+  assert.equal(audit.totals.total_tokens, audit.totals.input_tokens + audit.totals.output_tokens);
+  assert.equal(audit.model_count, 2);
+  assert.equal(audit.finding_count, 5);
+});
+
+test("getAudit URL-encodes the audit id", async () => {
+  let seen: { url: string; init: RequestInit } | undefined;
+  const client = new TokenOps({
+    readToken: "rt_test",
+    fetch: mockFetch(
+      200,
+      {
+        id: "aud/1 x",
+        status: "done",
+        scope_label: "",
+        created_at: null,
+        completed_at: null,
+        totals: { calls: 0, input_tokens: 0, output_tokens: 0, total_tokens: 0, estimated_cost_usd: 0 },
+        model_count: 0,
+        finding_count: 0,
+      },
+      (url, init) => {
+        seen = { url, init };
+      },
+    ),
+  });
+  await client.getAudit("aud/1 x");
+  assert.ok(seen);
+  assert.match(seen.url, /\/api\/v1\/audits\/aud%2F1%20x$/);
+});
+
+test("getAudit without a readToken throws before any fetch call", async () => {
+  let called = false;
+  const client = new TokenOps({
+    fetch: mockFetch(200, {}, () => {
+      called = true;
+    }),
+  });
+  await assert.rejects(() => client.getAudit("aud_1"), /readToken/);
+  assert.equal(called, false);
+});
+
+test("getAudit on a 404 raises TokenOpsError with .status === 404", async () => {
+  const client = new TokenOps({
+    readToken: "rt_test",
+    fetch: mockFetch(404, { error: { message: "audit not found" } }),
+  });
+  await assert.rejects(
+    () => client.getAudit("missing"),
+    (e: unknown) => e instanceof TokenOpsError && e.status === 404,
+  );
+});
+
 test("a non-2xx raises TokenOpsError carrying the envelope message + status", async () => {
   const client = new TokenOps({
     readToken: "rt_test",

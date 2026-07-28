@@ -39,6 +39,24 @@ export interface Audit {
   [key: string]: unknown;
 }
 
+/** One audit's own summary — totals, cost, counts, scope, timing. No prompt/completion field. */
+export interface AuditSummary {
+  id: string;
+  status: string;
+  scope_label: string;
+  created_at: string | null;
+  completed_at: string | null;
+  totals: {
+    calls: number;
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    estimated_cost_usd: number;
+  };
+  model_count: number;
+  finding_count: number;
+}
+
 export interface Finding {
   detector: string;
   severity: string;
@@ -109,6 +127,13 @@ export class TokenOps {
     if (!this.readToken) throw new Error("listAudits requires a readToken (rt_…)");
     const body = await this.request<{ audits: Audit[] }>("GET", "/api/v1/audits", this.readToken);
     return body.audits;
+  }
+
+  /** One audit's summary (totals, cost, counts, scope, timing). Requires `read:audits`. */
+  async getAudit(auditId: string): Promise<AuditSummary> {
+    if (!this.readToken) throw new Error("getAudit requires a readToken (rt_…)");
+    const path = `/api/v1/audits/${encodeURIComponent(auditId)}`;
+    return this.request<AuditSummary>("GET", path, this.readToken);
   }
 
   /** Findings for one audit, ranked by monthly $ impact. Requires `read:findings`. */
