@@ -370,6 +370,124 @@ class TestGetAuditSummary:
         }
 
 
+# --------------------------------- GET /api/v1/audits/{id}/breakdown (#85)
+
+
+class TestGetAuditBreakdown:
+    """Issue #85 (fast-follow to #72/#83): the tokenomics breakdown over the
+    read API — a VERBATIM passthrough of the tokenomics.json artifact the
+    runner wrote (no parallel money math), same read:audits scope + tenancy
+    path as GET /api/v1/audits/{id}."""
+
+    def test_breakdown_matches_the_artifact_on_disk(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["audit_id"] == audit_id
+        assert body["unavailable_reason"] is None
+
+        tk_path = Path(app.state.settings.report_dir) / audit_id / "tokenomics.json"
+        on_disk = json.loads(tk_path.read_text(encoding="utf-8"))
+        assert body["breakdown"] == on_disk  # byte-identical passthrough (no recompute)
+
+        # hand-derived cross-check on one by_model slice, style of test_tokenomics.py:
+        # share is cost's fraction of total spend, so it must equal the slice's own
+        # monthly $ divided by the vitals' total monthly $ (the monthly factor cancels).
+        model_slice = body["breakdown"]["by_model"][0]
+        total = body["breakdown"]["monthly_spend_usd"]
+        assert total > 0
+        assert model_slice["share"] == pytest.approx(model_slice["monthly_usd"] / total)
+
+    def test_cross_workspace_audit_is_404(self, app: FastAPI) -> None:
+        grant(app)
+        other = grant(app, email=OTHER)
+        their_audit = seed_audit(app, other)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        r = client.get(
+            f"/api/v1/audits/{their_audit}/breakdown",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 404  # existence oracle closed, same as /findings and /{id}
+
+    def test_scope_enforced_403_without_audits_scope(self, app: FastAPI) -> None:
+        uid = grant(app)
+        audit_id = seed_audit(app, uid)
+        client = TestClient(app)
+        token = mint_token(client, ["read:findings"])  # NOT read:audits
+        r = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 403
+        assert r.json()["error"]["code"] == "forbidden"
+
+    def test_missing_artifact_is_honest_200_never_500(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        tk_path = Path(app.state.settings.report_dir) / audit_id / "tokenomics.json"
+        tk_path.unlink()
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["breakdown"] is None
+        assert body["unavailable_reason"]  # honest, non-empty — never a fabricated zero
+
+    def test_corrupt_artifact_is_honest_200_never_500(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        tk_path = Path(app.state.settings.report_dir) / audit_id / "tokenomics.json"
+        tk_path.write_text("{not json", encoding="utf-8")
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["breakdown"] is None
+        assert body["unavailable_reason"]
+
+    def test_fr22_shape_counts_and_dollars_only(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        blob = resp.text.lower()
+        assert "prompt" not in blob and "completion" not in blob and "content" not in blob
+
+    def test_strict_json_no_nan_or_infinity_token(self, app: FastAPI) -> None:
+        grant(app)
+        audit_id = seed_pipeline_audit(app, "waste_pack_anthropic.jsonl", email=EMAIL)
+        app.state.runner.run(audit_id)
+        client = TestClient(app)
+        token = mint_token(client, ["read:audits"])
+        resp = client.get(
+            f"/api/v1/audits/{audit_id}/breakdown", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert resp.status_code == 200
+        assert "NaN" not in resp.text and "Infinity" not in resp.text
+        json.loads(resp.text)  # strict parser — would raise on a stray NaN/Infinity token
+
+
 # ------------------------------------------------------ usage metering (#59)
 
 

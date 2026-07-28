@@ -1,8 +1,9 @@
 """Read API (S-6, R-SDK-PLATFORM) — the READ half of the platform.
 
-GET /api/v1/audits                    (scope read:audits)
-GET /api/v1/audits/{id}                (scope read:audits)
-GET /api/v1/audits/{id}/findings      (scope read:findings)
+GET /api/v1/audits                       (scope read:audits)
+GET /api/v1/audits/{id}                   (scope read:audits)
+GET /api/v1/audits/{id}/findings         (scope read:findings)
+GET /api/v1/audits/{id}/breakdown        (scope read:audits)
 
 Every response is COUNTS AND DOLLARS ONLY (FR-22): audit status, token counts,
 spend figures, finding severities and dollar impact. No prompt or completion
@@ -15,6 +16,7 @@ exist.
 
 from __future__ import annotations
 
+import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -23,6 +25,7 @@ from sqlalchemy import func, select
 
 from tokenops_cost_auditor.persistence.models import Audit, CallAggregate, FindingRow
 from tokenops_cost_auditor.persistence.repo import active_workspace_id
+from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.web.api_auth import ReadPrincipal, require_read_scope
 
 router = APIRouter(prefix="/api/v1", tags=["read-api"])
@@ -166,3 +169,56 @@ def list_findings(
             for f in rows
         ]
     return JSONResponse(status_code=200, content={"audit_id": audit_id, "findings": findings})
+
+
+def _json_safe(value: object) -> object:
+    """Coerce a non-finite float (NaN/Infinity) to None. `allow_nan=False` on
+    Starlette's JSONResponse would otherwise raise ValueError -> 500 on such a
+    value; `tokenomics.compute` structurally excludes NaN already, so this is
+    defense-in-depth for an older/partial artifact, not a known live bug."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(v) for v in value]
+    return value
+
+
+@router.get("/audits/{audit_id}/breakdown")
+def get_audit_breakdown(
+    request: Request,
+    audit_id: str,
+    principal: Annotated[ReadPrincipal, Depends(_needs_audits)],
+) -> JSONResponse:
+    """The audit's tokenomics breakdown — vitals, per-model/per-route cost
+    allocation, and data coverage — passed through VERBATIM from the
+    tokenomics.json artifact the runner wrote at audit time (no parallel money
+    math; a second computation could disagree with the report and with the
+    HTML `/breakdown` page). Same `read:audits` scope + tenancy path as
+    GET /api/v1/audits/{audit_id}. When the artifact is absent, corrupt, or the
+    audit predates the feature, this is a 200 with `breakdown: null` and an
+    honest `unavailable_reason` — never a 404 (the audit exists and is the
+    caller's own) and never fabricated zeros."""
+    with request.app.state.session_factory() as session:
+        audit = session.get(Audit, audit_id)
+        # Tenant isolation: outside the principal's active workspace (or absent)
+        # is an identical 404 — no existence oracle across workspaces (O-1).
+        if audit is None or audit.workspace_id != active_workspace_id(session, principal.user_id):
+            raise HTTPException(status_code=404, detail="audit not found")
+    report_dir = request.app.state.settings.report_dir
+    artifact = tokenomics_svc.load_artifact(report_dir, audit_id)
+    if artifact is None:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "audit_id": audit_id,
+                "breakdown": None,
+                "unavailable_reason": (
+                    "no tokenomics breakdown is available for this audit "
+                    "(not yet computed, purged, or unreadable)"
+                ),
+            },
+        )
+    body = {"audit_id": audit_id, "breakdown": _json_safe(artifact), "unavailable_reason": None}
+    return JSONResponse(status_code=200, content=body)

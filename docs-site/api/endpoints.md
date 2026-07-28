@@ -147,6 +147,27 @@ returns its partial totals with `status` reflecting that, never a 500.
 
 Responses: `200`, `422`
 
+## `GET /api/v1/audits/{audit_id}/breakdown`
+
+Get Audit Breakdown.
+
+The audit's tokenomics breakdown — vitals, per-model/per-route cost
+allocation, and data coverage — passed through VERBATIM from the
+tokenomics.json artifact the runner wrote at audit time (no parallel money
+math; a second computation could disagree with the report and with the
+HTML `/breakdown` page). Same `read:audits` scope + tenancy path as
+GET /api/v1/audits/{audit_id}. When the artifact is absent, corrupt, or the
+audit predates the feature, this is a 200 with `breakdown: null` and an
+honest `unavailable_reason` — never a 404 (the audit exists and is the
+caller's own) and never fabricated zeros.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `audit_id` | path | yes | string |
+| `Authorization` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `GET /api/v1/audits/{audit_id}/findings`
 
 List Findings.

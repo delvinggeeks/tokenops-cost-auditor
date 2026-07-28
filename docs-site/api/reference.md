@@ -383,6 +383,47 @@ audit that hasn't finished yet returns its honest partial totals with
 }
 ```
 
+### Get an audit's tokenomics breakdown
+
+`GET /api/v1/audits/{audit_id}/breakdown` · scope `read:audits`
+
+Returns the same enterprise tokenomics breakdown the `/breakdown` dashboard page
+shows — vitals (spend, tokens in/out/cached, cache-hit rate, out:in ratio,
+cost-per-1k-out, cost-per-request), per-model and per-route cost allocation, and
+data coverage — passed through **verbatim** from the report artifact computed
+at audit time (no parallel computation, so it can never disagree with the
+report or the dashboard). An audit that isn't yours is a `404` (never a `403`),
+same as findings above.
+
+When no breakdown is available for the audit — it hasn't been computed yet,
+the report artifact was purged, or it's unreadable — this returns `200` with
+`"breakdown": null` and a short `"unavailable_reason"` string. This is **not**
+an error and **not** a zero-filled breakdown (fabricating `$0.00` vitals would
+be indistinguishable from a real all-zero audit); code defensively — check
+`breakdown` for `null` before reading its fields.
+
+```json
+{
+  "audit_id": "…",
+  "breakdown": {
+    "monthly_spend_usd": 42.5,
+    "tokens_in": 900000, "tokens_out": 300000, "tokens_cached": 90000,
+    "cache_hit_rate": 0.1, "out_in_ratio": 0.33,
+    "cost_per_1k_out": 0.14, "cost_per_request": 0.035,
+    "by_model": [
+      {"name": "gpt-4o", "calls": 800, "monthly_usd": 42.5, "share": 1.0,
+       "cache_hit_rate": 0.1, "out_in_ratio": 0.33, "cost_per_1k_out": 0.14}
+    ],
+    "by_route": [
+      {"name": "chat", "calls": 800, "monthly_usd": 42.5, "share": 1.0,
+       "cache_hit_rate": 0.1, "out_in_ratio": 0.33, "cost_per_1k_out": 0.14}
+    ],
+    "pct_priced": 1.0, "pct_attributed": 1.0
+  },
+  "unavailable_reason": null
+}
+```
+
 ### List findings
 
 `GET /api/v1/audits/{audit_id}/findings` · scope `read:findings`
