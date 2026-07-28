@@ -80,6 +80,19 @@ T-OPS-04: pricing_refresh diff logic on fixture pages (offline); output
 lists new/changed/unreachable; never writes prices.yaml.
 T-WEB-01: landing contains verbatim data-policy string (FR-23).
 T-CLI-01: CLI produces PDF from F1.
+[amendment 2026-07-28, T-F5 (FR-38) — vv gate note G-T-F5 f.1; the wider
+FR-3x-era refresh of this doc is a registered QUEUE candidate:]
+T-SHOW-01..06 (tests/test_showback.py, serializer): pinned CSV-byte golden
+incl. CRLF; empty allocation → header + one comment line; json round-trip
+byte-verbatim property on every money/share field; fixed-template caveat on
+every row; model-before-route artifact order; comma/quote name CSV-quoting.
+T-SHOW-07..12 (route + surface): owner 200 text/csv with attachment
+filename; body byte-identical to on-disk artifact; every non-billing role
+403 (O-2); no-audit / coarse-source / purged-artifact 404; FR-22
+marker-absence on the CSV body; affordance owner-only and absent without
+an artifact.
+T-SHOW-13 (journey): upload → audit done → button → download → figures
+match the artifact byte-for-byte.
 
 ## 4. CI pipeline (GitHub Actions)
 
