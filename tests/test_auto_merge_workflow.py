@@ -28,7 +28,9 @@ class TestAutoMergeWorkflowIsSafe:
     def test_it_uses_native_auto_merge_so_branch_protection_is_the_gate(self) -> None:
         run = _wf()["jobs"]["arm-auto-merge"]["steps"][0]["run"]
         assert "gh pr merge" in run and "--auto" in run  # queue, don't force
-        assert "--squash" in run
+        # rebase, not squash: squash rewrote the author + appended a Co-authored-by
+        # trailer, violating CLAUDE.md rule 6 (founder ruling 2026-07-28).
+        assert "--rebase" in run
 
     def test_it_merges_as_the_loop_pat_so_downstream_workflows_trigger(self) -> None:
         # CRITICAL: a merge under GITHUB_TOKEN is attributed to the github-actions app,

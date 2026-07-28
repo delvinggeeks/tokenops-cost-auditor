@@ -36,11 +36,14 @@ scope — R-PLATFORM (API-first platform + enterprise: SDKs, MCP, SSO/SCIM), R-O
 
 _T-P8 SHIPPED 2026-07-28 — #86 merged (endpoint + SDK + docs/04 row, gates green)._
 
-- `T-D3 · QUEUE law 5 (process) · BACKLOG/ROADMAP prune — re-verify all ~30 BACKLOG items +
-  ROADMAP overlaps against shipped reality: shipped → delete (docs/04 owns it) · superseded
-  → delete with one-line note · live → one line + trigger. Known-stale pair to fix:
-  "API keys / programmatic access" (S-6 shipped it), "Orgs/SSO (X-03 stands)" (relaxed by
-  R-ORG) · trace: docs-only PR → gate round · sequenced by founder 2026-07-28`
+_T-D3 SHIPPED 2026-07-28 — BACKLOG/ROADMAP prune executed: known-stale pair fixed (API
+keys deleted as shipped S-6; Orgs/SSO corrected to reflect R-ORG's relaxation, SSO itself
+still parked behind O-3); ~28-bullet trigger register shrunk to one line + trigger each;
+WP-P1.5/WP-P2-AGG/WP-MCP/View-report-link/Plain-English-PDF deleted as
+shipped-or-superseded (found during the sweep, beyond the two named items);
+WP-PIPELINE-UI + WP-REPORT-EXPLORER framing corrected to shipped-with-residue; ROADMAP §5
++ this file's S-3 line corrected (read tools shipped, write/parity still parked). Full
+count in STATUS.md._
 
 > Each task lands here as one line:
 > `T-<id> · FR-xx | R-RULING · <vertical-slice one-liner> · trace: <module>→<test>`
@@ -108,7 +111,8 @@ gets its first shipped surfaces. Slices:
 Each fires on a named customer/demand event. Pulling one forward without its trigger
 **is** the divergence we're stopping.
 
-- S-2 OTLP ← first streaming customer · S-3 MCP ← API-key signal · O-3 SSO ← first team customer
+- S-2 OTLP ← first streaming customer · S-3 MCP write-tools/get_audit-parity ← API-key
+  signal (read tools shipped, Issue #54) · O-3 SSO ← first team customer
 - M-FLY-2 calibration ← n≥25 peer data · D7 export detector ← day-45 · (full list: `ROADMAP §5`)
 - L1 peer benchmarks ← n≥10 opted-in workspaces · L3 predictive ← n≥50 + 6mo history
   (docs/12 §Stage-3) · T5 gateway + L4 policy ← first in-VPC-blocking enterprise deal
