@@ -4,7 +4,7 @@ The adoption wedge of PLAN-SDK: a customer mints an INGEST-ONLY key on
 Sources, puts `TOKENOPS_COST_AUDITOR_DSN=https://ik_<key>@<host>` in their
 environment, and their code (curl today; the S-1 SDK next) POSTs per-call
 usage records to /api/v1/ingest. Records enter the same T1 pipeline as an
-upload — full six-detector coverage, FR-26 idempotent.
+upload — full detector coverage, FR-26 idempotent.
 
 Trust boundary, honestly: the key is WRITE-ONLY by construction — every
 route it authorizes ingests counts; none reads. A leaked DSN can pollute

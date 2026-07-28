@@ -6,7 +6,7 @@
 That is the whole setup. After init(), every OpenAI and Anthropic call your
 process makes is auto-instrumented: token counts, model, timing and status
 are batched and shipped to your account, where they run through the full
-six-detector audit. Prompt and completion TEXT are never read, never
+detector audit. Prompt and completion TEXT are never read, never
 serialized, never sent (FR-22 by construction — see sdk/extract.py). The
 SDK is OBSERVE-ONLY: it never sits in your request path and never alters,
 slows, or breaks a call (X-01 — see sdk/instrument.py). No DSN set = the

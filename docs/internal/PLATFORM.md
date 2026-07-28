@@ -16,8 +16,9 @@ HTML templates · 14 architecture docs.
 
 A **TokenOps cost auditor**: customers connect their LLM usage (upload a log,
 install the SDK, or connect a provider like OpenAI/Anthropic/Azure/Bedrock/Vertex),
-and the platform audits it for waste — six detectors (oversized model, missing
-cache, prompt bloat, retry storms, unbounded max_tokens, chatty loops) — and
+and the platform audits it for waste — nine detectors (oversized model, missing
+cache, prompt bloat, retry storms, unbounded max_tokens, chatty loops, spend
+concentration, ineffective cache, spend anomaly) — and
 returns a dollar-ranked report with fixes. It never sits in the customer's request
 path (no proxy, no enforcement — X-01/X-02); it OBSERVES and advises.
 

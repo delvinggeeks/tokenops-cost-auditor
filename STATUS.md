@@ -4163,3 +4163,40 @@ measured slow export); u.1 "detector fire rates" jargon → "which cost patterns
 and how often" (mockup synced, the full what-leaves list intact); u.2 consent-card icon
 detector→eye (existing sprite symbol — a consent surface shows what can be SEEN, not a
 detector; no new tone, sprite-parity untouched).
+
+2026-07-29 (T-D1 · internal-docs refresh, Issue #99 — build session): SHIPPED (PR open).
+Session start verified #97/#98 merged + #95 closed; prod promotion still NOT dispatched —
+staging carries T-F3/T-F5/T-F2 awaiting the founder's rendered-page review. The
+QUEUE-mandated T-F4 SCOPE-CHECK ran first: the FR-37 realized-delta MECHANIC is already
+shipped — savings.compute() credits each Applied finding min(max(0, baseline−recomputed),
+baseline) at the next ≥7-day audit with honest pending/identified, and statements/build.py
+inherits the figure — so T-F4 SHRINKS (not collapses) to the LLD §9.4 residue:
+per-finding VerifiedLine(amount_usd, finding_ref, from_audit, to_audit) emission, the
+attributed lines rendered in the statement VERIFIED section (provenance = both audit
+ids), and the FR-37 acceptance journey test; totals must not move (existing goldens are
+the tripwire). Recorded on the QUEUE T-F4 line (spine commit 3fc0c8c). T-D1 then filed
+as Issue #99 with §2 criteria and registered in NOW. The slice: CODE-TOUR.md verified
+stop-by-stop against the tree — Stop 3 agent-verified pricing (R-AUTO-PRICING,
+pricing_verify.py) + the price file's REAL path (the old `data/prices.yaml` citation was
+itself drift, caught by the new tripwire on its first run); Stop 4 rewritten for the nine
+detectors (d1–d6/d8–d10, d7 never shipped, aggregate-coarseness caveat, detector_copy);
+Stop 9 rewritten for Standard Checkout (plans free/pro/team, Orders/Checkout-Session
+credits, subscriptions→entitlements(), atomic claim_credit unchanged); Stop 11 31 tables
+/ chain 001→024; Stop 12 scripts list refreshed — plus four NEW Part-2 stops: 13 platform
+API (SDK→ingest, scoped read API, OAuth-server+PKCE, MCP), 14 orgs/RBAC (tenant-blind
+engine), 15 flywheel (L0 frame, ladder, FR-35 export), 16 statements (the ONE
+verified-savings formula). docs/README.md reading-order note + known-stale register line
+cleared. R-IMPROVISE in-slice: stale "six-detector" claims made count-free in TWO code
+docstrings (sdk/__init__.py, routes_ingest.py) and PLATFORM.md §1 corrected to the nine;
+PLAN-era docs (PLAN, PLAN-SDK, PLAN-COPILOT) keep their six-detector language as
+era-accurate history, NOT drift; docs/01 FR-42 text + docs-site perf claims deliberately
+untouched (T-D4 owns the re-time). Parked to BACKLOG (one line): tour stops for
+dashboard/alerts/copilot/collector. New tests/test_docs_internal.py (authored Sonnet per
+TE-5): cited-path existence, cited-symbol resolution, detector-count word pinned to
+registry.DETECTORS (a d11 without a tour touch fails the suite), no literal six-detector
+claims under src/. Full suite green — 1309 passed / 5 skipped, exit 0 (verified by
+marker count; two earlier racing background runs were killed and re-run cleanly);
+coverage gate green (services 96.4%, money files 100%). No money-math change, no
+migration, no docs/04 row (spine/docs card, T-D3 class). Gate round: CI on the PR; no ux
+gate (internal docs, no customer surface). Next per NOW order: T-F4 (shrunk scope above)
+→ T-D2.
