@@ -18,18 +18,84 @@ how agents hallucinate). Detail lives in the sources; sequence lives here.
 2. **Nothing is built that isn't a NOW task here.** A new idea → `docs/01` (real scope) or `BACKLOG.md` (one line), never straight to code.
 3. **Done = its `docs/04` row updated in the same PR** + gate round green. No other "done".
 4. This file is the control surface, set up by hand; the **tasks on it go through the loop** (card → fresh session → reviewers → merge).
+5. **Single flow (founder 2026-07-28).** An unshipped requirement lives as exactly ONE line
+   in exactly ONE zone of this file (NOW / CANDIDATES / BLOCKED / PARKED). BACKLOG and the
+   PLAN docs are reference detail, never a second queue — anything actionable there is
+   surfaced here at reconcile, or it does not exist.
+6. **Reconcile at session start.** Diff this file against open issues + the docs/04 tail:
+   mark shipped, surface strays. A requirement found in any doc but absent here is a bug in
+   the spine, fixed in the same session — never silently dropped (R-IMPROVISE).
 
 ## NOW — buildable, in order
 
-_Empty. All 48 FR/NFR are shipped + traced (`docs/04`); the product frontier is
-exhausted (2026-07-26). Nothing is silently missing — verified by req↔trace diff._
+_Reconciled 2026-07-28._ The 2026-07-26 "frontier exhausted" note is **superseded**: all 48
+original FR/NFR remain shipped + traced (`docs/04`), but founder rulings since have opened new
+scope — R-PLATFORM (API-first platform + enterprise: SDKs, MCP, SSO/SCIM), R-ORG
+(workspaces/RBAC), R-IAM, and the payments pivot to real Standard Checkout. The frontier is
+**open again**, and is now tracked by RULING, not by FR count.
 
-> When scope opens, each task lands here as one line:
-> `T-<id> · FR-xx · <vertical-slice one-liner> · trace: <module>→<test>`
+_T-P8 SHIPPED 2026-07-28 — #86 merged (endpoint + SDK + docs/04 row, gates green). NOW is
+empty again; the founder sequences the next slice from CANDIDATES._
+
+> Each task lands here as one line:
+> `T-<id> · FR-xx | R-RULING · <vertical-slice one-liner> · trace: <module>→<test>`
+
+## CANDIDATES — verified gaps; the founder sequences these into NOW
+
+Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
+re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
+
+- **MCP `get_audit` parity** — `mcp/server.py` `TOOLS` carries only `list_audits`/`list_findings`,
+  while the read API and the JS SDK both expose the per-audit summary (verified 2026-07-28).
+- **MCP `get_breakdown`** — the agent surface for T-P8's endpoint (parked by #85).
+- **`GET /api/v1/savings`, `GET /api/v1/sources`** — pre-registered as "separate later slices" by #83.
+- **Cross-audit drift over the API** — `services/dashboard/drift` is browser-only (parked by #85).
+- **Showback export for finance** — tag/route cost CSV an owner can hand to accounting; the
+  allocation math (`tokenomics.by_route`, `pct_attributed`) is shipped, only the export
+  surface is missing (registered 2026-07-28 from the pillar-map gap analysis).
+- **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
+  Part 2 lacks stops for platform API / orgs / payments / flywheel / statements; verify
+  every stop against the current tree (registered 2026-07-28; entry point `docs/README.md`
+  ships same day).
+- **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
+  components + sequence diagrams covering read API, payments, orgs, flywheel
+  (architect-gated per its charter — D6/D13-style pass).
+- **T-D3 BACKLOG/ROADMAP prune (the decompose-and-shrink slice, law 5)** — re-verify all
+  ~30 BACKLOG items + ROADMAP overlaps against shipped reality: shipped → delete (docs/04
+  owns it) · superseded → delete with a one-line note · live → keep one line + its trigger.
+  Two proven stale 2026-07-28: "API keys / programmatic access" (S-6 shipped it) and
+  "Orgs/SSO (X-03 stands)" (X-03 relaxed by R-ORG; workspaces/RBAC shipped).
+
+**R-MODEL-FACTORY (founder 2026-07-28).** The learning lifecycle gets its own FACTORY: a
+separate repo with eval-gated CI running daily; the platform consumes versioned model
+artifacts behind a default-off flag; cross-workspace learning happens ONLY through an
+opt-in, FR-22/R-ZTA-safe aggregate export. Dev-persona law (docs/12 INTENT + COPY LAW)
+gets its first shipped surfaces. Slices:
+
+- **T-F1 factory scaffold** — separate repo (name: founder decides): eval harness + golden
+  baselines + promotion gate + daily scheduled CI (evals-only until docs/12 §Stage-3
+  thresholds fire — no training on n=1) · trace: factory CI green → platform artifact-loader test
+- **T-F2 cohort export + consent** — per-workspace opt-in flag; aggregate-only features
+  (counts/ratios/percentiles, schema-versioned, k-floor n≥10 = the L1 threshold); tenancy
+  stripped at the web/persistence boundary, engine stays tenant-blind (R-ORG) · overlaps
+  `services/flywheel/{cohort,benchmarks}.py` — verify before building · trace: export
+  golden + consent journey
+- **T-F3 behaviour lens v1** — BEHAVIORAL intent (docs/12 INTENT LAW) surfaced per route:
+  shape chips (loop / retry-burst / context-growth / unclaimed-cache) on the breakdown page
+  + read API, fix-first copy per COPY LAW ("your pipeline, same output, lower bill");
+  deterministic, engine-pure · trace: shape fixtures → ux gate at both depths
+- **T-F4 realized-delta per finding** — Applied-verdict findings (flywheel L0) get a
+  next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
+  provenance) · SCOPE-CHECK FIRST: `services/statements/build.py` already carries verified
+  sections — measure the gap; this slice may shrink or collapse
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
 - Stripe/OAuth LIVE creds · domain cutover · UAT-2 · pending rulings — full list: `ROADMAP §4`.
+- **Payments real-key testing (2026-07-28).** All four checkout slices are merged (#75 one-time
+  INR, #80 INR subs, #78 one-time USD, #82 USD subs) and are code-complete + test-guarded, but
+  each endpoint honestly 503s "checkout not switched on" until its keys are set. Founder lane:
+  provider env keys + the provider-dashboard webhook endpoints. No agent work is blocked on this.
 - (LE-2 continuous deploy is LIVE, not blocked — staging auto-deploys on every merge to
   `main`, verified `curl https://staging.tokenops-cost-auditor.com/healthz` →
   `{"ok":true,"db":true}`, same for prod. Branch protection on `main` is also LIVE. The
@@ -43,6 +109,8 @@ Each fires on a named customer/demand event. Pulling one forward without its tri
 
 - S-2 OTLP ← first streaming customer · S-3 MCP ← API-key signal · O-3 SSO ← first team customer
 - M-FLY-2 calibration ← n≥25 peer data · D7 export detector ← day-45 · (full list: `ROADMAP §5`)
+- L1 peer benchmarks ← n≥10 opted-in workspaces · L3 predictive ← n≥50 + 6mo history
+  (docs/12 §Stage-3) · T5 gateway + L4 policy ← first in-VPC-blocking enterprise deal
 
 ## Superseded for SEQUENCING → this file
 
