@@ -104,6 +104,18 @@ numbered findings citing `file:line`, ≤300 words); TE-10 a FAIL stops the card
 main thread, re-run the failed gate on the NEW diff; TE-11 pinned toolchain only. K-2: a fix
 that fails twice on the same test → STOP, write STATUS, ask the founder (never attempt-loop #3).
 
+**WHERE the round runs (founder ruling 2026-07-28, T-F3 session):** LE-4 is LIVE —
+`gate-round.yml` has run the agent round on every PR since the credential landed
+(2026-07-25; verified on PRs #84/#86/#88). **CI is the gate-round home.** The build
+session does NOT hand-run the review gates locally anymore (that duplicates the CI round
+— TE-1 spirit): build → tests/tripwires locally → open the PR → the CI round reviews →
+fixes land on the PR branch and CI re-gates. Two exceptions stay in-session by nature:
+the **ux mockup gate** (R-DESIGN: mockups gate BEFORE wiring — there is no PR yet) and
+any **pre-wiring scope check** a card names. system-tester's post-deploy walk is
+unchanged. The "run BY HAND in the main thread" language in `gate-round.yml`'s header
+and anywhere else in this file describes the pre-2026-07-28 era and is superseded by
+this clause.
+
 ---
 
 ## 5. CI + deploy — the RECONCILED pipeline (this is the current reality)
