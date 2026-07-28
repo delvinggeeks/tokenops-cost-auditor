@@ -3950,3 +3950,16 @@ null-breakdown contract), `docs-site/api/sdk-js.md` (table row + snippet), `endp
 regenerated (`scripts/export_openapi.py --check` clean). Parked to
 `docs/internal/BACKLOG.md`: an MCP `get_breakdown` tool and cross-audit drift over the
 API. docs/04-TRACEABILITY.md (slice-8 row) updated in this commit.
+
+2026-07-28 (Fable session, post-#86 — requirements/design stage): #85→#86 verified merged
+(verbatim-passthrough + honest-null both genuinely tested; endpoints.md regenerated, CI-proven).
+Session rulings, all committed: QUEUE laws 5–6 (single flow — one line, one zone; session-start
+reconcile; chat decision without an FR = lost scope); R-MODEL-FACTORY → FR-34..38 (docs/01 §H)
+with HLD §8 + LLD §9 Fable design deltas (factory sibling repo, CohortExportEnvelope v1 k≥10,
+ModelArtifactPort default-off, ShapeClass lens, RealizedDelta, showback CSV); R-REQ-PIPELINE
+(docs/09 §9 + TE-5 amendment: Fable analyzes/designs → Opus 5 implements → Sonnet 5 unit-tests);
+LIFECYCLE-MAP.md (completeness view; one ❓ = chargeback) + docs/README.md (internal front door);
+T-D1/D2/D3 docs-maintenance candidates. Found + recorded, awaiting founder: authorship-squash
+defect (LE-3 squash rewrites author + adds trailer; 65 commits since 07-24 violate rule 6;
+pre-merge gate structurally blind to it) and the unrecorded R-SCOPE-STOP ruling — both now in
+QUEUE BLOCKED ① – ⑤ with the sequencing/naming/chargeback decisions. Commits a3207b0, 3351f6f.
