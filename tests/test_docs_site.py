@@ -204,6 +204,7 @@ class TestApiReferenceAccuracy:
             "/api/v1/audits/{audit_id}/status",
             "/api/v1/audits",  # S-6 read endpoint
             "/api/v1/audits/{audit_id}/findings",  # S-6 read endpoint
+            "/api/v1/audits/{audit_id}/breakdown",  # R-PLATFORM slice 8
             "/oauth/authorize",  # S-6 OAuth
             "/oauth/token",  # S-6 OAuth
             "/r/{token}",
@@ -272,6 +273,7 @@ class TestApiReferenceAccuracy:
         ("GET", "/api/v1/audits/{audit_id}"),
         ("GET", "/api/v1/audits/{audit_id}/status"),
         ("GET", "/api/v1/audits/{audit_id}/findings"),
+        ("GET", "/api/v1/audits/{audit_id}/breakdown"),
     )
 
     def test_12_every_current_v1_endpoint_documented_by_method(self, app) -> None:
@@ -368,6 +370,10 @@ class TestSdkJsDocs:
     def test_documents_get_audit(self) -> None:
         assert "getAudit" in self.SDK
         assert "/api/v1/audits/{id}" in self.SDK
+
+    def test_documents_get_breakdown(self) -> None:
+        assert "getBreakdown" in self.SDK
+        assert "/api/v1/audits/{id}/breakdown" in self.SDK
 
     def test_states_counts_only_fr22(self) -> None:
         body = re.sub(r"\s+", " ", self.SDK).lower()

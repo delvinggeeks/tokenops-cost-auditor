@@ -532,3 +532,12 @@ it under R-PIPELINE-UI-SEQ.
 - STRIPE SUBSCRIPTION UPGRADE/DOWNGRADE (Issue #81 noted follow-up). Same limitation as
   the Razorpay row above, now also true of the recurring USD Checkout Session: mid-cycle
   Pro↔Team moves are cancel-and-resubscribe, not an in-place swap.
+
+- MCP `get_breakdown` TOOL + `get_audit` PARITY GAP (Issue #85 noted follow-up). The
+  tokenomics breakdown and the audit summary are now reachable over the read API
+  (`GET /api/v1/audits/{id}/breakdown`, `GET /api/v1/audits/{id}`) but `mcp/server.py`
+  only exposes `list_audits`/`list_findings` — no MCP tool wraps either endpoint yet.
+
+- CROSS-AUDIT DRIFT OVER THE API (Issue #85 noted follow-up). The `/breakdown` HTML
+  page's "vs your last audit" trend (`services/dashboard/drift`) is not part of
+  `GET /api/v1/audits/{id}/breakdown` — a separate slice if a read-API consumer needs it.

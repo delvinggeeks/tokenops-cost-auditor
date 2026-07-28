@@ -3930,3 +3930,23 @@ byte-for-byte copy of the real `get_audit` body; missing-readToken-throws-before
 404 → `TokenOpsError.status === 404`; auditId URL-encoding) and
 tests/test_docs_site.py::TestSdkJsDocs (getAudit + its endpoint documented).
 docs-site/api/sdk-js.md and docs/04-TRACEABILITY.md (slice-7 row) updated in this commit.
+
+Issue #85 (R-PLATFORM slice 8, fast-follow to #72/#83): the tokenomics breakdown became
+an API capability. `services/dashboard/tokenomics.py` gained `load_artifact(report_dir,
+audit_id)` — the exact absent/corrupt/purged-safe loader `routes_dashboard._load_tokenomics`
+used inline, promoted so the HTML `/breakdown` page and the new read endpoint can't
+disagree on when a breakdown exists; `_load_tokenomics` is now a thin delegation with its
+signature unchanged, so `tests/test_breakdown.py`/`tests/test_drift_journey.py` pass
+untouched. `web/routes_api_read.py` gained `GET /api/v1/audits/{id}/breakdown` — same
+`read:audits` scope + tenancy path as `GET /api/v1/audits/{id}` (other-workspace id 404,
+no new scope), the artifact's figures passed through VERBATIM (no parallel money math, no
+golden owed). Absent/corrupt/pre-feature artifact → 200 with `breakdown: null` + an honest
+`unavailable_reason`, never a 404/500/fabricated zero; a `_json_safe` walk coerces any
+stray NaN/Infinity float to `null` (defense-in-depth against Starlette's `allow_nan=False`
+500, not a known live bug). `sdk/js` gained `getBreakdown(auditId)` returning the WHOLE
+typed response (`{audit_id, breakdown, unavailable_reason}` — not unwrapped, so a caller
+keeps the honest-null reason). Docs: `docs-site/api/reference.md` (new section + the
+null-breakdown contract), `docs-site/api/sdk-js.md` (table row + snippet), `endpoints.md`
+regenerated (`scripts/export_openapi.py --check` clean). Parked to
+`docs/internal/BACKLOG.md`: an MCP `get_breakdown` tool and cross-audit drift over the
+API. docs/04-TRACEABILITY.md (slice-8 row) updated in this commit.
