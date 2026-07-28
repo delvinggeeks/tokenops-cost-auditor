@@ -58,14 +58,17 @@ copy + pre-feature and coarse-depth honest states, verbatim API passthrough + sd
 types, docs/04 FR-36 row split out of the design span. T-F5 is next per the NOW order;
 T-F4's scope-check may now run._
 
+_T-F5 SHIPPED 2026-07-28 — Issue #92 slice: `services/dashboard/showback.to_csv`
+(LLD §9.5, header verbatim, figures verbatim from the artifact — no re-rounding),
+`GET /breakdown/showback.csv` behind O-2 `Perm.MANAGE_BILLING`, the `/breakdown`
+download affordance (owner-only, artifact-gated), docs/04 FR-38 row split out of the
+design span. T-F2 is next per the NOW order._
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
-- **T-F5 · FR-38** showback export for finance — tag/route cost CSV an owner can hand to accounting; the
-  allocation math (`tokenomics.by_route`, `pct_attributed`) is shipped, only the export
-  surface is missing (registered 2026-07-28 from the pillar-map gap analysis).
 - **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
   Part 2 lacks stops for platform API / orgs / payments / flywheel / statements; verify
   every stop against the current tree (registered 2026-07-28; entry point `docs/README.md`

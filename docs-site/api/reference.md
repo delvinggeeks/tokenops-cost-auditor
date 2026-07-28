@@ -442,6 +442,17 @@ back-fills a classification), and it never exists for connected-source audits
 — aggregate usage buckets have no per-request rows to classify, so nothing is
 fabricated. Code defensively: treat `shapes` as optional.
 
+**Showback CSV (finance export).** The `/breakdown` dashboard page (session-driven
+HTML, not part of the versioned `/api/v1` surface above) offers a
+`GET /breakdown/showback.csv` download beside the "By route" table — one row per
+`by_model` and `by_route` slice, figures taken verbatim from the same artifact this
+endpoint returns, plus a `pct_attributed_caveat` column so the coverage figure travels
+with the export. It is gated to **billing-capable roles only** (O-2 RBAC,
+`Perm.MANAGE_BILLING` — the workspace owner by default); any other role gets a `403`,
+and an audit with no tokenomics artifact (not yet computed, purged, or a
+connected-source/aggregate-depth audit) gets an honest `404` — never an empty-but-200
+file.
+
 ### List findings
 
 `GET /api/v1/audits/{audit_id}/findings` · scope `read:findings`

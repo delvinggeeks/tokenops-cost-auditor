@@ -24,7 +24,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from tokenops_cost_auditor.config import Settings
-from tokenops_cost_auditor.persistence.models import ApiToken, Audit, User
+from tokenops_cost_auditor.persistence.models import ApiToken, Audit, User, WorkspaceMember
+from tokenops_cost_auditor.persistence.repo import (
+    get_or_create_user,
+    get_or_create_workspace,
+    set_active_workspace,
+)
 from tokenops_cost_auditor.services.connectors.crypto import credential_fingerprint
 from tokenops_cost_auditor.services.runner import AuditRunner
 
@@ -282,3 +287,86 @@ class TestBreakdownShapesPrivacy:
         for entry in by_route:
             rationale = entry["rationale"]
             assert any(p.match(rationale) for p in _RATIONALE_PATTERNS), rationale
+
+
+MEMBER_EMAIL = "breakdown-member@example.com"
+
+
+def _seed_member(app: FastAPI) -> None:
+    """A non-billing member in the SAME workspace as EMAIL (the owner) — the
+    O-2 RBAC denial fixture for the showback export route."""
+    with app.state.session_factory() as session:
+        owner = get_or_create_user(session, EMAIL)
+        ws = get_or_create_workspace(session, owner)
+        member = get_or_create_user(session, MEMBER_EMAIL)
+        session.add(WorkspaceMember(workspace_id=ws.id, user_id=member.id, role="member"))
+        session.flush()
+        set_active_workspace(session, member.id, ws.id)
+        session.commit()
+
+
+class TestShowbackCsvExport:
+    """FR-38 (LLD §9.5, T-F5, Issue #92) — the finance-grade showback export:
+    the route behind O-2 MANAGE_BILLING, the /breakdown affordance, and
+    FR-22 by construction on the CSV response itself."""
+
+    def test_owner_downloads_csv_matching_the_artifact_byte_for_byte(
+        self, app: FastAPI, settings: Settings
+    ) -> None:
+        audit_id = _seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        tk = json.loads(
+            (Path(settings.report_dir) / audit_id / "tokenomics.json").read_text(encoding="utf-8")
+        )
+
+        resp = TestClient(app).get("/breakdown/showback.csv", headers=HDR)
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith("text/csv")
+        assert (
+            resp.headers["content-disposition"]
+            == f'attachment; filename="showback-{audit_id[:8]}.csv"'
+        )
+        body = resp.text
+        expected_header = "dimension,name,calls,monthly_usd,share,pct_attributed_caveat"
+        assert body.split("\r\n")[0] == expected_header
+        # every model/route slice in the artifact appears verbatim in the CSV —
+        # byte-for-byte agreement with the artifact (FR-38 acceptance)
+        for s in tk["by_model"]:
+            assert f"model,{s['name']},{s['calls']},{s['monthly_usd']},{s['share']}," in body
+        for s in tk["by_route"]:
+            assert f"route,{s['name']},{s['calls']},{s['monthly_usd']},{s['share']}," in body
+
+    def test_non_billing_role_gets_403(self, app: FastAPI) -> None:
+        audit_id = _seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        _seed_member(app)
+        resp = TestClient(app).get(
+            "/breakdown/showback.csv", headers={"X-User-Email": MEMBER_EMAIL}
+        )
+        assert resp.status_code == 403
+
+    def test_no_artifact_is_an_honest_404_not_a_500_or_empty_200(self, app: FastAPI) -> None:
+        resp = TestClient(app).get("/breakdown/showback.csv", headers=HDR)
+        assert resp.status_code == 404
+
+    def test_coarse_source_audit_has_no_export_either(self, app: FastAPI) -> None:
+        _seed_coarse_audit(app)
+        resp = TestClient(app).get("/breakdown/showback.csv", headers=HDR)
+        assert resp.status_code == 404
+
+    def test_affordance_shown_to_owner_hidden_from_member(self, app: FastAPI) -> None:
+        audit_id = _seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        _seed_member(app)
+        c = TestClient(app)
+        owner_page = c.get("/breakdown", headers=HDR).text
+        assert 'href="/breakdown/showback.csv"' in owner_page
+        member_page = c.get("/breakdown", headers={"X-User-Email": MEMBER_EMAIL}).text
+        assert 'href="/breakdown/showback.csv"' not in member_page
+
+    def test_fr22_marker_absence_on_the_csv(self, app: FastAPI) -> None:
+        audit_id = _seed_audit(app, "waste_pack_anthropic.jsonl")
+        app.state.runner.run(audit_id)
+        resp = TestClient(app).get("/breakdown/showback.csv", headers=HDR)
+        blob = resp.text.lower()
+        assert "prompt" not in blob and "completion" not in blob and "content" not in blob

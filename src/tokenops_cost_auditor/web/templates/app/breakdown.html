@@ -149,7 +149,12 @@
 
   {# ---- Cost allocation by route (showback) + FR-36 workload-shape chips ---- #}
   <section class="widget w-12" data-reveal>
-    <div class="widget-head"><h2>By route (cost allocation)</h2></div>
+    <div class="widget-head">
+      <h2>By route (cost allocation)</h2>
+      {% if can_view_billing %}
+      <a class="btn btn-sm" href="/breakdown/showback.csv" download>Download cost allocation CSV</a>
+      {% endif %}
+    </div>
     <p class="tells">Attributed from your call <code>tag</code>. Untagged spend is its own row —
       never silently allocated, so the numbers stay honest.{% if has_shapes %} The workload shape
       is classified from counts and timing only — we never read your prompts.{% endif %}</p>

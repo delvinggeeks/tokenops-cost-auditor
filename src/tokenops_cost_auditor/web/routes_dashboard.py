@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,9 +38,11 @@ from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
 from tokenops_cost_auditor.services.dashboard import shapes as shapes_svc
+from tokenops_cost_auditor.services.dashboard import showback as showback_svc
 from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web import help as help_registry
 from tokenops_cost_auditor.web.routes_sources import user_plan
 from tokenops_cost_auditor.web.shell import data_freshness, workspace_bar
@@ -87,7 +89,6 @@ def _shell_ctx(
 ) -> dict[str, object]:
     plan_key = user_plan(session, user.id)
     from tokenops_cost_auditor.services.dashboard import activity
-    from tokenops_cost_auditor.web import authz
 
     # O-2 RBAC: the viewer's role in their ACTIVE workspace + the derived permission
     # booleans, on EVERY app page so a control a role can't use is never rendered
@@ -690,6 +691,36 @@ def breakdown_page(request: Request, user_email: str = Depends(current_user)) ->
             support_email=request.app.state.settings.support_email,
             show_tour=False,
             **ctx,
+        )
+
+
+@router.get("/breakdown/showback.csv", response_model=None)
+def breakdown_showback_csv(request: Request, user_email: str = Depends(current_user)) -> Response:
+    """FR-38 (LLD §9.5) — the finance-grade showback export beside the page it
+    serves. O-2 gated (`Perm.MANAGE_BILLING`) BEFORE any work, the exact idiom
+    `routes_billing.py` uses. Latest DONE audit's tokenomics.json, verbatim;
+    absent (no audit yet / coarse connected source / FR-21 purge) is an
+    honest 404 — never a 500, never an empty-but-200 fabrication."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        # O-2 RBAC: authorize BEFORE committing (routes_billing.py idiom, cold-reviewer
+        # #75) so a denied caller leaves no orphan user row.
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_BILLING,
+            detail="only billing-capable roles can download the showback export",
+        )
+        session.commit()
+        report_dir = request.app.state.settings.report_dir
+        audit = metrics.latest_audit(session, user.id)
+        tk = _load_tokenomics(report_dir, audit)
+        if tk is None or audit is None:
+            raise HTTPException(status_code=404, detail="no breakdown available for export")
+        csv_text = showback_svc.to_csv(tk)
+        return Response(
+            content=csv_text,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="showback-{audit.id[:8]}.csv"'},
         )
 
 

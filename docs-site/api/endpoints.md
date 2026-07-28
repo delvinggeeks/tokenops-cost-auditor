@@ -478,6 +478,22 @@ the audit under FR-21 → honest empty state).
 
 Responses: `200`, `422`
 
+## `GET /breakdown/showback.csv`
+
+Breakdown Showback Csv.
+
+FR-38 (LLD §9.5) — the finance-grade showback export beside the page it
+serves. O-2 gated (`Perm.MANAGE_BILLING`) BEFORE any work, the exact idiom
+`routes_billing.py` uses. Latest DONE audit's tokenomics.json, verbatim;
+absent (no audit yet / coarse connected source / FR-21 purge) is an
+honest 404 — never a 500, never an empty-but-200 fabrication.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /copilot/seats`
 
 Upload Seats.
