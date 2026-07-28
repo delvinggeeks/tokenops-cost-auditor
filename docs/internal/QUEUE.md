@@ -58,10 +58,12 @@ copy + pre-feature and coarse-depth honest states, verbatim API passthrough + sd
 types, docs/04 FR-36 row split out of the design span. T-F5 is next per the NOW order;
 T-F4's scope-check may now run._
 
-- **T-F5 · FR-38** — Issue #92 — showback CSV export: `dimension,name,calls,monthly_usd,
-  share,pct_attributed_caveat` per LLD §9.5, figures verbatim from `tokenomics.json`,
-  route + `/breakdown` affordance behind O-2 `MANAGE_BILLING`, honest empty/404 states ·
-  trace: `services/dashboard` serializer + `routes_dashboard`→`test_showback` + journey.
+_T-F5 SHIPPED 2026-07-28 — Issue #92 slice: `services/dashboard/showback.py` serializer
+(LLD §9.5 columns verbatim, artifact-byte figures, caveat on every row, honest empty
+comment line), `GET /breakdown/showback.csv` behind O-2 `MANAGE_BILLING` (403/404 honest
+states), owner-gated `/breakdown` affordance with visible showback gloss (ux mockup gate
+PASS-WITH-NOTES, all 4 notes closed in-slice), docs/04 FR-38 row split out of the design
+span. Next per NOW order: T-F2; T-F4's scope-check may run._
 
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 

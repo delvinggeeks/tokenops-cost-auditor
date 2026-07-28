@@ -4077,3 +4077,34 @@ duplicating the CI round. docs/09 §4 amended (CI is the reviewing home; build s
 tests/tripwires + PR only; ux mockup gate and card-named pre-wiring checks stay
 in-session; system-tester post-deploy walk unchanged). The T-F3 local round stands as
 this card's record — its cold-reviewer fixes landed pre-PR — but it is the last local round.
+
+2026-07-28 (T-F5 · FR-38 showback CSV export, Issue #92 — build session): SHIPPED, first
+card under the CI-gate-round regime (no local round; ux mockup gate stayed in-session per
+the amended docs/09 §4). Session start found PR #91 (T-F3) UNMERGED — its CI gate-round
+was still running and the auto-merge label was missing (every prior loop PR carried it);
+label armed after confirming gate-round is a required branch-protection check, gate
+passed, #91 rebase-merged, #89 closed. T-F5 then filed as Issue #92 with full §2 criteria
+and registered in QUEUE NOW (docs(spine) 7618e50). The slice:
+services/dashboard/showback.py (LLD §9.5 header verbatim; figures are the
+tokenomics.json artifact's exact bytes — shortest-roundtrip float repr, never re-rounded,
+reconciles to the tokenomics goldens byte-for-byte; fixed-template attribution caveat on
+EVERY row so the coverage honesty survives the handoff into a spreadsheet; RFC 4180 CRLF;
+empty allocation → header + one honest # comment line). GET /breakdown/showback.csv
+behind O-2 MANAGE_BILLING (authz.ensure before commit, the routes_billing idiom; 403
+non-owners; artifact absent/coarse-source/FR-21-purged → honest 404, never an empty 200).
+/breakdown gains the owner-gated kit.button quiet affordance + a VISIBLE showback gloss
+caption (non-billing roles see neither — O-2 absence idiom); i-download added identically
+to icons.svg + _sprite.html (pin test). Mockup gated BEFORE wiring: PASS-WITH-NOTES, all
+4 notes closed in-slice (f.1 trust claim visible-text not hover-only; f.2 delight
+explicitly none — the designed care is the caveat riding every file row; f.3 resolved:
+route IS the tag allocation, by_route groups by call tag, FR-38 "tag/route/model" names
+provenance not a third grouping; f.4 "showback" glossed at first use). Unit tests
+authored on Sonnet 5 per TE-5/R-REQ-PIPELINE (tests/test_showback.py, 16 tests: pinned
+CSV-byte golden, empty-comment, json round-trip byte-verbatim property, caveat/order/
+quoting, owner 200 + attachment filename, all non-billing roles 403, three 404 paths,
+FR-22 marker-absence on the CSV, affordance visibility both roles + no-audit absence,
+full upload→download journey). Full suite 1289 passed / 5 skipped; coverage gate green
+(services 96.4%, money files 100%). No money-math change (serializer recomputes nothing)
+→ no pricing golden / pricing_verify impact. docs/04 FR-38 row split out of the FR-34..38
+design span; QUEUE T-F5 NOW-line retired; docs-site how-it-works "Show back" paragraph.
+Next per NOW order: T-F2; T-F4's scope-check may run.

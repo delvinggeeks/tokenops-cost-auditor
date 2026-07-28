@@ -149,7 +149,18 @@
 
   {# ---- Cost allocation by route (showback) + FR-36 workload-shape chips ---- #}
   <section class="widget w-12" data-reveal>
-    <div class="widget-head"><h2>By route (cost allocation)</h2></div>
+    <div class="widget-head"><h2>By route (cost allocation)</h2>
+      {%- if can_view_billing %}
+      {{ kit.button("Download showback CSV", href="/breakdown/showback.csv", icon="download") }}
+      {%- endif %}
+    </div>
+    {% if can_view_billing %}
+    {# FR-38 (T-F5): the trust claim is VISIBLE text, never hover-only (ux gate
+       f.1). Renders only with the button — a role that cannot fetch the file
+       sees neither (O-2 absence idiom, same as the Billing nav). #}
+    <p class="tells">Showback = the allocation file accounting uses to bill AI spend back to
+      teams. Same figures as this page, exact to the byte — visible to workspace owners only.</p>
+    {% endif %}
     <p class="tells">Attributed from your call <code>tag</code>. Untagged spend is its own row —
       never silently allocated, so the numbers stay honest.{% if has_shapes %} The workload shape
       is classified from counts and timing only — we never read your prompts.{% endif %}</p>
