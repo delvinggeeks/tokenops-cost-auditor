@@ -3,6 +3,34 @@
 One paragraph per milestone: decisions, open questions, file map delta. Gate agents
 read this instead of exploring the repo.
 
+## T-D3 — BACKLOG/ROADMAP prune (2026-07-28) — Issue #87, `loop:ready`
+
+QUEUE law 5 (process): re-verified every BACKLOG.md item + the ROADMAP §4/§5 overlaps
+against docs/04-TRACEABILITY.md and the code, docs-only. Counts: **6 shipped-deleted**
+(API keys/programmatic access → S-6 read API+OAuth; WP-MCP → R-PLATFORM slice 2 read
+tools; WP-P2-AGG Connect flows → V15 R-CONNECT; "in-app View report link missing" → PR
+#28; "PLAIN-ENGLISH PDF REPORT" → PR #29; the WP-PIPELINE-UI "first post-launch gated
+milestone" framing → FR-31 traced-done), **2 superseded-deleted** (WP-P1.5 pricing-watch
+→ R-LIVE-PRICING auto sync, already noted in ROADMAP §6; WP-SKILL → folded into
+WP-CC-LINK, R-CC-LINK 2026-07-23), **26 trigger-register items kept-live** (shrunk to one
+line + named trigger each, no essays) plus WP-CC-LINK residue, WP-REPORT-EXPLORER
+residue, the WP-PIPELINE-UI residue follow-ups (13 items, corrected/renumbered where a
+sub-item had shipped), and 3 standing design/reference sections left unchanged
+(R-DEPLOYMENT-CONTRACT, WP-FRAMEWORK-ADAPT, R-SAAS-BASICS — governing law, not scope
+items). Both founder-flagged stale items fixed: "API keys" deleted as shipped; "Orgs/SSO
+(X-03 stands)" corrected — R-ORG relaxed X-03 and workspaces/RBAC (O-0..O-2/O-4) shipped,
+SSO itself stays parked behind O-3, first team customer. Bonus corrections found during
+the sweep (R-IMPROVISE — surfaced, not silently dropped): WP-REPORT-EXPLORER's "saved
+views HELD" claim was stale (saved views shipped with FR-32, only the export hook is
+parked); ROADMAP §5 and QUEUE.md's S-3 MCP line said the whole server was trigger-gated
+when read tools already shipped (Issue #54) — corrected to read-tools-shipped/write-
+tools-parked in both files; the "six detectors" stale-copy backlog item was narrowed to
+the one file (`docs-site/engineering/performance.md`) still saying six against nine.
+BACKLOG.md: 544 → 329 lines. Zero code changes, zero QUEUE zone changes beyond the S-3
+reconcile note and T-D3's own line marked SHIPPED. docs/04-TRACEABILITY.md untouched (no
+new requirement implemented, none of the deleted items had rows there — they were
+pre-implementation scope notes).
+
 ## FOUNDER-OWNED TASKS (consolidated order 2026-07-27 §4)
 
 1. UptimeRobot public status page + CNAME status.tokenops-cost-auditor.com (runbook

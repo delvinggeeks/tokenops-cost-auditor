@@ -177,7 +177,9 @@ backlog of forgotten work.
 
 **SDK / platform**
 - S-2 **T4 OTLP endpoint** (`/api/v1/otlp/v1/traces`, gen_ai.*→CallRecordFrame, content dropped at door) — HELD, spec (docs/13) approved-to-exist, endpoint is a SEPARATE founder approval on first streaming-customer conversation (~3–5d). Also: K8s attribution, per-agent/RAG attribution, FOCUS export — all ride the T4 build.
-- S-3 **MCP server** over /api/v1 (read tools) — API-key buying signal. Write tools after.
+- S-3 **MCP server** over /api/v1 — read tools (`list_audits`/`list_findings`) SHIPPED
+  (R-PLATFORM slice 2, Issue #54); `get_audit`/`get_breakdown` parity + write tools stay
+  PARKED behind R-SCOPE-STOP (first programmatic-access request).
 - S-4 JS/TS SDK; S-5 GitHub Action + Slack delivery; outbound webhooks — later/pull.
 - **Customer API keys** (per-key scopes/metering) — first integration request (fires S-3 too).
 
@@ -215,3 +217,11 @@ backlog of forgotten work.
   §5. Lesson recorded: work §3 top-down; new ideas go to §5, not into code.
 - **WORKFLOW-READINESS.md** is fully remediated (all 50 findings closed) except the one
   India-pricing ruling (§4). **UAT-2** is not yet executed.
+- **T-D3 BACKLOG/ROADMAP prune (2026-07-28, QUEUE law 5):** BACKLOG.md's trigger register
+  re-verified against docs/04 and code. Deleted as shipped-or-superseded beyond the two
+  named-stale items (API keys/S-6, Orgs-SSO/R-ORG): WP-P1.5 (superseded, noted above),
+  WP-P2-AGG Connect flows (shipped, V15 R-CONNECT), WP-MCP (shipped read tools, R-PLATFORM
+  slice 2 — see the corrected S-3 line, §5), the "in-app View report link" and "Plain-
+  English PDF" backlog follow-ups (shipped PR #28/#29, §3 #2/#3). WP-REPORT-EXPLORER's
+  "saved views HELD" claim was stale — saved views shipped with FR-32, only the export
+  hook (C3) is still parked.
