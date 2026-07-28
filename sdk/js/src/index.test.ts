@@ -172,6 +172,10 @@ test("getBreakdown GETs /api/v1/audits/{id}/breakdown and returns the whole resp
       ],
       pct_priced: 1.0,
       pct_attributed: 1.0,
+      // FR-36 behaviour lens: additive, keyed by route name like by_route.
+      route_shapes: {
+        chat: { cls: "steady", rationale: "40 calls, no loop/retry/growth/cache-miss pattern crossed threshold" },
+      },
     },
     unavailable_reason: null,
   };
@@ -191,6 +195,36 @@ test("getBreakdown GETs /api/v1/audits/{id}/breakdown and returns the whole resp
   assert.equal(res.breakdown.monthly_spend_usd, 42.5);
   assert.equal(res.breakdown.by_model[0]?.name, "gpt-5.4");
   assert.equal(res.breakdown.by_model[0]?.monthly_usd, 42.5);
+  assert.equal(res.breakdown.route_shapes?.chat?.cls, "steady");
+});
+
+test("getBreakdown tolerates a pre-feature artifact with no route_shapes key", async () => {
+  const fixture = {
+    audit_id: "aud_1",
+    breakdown: {
+      monthly_spend_usd: 42.5,
+      tokens_in: 1000,
+      tokens_out: 250,
+      tokens_cached: 100,
+      cache_hit_rate: 0.1,
+      out_in_ratio: 0.25,
+      cost_per_1k_out: 0.17,
+      cost_per_request: 1.0625,
+      by_model: [],
+      by_route: [],
+      pct_priced: 1.0,
+      pct_attributed: 1.0,
+      // no route_shapes key at all — an audit that predates the behaviour lens
+    },
+    unavailable_reason: null,
+  };
+  const client = new TokenOps({
+    readToken: "rt_test",
+    fetch: mockFetch(200, fixture),
+  });
+  const res = await client.getBreakdown("aud_1");
+  assert.ok(res.breakdown);
+  assert.equal(res.breakdown.route_shapes, undefined);
 });
 
 test("getBreakdown returns null breakdown with the unavailable_reason intact, no throw", async () => {

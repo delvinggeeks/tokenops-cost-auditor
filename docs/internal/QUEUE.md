@@ -45,6 +45,10 @@ WP-PIPELINE-UI + WP-REPORT-EXPLORER framing corrected to shipped-with-residue; R
 + this file's S-3 line corrected (read tools shipped, write/parity still parked). Full
 count in STATUS.md._
 
+_T-F3 · FR-36 SHIPPED 2026-07-28 — #89 (behaviour lens v1: services/dashboard/shapes
+classifier + tokenomics.json route_shapes artifact + /breakdown "Workload shape by route"
+chips + read-API verbatim passthrough + sdk/js types, docs/04 row, gates green)._
+
 > Each task lands here as one line:
 > `T-<id> · FR-xx | R-RULING · <vertical-slice one-liner> · trace: <module>→<test>`
 
@@ -79,10 +83,6 @@ gets its first shipped surfaces. Slices:
   stripped at the web/persistence boundary, engine stays tenant-blind (R-ORG) · overlaps
   `services/flywheel/{cohort,benchmarks}.py` — verify before building · trace: export
   golden + consent journey
-- **T-F3 · FR-36** behaviour lens v1 — BEHAVIORAL intent (docs/12 INTENT LAW) surfaced per route:
-  shape chips (loop / retry-burst / context-growth / unclaimed-cache) on the breakdown page
-  + read API, fix-first copy per COPY LAW ("your pipeline, same output, lower bill");
-  deterministic, engine-pure · trace: shape fixtures → ux gate at both depths
 - **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
   next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
   provenance) · SCOPE-CHECK FIRST: `services/statements/build.py` already carries verified

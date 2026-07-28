@@ -389,11 +389,21 @@ audit that hasn't finished yet returns its honest partial totals with
 
 Returns the same enterprise tokenomics breakdown the `/breakdown` dashboard page
 shows — vitals (spend, tokens in/out/cached, cache-hit rate, out:in ratio,
-cost-per-1k-out, cost-per-request), per-model and per-route cost allocation, and
-data coverage — passed through **verbatim** from the report artifact computed
-at audit time (no parallel computation, so it can never disagree with the
-report or the dashboard). An audit that isn't yours is a `404` (never a `403`),
-same as findings above.
+cost-per-1k-out, cost-per-request), per-model and per-route cost allocation,
+data coverage, and the behaviour lens (`route_shapes`) — passed through
+**verbatim** from the report artifact computed at audit time (no parallel
+computation, so it can never disagree with the report or the dashboard). An
+audit that isn't yours is a `404` (never a `403`), same as findings above.
+
+`route_shapes` (FR-36) is a per-route workload-shape classification keyed by
+the same route name as `by_route[].name`: `cls` is one of `agent_loop`,
+`retry_burst`, `context_growth`, `unclaimed_cache`, `steady`, computed
+deterministically from call counts, timing, model and cache fields only —
+never prompt/completion text (there is nothing else to classify from).
+`rationale` is a fixed template citing the exact counts that fired it, never a
+probability or free text. It is additive: an audit from before this field
+shipped simply has no `route_shapes` key — treat its absence as "not
+computed," never as an all-`steady` result.
 
 When no breakdown is available for the audit — it hasn't been computed yet,
 the report artifact was purged, or it's unreadable — this returns `200` with
@@ -418,7 +428,11 @@ be indistinguishable from a real all-zero audit); code defensively — check
       {"name": "chat", "calls": 800, "monthly_usd": 42.5, "share": 1.0,
        "cache_hit_rate": 0.1, "out_in_ratio": 0.33, "cost_per_1k_out": 0.14}
     ],
-    "pct_priced": 1.0, "pct_attributed": 1.0
+    "pct_priced": 1.0, "pct_attributed": 1.0,
+    "route_shapes": {
+      "chat": {"cls": "steady",
+        "rationale": "800 calls, no loop/retry/growth/cache-miss pattern crossed threshold"}
+    }
   },
   "unavailable_reason": null
 }

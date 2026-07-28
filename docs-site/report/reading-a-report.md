@@ -64,3 +64,21 @@ report, so the report is self-explaining when forwarded to finance.
 breakdowns, findings with evidence. It is deterministic — the same upload
 produces byte-identical JSON (`generated_at` excluded) — so you can diff two
 audits of the same log and expect zero noise. <!-- src: T-REP-03/08 -->
+
+## The enterprise breakdown: behaviour lens
+
+The `/breakdown` dashboard page (and its read-API twin,
+[`GET /audits/{id}/breakdown`](../api/reference.md)) goes one level deeper
+than the report: per-model and per-route cost allocation, unit-economics
+ratios, and a **workload-shape chip per route** — the behaviour lens. Each
+route's calls are classified into one of five shapes — agent loop, retry
+burst, context growth, unclaimed cache, or steady — from call counts, timing,
+model and cache fields only, the same determinism law as the detectors above:
+no content is ever read, and the one-line rationale under each chip names the
+exact counts that fired it. <!-- src: FR-36; services/dashboard/shapes.py -->
+
+The breakdown needs per-request rows, so it degrades honestly where those
+aren't available: a connected usage API reports daily aggregates only, and the
+page says so plainly rather than guessing a shape. An audit from before this
+lens shipped simply has no shape data — never a fabricated "steady".
+<!-- src: FR-36 depth honesty -->

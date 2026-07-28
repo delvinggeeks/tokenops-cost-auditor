@@ -9,7 +9,10 @@ SRC = Path(__file__).parents[1] / "src" / "tokenops_cost_auditor" / "services"
 GUARDED_PACKAGES = ("rules", "pricing")
 # Single deterministic modules held to the same law (vv-gate 01334e8 f.4: the
 # forecast was clean by discipline only — enforcement belongs here).
-GUARDED_MODULES = ("forecast.py",)
+# dashboard/shapes.py: FR-36 Accept — the behaviour-lens classifier extends
+# engine purity even though services/dashboard sits outside T-NFR-01's
+# literal scope.
+GUARDED_MODULES = ("forecast.py", "dashboard/shapes.py")
 FORBIDDEN = {
     "anthropic",
     "openai",

@@ -9,6 +9,11 @@ numbers a finance team can reconcile to the penny, which an LLM cannot produce.
 Not a new pricing estimator (it only aggregates cost_usd the coster already
 computed), so no rate golden is owed — but the money is pinned by test_tokenomics
 against hand-derived values. Engine-pure: no network/LLM (T-NFR-01 spirit).
+
+Also computes the behaviour lens (FR-36): one `shapes.ShapeResult` per route,
+keyed by the same route name as `by_route` — the deterministic workload-shape
+classification riding alongside the dollar breakdown so both surfaces (the
+`/breakdown` page and the read API) agree on what shape a route is.
 """
 
 from __future__ import annotations
@@ -20,6 +25,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from tokenops_cost_auditor.config import Settings, get_settings
+from tokenops_cost_auditor.services.dashboard import shapes
 from tokenops_cost_auditor.services.rules.findings import monthly_factor, observed_days
 
 UNTAGGED = "(untagged)"
@@ -52,6 +59,10 @@ class Tokenomics:
     by_route: tuple[Slice, ...]
     pct_priced: float  # share of REQUESTS we could price (unpriced $ is unknowable)
     pct_attributed: float  # share of SPEND (dollars) carrying a route tag
+    # FR-36 behaviour lens: one shape per route, keyed by the same name as
+    # by_route. Additive — an older/pre-feature artifact simply lacks this key
+    # (honest null downstream, never a fabricated shape).
+    route_shapes: dict[str, shapes.ShapeResult]
 
 
 def _rate(numer: float, denom: float) -> float:
@@ -90,13 +101,21 @@ def _ranked(
     return tuple(sorted(out, key=lambda s: -s.monthly_usd))
 
 
-def compute(priced: pd.DataFrame) -> Tokenomics:
+def _route_shapes(rows: pd.DataFrame, settings: Settings) -> dict[str, shapes.ShapeResult]:
+    return {
+        _route_name(tag): shapes.classify(group, settings)
+        for tag, group in rows.groupby("tag", sort=True)
+    }
+
+
+def compute(priced: pd.DataFrame, settings: Settings | None = None) -> Tokenomics:
     """The exact tokenomics breakdown for one audited frame. Unpriced rows (NaN
     cost) are excluded from money/ratios but counted in pct_priced, so the
     coverage is honest and the dollars reconcile to what we could actually price."""
+    settings = settings if settings is not None else get_settings()
     n_total = len(priced)
     if n_total == 0:
-        return Tokenomics(0.0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, (), (), 0.0, 0.0)
+        return Tokenomics(0.0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, (), (), 0.0, 0.0, {})
     rows = priced.dropna(subset=["cost_usd"])
     total_cost = float(rows["cost_usd"].sum()) if len(rows) else 0.0
     factor = monthly_factor(observed_days(priced))
@@ -106,6 +125,7 @@ def compute(priced: pd.DataFrame) -> Tokenomics:
 
     by_model = _ranked(rows, "model", str, total_cost, factor)
     by_route = _ranked(rows, "tag", _route_name, total_cost, factor)
+    route_shapes = _route_shapes(rows, settings) if len(rows) else {}
     # Attribution is SPEND-weighted (cold gate): what share of DOLLARS carries a
     # route tag — a cheap untagged call matters less than an expensive one.
     if len(rows):
@@ -120,6 +140,7 @@ def compute(priced: pd.DataFrame) -> Tokenomics:
         cache_hit_rate=_rate(cached, inp),
         out_in_ratio=_rate(out, inp),
         cost_per_1k_out=_rate(total_cost, out / 1000.0),
+        route_shapes=route_shapes,
         cost_per_request=_rate(total_cost, n_total),
         by_model=by_model,
         by_route=by_route,

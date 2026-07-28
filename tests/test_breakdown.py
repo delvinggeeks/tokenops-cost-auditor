@@ -60,12 +60,21 @@ class TestBreakdownJourney:
         assert 0.0 <= tk["cache_hit_rate"] <= 1.0
         assert tk["pct_priced"] == 1.0  # the sample is fully priced
 
-        # and it renders on /breakdown with the exact slices
+        # FR-36 behaviour lens: one shape per route, keyed like by_route
+        assert set(tk["route_shapes"]) == {s["name"] for s in tk["by_route"]}
+        summarizer = tk["route_shapes"]["summarizer"]
+        assert summarizer["cls"] == "agent_loop"
+        assert "repeated input signature" in summarizer["rationale"]
+
+        # and it renders on /breakdown with the exact slices + the shape chips
         page = TestClient(app).get("/breakdown", headers=HDR).text
         assert "Tokenomics vitals" in page
         assert "By model" in page and "By route (cost allocation)" in page
         assert "Data coverage" in page
         assert tk["by_model"][0]["name"] in page  # the top model appears in the table
+        assert "Workload shape by route" in page
+        assert "Agent loop" in page  # the summarizer/agent-7 routes' chip label
+        assert "repeated input signature seen 30 times" in page  # counts-citing rationale
 
     def test_corrupt_artifact_degrades_to_empty_state_not_500(
         self, app: FastAPI, settings: Settings

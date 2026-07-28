@@ -33,6 +33,19 @@
            "Your audit ran, but its models aren't on our verified rate card yet — so we
             won't guess a breakdown. Email " ~ support_email ~ " and we'll price it.",
            action_label="Contact support", action_href="mailto:" ~ support_email) }}
+    {% elif audit and audit.source_id %}
+      {# Depth honesty (FR-36): a connected usage API reports daily aggregates,
+         not per-request rows — the whole tokenomics breakdown (and the shape
+         lens with it) needs per-request depth. Never a fabricated breakdown,
+         never a fabricated shape. #}
+      {{ kit.empty_state(
+           "Shape lens needs per-request data",
+           "Your latest audit read a connected usage API, which reports daily aggregates
+            only — there are no per-request rows to classify into a workload shape or to
+            build the full tokenomics breakdown from. Upload a request log or run the SDK
+            collector for per-request depth.",
+           action_label="Upload a log file", action_href="/upload",
+           alt_label="SDK ingest guide", alt_href="/guide") }}
     {% else %}
       {{ kit.empty_state(
            "No breakdown yet",
@@ -152,6 +165,46 @@
         </tr>
       {% endfor %}
     {{ kit.table_close() }}
+  </section>
+
+  {# ---- Behaviour lens: per-route workload shape (FR-36, docs/12 COPY LAW —
+     dev depth is fix-first: name the fix, not the blame). A separate section
+     from the money table above, which stays money-verified and unchanged. ---- #}
+  <section class="widget w-12" data-reveal>
+    <div class="widget-head"><h2>Workload shape by route</h2></div>
+    {% set shapes_map = tk.route_shapes if tk.route_shapes else {} %}
+    {% if shapes_map %}
+    <p class="tells">The same routes, a different lens: how each route's traffic <em>behaves</em> —
+      a loop, a retry burst, growing context, or an uncached repeat — classified from call counts
+      and timing only, never content. Your pipeline, same output, lower bill.</p>
+    {{ kit.table_open([
+         {"label": "Route"}, {"label": "Shape"}, {"label": "Why"}, {"label": "Fix"},
+       ]) }}
+      {% for s in tk.by_route %}
+        {% set rs = shapes_map.get(s.name) %}
+        <tr>
+          <td>{{ s.name }}</td>
+          {% if rs %}
+            {% set sc = shape_copy.get(rs.cls, {"label": rs.cls, "fix": ""}) %}
+            <td><span class="badge {{ 'badge-verified' if rs.cls == 'steady' else 'badge-waste' }}">{{ sc.label }}</span></td>
+            <td class="tells">{{ rs.rationale }}</td>
+            <td class="tells">{{ sc.fix }}</td>
+          {% else %}
+            <td><span class="badge badge-neutral">No signal</span></td>
+            <td class="tells">not enough per-request signal for this route to classify a shape</td>
+            <td class="tells">—</td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    {{ kit.table_close() }}
+    {% else %}
+    {{ kit.empty_state(
+         "This audit predates the behaviour lens",
+         "Re-run this audit and each route's workload shape — loop, retry burst, growing
+          context, uncached repeat, or steady — appears here alongside the cost allocation
+          above.",
+         action_label="Upload another log", action_href="/upload") }}
+    {% endif %}
   </section>
 
   {# ---- Data coverage: trust the completeness ---- #}

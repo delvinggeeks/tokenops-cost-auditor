@@ -26,6 +26,7 @@ from tokenops_cost_auditor.obs import errors as obs_errors
 from tokenops_cost_auditor.obs.logging import configure_logging, request_id_middleware
 from tokenops_cost_auditor.obs.ratelimit import limiter
 from tokenops_cost_auditor.persistence.repo import make_engine, make_session_factory
+from tokenops_cost_auditor.services.dashboard import shapes as shapes_svc
 from tokenops_cost_auditor.services.mail.base import LogMailAdapter
 from tokenops_cost_auditor.services.mail.smtp import SmtpMailAdapter
 from tokenops_cost_auditor.services.payments.razorpay_link import RazorpayLinkAdapter
@@ -151,6 +152,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.jinja.globals["support_email"] = settings.support_email
     app.state.jinja.globals["status_url"] = settings.status_url
     app.state.jinja.globals["base_url"] = settings.public_base_url
+    # FR-36 behaviour lens: fixed chip copy per shape class, keyed by the
+    # string value so a route_shapes["cls"] loaded from tokenomics.json can
+    # look itself up directly (`shape_copy[rs.cls]`).
+    app.state.jinja.globals["shape_copy"] = shapes_svc.SHAPE_COPY
 
     # Asset versioning (walkthrough round 3): static assets carried NO
     # Cache-Control, so browsers heuristically cached them and two design

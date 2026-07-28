@@ -195,7 +195,8 @@ class AuditRunner:
         # half-written file (cold gate).
         tk_tmp = report_dir / "tokenomics.json.tmp"
         tk_tmp.write_text(
-            json.dumps(dataclasses.asdict(tokenomics_svc.compute(priced))), encoding="utf-8"
+            json.dumps(dataclasses.asdict(tokenomics_svc.compute(priced, self.settings))),
+            encoding="utf-8",
         )
         tk_tmp.replace(report_dir / "tokenomics.json")
         t_report = datetime.now(UTC)

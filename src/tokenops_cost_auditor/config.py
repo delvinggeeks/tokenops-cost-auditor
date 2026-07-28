@@ -272,6 +272,22 @@ class Settings(BaseSettings):
     dunning_readonly_days: int = 7
     dunning_cancel_days: int = 21
 
+    # Behaviour lens (FR-36, LLD §9.3): per-route workload-shape thresholds —
+    # the same detector-thresholds idiom as D1-D10 above, no magic numbers in
+    # services/dashboard/shapes.py. Windows/minimums mirror the D2/D4/D6
+    # detectors they echo (retry clusters, agent re-reads) since a shape is the
+    # same underlying pattern viewed as behaviour instead of as a dollar finding.
+    shape_min_calls: int = 5  # fewer calls than this: not enough signal, STEADY by default
+    shape_retry_window_s: int = 120  # RETRY_BURST cluster window (matches D4_WINDOW_S)
+    shape_retry_dup_min: int = 3  # near-identical calls in-window to call it a burst
+    shape_agent_loop_small_completion_t: int = 300  # matches D6_SMALL_COMPLETION_T
+    shape_agent_loop_min_calls: int = 8  # matches D6_LOOP_MIN
+    shape_agent_loop_reread_min: int = 5  # matches D6_REREAD_MIN
+    shape_context_growth_mult: float = 1.5  # 2nd-half avg prompt >= this x 1st-half avg
+    shape_unclaimed_cache_min_repeats: int = 5  # same prefix repeated >= N times
+    shape_unclaimed_cache_min_prompt_tokens: int = 1024  # matches D2_CACHE_MIN_PROMPT_TOKENS
+    shape_unclaimed_cache_max_hit_rate: float = 0.05  # cache hit rate at/below this = unclaimed
+
 
 @lru_cache
 def get_settings() -> Settings:

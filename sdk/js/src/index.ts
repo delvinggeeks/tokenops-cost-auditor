@@ -68,6 +68,23 @@ export interface BreakdownSlice {
   cost_per_1k_out: number;
 }
 
+/**
+ * FR-36 behaviour lens: a route's deterministic workload-shape classification
+ * (counts/timing/model/cache only — never content). `rationale` is a fixed
+ * template naming the counts that fired it, never free text.
+ */
+export type ShapeClass =
+  | "agent_loop"
+  | "retry_burst"
+  | "context_growth"
+  | "unclaimed_cache"
+  | "steady";
+
+export interface RouteShape {
+  cls: ShapeClass;
+  rationale: string;
+}
+
 /** The audit's tokenomics breakdown — vitals, per-model/per-route allocation, coverage. */
 export interface AuditTokenomics {
   monthly_spend_usd: number;
@@ -82,6 +99,9 @@ export interface AuditTokenomics {
   by_route: BreakdownSlice[];
   pct_priced: number;
   pct_attributed: number;
+  /** Keyed by route name (same key as `by_route[].name`). Additive — absent
+   * on an audit that predates the behaviour lens (honest null, no fabrication). */
+  route_shapes?: Record<string, RouteShape>;
 }
 
 /** GET /api/v1/audits/{id}/breakdown response — `breakdown` is null when unavailable. */
