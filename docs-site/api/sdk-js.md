@@ -37,6 +37,9 @@ if (audit.status === "done") {
     console.log(`${f.detector}  ${f.severity}  $${f.monthly_cost_impact_usd}/mo — ${f.fix}`);
   }
 }
+
+const summary = await client.getAudit(audit_id);        // one audit's own summary
+console.log(`${summary.totals.calls} calls, $${summary.totals.estimated_cost_usd} — ${summary.finding_count} findings`);
 ```
 
 ## Errors
@@ -52,6 +55,7 @@ for example a read token missing a scope raises a `403`. See the
 | `ingest(records)` | ingest key | `POST /api/v1/ingest` |
 | `listAudits()` | read token (`read:audits`) | `GET /api/v1/audits` |
 | `listFindings(id)` | read token (`read:findings`) | `GET /api/v1/audits/{id}/findings` |
+| `getAudit(id)` | read token (`read:audits`) | `GET /api/v1/audits/{id}` |
 | `waitForAudit(id)` | read token | polls `List audits` |
 
 The Python SDK and the raw HTTP contract are in the [reference](reference.md).
