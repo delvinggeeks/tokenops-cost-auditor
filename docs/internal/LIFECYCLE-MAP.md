@@ -53,6 +53,14 @@ Status: ✅ shipped · 📋 registered/spec'd (trigger named) · 🚫 forbidden 
 | **GOVERN (our product, never their traffic)** | | | | |
 | Workspaces, 4-role RBAC, scoped read tokens, INSERT-only auditlog, FR-22, API rate limits | P4 | ✅ | R-ORG, FR-21/22, NFR-03 | `services/lifecycle/auditlog.py` et al. |
 | SSO · SCIM · IAM CRUD / service accounts / custom roles | P4 | 📋 | R-IAM, O-3 | ← first team customer (SSO); design registered |
+| **ENTERPRISE DEPLOY (design: docs/15, R-ENT-DEPLOY 2026-07-28)** | | | | |
+| In-perimeter CLI audit (nothing leaves) | P4 | ✅ | docs/15 §1a | `cli.py` `audit` subcommand |
+| Hosted SaaS + VPC compose bundle | — | ✅ | docs/15 §1b-c | `docker-compose.yml`, `deploy/tf/`, LE-2 |
+| Helm chart | — | 📋 T-E1/FR-39 | docs/15 §8 | ← first VPC customer |
+| Air-gap bundle | — | 📋 T-E2/FR-39 | R-DEPLOYMENT-CONTRACT 5 | ← first air-gapped deal |
+| Marketplace IaC + listings | — | 📋 T-E3/FR-39 | R-MARKETPLACE a | ← first marketplace lead |
+| Lane-A zero-touch release train | — | 📋 T-E4/FR-40 | docs/15 §2A | ← R-DEPLOY-AUTOMATION 2 (>1 app OR >1 deploy/wk for a month) |
+| Lane-B customer update channel (pull-only, N-1) | — | 📋 T-E5/FR-41 | docs/15 §2B | ← rides T-E1 |
 | **PLATFORM (enabler)** | | | | |
 | Read API (audits, audit, findings, breakdown) + OAuth + JS SDK read methods | — | ✅ | R-PLATFORM S-6 | #72/#83/#86; docs-site regenerated gate |
 | MCP server (list_audits, list_findings) | — | ✅ | S-3 | `mcp/server.py:45`; parity tools 📋 ← programmatic-access request (R-SCOPE-STOP) |

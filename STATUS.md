@@ -3998,3 +3998,14 @@ programmatic-access request); chargeback rejected-for-now; auto-merge flipped sq
 (clean-authorship law — squash was rewriting author + adding a trailer on every merged
 commit; repo allow_rebase_merge verified true). Open: ③ factory repo name (blocks T-F1 only).
 T-D3 filed as a loop:ready issue this session.
+
+2026-07-28 (R-ENT-DEPLOY design pass, Fable): docs/15-ENTERPRISE-DEPLOYMENT.md authored —
+five deployment modes with honest readiness (CLI/SaaS/compose shipped; Helm/air-gap/
+marketplace gaps trigger-named), two zero-touch lanes kept distinct (Lane A activation
+bound to the verbatim R-DEPLOY-AUTOMATION 2 trigger; Lane B pull-only/N-1/zero-egress),
+scale story from measured figures only (with the six-detector-era detect caveat and the
+never-load-tested list stated), readiness ledger, Answer Sheet, HLD §6 + LLD §7 contracts.
+Registered per R-REQ-PIPELINE: FR-39..42 (docs/01 §I), T-E1..E5 in QUEUE PARKED (triggers,
+no dates), LIFECYCLE-MAP enterprise-deploy section. Zero build authorized. Reconcile notes:
+the ruling's "docs/13-LIFECYCLE-MAP" = docs/internal/LIFECYCLE-MAP.md; perf page's "all six
+detectors" label is stale vs nine shipped — re-measure gap flagged inside FR-42.

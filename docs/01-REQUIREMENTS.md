@@ -238,3 +238,40 @@ FR-38 (S) [pillar-map 2026-07-28] Showback export. Finance-grade CSV of
   caveat, downloadable by billing-capable roles only (O-2 RBAC). Accept:
   export matches tokenomics goldens byte-for-byte; RBAC test; honest empty
   state when nothing is attributed.
+
+## I. Enterprise deployment & zero-touch CI/CD [added 2026-07-28, R-ENT-DEPLOY — design home: docs/15]
+
+All four are TRIGGER-GATED (docs/15 §8; triggers never dates). Zero-egress +
+no-phone-home (R-DEPLOYMENT-CONTRACT 2–3) bind every customer-side clause.
+Nothing below authorizes code before its trigger fires and the founder
+sequences it.
+
+FR-39 (S) [R-ENT-DEPLOY, R-MARKETPLACE a] Deployment modes. The product ships
+  as ONE artifact behind five modes — in-perimeter CLI (shipped), hosted SaaS
+  (shipped), VPC self-hosted compose (shipped)/Helm (gap), air-gap bundle
+  (gap), marketplace IaC (gap) — config-only differences, BYO
+  postgres/TLS/identity, engine bytes identical in every channel.
+  Accept (per closing slice): install evidence named in docs/15 §4 ledger.
+
+FR-40 (S) [R-ENT-DEPLOY, R-DEPLOY-AUTOMATION 2] Lane-A zero-touch release
+  train: tag → signed image → gate-round → staging → smoke → promote →
+  health-gated cutover with auto-rollback (docs/15 §7.5); backup-then-migrate
+  order; additive-only migration law retained. Activation ONLY on the
+  recorded trigger (>1 app from monorepo OR >1 deploy/week for a month);
+  founder-gated promotion stands until then. Accept: drill tag reaches prod
+  with zero human steps; induced health-fail rolls back automatically.
+
+FR-41 (S) [R-ENT-DEPLOY] Lane-B customer zero-touch updates: pull-only signed
+  semver channel, stable Helm values contract (docs/15 §7.2), pre-upgrade
+  migration runner (§7.4), offline bundle path (§7.3), N-1
+  upgrade/rollback-compatibility window. We never push, ping, or
+  update-check. Accept: N-1→N→rollback cycle green against kind; offline
+  install completes with zero network calls.
+
+FR-42 (S) [R-ENT-DEPLOY, R-MARKETPLACE b] Scale claims discipline: public
+  scale statements use MEASURED figures only (docs/15 §3 + its caveats);
+  scaling dimensions are data volume + audit concurrency (+ Phase-2 policy
+  throughput), never concurrent logins; rungs advance only on their named
+  triggers. Accept: docs-site perf claims trace to a measured run; stale-era
+  figures carry their caveat (six-detector detect timing flagged until
+  re-measured).

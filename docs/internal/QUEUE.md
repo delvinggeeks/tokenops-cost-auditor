@@ -119,6 +119,10 @@ Each fires on a named customer/demand event. Pulling one forward without its tri
 - **R-SCOPE-STOP (recorded 2026-07-28, ruled from chat):** further read-API/agent surfaces —
   MCP `get_audit`/`get_breakdown` parity, `GET /api/v1/savings`, `GET /api/v1/sources`,
   drift-over-API — ← first programmatic-access request from a real customer
+- **R-ENT-DEPLOY slice set (design docs/15 §8 · FR-39..42):** T-E1 Helm ← first VPC
+  customer · T-E2 air-gap bundle ← first air-gapped deal · T-E3 marketplace IaC ← first
+  marketplace lead · T-E4 Lane-A release train ← R-DEPLOY-AUTOMATION 2 trigger · T-E5
+  Lane-B update channel ← rides T-E1
 
 ## Superseded for SEQUENCING → this file
 
