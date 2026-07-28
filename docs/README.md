@@ -16,7 +16,8 @@ platform.** Nothing is duplicated between them — each fact has one home.
    data flow, ADR summary (tech-stack decisions live here; the public mirror is
    `docs-site/engineering/stack.md`).
 4. **`internal/CODE-TOUR.md`** — the same architecture, but walked through real files in
-   plain language. ⚠ Stop 4 says "six detectors"; there are nine — refresh registered in QUEUE.
+   plain language, 16 stops: the audit pipeline (Part 1) then the platform-era systems
+   around it — orgs, the developer platform, flywheel, statements (Part 2).
 5. **`12-FLYWHEEL.md`** — the intelligence lifecycle: five ingestion tiers, the
    deterministic engine, the L0–L4 learning ladder with its honesty thresholds, intent law.
 6. **`internal/LIFECYCLE-MAP.md`** — one table: every lifecycle capability, its status,
@@ -60,6 +61,4 @@ flowchart LR
 
 ## Known-stale register
 
-- `internal/CODE-TOUR.md` — detector count + missing Part-2 stops (platform API, orgs,
-  payments, flywheel, statements) → QUEUE candidate T-D1.
 - `uml/` — 2 diagrams, both pre-platform-track → QUEUE candidate T-D2 (architect-gated).

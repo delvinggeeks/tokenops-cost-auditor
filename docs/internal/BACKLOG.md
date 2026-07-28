@@ -332,3 +332,6 @@ follow-ups from that build and the depth-engine detour:
   runs one CallAggregate + one FindingRow query per workspace plus one artifact read per
   audit — linear and fine at k=10, worth batching by audit_id across the whole cohort
   before it isn't.
+- CODE-TOUR.md Part-2 stops beyond T-D1's four (Issue #99 out-of-scope line) — dashboard,
+  alerts, copilot, and the collector/device-link surfaces have no tour stop yet; each is
+  its own ~15-min stop, not folded into an existing one.

@@ -73,15 +73,24 @@ floor), owner-gated Settings consent card (ux mockup gate PASS-WITH-NOTES, all 3
 closed in-slice), `GET /admin/cohort-export.json` + admin state row, docs/04 FR-35 row
 split out of the design span. Next per NOW order: T-D1; T-F4's scope-check may run._
 
+_T-D1 SHIPPED 2026-07-28 — Issue #99 slice: `docs/internal/CODE-TOUR.md` refreshed
+end-to-end against the current tree — Stop 3 corrected to agent-verified pricing
+(R-AUTO-PRICING, `scripts/pricing_verify.py`), Stop 4 corrected to nine detectors
+(d1-d6, d8-d10; d7 never shipped), Stop 9 corrected to Standard Checkout
+orders/subscriptions + the free/pro/team plan catalogue, Stop 11 corrected to 31
+tables and the 001-024 migration chain; four new Part-2 stops added (13 platform
+API, 14 orgs, 15 flywheel, 16 statements). `docs/README.md`'s reading-order note and
+known-stale register cleared for CODE-TOUR (the `uml/`/T-D2 line stays). New
+`tests/test_docs_internal.py` pins every backticked path/symbol in the tour to the
+real tree and the detector count to `rules.registry.DETECTORS`, so a future drift
+fails the suite instead of silently aging. No FR/traceability implication (docs
+spine maintenance, same class as T-D3). Next per NOW order: T-D2 (architect-gated)._
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
-- **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
-  Part 2 lacks stops for platform API / orgs / payments / flywheel / statements; verify
-  every stop against the current tree (registered 2026-07-28; entry point `docs/README.md`
-  ships same day).
 - **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
   components + sequence diagrams covering read API, payments, orgs, flywheel
   (architect-gated per its charter — D6/D13-style pass).

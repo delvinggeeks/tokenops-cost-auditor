@@ -4163,3 +4163,32 @@ measured slow export); u.1 "detector fire rates" jargon → "which cost patterns
 and how often" (mockup synced, the full what-leaves list intact); u.2 consent-card icon
 detector→eye (existing sprite symbol — a consent surface shows what can be SEEN, not a
 detector; no new tone, sprite-parity untouched).
+
+2026-07-28 (T-D1 internal-docs refresh, Issue #99): `docs/internal/CODE-TOUR.md`
+verified/refreshed stop-by-stop against the current tree. Stop 3 corrected from
+"hand-verified" to agent-verified pricing (R-AUTO-PRICING — `scripts/pricing_verify.py`
+is the strict gate now, no founder-eyes step). Stop 4 corrected from six to nine
+detectors (d1-d6, d8-d10; d7 was never shipped — matches registry.py's DETECTORS
+tuple and export.py's existing "d7 never shipped" note). Stop 9 corrected from
+credits-era framing to the real two-path money flow: Razorpay Standard Checkout /
+Stripe Checkout Session one-shot orders feeding the same atomic credit claim, plus
+the recurring free/pro/team subscription catalogue in payments/plans.py. Stop 11
+corrected from "8 tables" to the real count — 31 tables (models.py), migration chain
+001 through 024. Four Part-2 stops added: Stop 13 platform API (routes_api_read.py +
+sdk/js + src/.../sdk + mcp/server.py), Stop 14 orgs (routes_members.py + authz.py's
+4-role owner/admin/member/viewer matrix), Stop 15 flywheel (frame.py/cohort.py/
+export.py — the L0-L4 ladder's data spine), Stop 16 statements (statements/build.py,
+the Savings Statement's verified-vs-customer-reported money law). Dashboard/alerts/
+copilot/collector stops explicitly parked to BACKLOG.md as one line (R-IMPROVISE —
+named, not silently dropped); docs-site/engineering/performance.md's stale
+"all six detectors" claim is T-D4's, untouched here. `docs/README.md`'s reading-order
+note and known-stale register entry for CODE-TOUR cleared (the uml/T-D2 line stays).
+New `tests/test_docs_internal.py` (6 tests): every backticked repo path in the tour
+resolves on disk (suffix-matched so `mcp/server.py` in prose still pins to the real
+`src/tokenops_cost_auditor/mcp/server.py`), every backticked `symbol()` resolves to a
+`def` under src/, and the detector-count word + span bounds/skip-gap derive from
+`rules.registry.DETECTORS` — so a future d11 landing without a tour touch fails the
+suite instead of aging silently, closing the exact drift class this card fixed. No
+FR/traceability implication (docs spine maintenance, same class as T-D3); no
+money-math, no migration, no engine-purity touch. Full suite green; ruff/mypy clean.
+Next per NOW order: T-D2 (architect-gated).
