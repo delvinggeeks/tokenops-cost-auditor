@@ -71,17 +71,21 @@ _T-F2 SHIPPED 2026-07-29 — Issue #95 slice: migration 024 `workspaces.cohort_o
 disjoint from frame.py's, k≥10 floor with honest below-floor refusal naming n and the
 floor), owner-gated Settings consent card (ux mockup gate PASS-WITH-NOTES, all 3 notes
 closed in-slice), `GET /admin/cohort-export.json` + admin state row, docs/04 FR-35 row
-split out of the design span. Next per NOW order: T-D1; T-F4's scope-check may run._
+split out of the design span. Next per NOW order: T-D1; T-F4's scope-check may run.
+
+- **T-D1 · spine/docs | WP-COMPREHEND** internal-docs refresh — Issue #99: every
+  CODE-TOUR stop verified against the tree (nine detectors d1–d6/d8–d10, agent-verified
+  pricing per R-AUTO-PRICING, Standard-Checkout payments, 31 tables / chain 001→024) +
+  Part-2 stops for platform API / orgs / flywheel / statements; `docs/README.md`
+  stale-register line cleared; docs-drift tripwire test ·
+  trace: `docs/internal/CODE-TOUR.md`→`tests/test_docs_internal.py`_
 
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
-- **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
-  Part 2 lacks stops for platform API / orgs / payments / flywheel / statements; verify
-  every stop against the current tree (registered 2026-07-28; entry point `docs/README.md`
-  ships same day).
+- _(T-D1 → NOW 2026-07-29, Issue #99.)_
 - **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
   components + sequence diagrams covering read API, payments, orgs, flywheel
   (architect-gated per its charter — D6/D13-style pass).
@@ -110,8 +114,17 @@ gets its first shipped surfaces. Slices:
 - _(T-F3 → NOW 2026-07-28, Issue #89.)_
 - **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
   next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
-  provenance) · SCOPE-CHECK FIRST: `services/statements/build.py` already carries verified
-  sections — measure the gap; this slice may shrink or collapse
+  provenance) · SCOPE-CHECK RUN 2026-07-29 (T-D1 session): the realized-delta MECHANIC is
+  already shipped — `services/dashboard/savings.py::compute()` credits each Applied finding
+  min(max(0, baseline − recomputed), baseline) at the next ≥7-day audit, honest
+  pending/identified when unmeasurable, and `statements/build.py` inherits the figure
+  (goldens in test_verified_savings.py / test_statements.py). The slice SHRINKS (does not
+  collapse) to the LLD §9.4 residue: emit per-finding
+  `VerifiedLine(amount_usd, finding_ref, from_audit, to_audit)` from the existing compute,
+  render the attributed lines in the statement VERIFIED section (R-Q9: provenance = both
+  audit ids — today only the aggregate + a period-wide audit list ship), + the FR-37
+  acceptance journey test (upload→finding→apply→re-audit→statement). Totals must not move:
+  same formula, now attributed — existing money-math goldens are the tripwire.
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
