@@ -365,6 +365,10 @@ class TestSdkJsDocs:
         for scope in ("read:audits", "read:findings"):
             assert scope in self.SDK, scope
 
+    def test_documents_get_audit(self) -> None:
+        assert "getAudit" in self.SDK
+        assert "/api/v1/audits/{id}" in self.SDK
+
     def test_states_counts_only_fr22(self) -> None:
         body = re.sub(r"\s+", " ", self.SDK).lower()
         assert "counts-only" in body or "counts only" in body
