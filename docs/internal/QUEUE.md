@@ -65,13 +65,13 @@ states), owner-gated `/breakdown` affordance with visible showback gloss (ux moc
 PASS-WITH-NOTES, all 4 notes closed in-slice), docs/04 FR-38 row split out of the design
 span. Next per NOW order: T-F2; T-F4's scope-check may run._
 
-- **T-F2 · FR-35** — Issue #95 — cohort export + consent: `workspaces.cohort_opt_in`
-  (explicit opt-in, owner-gated Settings control, audit-logged) + `services/flywheel/
-  export.py` CohortExportEnvelope v1 (LLD §9.1 — aggregate-only features, opaque
-  `workspace_ref`, k≥10 floor with honest below-floor refusal) + `GET
-  /admin/cohort-export.json` admin surface · scope-check done in-card: frame/cohort/
-  benchmarks don't cover it, slice stands · trace: `services/flywheel/export.py` →
-  export golden + consent journey.
+_T-F2 SHIPPED 2026-07-29 — Issue #95 slice: migration 024 `workspaces.cohort_opt_in`
+(explicit opt-in, default false), `services/flywheel/export.py` CohortExportEnvelope v1
+(LLD §9.1 verbatim — aggregate-only features, opaque `workspace_ref` in a key-space
+disjoint from frame.py's, k≥10 floor with honest below-floor refusal naming n and the
+floor), owner-gated Settings consent card (ux mockup gate PASS-WITH-NOTES, all 3 notes
+closed in-slice), `GET /admin/cohort-export.json` + admin state row, docs/04 FR-35 row
+split out of the design span. Next per NOW order: T-D1; T-F4's scope-check may run._
 
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 

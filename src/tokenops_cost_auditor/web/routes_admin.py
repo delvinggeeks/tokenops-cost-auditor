@@ -7,7 +7,7 @@ import secrets
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -63,11 +63,32 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
             flywheel_line = cohort.status(session, request.app.state.settings).digest_line()
     except Exception:  # cold-review f.2: a flywheel bug must never 500 the
         flywheel_line = "Flywheel: unavailable (check logs)"  # founder's ops panel
+    # T-F2 · FR-35: cohort-export state beside the flywheel digest. Below the
+    # k-floor the refusal IS the surface (no download exists to offer); the
+    # founder-facing count is allowed here — customer surfaces never count down.
+    try:
+        with _session(request) as session:
+            from tokenops_cost_auditor.services.flywheel import export as cohort_export
+
+            settings = request.app.state.settings
+            exp = cohort_export.build(
+                session, settings, settings.secret_key, cohort_export.current_period()
+            )
+        if exp.live:
+            export_line = (
+                f"Cohort export: period {exp.period} · live — {exp.k} opted-in "
+                f"workspace(s) · GET /admin/cohort-export.json"
+            )
+        else:
+            export_line = f"Cohort export: period {exp.period} · {exp.reason}"
+    except Exception:  # same law as the digest: never 500 the ops panel
+        export_line = "Cohort export: unavailable (check logs)"
     return HTMLResponse(
         "<h1>TokenOps Cost Auditor — admin</h1>"
         f"<p>{flywheel_line}</p>"
+        f"<p>{export_line}</p>"
         "<p>Actions: POST /admin/audits/{id}/rerun · POST /admin/audits/{id}/purge · "
-        "GET /admin/audits/{id}/report · "
+        "GET /admin/audits/{id}/report · GET /admin/cohort-export.json · "
         "POST /admin/payments/mark-paid (email, amount, currency, provider)</p>"
         f"<table border=1 cellpadding=4><tr><th>audit</th><th>user</th><th>status</th>"
         f"<th>paid via</th><th>created</th><th>purge</th></tr>{rows}</table>"
@@ -211,3 +232,30 @@ def mark_paid(
         )
         session.commit()
     return {"status": "paid", "email": email.lower()}
+
+
+@router.get("/cohort-export.json", response_model=None)
+def cohort_export_download(
+    request: Request,
+    period: str | None = None,
+    actor: str = Depends(admin_actor),
+) -> JSONResponse:
+    """T-F2 · FR-35: the factory's ONLY inlet — aggregate envelopes, tenancy
+    already stripped by the exporter. Below the k-anonymity floor → honest 404
+    whose detail names n and the floor (FR-35 "exports nothing and says why"),
+    never an empty-but-valid file. Every pull lands in the audit log — data
+    leaving the platform leaves a trail."""
+    from tokenops_cost_auditor.services.flywheel import export as cohort_export
+
+    settings = request.app.state.settings
+    which = period or cohort_export.current_period()
+    with _session(request) as session:
+        exp = cohort_export.build(session, settings, settings.secret_key, which)
+        if not exp.live:
+            raise HTTPException(status_code=404, detail=exp.reason)
+        auditlog.append(session, actor, "cohort_export.pulled", exp.period, {"k": exp.k})
+        session.commit()
+    return JSONResponse(
+        exp.to_dict(),
+        headers={"Content-Disposition": f"attachment; filename=cohort-export-{exp.period}.json"},
+    )

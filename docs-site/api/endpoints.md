@@ -68,6 +68,22 @@ Rerun Audit.
 
 Responses: `200`, `422`
 
+## `GET /admin/cohort-export.json`
+
+Cohort Export Download.
+
+T-F2 · FR-35: the factory's ONLY inlet — aggregate envelopes, tenancy
+already stripped by the exporter. Below the k-anonymity floor → honest 404
+whose detail names n and the floor (FR-35 "exports nothing and says why"),
+never an empty-but-valid file. Every pull lands in the audit log — data
+leaving the platform leaves a trail.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `period` | query | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /admin/payments/mark-paid`
 
 Mark Paid.
@@ -852,6 +868,22 @@ R-SAAS-BASICS 4a. Everything stated on the page happens, in order:
 raw uploads purged (ONE purge definition), connected keys revoked and
 their ciphertext deleted, the subscription cancelled on our side, this
 session ended — all audit-logged.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/cohort`
+
+Save Cohort Consent.
+
+T-F2 · FR-35: workspace cohort-export consent — the one flag the
+exporter honors. Owner-only (MANAGE_WORKSPACE): sharing data OUT of the
+workspace is a governance act, so the ensure() runs before any write and
+non-owners 403 (they never see the card either — O-2 absence idiom).
+Audit-logged like every data-use decision.
 
 | Parameter | In | Required | Type |
 |---|---|---|---|

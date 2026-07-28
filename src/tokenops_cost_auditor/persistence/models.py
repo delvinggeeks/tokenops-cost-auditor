@@ -104,6 +104,10 @@ class Workspace(Base):
     # True for a backfilled workspace-of-one (never renamed by an org). Lets the
     # UI say "your workspace" vs a named org, and O-1 invites target real orgs.
     personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # T-F2 · FR-35: EXPLICIT opt-in to the aggregate cohort export — the only
+    # data path into the model factory. Opposite consent direction from
+    # User.benchmark_sharing (R-F1 opt-out): nothing leaves unless this is on.
+    cohort_opt_in: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

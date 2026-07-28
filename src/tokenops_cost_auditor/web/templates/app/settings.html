@@ -81,6 +81,36 @@
     </form>
   {{ kit.surface_close() }}
 
+  {# T-F2 · FR-35: workspace cohort-export consent — EXPLICIT opt-in, the only
+     path any data takes OUT of the product. Owner-only (MANAGE_WORKSPACE):
+     non-owners see nothing, never a disabled control (O-2 absence idiom). The
+     disambiguation from Peer benchmarks LEADS the copy (ux gate f.1); kit
+     tones only, no new colors (ux f.3). #}
+  {% if can_manage_workspace %}
+    {{ kit.surface_open(title="Model improvement (cohort learning)", icon="detector", span=6) }}
+      <form method="post" action="/settings/cohort">
+        <label style="display:flex; gap:var(--s1); align-items:flex-start;">
+          <input type="checkbox" name="cohort_opt_in" value="1"
+                 {% if cohort_opt_in %}checked{% endif %}>
+          <span>Share aggregate workspace features to improve detection models<br>
+            <small class="muted"><strong>This is the only setting that lets
+              anything leave your workspace — Peer benchmarks above never does —
+              and it is off by default.</strong> Benchmarks rank you
+              <em>inside</em> the product; this export goes <em>out</em>, to
+              model building, and carries counts and ratios only: spend level,
+              token mix, cache-hit rate, detector fire rates, workload-shape
+              mix — under an opaque workspace reference. Never names, routes,
+              tags, prompts or completions. Exports exist only in cohorts of
+              ten or more opted-in workspaces (a k-anonymity floor); below
+              that, nothing is exported at all. Every change here lands in
+              your audit log.</small></span>
+        </label>
+        <p style="margin-top: var(--s2);">
+          {{ kit.button("Save cohort preference", variant="primary") }}</p>
+      </form>
+    {{ kit.surface_close() }}
+  {% endif %}
+
   {# Sources — the same routes as /sources, surfaced where people look #}
   {{ kit.surface_open(title="Connected sources", icon="source", span=12) }}
     <p class="tells">What this tells you: which providers we pull usage from, and
