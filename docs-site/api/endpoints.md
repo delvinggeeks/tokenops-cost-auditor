@@ -478,6 +478,21 @@ the audit under FR-21 → honest empty state).
 
 Responses: `200`, `422`
 
+## `GET /breakdown/showback.csv`
+
+Breakdown Showback Csv.
+
+FR-38 showback export — the by-model/by-route allocation as a finance-grade
+CSV, figures byte-identical to the tokenomics artifact (LLD §9.5). O-2 RBAC:
+owner-only (MANAGE_BILLING), the same gate as billing — the page hides the
+affordance from other roles AND the route refuses them (defense in depth).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /copilot/seats`
 
 Upload Seats.
