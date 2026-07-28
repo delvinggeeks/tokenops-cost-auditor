@@ -4107,4 +4107,10 @@ full upload→download journey). Full suite 1289 passed / 5 skipped; coverage ga
 (services 96.4%, money files 100%). No money-math change (serializer recomputes nothing)
 → no pricing golden / pricing_verify impact. docs/04 FR-38 row split out of the FR-34..38
 design span; QUEUE T-F5 NOW-line retired; docs-site how-it-works "Show back" paragraph.
+First CI gate-round on PR #93: spec-guard/system-tester/ux-reviewer/architect PASS;
+vv-engineer PASS-WITH-NOTES, both notes closed in-diff (GUARDED_MODULES + showback.py;
+docs/05 T-SHOW-01..13 block added in-slice, the wider FR-3x-era docs/05 backfill
+registered as QUEUE candidate T-D5); cold-reviewer NO-VERDICT (truncated response twice —
+harness fault, not a finding; re-runs on the fix push). CI lint caught test_showback.py
+unformatted — ruff format is now part of the authoring checklist, not just ruff check.
 Next per NOW order: T-F2; T-F4's scope-check may run.

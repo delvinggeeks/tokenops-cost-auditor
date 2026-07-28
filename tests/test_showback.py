@@ -372,9 +372,11 @@ class TestShowbackAffordanceVisibility:
         assert "Showback = the allocation file accounting uses" in owner_page
 
         for role in NON_OWNER_ROLES:
-            page = TestClient(app).get(
-                "/breakdown", headers={"X-User-Email": f"showback-{role}@example.com"}
-            ).text
+            page = (
+                TestClient(app)
+                .get("/breakdown", headers={"X-User-Email": f"showback-{role}@example.com"})
+                .text
+            )
             assert "Download showback CSV" not in page
             assert 'href="/breakdown/showback.csv"' not in page
             assert "Showback = the allocation file accounting uses" not in page

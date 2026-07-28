@@ -77,6 +77,10 @@ re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 - **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
   components + sequence diagrams covering read API, payments, orgs, flywheel
   (architect-gated per its charter — D6/D13-style pass).
+- **T-D5 docs/05 test-plan refresh (FR-3x era)** — `docs/05-TEST-PLAN.md` §3 has no IDs
+  for the v1.5+ slices (FR-36 shapes precedent; surfaced by the T-F5 vv gate note, which
+  called the gap compounding). T-F5 added its own T-SHOW block in-slice; backfill the
+  rest against the current tests/ tree (registered 2026-07-28).
 - **T-D4 · FR-42** perf-claims reconcile — `docs-site/engineering/performance.md` says
   "all six detectors" (3×) with no era caveat while nine ship; FR-42 acceptance requires
   the caveat now and a nine-detector re-time on the measured machine to retire it
