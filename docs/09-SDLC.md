@@ -181,3 +181,26 @@ the ROADMAP.
 6. **Enforcement honesty.** Traceability "same-commit" and money-math "spreadsheet-diff in
    commit" are REVIEW-enforced today (no CI script yet), not machine-checked — a CI
    traceability check is a ROADMAP item. Don't claim machine-checked where it's review-only.
+
+## 9. R-REQ-PIPELINE — new-scope intake + model tiering [founder 2026-07-28]
+
+Every piece of NEW SCOPE (founder ruling, conversation decision, competitive
+insight) follows ONE pipeline, same-day, before any build:
+
+1. **ANALYZE (Fable).** A Fable session converts the scope into numbered FRs
+   in docs/01 — enterprise-grade: acceptance criteria, tenancy/RBAC impact,
+   honest empty/error states, scale posture — plus the HLD/LLD design delta.
+   Design precedes implementation, always.
+2. **REGISTER.** Each FR lands as exactly ONE QUEUE line (QUEUE law 5).
+   No FR number, no line, no build.
+3. **SEQUENCE (founder).** Only the founder moves a line into NOW.
+4. **IMPLEMENT (Opus 5).** The loop's build sessions run Opus 5.
+5. **UNIT-TEST (low-cost tier).** Test authoring runs Sonnet 5; mechanical
+   scaffolds/parametrizations may drop to Haiku 4.5. Gate agents stay Sonnet
+   (TE-5). The vv-engineer gate still judges the tests regardless of which
+   tier wrote them.
+6. **GATES + DoD** unchanged (§3, §4) — tiering changes who writes, never
+   what passes.
+
+A conversation decision that never became an FR is LOST SCOPE — the QUEUE
+law-6 reconcile treats it as a spine bug.

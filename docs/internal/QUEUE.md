@@ -50,7 +50,7 @@ re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 - **MCP `get_breakdown`** — the agent surface for T-P8's endpoint (parked by #85).
 - **`GET /api/v1/savings`, `GET /api/v1/sources`** — pre-registered as "separate later slices" by #83.
 - **Cross-audit drift over the API** — `services/dashboard/drift` is browser-only (parked by #85).
-- **Showback export for finance** — tag/route cost CSV an owner can hand to accounting; the
+- **T-F5 · FR-38** showback export for finance — tag/route cost CSV an owner can hand to accounting; the
   allocation math (`tokenomics.by_route`, `pct_attributed`) is shipped, only the export
   surface is missing (registered 2026-07-28 from the pillar-map gap analysis).
 - **T-D1 internal-docs refresh** — `CODE-TOUR.md` says "six detectors" (nine exist) and
@@ -66,25 +66,26 @@ re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
   Two proven stale 2026-07-28: "API keys / programmatic access" (S-6 shipped it) and
   "Orgs/SSO (X-03 stands)" (X-03 relaxed by R-ORG; workspaces/RBAC shipped).
 
-**R-MODEL-FACTORY (founder 2026-07-28).** The learning lifecycle gets its own FACTORY: a
+**R-MODEL-FACTORY (founder 2026-07-28) — formalized as FR-34..FR-38 (docs/01 §H) with
+HLD §8 + LLD §9 design deltas, per R-REQ-PIPELINE (docs/09 §9).** The learning lifecycle gets its own FACTORY: a
 separate repo with eval-gated CI running daily; the platform consumes versioned model
 artifacts behind a default-off flag; cross-workspace learning happens ONLY through an
 opt-in, FR-22/R-ZTA-safe aggregate export. Dev-persona law (docs/12 INTENT + COPY LAW)
 gets its first shipped surfaces. Slices:
 
-- **T-F1 factory scaffold** — separate repo (name: founder decides): eval harness + golden
+- **T-F1 · FR-34** factory scaffold — separate repo (name: founder decides): eval harness + golden
   baselines + promotion gate + daily scheduled CI (evals-only until docs/12 §Stage-3
   thresholds fire — no training on n=1) · trace: factory CI green → platform artifact-loader test
-- **T-F2 cohort export + consent** — per-workspace opt-in flag; aggregate-only features
+- **T-F2 · FR-35** cohort export + consent — per-workspace opt-in flag; aggregate-only features
   (counts/ratios/percentiles, schema-versioned, k-floor n≥10 = the L1 threshold); tenancy
   stripped at the web/persistence boundary, engine stays tenant-blind (R-ORG) · overlaps
   `services/flywheel/{cohort,benchmarks}.py` — verify before building · trace: export
   golden + consent journey
-- **T-F3 behaviour lens v1** — BEHAVIORAL intent (docs/12 INTENT LAW) surfaced per route:
+- **T-F3 · FR-36** behaviour lens v1 — BEHAVIORAL intent (docs/12 INTENT LAW) surfaced per route:
   shape chips (loop / retry-burst / context-growth / unclaimed-cache) on the breakdown page
   + read API, fix-first copy per COPY LAW ("your pipeline, same output, lower bill");
   deterministic, engine-pure · trace: shape fixtures → ux gate at both depths
-- **T-F4 realized-delta per finding** — Applied-verdict findings (flywheel L0) get a
+- **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
   next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
   provenance) · SCOPE-CHECK FIRST: `services/statements/build.py` already carries verified
   sections — measure the gap; this slice may shrink or collapse
