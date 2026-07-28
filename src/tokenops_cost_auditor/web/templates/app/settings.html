@@ -81,6 +81,32 @@
     </form>
   {{ kit.surface_close() }}
 
+  {# FR-35 (R-MODEL-FACTORY): per-workspace consent to the cohort export — the
+     ONLY data path into the model factory. Owner-only (O-2 MANAGE_WORKSPACE,
+     data-use governance is an owner act); a non-owner sees no toggle at all
+     (absence, never a disabled control — the O-2 idiom). #}
+  {% if can_manage_workspace %}
+  {{ kit.surface_open(title="Cohort export", icon="overview", span=6) }}
+    <form method="post" action="/settings/workspace/cohort-opt-in">
+      <label style="display:flex; gap:var(--s1); align-items:flex-start;">
+        <input type="checkbox" name="cohort_opt_in" value="1"
+               {% if cohort_opt_in %}checked{% endif %}>
+        <span>Include this workspace in the cohort export<br>
+          <small class="muted">Separate from your peer-benchmark setting above —
+            this controls data leaving to the anonymized cross-customer model
+            training set only. Off by default — this box opts your workspace IN.
+            What leaves: aggregate counts and ratios only (spend, token ratios,
+            detector and workload-shape rates) — never names, routes, tags or
+            your prompts. Every export protects your identity: it only ever
+            includes a period where at least 10 workspaces take part, so a
+            single participant can never be singled out.</small></span>
+      </label>
+      <p style="margin-top: var(--s2);">
+        {{ kit.button("Save cohort export setting", variant="primary") }}</p>
+    </form>
+  {{ kit.surface_close() }}
+  {% endif %}
+
   {# Sources — the same routes as /sources, surfaced where people look #}
   {{ kit.surface_open(title="Connected sources", icon="source", span=12) }}
     <p class="tells">What this tells you: which providers we pull usage from, and

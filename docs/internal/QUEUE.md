@@ -65,6 +65,19 @@ states), owner-gated `/breakdown` affordance with visible showback gloss (ux moc
 PASS-WITH-NOTES, all 4 notes closed in-slice), docs/04 FR-38 row split out of the design
 span. Next per NOW order: T-F2; T-F4's scope-check may run._
 
+_T-F2 SHIPPED 2026-07-28 — Issue #95 slice: `workspaces.cohort_opt_in` (migration 024,
+NOT NULL default False — explicit opt-in, absence = excluded); `services/flywheel/export.py`
+the CohortExportEnvelope v1 builder (LLD §9.1 verbatim: schema_version/period/workspace_ref
+opaque HKDF hash under a DISTINCT info context from frame.py's user pseudonym/k/features —
+aggregate-only counts+ratios, k-floor = `flywheel_l1_min_customers`, below-floor -> zero
+envelopes + an honest reason naming n and the floor); Settings gained the owner-only
+(`MANAGE_WORKSPACE`) consent toggle, audit-logged, absent for non-owners; `/admin` gained
+the cohort-export row + `GET /admin/cohort-export.json` behind the existing admin-token
+gate. Engine untouched (services/rules + services/pricing stay cohort-blind, T-NFR-01); no
+new money math (monthly_spend_usd is a tokenomics.json passthrough, no pricing golden
+owed); docs/04 FR-35 row split out of the design span. Next per NOW order: T-D1; T-F4's
+scope-check may run._
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
@@ -97,11 +110,7 @@ gets its first shipped surfaces. Slices:
 - **T-F1 · FR-34** factory scaffold — separate repo (name: founder decides): eval harness + golden
   baselines + promotion gate + daily scheduled CI (evals-only until docs/12 §Stage-3
   thresholds fire — no training on n=1) · trace: factory CI green → platform artifact-loader test
-- **T-F2 · FR-35** cohort export + consent — per-workspace opt-in flag; aggregate-only features
-  (counts/ratios/percentiles, schema-versioned, k-floor n≥10 = the L1 threshold); tenancy
-  stripped at the web/persistence boundary, engine stays tenant-blind (R-ORG) · overlaps
-  `services/flywheel/{cohort,benchmarks}.py` — verify before building · trace: export
-  golden + consent journey
+- _(T-F2 → NOW 2026-07-28, Issue #95.)_
 - _(T-F3 → NOW 2026-07-28, Issue #89.)_
 - **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
   next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9

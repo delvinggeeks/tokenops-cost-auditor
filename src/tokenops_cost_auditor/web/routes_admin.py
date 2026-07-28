@@ -3,6 +3,7 @@ append-only audit_log. Paths per docs/03 §5 (/admin — web layer, not /api/v1)
 
 from __future__ import annotations
 
+import dataclasses
 import secrets
 from pathlib import Path
 
@@ -11,12 +12,17 @@ from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tokenops_cost_auditor.persistence.models import Audit, Subscription, User
+from tokenops_cost_auditor.persistence.models import Audit, Subscription, User, utcnow
 from tokenops_cost_auditor.persistence.repo import get_or_create_user, workspace_id_for
+from tokenops_cost_auditor.services.flywheel import export as cohort_export_svc
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments.base import grant_payment
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+def _current_period() -> str:
+    return f"{utcnow():%Y-%m}"
 
 
 def admin_actor(request: Request) -> str:
@@ -63,15 +69,67 @@ def admin_home(request: Request, actor: str = Depends(admin_actor)) -> HTMLRespo
             flywheel_line = cohort.status(session, request.app.state.settings).digest_line()
     except Exception:  # cold-review f.2: a flywheel bug must never 500 the
         flywheel_line = "Flywheel: unavailable (check logs)"  # founder's ops panel
+    period = _current_period()
+    try:
+        with _session(request) as session:
+            result = cohort_export_svc.build(session, request.app.state.settings, period)
+        if result.envelopes:
+            cohort_line = (
+                f"Cohort export ({result.period}): {result.k} workspace(s), floor "
+                f"{result.floor} — LIVE, "
+                f'<a href="/admin/cohort-export.json?period={result.period}">download JSON</a>'
+            )
+        else:
+            cohort_line = f"Cohort export ({result.period}): {result.reason}"
+    except Exception:  # a cohort-export bug must never 500 the founder's ops panel
+        cohort_line = "Cohort export: unavailable (check logs)"
     return HTMLResponse(
         "<h1>TokenOps Cost Auditor — admin</h1>"
         f"<p>{flywheel_line}</p>"
+        f"<p>{cohort_line}</p>"
         "<p>Actions: POST /admin/audits/{id}/rerun · POST /admin/audits/{id}/purge · "
         "GET /admin/audits/{id}/report · "
-        "POST /admin/payments/mark-paid (email, amount, currency, provider)</p>"
+        "POST /admin/payments/mark-paid (email, amount, currency, provider) · "
+        "GET /admin/cohort-export.json (?period=YYYY-MM)</p>"
         f"<table border=1 cellpadding=4><tr><th>audit</th><th>user</th><th>status</th>"
         f"<th>paid via</th><th>created</th><th>purge</th></tr>{rows}</table>"
     )
+
+
+@router.get("/cohort-export.json")
+def cohort_export_json(
+    request: Request,
+    period: str | None = None,
+    actor: str = Depends(admin_actor),
+) -> dict[str, object]:
+    """FR-35: the factory's only inlet. Pull-only — nothing here schedules or
+    pushes. Below the k-anonymity floor, this returns ZERO envelopes and the
+    honest reason naming n and the floor (never a 200 with a fabricated or
+    partial export)."""
+    resolved_period = period or _current_period()
+    with _session(request) as session:
+        result = cohort_export_svc.build(session, request.app.state.settings, resolved_period)
+        for envelope in result.envelopes:
+            problems = cohort_export_svc.envelope_violations(envelope)
+            if problems:  # pragma: no cover - defense-in-depth, schema is test-pinned
+                raise HTTPException(
+                    status_code=500, detail=f"envelope schema violation: {problems}"
+                )
+        auditlog.append(
+            session,
+            actor,
+            "cohort_export.downloaded",
+            resolved_period,
+            {"k": result.k, "envelopes": len(result.envelopes)},
+        )
+        session.commit()
+    return {
+        "period": result.period,
+        "k": result.k,
+        "floor": result.floor,
+        "reason": result.reason,
+        "envelopes": [dataclasses.asdict(e) for e in result.envelopes],
+    }
 
 
 @router.post("/plans/grant")

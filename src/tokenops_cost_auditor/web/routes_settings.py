@@ -15,6 +15,7 @@ from sqlalchemy import select
 from tokenops_cost_auditor.api.routes_upload import current_user
 from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, utcnow
 from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     active_workspace_id,
     get_or_create_user,
     get_or_create_workspace,
@@ -23,6 +24,7 @@ from tokenops_cost_auditor.persistence.repo import (
 )
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments import subscriptions
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 from tokenops_cost_auditor.web.routes_sources import PROVIDERS, user_plan
@@ -84,6 +86,7 @@ def settings_page(
             statement_emails=user.statement_emails is not False,
             daily_digest_emails=user.daily_digest_emails is not False,
             benchmark_sharing=user.benchmark_sharing is not False,
+            cohort_opt_in=workspace.cohort_opt_in,
             held_uploads=len(held),
             retention_days=settings.purge_after_days,
             purge_phrase=PURGE_PHRASE,
@@ -194,6 +197,37 @@ def rename_workspace(
         workspace = get_or_create_workspace(session, user)
         workspace.name = new_name
         auditlog.append(session, user.email, "workspace.renamed", new_name)
+        session.commit()
+    return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/workspace/cohort-opt-in", response_model=None)
+def save_cohort_opt_in(
+    request: Request,
+    cohort_opt_in: str | None = Form(default=None),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """FR-35 (R-MODEL-FACTORY): the workspace's consent to the cohort export —
+    the ONLY data path into the model factory. Owner-only (MANAGE_WORKSPACE,
+    data-use governance is an owner act); the page hides the toggle from every
+    other role AND the route refuses a forged POST (defense in depth,
+    authorized BEFORE commit — the routes_dashboard showback idiom). Every
+    flip is audit-logged, same as settings.benchmark_sharing."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        workspace = get_or_create_workspace(session, user)
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_WORKSPACE,
+            detail="only the workspace owner can change the cohort export setting",
+        )
+        workspace.cohort_opt_in = cohort_opt_in is not None
+        auditlog.append(
+            session,
+            user.email,
+            "settings.cohort_opt_in",
+            "opted_in" if cohort_opt_in is not None else "opted_out",
+        )
         session.commit()
     return RedirectResponse("/settings", status_code=303)
 

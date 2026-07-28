@@ -94,6 +94,32 @@ an artifact.
 T-SHOW-13 (journey): upload → audit done → button → download → figures
 match the artifact byte-for-byte.
 
+[amendment 2026-07-28, T-F2 (FR-35) — tests/test_cohort_export.py:]
+T-COH-01..04 (builder golden): exact envelope shape/values incl.
+detector_fire_rates + shape_mix arithmetic; workspace_ref opaque/keyed/never
+the id; DISTINCT HKDF context proven non-colliding with frame.py's user
+pseudonym on the same raw id; missing-artifact honest fallback (audited
+total_spend_usd + zeros, never a crash).
+T-COH-05..08 (below-floor honesty): 9 vs 10 exact boundary; opted-out
+workspaces never count toward k; out-of-period audits excluded; the refusal
+names n and the floor.
+T-COH-09 (determinism): two builds of the same DB state are byte-identical.
+T-COH-10..12 (schema self-audit): a real envelope has zero violations; a
+tampered free-text feature is caught; FEATURE_KEYS pinned to the LLD §9.1
+contract.
+T-COH-13..15 (consent journey): default off → absent from the export,
+opt-in → present, opt-out → absent again; every flip audit-logged;
+non-owner roles see no Settings toggle AND a forged POST 403s (O-2).
+T-COH-16..19 (admin surface): token gate 404 without X-Admin-Token; a live
+export over the real route; the below-floor honest JSON (envelopes: [] +
+reason); the download is audit-logged; the admin-home row renders both
+states.
+T-COH-20 (FR-22): no prompt/completion/content substrings in the export
+response.
+T-COH-21 (engine purity, T-NFR-01): services/rules + services/pricing source
+never contains "cohort"/"flywheel"; services/flywheel/*.py still imports no
+rules/pricing/connectors/network.
+
 ## 4. CI pipeline (GitHub Actions)
 
 jobs: lint(ruff) → type(mypy strict on services/*) → unit+integration

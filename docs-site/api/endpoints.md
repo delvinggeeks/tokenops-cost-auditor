@@ -68,6 +68,21 @@ Rerun Audit.
 
 Responses: `200`, `422`
 
+## `GET /admin/cohort-export.json`
+
+Cohort Export Json.
+
+FR-35: the factory's only inlet. Pull-only — nothing here schedules or
+pushes. Below the k-anonymity floor, this returns ZERO envelopes and the
+honest reason naming n and the floor (never a 200 with a fabricated or
+partial export).
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
+| `period` | query | no | string |
+
+Responses: `200`, `422`
+
 ## `POST /admin/payments/mark-paid`
 
 Mark Paid.
@@ -1088,6 +1103,23 @@ Delete Webhook.
 | Parameter | In | Required | Type |
 |---|---|---|---|
 | `endpoint_id` | path | yes | string |
+| `x-user-email` | header | no | string |
+
+Responses: `200`, `422`
+
+## `POST /settings/workspace/cohort-opt-in`
+
+Save Cohort Opt In.
+
+FR-35 (R-MODEL-FACTORY): the workspace's consent to the cohort export —
+the ONLY data path into the model factory. Owner-only (MANAGE_WORKSPACE,
+data-use governance is an owner act); the page hides the toggle from every
+other role AND the route refuses a forged POST (defense in depth,
+authorized BEFORE commit — the routes_dashboard showback idiom). Every
+flip is audit-logged, same as settings.benchmark_sharing.
+
+| Parameter | In | Required | Type |
+|---|---|---|---|
 | `x-user-email` | header | no | string |
 
 Responses: `200`, `422`

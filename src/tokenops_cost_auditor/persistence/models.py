@@ -105,6 +105,12 @@ class Workspace(Base):
     # UI say "your workspace" vs a named org, and O-1 invites target real orgs.
     personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # FR-35 (R-MODEL-FACTORY): explicit per-workspace opt-in to the cohort
+    # export — the ONLY data path into the model factory. NOT NULL default
+    # False: absence = excluded, the safe default IS the law. Distinct from
+    # User.benchmark_sharing (in-product benchmark cohort, opt-OUT default
+    # included) — this flag governs data LEAVING to the factory, nothing else.
+    cohort_opt_in: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class WorkspaceMember(Base):

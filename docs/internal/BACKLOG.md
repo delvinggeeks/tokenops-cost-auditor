@@ -327,3 +327,7 @@ follow-ups from that build and the depth-engine detour:
   `get_audit` or the newer `GET /api/v1/audits/{id}/breakdown` yet, and the
   `/breakdown` HTML page's "vs your last audit" trend is not part of the read API
   either — both ride the same R-SCOPE-STOP trigger, not a separate signal.
+- COHORT EXPORT CARD ICON (Issue #95 ux gate note, T-F2). Settings' new "Cohort
+  export" card reuses `icon="overview"` (the Workspace card's icon); a dedicated
+  icon would help it read as distinct from generic overview surfaces — cosmetic,
+  non-blocking.

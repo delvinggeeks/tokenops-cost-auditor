@@ -4114,3 +4114,46 @@ registered as QUEUE candidate T-D5); cold-reviewer NO-VERDICT (truncated respons
 harness fault, not a finding; re-runs on the fix push). CI lint caught test_showback.py
 unformatted — ruff format is now part of the authoring checklist, not just ruff check.
 Next per NOW order: T-F2; T-F4's scope-check may run.
+
+2026-07-28 (T-F2 · FR-35 cohort export + consent, Issue #95 — autonomous loop build
+session, LE-5): SHIPPED. The scope-check confirmed the slice stands as scoped —
+`services/flywheel/{frame,cohort,benchmarks}.py` overlap (the cohort_pseudonym HKDF/HMAC
+idiom, the flywheel_l1_min_customers k-floor, frame.py's schema-self-audit pattern) but
+none of the three export anything, so a NEW module `services/flywheel/export.py` was
+built, reusing those idioms under a DISTINCT HKDF info context (`workspace_pseudonym`
+vs frame.py's user `cohort_pseudonym` — proven non-colliding on the same raw id in-test).
+`workspaces.cohort_opt_in` (migration 024, NOT NULL default False — absence = excluded,
+no backfill needed, additive with `server_default=sa.false()`). `export.build(session,
+settings, period)` — cohort = opted-in workspaces with >=1 DONE audit in the "YYYY-MM"
+period; k < flywheel_l1_min_customers -> ZERO envelopes + an honest reason naming n and
+the floor (never a partial/fabricated export); features are a PASSTHROUGH of the audit's
+own persisted tokenomics.json (no recompute drift, so no pricing golden owed — the
+export golden is a serialization fixture, not new money, per the issue's acceptance
+clause); detector_fire_rates keyed by the NINE shipped registry ids (d1-d6,d8-d10,
+hardcoded not imported — services/flywheel still imports no services.rules, ever);
+shape_mix keyed by the five ShapeClass values, tallied from the artifact's shapes block;
+envelopes sort on workspace_ref (total key) for byte-identical determinism.
+`envelope_violations` is the executable schema self-audit (FR-22/R-ZTA — a free-text
+feature cannot ship undetected). Settings gained an owner-only (O-2 MANAGE_WORKSPACE)
+"Cohort export" card — `POST /settings/workspace/cohort-opt-in`, authorized BEFORE
+commit (the routes_dashboard showback idiom), audit-logged
+(settings.cohort_opt_in/opted_in|opted_out), absent entirely for non-owners (O-2 absence
+idiom) and a forged POST 403s. /admin gained a cohort-export row beside the flywheel
+digest line + `GET /admin/cohort-export.json` behind the existing admin-token gate,
+audit-logged on download, below-floor -> 200 with `envelopes: []` + the honest reason
+(never a fabricated export). ux-reviewer ran in-session (no separate mockup file — the
+surface is one small card + one admin line): PASS-WITH-NOTES, both notes closed in-slice
+(f.2 disambiguating clause added so the new card can't be misread as extending the
+existing Peer-benchmarks toggle; f.3 icon-reuse cosmetic note parked to BACKLOG, non-
+blocking). Unit tests authored on Sonnet 5 per TE-5/R-REQ-PIPELINE
+(tests/test_cohort_export.py, 24 tests: builder golden incl. detector/shape arithmetic,
+below-floor exact boundary + non-opted-in/out-of-period exclusion, determinism, schema
+self-audit incl. a tampered-feature catch, consent journey (default off -> opt-in ->
+opt-out), audit-log, non-owner absence + 403, admin surface incl. token gate + live +
+below-floor + audit-log, FR-22 marker-absence, engine-purity re-proof that
+services/rules+services/pricing stay cohort-blind, no-pricing-import proof). Full suite
+green (`ruff check`/`ruff format --check`/`mypy`/`pytest -m 'not perf'`), coverage gate
+green (services 96.3%, money files 100%, export.py 95.0%), `scripts/export_openapi.py
+--check` + `mkdocs build --strict` clean. docs/04 FR-35 row split out of the FR-34..38
+design span; docs/05 T-COH-01..21 block added; QUEUE T-F2 NOW-line retired. Next per NOW
+order: T-D1; T-F4's scope-check may run.
