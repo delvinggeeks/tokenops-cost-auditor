@@ -327,3 +327,8 @@ follow-ups from that build and the depth-engine detour:
   `get_audit` or the newer `GET /api/v1/audits/{id}/breakdown` yet, and the
   `/breakdown` HTML page's "vs your last audit" trend is not part of the read API
   either — both ride the same R-SCOPE-STOP trigger, not a separate signal.
+- COHORT-EXPORT QUERY BATCHING (PR #97 cold-review f.3; PARKED ← opted-in cohort
+  meaningfully above the k-floor, say n≥50, or a measured slow export). `export._features`
+  runs one CallAggregate + one FindingRow query per workspace plus one artifact read per
+  audit — linear and fine at k=10, worth batching by audit_id across the whole cohort
+  before it isn't.

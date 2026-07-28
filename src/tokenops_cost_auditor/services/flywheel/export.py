@@ -31,6 +31,7 @@ period are byte-identical.
 from __future__ import annotations
 
 import hmac
+import logging
 from dataclasses import dataclass, fields
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -49,6 +50,8 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.services.dashboard.shapes import ShapeClass
 from tokenops_cost_auditor.services.dashboard.tokenomics import load_artifact
+
+logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "1.0"
 
@@ -185,6 +188,14 @@ def _features(session: Session, settings: Settings, audits: list[Audit]) -> Feat
         key = fr.detector.split("_", 1)[0]
         if key in fired:
             fired[key].add(fr.audit_id)
+        else:
+            # cold-review #97 f.1: an off-pattern detector name must not
+            # UNDER-COUNT silently — the registry pin test guards today's
+            # ids, this guards the runtime against tomorrow's.
+            logger.warning(
+                "cohort export: detector %r matches no envelope key — dropped from fire rates",
+                fr.detector,
+            )
     n_audits = len(audit_ids)
 
     # shape_mix: passthrough of each audit's persisted shapes block. An audit
@@ -228,6 +239,13 @@ def build(session: Session, settings: Settings, secret_key: str, period: str) ->
     completion falls in `period`. k counts member workspaces; below
     `flywheel_l1_min_customers` NO envelope exists (LLD §9.1: "envelope
     EXISTS only when k>=10") and `reason` says why (FR-35 accept clause).
+
+    Consent is evaluated AT EXPORT TIME (LLD §9.1 verbatim: "checked at
+    export time") — deliberately, cold-review #97 f.2: the flag is the
+    workspace's STANDING consent, not a per-period ledger. Opting in covers
+    the workspace's history, past periods included; opting out stops every
+    period, past included. A per-period consent ledger would be new scope
+    (docs/01 first).
     """
     floor = settings.flywheel_l1_min_customers
     opted = {

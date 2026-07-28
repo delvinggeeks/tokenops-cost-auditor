@@ -4149,3 +4149,17 @@ impact. Full suite green (1308 selected, exit 0); coverage gate green (services 
 money files coster/findings 100%); ruff + mypy + migration chain 001→024 all clean. docs/04 FR-35 row split out of the design span (residual row now FR-34+FR-37);
 docs/05 T-COH block; endpoints.md regenerated (MP-3); QUEUE T-F2 NOW-line retired.
 Next per NOW order: T-D1; T-F4's scope-check may run.
+
+2026-07-29 (T-F2 gate round + note closure): PR #97 rebase-merged 19:25 UTC, first-run CI
+gate round green in one pass — spec-guard/vv-engineer/system-tester/architect PASS (a
+real cold-reviewer verdict again, no truncation); Issue #95 auto-closed; staging deploy
+succeeded. cold-reviewer PASS-WITH-NOTES ×3 and ux-reviewer PASS-WITH-NOTES ×2, all five
+triaged same-day in follow-up PR (fix/issue-95-gate-notes): c.1 off-pattern detector id
+now WARN-logged, never a silent under-count (+ caplog test); c.2 export-time consent
+confirmed AGAINST LLD §9.1 ("checked at export time" verbatim) — standing consent, not a
+per-period ledger; documented in build()'s docstring as deliberate; c.3 per-workspace
+query batching PARKED to BACKLOG one-liner (trigger: cohort well above the floor or a
+measured slow export); u.1 "detector fire rates" jargon → "which cost patterns showed up
+and how often" (mockup synced, the full what-leaves list intact); u.2 consent-card icon
+detector→eye (existing sprite symbol — a consent surface shows what can be SEEN, not a
+detector; no new tone, sprite-parity untouched).
