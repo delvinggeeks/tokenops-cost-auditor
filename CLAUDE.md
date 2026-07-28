@@ -68,7 +68,12 @@
    TE-5 MODEL TIERING. Gate agents run Sonnet (set in agent frontmatter).
         Opus runs the main build thread and implementation milestones;
         PRD/design breakdowns and PLAN authoring run on Fable
-        [amendment 2026-07-23, R-PROCEED].
+        [amendment 2026-07-23, R-PROCEED]. [Amendment 2026-07-28,
+        R-REQ-PIPELINE: unit-test AUTHORING runs Sonnet 5 (mechanical
+        scaffolds may drop to Haiku 4.5); new scope enters ONLY via the
+        docs/09 §9 intake pipeline — Fable analysis → docs/01 FRs +
+        HLD/LLD deltas → QUEUE line → founder sequences → Opus 5 builds
+        → low-cost tier unit-tests → gates.]
    TE-6 TURN BUDGET. Each gate agent: max 15 tool calls per invocation.
         If it cannot conclude, it returns PARTIAL + a numbered question
         list; it does NOT keep digging.

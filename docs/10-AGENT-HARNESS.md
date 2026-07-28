@@ -186,3 +186,13 @@ without its reachable UI, journey test and ux gate as a FAIL condition,
 not a note. The day's own evidence: the Anthropic connector (backend
 complete, zero inbound links, invisible for weeks) and the M-FLY-1
 widget/report split were horizontal thinking wearing green suites.
+
+## Amendment 2026-07-28 — R-REQ-PIPELINE (TE-5 extended: unit-test tier + intake)
+
+TE-5 as amended: requirement analysis, PRD/HLD/LLD design deltas and PLAN
+authoring run on Fable; implementation milestones and the main build thread
+run on Opus 5; UNIT-TEST AUTHORING runs Sonnet 5 (mechanical scaffolds may
+use Haiku 4.5); gate agents stay Sonnet (agent frontmatter). New scope enters
+only through the docs/09 §9 intake pipeline: Fable analysis -> docs/01 FRs +
+design deltas -> QUEUE line -> founder sequences -> Opus builds -> low-cost
+tier writes unit tests -> gates. CLAUDE.md rule 7 carries the same sentence.

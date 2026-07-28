@@ -157,3 +157,43 @@ detector thresholds (D1..D6 as §3), INR_PER_USD_DISPLAY.
 IngestError(format/row), PricingGapError(model missing → report lists
 "unpriced models", audit continues, severity note), RenderError,
 PaymentVerifyError. All mapped to user-safe messages; internals to logs.
+
+## 9. Platform-intelligence contracts [2026-07-28, R-MODEL-FACTORY — Fable design pass; per-slice detail expands at each slice's design gate]
+
+### 9.1 CohortExportEnvelope v1 (FR-35)
+```
+{ "schema_version": "1.0", "period": "YYYY-MM",
+  "workspace_ref": "<opaque salted hash — never the id>",
+  "k": <int, cohort size at export; envelope EXISTS only when k>=10>,
+  "features": { "monthly_spend_usd": float, "tokens_in|out|cached": int,
+    "cache_hit_rate": float, "out_in_ratio": float,
+    "detector_fire_rates": {"d1".."d10": float},
+    "shape_mix": {"agent_loop|retry_burst|context_growth|unclaimed_cache|steady": float} } }
+```
+No names, no routes, no tags, no text — ratios and counts only (R-ZTA).
+Consent: `workspace.cohort_opt_in` (default false), checked at export time.
+
+### 9.2 ModelArtifactPort (FR-34)
+`load(name: str, version: str) -> ArtifactHandle` — verifies sha256 + semver
+against a pinned manifest; raises on mismatch; returns None when
+`model_artifacts_enabled` is false (callers must handle None = deterministic
+path). Artifacts carry `eval_report.json` (baseline_delta must be > 0 to
+promote — enforced factory-side AND re-checked at load).
+
+### 9.3 ShapeClass (FR-36)
+`Enum {AGENT_LOOP, RETRY_BURST, CONTEXT_GROWTH, UNCLAIMED_CACHE, STEADY}` ·
+`classify(route_rows: pd.DataFrame) -> ShapeResult(cls, rationale: str)` —
+thresholds in config (like detector thresholds §3), rationale is a fixed
+template string naming the counts that fired it (no probabilities, no
+inference). Ships beside tokenomics.py; import-guard covered.
+
+### 9.4 RealizedDelta (FR-37)
+Join key: (workspace_id, detector, route/model scope) — L0 verdict row ×
+drift delta between the audit that raised the finding and the next completed
+audit. Emitted as `VerifiedLine(amount_usd, finding_ref, from_audit, to_audit)`
+consumed ONLY by statements/build.py (R-Q9: provenance = both audit ids).
+
+### 9.5 Showback CSV (FR-38)
+Columns: `dimension,name,calls,monthly_usd,share,pct_attributed_caveat` —
+figures byte-identical to tokenomics goldens; route behind O-2
+MANAGE_BILLING; empty allocation -> header row + honest comment line only.

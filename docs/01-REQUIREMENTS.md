@@ -190,3 +190,51 @@ O-0..O-4). Hard boundary: roles never gate the customer's LLM traffic
 tenant-blind (tenancy at the web/persistence boundary, never inside
 services/rules|pricing); single-tenant is the default, orgs opt-in.
 X-04 unchanged.]
+
+## H. Platform intelligence & enterprise scale [added 2026-07-28, R-MODEL-FACTORY + pillar-map consolidation]
+
+All five requirements are advisory-layer only: X-01/X-02/X-04 unchanged; the
+deterministic engine (NFR-01) and the no-text law (FR-22) are inherited, not
+weakened. Tenancy stays at the web/persistence boundary (R-ORG). Each FR below
+is sequenceable only via its QUEUE line (QUEUE law 5) and carries its
+acceptance criteria inline (09-SDLC §2).
+
+FR-34 (M) [R-MODEL-FACTORY] Model factory separation. All learned-model
+  building, evaluation and improvement happens in a SEPARATE repository with
+  its own eval-gated CI running on a daily schedule. The platform consumes
+  versioned model artifacts through a loader behind a default-off flag; an
+  artifact never ships unless it beats the deterministic baseline on the
+  golden eval set, and it NEVER replaces deterministic money math (rule 4
+  golden law intact). Until docs/12 §Stage-3 thresholds fire, the daily CI
+  runs evals only — no training below threshold, ever ("no n=1 model").
+  Accept: factory CI green daily; platform loader test proves flag-off = no
+  behaviour change; eval report artifact per run.
+
+FR-35 (M) [R-MODEL-FACTORY, R-ZTA] Cohort export with consent. Per-workspace
+  explicit opt-in; export contains aggregate features ONLY (counts, ratios,
+  percentiles — schema-versioned envelope), tenancy stripped at export time,
+  k-anonymity floor n>=10 (the L1 threshold); this export is the ONLY data
+  path into the factory. Accept: export golden fixture; consent-journey test;
+  a below-floor cohort exports nothing and says why.
+
+FR-36 (M) [R-MODEL-FACTORY, docs/12 INTENT+COPY LAW] Behaviour lens. Per-route
+  workload-shape classification (agent-loop / retry-burst / context-growth /
+  unclaimed-cache / steady) computed deterministically from counts, timing,
+  model and cache fields only — never content. Surfaced on the breakdown page
+  and the read API. Copy: dev depth is fix-first ("your pipeline, same output,
+  lower bill"); owner depth stays money-verified. Accept: golden fixture per
+  shape; ux gate passes both depths; engine purity test extends to the
+  classifier.
+
+FR-37 (M) [R-MODEL-FACTORY, R-Q9] Realized delta per finding. A finding
+  labelled Applied (flywheel L0) receives its next-audit drift delta,
+  attributed with provenance and rolled into the Savings Statement VERIFIED
+  section. No measurable delta -> the finding stays "identified", never a
+  fabricated figure. Accept: journey test upload->finding->apply->re-audit->
+  statement shows the verified line with provenance.
+
+FR-38 (S) [pillar-map 2026-07-28] Showback export. Finance-grade CSV of
+  tag/route/model cost allocation including the pct_attributed coverage
+  caveat, downloadable by billing-capable roles only (O-2 RBAC). Accept:
+  export matches tokenomics goldens byte-for-byte; RBAC test; honest empty
+  state when nothing is attributed.

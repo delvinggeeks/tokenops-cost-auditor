@@ -103,3 +103,34 @@ Interfaces already isolated: IngestPort (add proxy-stream source),
 AuditRunner (swap to queue), PaymentPort (subscriptions), Detector
 registry (add detectors without core change). Gateway/policy engine
 becomes a sibling service consuming the same pricing + rules packages.
+
+## 8. Platform-intelligence architecture delta [2026-07-28, R-MODEL-FACTORY — Fable design pass]
+
+Three new boundaries; every existing invariant survives them.
+
+**8.1 The factory is a sibling, never a tenant of this repo.** A separate
+repository (name: founder decision, T-F1) owns model building/eval. Contract
+between the repos is two artifacts, no shared code: (a) the COHORT EXPORT
+ENVELOPE flowing platform→factory (LLD §9.1), (b) the MODEL ARTIFACT flowing
+factory→platform (semver + checksum + eval report; loaded via ModelArtifactPort,
+LLD §9.2, behind `model_artifacts_enabled=false`). The audit engine never
+imports factory code (NFR-01 import guard extends); artifacts may tune
+presentation/thresholds surfaces, never priced money math (golden law).
+
+**8.2 Cohort export sits at the persistence boundary.** The exporter is a
+service ADJACENT to the engine (like statements/), reading CallAggregate +
+findings, stripping tenancy, enforcing consent + the k>=10 floor at export
+time. services/rules and services/pricing never learn the word "cohort"
+(tenant-blind law, R-ORG).
+
+**8.3 Behaviour lens is a pure sibling of tokenomics.** Deterministic
+classifier module beside services/dashboard/tokenomics.py, same purity rules
+(pandas in, dataclass out, no network). Read API + breakdown page consume it
+the same way they consume tokenomics — passthrough, no recompute drift.
+
+**8.4 Realized-delta joins three shipped systems.** flywheel L0 verdicts ×
+drift deltas × statement builder — no new storage beyond an attribution row;
+the statement's VERIFIED section is the only new consumer (R-Q9 provenance).
+
+Evolution path unchanged from §7: the factory's L4/T5 era attaches as a
+sibling service consuming the same contracts.
