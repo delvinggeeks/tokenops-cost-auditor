@@ -4032,3 +4032,48 @@ criteria: services/dashboard/shapes.py classifier per LLD §9.3, artifact-persis
 /breakdown chips (mockup before wiring, ux gate both depths), verbatim read-API
 passthrough, honest coarse-depth degrade (findings-depth law), purity guard, Sonnet 5
 unit-test authoring per TE-5. Builds run Opus 5 per R-REQ-PIPELINE.
+
+2026-07-28 (T-F3 · FR-36 behaviour lens v1, Issue #89 — build session): SHIPPED, first
+surface of the docs/12 dev-persona law. services/dashboard/shapes.py (LLD §9.3: five-class
+deterministic ShapeClass classifier; thresholds shape_* in Settings mirror the D4/D6/D3/D2
+detector family so the chip agrees with the findings list; precedence most-specific-first
+burst→loop→growth→cache→steady; rationale = fixed counts-citing template). Additive
+schema-versioned "shapes" block in tokenomics.json — write is guarded: a classification
+failure logs and omits the block (honest null downstream), never fails a finished audit.
+/breakdown gains the chip column (fix-first dev copy via SHAPE_COPY; owner money framing
+byte-untouched), the pre-feature honest-null note, and the connected-source aggregate-depth
+empty state — the old generic copy promised a breakdown a connected source can never
+produce (source audits write no tokenomics.json); fixed in-slice per R-IMPROVISE, ux-gated.
+Read API passes shapes verbatim (no endpoint change); sdk/js RouteShape + optional
+AuditTokenomics.shapes + fixture; docs-site reference/how-it-works/sdk-js. Mockup gated
+BEFORE wiring (PASS-WITH-NOTES; its WCAG f.8 came from the mockup's approximated hexes —
+the real kit badge tokens measure 5.2–9.8:1, AA-clean, no kit change owed). Unit tests
+authored on Sonnet 5 per TE-5/R-REQ-PIPELINE (18 tests: goldens ×5 exact class+rationale,
+determinism/order-invariance, precedence, config injection, UAT-1 cache-exclusion,
+FR-22 key-walk + fixed-template-only rationales). Notable catch: the SHIPPED FR-22 marker
+tripwire (test_developer_platform fr22 shape tests) rejects the substring "prompt" anywhere
+in a breakdown response — rationale vocabulary reworded to "input tokens" instead of
+weakening the guard (recorded in shapes.py docstring). Full-suite tripwires hit + fixed:
+.env.example SHAPE_* completeness; CSS design-source parity (the mockup-wiring-reconciles-
+shipped-laws lesson, confirmed again). Gate round (all five): spec-guard PASS-WITH-NOTES
+(empty-state copy note → closed by the ux gate's both-depths sign-off); cold-reviewer
+PASS-WITH-NOTES, all 3 fixed in-diff (guarded compute_shapes; q=max(1,n//4) latent -0
+slice bug; _shape_map drop now debug-logged); vv-engineer PASS-WITH-NOTES (shapes.py 100%
+covered; coverage note closed by the final full run); ux-reviewer wired PASS-WITH-NOTES
+(f.1 → .table-scroll wide-ledger affordance added, BOTH /breakdown tables wrapped);
+system-tester first pass PARTIAL (it raced the main thread's concurrent gate-fix edits —
+process lesson: freeze the tree before its walk), re-run on the stabilized tree
+PASS-WITH-NOTES (live walk: 9/9 chip↔artifact route agreement, both honest states, links
+resolve; its /reports 404 was a wrong-URL probe from the gate brief — no /reports route
+exists, reports are per-audit artifacts; walkthrough suite is the destination authority
+and is green). Full suite + coverage gate green (services 96.3%, money files 100%).
+docs/04 FR-36 row split out of the FR-34..38 design span; QUEUE T-F3 NOW-line retired.
+Next per NOW order: T-F5 (showback CSV); T-F4's scope-check may run.
+
+2026-07-28 (same session, gate-home ruling): founder ruled the gate round's home is CI —
+LE-4 has been live since 2026-07-25 (secret set; PRs #84/#86/#88 gated there) while this
+session still hand-ran the five-gate round locally per the un-reconciled docs/09 §4 text,
+duplicating the CI round. docs/09 §4 amended (CI is the reviewing home; build sessions do
+tests/tripwires + PR only; ux mockup gate and card-named pre-wiring checks stay
+in-session; system-tester post-deploy walk unchanged). The T-F3 local round stands as
+this card's record — its cold-reviewer fixes landed pre-PR — but it is the last local round.

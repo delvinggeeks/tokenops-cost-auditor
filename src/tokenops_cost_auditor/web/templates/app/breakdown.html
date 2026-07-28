@@ -33,14 +33,28 @@
            "Your audit ran, but its models aren't on our verified rate card yet — so we
             won't guess a breakdown. Email " ~ support_email ~ " and we'll price it.",
            action_label="Contact support", action_href="mailto:" ~ support_email) }}
+    {% elif coarse_source %}
+      {# FR-36 depth honesty (findings-depth law): a connected usage API reports
+         aggregate buckets, not per-request rows — the exact breakdown and the
+         shape lens structurally cannot run on it. Say so; never fabricate. #}
+      {{ kit.empty_state(
+           "Your latest audit is from a connected source — its data is aggregate",
+           "A connected usage API reports daily totals, not per-request rows, so the
+            exact tokenomics breakdown and the workload-shape lens can't run on it.
+            Upload a request log or send traffic through the SDK and both appear here —
+            per-route dollars, efficiency ratios, and each route's workload shape.",
+           action_label="Upload a log file", action_href="/upload",
+           alt_label="Set up SDK ingest", alt_href="/settings/developer") }}
     {% else %}
       {{ kit.empty_state(
            "No breakdown yet",
-           "Run an audit — upload a request log or connect a source — and your exact
-            tokenomics breakdown appears here: spend and tokens by model and route, with
-            the efficiency ratios your finance team can reconcile to the penny.",
+           "Run an audit from per-request data — upload a request log or send traffic
+            through the SDK — and your exact tokenomics breakdown appears here: spend and
+            tokens by model and route, with the efficiency ratios your finance team can
+            reconcile to the penny. (Connected-source audits are aggregate-depth: they
+            power your dashboard, but this page needs per-request rows.)",
            action_label="Upload a log file", action_href="/upload",
-           alt_label="Connect a source", alt_href="/sources") }}
+           alt_label="Set up SDK ingest", alt_href="/settings/developer") }}
     {% endif %}
   </section>
 {% else %}
@@ -112,6 +126,7 @@
   {# ---- Breakdown by model ---- #}
   <section class="widget w-12" data-reveal>
     <div class="widget-head"><h2>By model</h2></div>
+    <div class="table-scroll">
     {{ kit.table_open([
          {"label": "Model"}, {"label": "Monthly $", "cls": "money"}, {"label": "Share", "cls": "money"},
          {"label": "Calls", "cls": "money"}, {"label": "Cache hit", "cls": "money"},
@@ -129,21 +144,51 @@
         </tr>
       {% endfor %}
     {{ kit.table_close() }}
+    </div>
   </section>
 
-  {# ---- Cost allocation by route (showback) ---- #}
+  {# ---- Cost allocation by route (showback) + FR-36 workload-shape chips ---- #}
   <section class="widget w-12" data-reveal>
     <div class="widget-head"><h2>By route (cost allocation)</h2></div>
     <p class="tells">Attributed from your call <code>tag</code>. Untagged spend is its own row —
-      never silently allocated, so the numbers stay honest.</p>
+      never silently allocated, so the numbers stay honest.{% if has_shapes %} The workload shape
+      is classified from counts and timing only — we never read your prompts.{% endif %}</p>
+    {% if not has_shapes %}
+      {# Pre-feature artifact (honest null, FR-36): shapes were never classified
+         at audit time, and we never guess one after the fact. #}
+      <div class="since-here" role="note" style="margin-bottom: var(--s3);">
+        <svg class="i" aria-hidden="true"><use href="#i-clock"/></svg>
+        <span>This audit ran before the shape lens shipped, so its workload shapes were never
+          classified. Run a new audit and each route gets its shape chip — we never guess one
+          after the fact. <a href="/upload">Upload a log file</a> <span aria-hidden="true">→</span></span>
+      </div>
+    {% endif %}
+    <div class="table-scroll">
     {{ kit.table_open([
-         {"label": "Route"}, {"label": "Monthly $", "cls": "money"}, {"label": "Share", "cls": "money"},
-         {"label": "Calls", "cls": "money"}, {"label": "Cache hit", "cls": "money"},
-         {"label": "$/1k out", "cls": "money"},
+         {"label": "Route"}, {"label": "Workload shape"}, {"label": "Monthly $", "cls": "money"},
+         {"label": "Share", "cls": "money"}, {"label": "Calls", "cls": "money"},
+         {"label": "Cache hit", "cls": "money"}, {"label": "$/1k out", "cls": "money"},
        ]) }}
       {% for s in tk.by_route %}
+        {% set shape = shape_map.get(s.name) if shape_map else none %}
         <tr>
           <td>{{ s.name }}</td>
+          <td class="shape-cell">
+            {%- if shape %}
+              {%- set sc = shape_copy.get(shape.shape) %}
+              {%- if sc %}
+              <span class="badge badge-{{ sc.tone }}">{{ sc.label }}</span>
+              <small class="shape-why">{% if sc.fix %}{{ sc.fix }} {% endif %}<b>{{ shape.rationale[:1] | upper ~ shape.rationale[1:] }}.</b></small>
+              {%- else %}
+              {# Unknown class from a newer artifact schema: show it honestly,
+                 tone-neutral — never invent copy for a class we don't know. #}
+              <span class="badge badge-neutral">{{ shape.shape | lower | replace("_", " ") | capitalize }}</span>
+              <small class="shape-why"><b>{{ shape.rationale[:1] | upper ~ shape.rationale[1:] }}.</b></small>
+              {%- endif %}
+            {%- else %}
+              <span class="muted">—</span>
+            {%- endif %}
+          </td>
           <td class="money">${{ "{:,.2f}".format(s.monthly_usd) }}</td>
           <td class="money">{{ "{:.0f}%".format(s.share * 100) }}</td>
           <td class="money">{{ "{:,}".format(s.calls) }}</td>
@@ -152,6 +197,7 @@
         </tr>
       {% endfor %}
     {{ kit.table_close() }}
+    </div>
   </section>
 
   {# ---- Data coverage: trust the completeness ---- #}

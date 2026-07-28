@@ -183,6 +183,20 @@ class Settings(BaseSettings):
     d10_min_days: int = 7
     d10_z_threshold: float = 3.5
     d10_spike_mult: float = 2.0
+    # FR-36 behaviour lens (docs/03-LLD.md §9.3): per-route workload-shape
+    # classification. Each threshold mirrors the detector whose signal the
+    # shape shadows (burst~D4, loop~D6, growth~D3 family, cache~D2) so the
+    # chip on /breakdown agrees with the findings list. Counts/timing/cache
+    # only — never content; no money math, so no golden-spreadsheet row.
+    shape_burst_window_s: int = 120  # ~d4_window_s
+    shape_burst_min: int = 3  # ~d4_dup_min
+    shape_loop_min: int = 8  # ~d6_loop_min
+    shape_small_completion_t: int = 300  # ~d6_small_completion_t
+    shape_run_window_s: int = 600  # ~d6_run_window_s
+    shape_growth_min_calls: int = 8  # quartile medians need >= 2 rows per quarter
+    shape_growth_mult: float = 2.0  # ~d3_bloat_mult
+    shape_cache_min_repeats: int = 25  # ~d2_cache_min_repeats
+    shape_cache_min_prompt_tokens: int = 1024  # ~d2_cache_min_prompt_tokens
     prefix_hash_chars: int = 4096  # R-Q6: SHA-256 over first N chars (~1024 tokens)
     rules_disabled: list[str] = []  # detector names to skip (T-RUL-00 disable flag)
     # Materiality floor: a SAVINGS finding below this monthly $ (i.e. it would render
