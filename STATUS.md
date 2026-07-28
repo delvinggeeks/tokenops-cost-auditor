@@ -179,7 +179,7 @@ new ideas go to §5 not into code. Next build: O-2 Roles/RBAC.
 
 ## CROSS-AUDIT DRIFT — Breakdown "vs your last audit" (2026-07-25) — founder "proceed as recommended next step" (the drift half of anomaly & drift)
 
-On branch `cross-audit-drift` off main (cf75687). Second half of the founder's chosen
+On branch `cross-audit-drift` off main (b995ddc). Second half of the founder's chosen
 "anomaly & drift detection": after D10 within-audit spikes (PR #21, held for merge),
 this ships CROSS-AUDIT efficiency drift — the Breakdown page gains a "Trend vs your
 last audit" section comparing THIS audit's tokenomics vitals to the PRIOR audit's.
@@ -217,7 +217,7 @@ other empty state. ux f.5 → "unit economics" glossed on first use. system-test
 100% covered; full suite green.
 ## SPEND ANOMALY — D10 detector, depth-engine "dynamic analysis" (2026-07-25) — founder "proceed next", chose "Anomaly & drift detection"
 
-On branch `anomaly-detection` off main (cf75687). Next deterministic depth-engine
+On branch `anomaly-detection` off main (b995ddc). Next deterministic depth-engine
 slice = the "dynamic analysis based on logs" the founder repeatedly asked for.
 Shipped **D10 spend anomaly** (`services/rules/d10_spend_anomaly`): robust temporal
 spike detection over the audit's OWN daily-spend series — median + MAD, NOT mean +
@@ -288,12 +288,12 @@ rides the next scheduled deploy rather than forcing an emergency one.
 ## SHIPPED TO MAIN (2026-07-25) — founder "open PRs + merge both to main"
 
 Both slices merged via the GO-FORWARD PR flow (full CI: authorship·lint·type·
-docs·test·build all green). **PR #15 O-1b-3** (ce1a673) — CLOSES O-1. CI caught
+docs·test·build all green). **PR #15 O-1b-3** (1077701) — CLOSES O-1. CI caught
 two real gate failures a locally exit-masked `pytest | tail` had hidden — a
 `{{ m.email }}` in a data-confirm (test_authority_laws) and a stale endpoints.md
 (MP-3 drift, the 3 new routes) — both fixed, re-verified with pytest's OWN exit
 code, re-gated green (LESSON reinforced in [[never-mask-pytest-exit]]: never trust
-a piped pytest's exit; capture `$?` un-piped). **PR #16 coherence** (a5424c8) —
+a piped pytest's exit; capture `$?` un-piped). **PR #16 coherence** (18f14e2) —
 rebased onto O-1b-3, STATUS+traceability conflicts resolved keeping both. main is
 now well ahead of prod (v1.9.0=O-0) by the entire O-1 stack + coherence; the prod
 deploy stays founder-gated (deploy secrets + one validated run). NEXT theme
@@ -324,7 +324,7 @@ test_design_tokens (hex-free) + test_journeys all green. ux gate + PR next. NOTE
 this is a fully-editorial slice; FR-23 row (web/templates/landing) already covers it.
 ## TOKENOMICS BREAKDOWN — enterprise depth engine slice 1 (2026-07-25) — founder "enterprise-ready, industry-standard, deterministic, no LLM in the money path"
 
-SHIPPED-TO-MAIN first: D8/D9 richer-findings merged as PR #18 (squash 7115cb9,
+SHIPPED-TO-MAIN first: D8/D9 richer-findings merged as PR #18 (squash 2797081,
 all gates PASS + CI green). Then a strategic thread: founder asked "should we have
 our own trained model / LLM for analysis?" — ruled (my honest counter, founder
 agreed): NO neural/LLM model — it burns tokens, is non-reproducible, can't be
@@ -378,7 +378,7 @@ own un-piped runs, not a masked agent invocation.
 ## RICHER FINDINGS — D8/D9 detectors (2026-07-25) — founder "many findings / dynamic analysis", chose "richer findings / more detectors"
 
 SHIPPED-TO-MAIN first: the guided-first-run slice merged as PR #17 (squash
-0adb355; all gates PASS/PASS-WITH-NOTES + CI green; prod deploy stays
+e74fa01; all gates PASS/PASS-WITH-NOTES + CI green; prod deploy stays
 founder-gated). Then, on branch `richer-findings` off main, the founder's
 "why so few findings" thread turned into two new detectors (AskUserQuestion: A +
 D). Cross-provider arbitrage was DROPPED after checking the rate card — bedrock/
@@ -3621,7 +3621,7 @@ line by line rather than copied forward. No workflow/code changes; `deploy.yml` 
 LE-3 RECURSION-GUARD FIX (2026-07-26) — the loop's own merges now trigger deploy + close.
 Verified defect: PRs #41-#46 were auto-merged by the github-actions app (GITHUB_TOKEN), and
 GitHub's recursion guard SUPPRESSED all downstream workflows — so deploy.yml (on: push) never
-deployed staging past #40 (da5f713a), and loop-close-issues.yml (on: pull_request: closed)
+deployed staging past #40 (cea49bfa), and loop-close-issues.yml (on: pull_request: closed)
 never fired (#45 left open). Confirmed by mergedBy: #40 (human) deployed; #41-#46 (app) did
 not. Impact was latent (the un-deployed commits were docs/workflows, no app code) but real.
 Fix: auto-merge.yml enables auto-merge as the LOOP_PAT user (not GITHUB_TOKEN), so the
@@ -3990,7 +3990,7 @@ LIFECYCLE-MAP.md (completeness view; one ❓ = chargeback) + docs/README.md (int
 T-D1/D2/D3 docs-maintenance candidates. Found + recorded, awaiting founder: authorship-squash
 defect (LE-3 squash rewrites author + adds trailer; 65 commits since 07-24 violate rule 6;
 pre-merge gate structurally blind to it) and the unrecorded R-SCOPE-STOP ruling — both now in
-QUEUE BLOCKED ① – ⑤ with the sequencing/naming/chargeback decisions. Commits a3207b0, 3351f6f.
+QUEUE BLOCKED ① – ⑤ with the sequencing/naming/chargeback decisions. Commits 897ff73, 95d319d.
 
 2026-07-28 (same session, rulings round): founder resolved ①②④⑤ via in-session decision
 round — T-D3 into NOW; R-SCOPE-STOP recorded as PARKED trigger (API/agent surfaces ← first
