@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-F2 — Settings cohort consent + admin export (mockup, FR-35)</title>
+<style>
+  /* Approximation of the app kit for the T-F2 ux gate (three-second rule +
+     R-DESIGN checklist). Not pixel-parity — the wired surface reuses
+     kit/_kit.html (surface/button macros) and wa-design.css tones. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --verified:#0f9d58; --verified-bg:#e9f7ef;
+    --waste:#c0392b; --waste-bg:#fbeeec; --estimate:#b45309; --estimate-bg:#fdf3e7;
+    --chip:#eef1f6; --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;--verified-bg:#12291c;--waste-bg:#2e1a17;
+      --estimate-bg:#2b2113;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)} h2{font-size:17px;margin:0 0 var(--s2)}
+  .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--accent);font-weight:700;margin:var(--s4) 0 var(--s2);
+    border-top:2px dashed var(--line);padding-top:var(--s3)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  .muted{color:var(--muted)}
+  label.consent{display:flex;gap:var(--s1);align-items:flex-start}
+  label.consent small{color:var(--muted);display:block;margin-top:2px}
+  .btn-primary{display:inline-block;padding:8px 16px;border-radius:8px;border:0;
+    background:var(--accent);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer}
+  .btn-quiet{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;
+    border-radius:8px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-weight:600;text-decoration:none;font-size:13.5px;
+    white-space:nowrap}
+  .btn-quiet:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-quiet svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;
+    fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .jsonbox{background:var(--chip);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    overflow-x:auto;white-space:pre;color:var(--ink)}
+  .jsonbox .k{color:var(--accent)}
+  .jsonbox .com{color:var(--muted);font-style:italic}
+  .filehint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  .note{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;
+    background:var(--card);font-size:13.5px;color:var(--muted);margin:var(--s2) 0}
+  .adminrow{display:flex;justify-content:space-between;gap:var(--s2);align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;
+    font-weight:600;background:var(--chip);color:var(--muted)}
+  .pill.live{background:var(--verified-bg);color:var(--verified)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Settings cohort consent + admin export (T-F2 · FR-35)</h1>
+  <p class="sub">Mockup for the ux gate, BEFORE wiring (R-DESIGN). Two surfaces: the
+    workspace-consent control on Settings (customer-facing, owner-only) and the
+    cohort-export row on /admin (founder-facing). The design crux: this control sits
+    BESIDE the shipped “Peer benchmarks” checkbox and must be impossible to confuse
+    with it — opposite default, opposite direction of data flow. Four states below,
+    plus the absence rules.</p>
+
+  <!-- ============================================================ STATE 1 -->
+  <div class="demo-label">State 1 · Owner (MANAGE_WORKSPACE) — the consent surface, beside Peer benchmarks</div>
+
+  <!-- ux f.2: the opacity dim below is a MOCKUP-ONLY presentation device
+       (it de-emphasizes the shipped neighbour so the reviewer's eye lands on
+       the new card). It MUST NOT transfer to wiring — the live Peer
+       benchmarks card keeps full contrast, byte-untouched. -->
+  <div class="card" style="opacity:.62">
+    <h2>Peer benchmarks</h2>
+    <label class="consent">
+      <input type="checkbox" checked>
+      <span>Include my account in peer benchmarks<br>
+        <small>Included by default — uncheck to opt out. <em>(shipped surface,
+        byte-untouched by this slice — shown for adjacency only)</em></small></span>
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>Model improvement (cohort learning)</h2>
+    <label class="consent">
+      <input type="checkbox">
+      <span>Share aggregate workspace features to improve detection models<br>
+        <small><strong>This is the only setting that lets anything leave your
+          workspace — Peer benchmarks above never does — and it is off by
+          default.</strong> Benchmarks rank you <em>inside</em> the product;
+          this export goes <em>out</em>, to model building, and carries counts
+          and ratios only: spend level, token mix, cache-hit rate, detector
+          fire rates, workload-shape mix — under an opaque workspace
+          reference. Never names, routes, tags, prompts or completions.
+          Exports exist only in cohorts of ten or more opted-in workspaces (a
+          k-anonymity floor); below that, nothing is exported at all. Every
+          change here lands in your audit log.</small></span>
+    </label>
+    <p style="margin:var(--s2) 0 0">
+      <button class="btn-primary">Save cohort preference</button></p>
+    <p class="filehint"><em>(ux f.1 closed: the disambiguation-from-benchmarks
+      LEADS the copy — the three-second skim now answers “what is this and how
+      is it different from the checkbox above” in the first bolded line.)</em></p>
+  </div>
+
+  <!-- ============================================================ STATE 2 -->
+  <div class="demo-label">State 2 · Member / analyst / admin-role — the surface is absent (O-2 idiom)</div>
+
+  <div class="card" style="opacity:.62">
+    <h2>Peer benchmarks</h2>
+    <label class="consent">
+      <input type="checkbox" checked>
+      <span>Include my account in peer benchmarks<br>
+        <small>(the USER-level benchmark checkbox stays — it is each member's own
+          call, R-F1)</small></span>
+    </label>
+  </div>
+
+  <div class="note">Deliberately NO “Model improvement” card here: workspace data-use is
+    an owner decision (<code>Perm.MANAGE_WORKSPACE</code>), and a control a role cannot
+    use is never shown disabled — it is absent (the kit's RBAC idiom, same as the Billing
+    nav and the T-F5 showback button). The POST route 403s these roles; nothing else on
+    Settings changes.</div>
+
+  <!-- ============================================================ STATE 3 -->
+  <div class="demo-label">State 3 · /admin (founder) — cohort export row, below the k-floor</div>
+
+  <div class="card">
+    <h2>Flywheel</h2>
+    <div class="adminrow">
+      <span>Flywheel: 7 audited / 3 labeled customer(s), 2mo history — L1 dormant (needs 3 more) · …</span>
+      <span class="muted" style="font-size:12px">(shipped digest line, unchanged)</span>
+    </div>
+    <div class="adminrow">
+      <span><strong>Cohort export</strong> · period 2026-07 ·
+        <span class="pill">below floor — 3 of 10 opted in</span></span>
+      <span class="muted">exports nothing: k-anonymity floor not met — no file exists
+        to download</span>
+    </div>
+  </div>
+  <div class="note">The refusal is the surface: no download control renders below the
+    floor (a button that yields an empty-but-valid file would fabricate a deliverable).
+    The “3 of 10” countdown is FOUNDER-facing only — the customer settings copy above
+    states the floor as a privacy guarantee, never a countdown (zero-state law,
+    <code>flywheel/cohort.py</code> docstring).</div>
+
+  <!-- ============================================================ STATE 4 -->
+  <div class="demo-label">State 4 · /admin (founder) — at or above the floor: the download, and what the file contains</div>
+
+  <div class="card">
+    <h2>Flywheel</h2>
+    <div class="adminrow">
+      <span><strong>Cohort export</strong> · period 2026-07 ·
+        <span class="pill live">live — 12 opted-in workspaces</span></span>
+      <a class="btn-quiet" href="#">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+        Download cohort-export.json
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The file (one envelope per opted-in workspace — LLD §9.1 verbatim)</h2>
+    <div class="jsonbox">{ <span class="k">"schema_version"</span>: "1.0", <span class="k">"period"</span>: "2026-07",
+  <span class="k">"workspace_ref"</span>: "9f2c…a41e", <span class="com">// opaque keyed hash — never the id, distinct key-space from frame.py</span>
+  <span class="k">"k"</span>: 12, <span class="com">// cohort size at export; the envelope EXISTS only when k >= 10</span>
+  <span class="k">"features"</span>: {
+    <span class="k">"monthly_spend_usd"</span>: 1284.5, <span class="k">"tokens_in"</span>: 8412034, <span class="k">"tokens_out"</span>: 912558,
+    <span class="k">"tokens_cached"</span>: 3020411, <span class="k">"cache_hit_rate"</span>: 0.359, <span class="k">"out_in_ratio"</span>: 0.108,
+    <span class="k">"detector_fire_rates"</span>: { "d1": 0.22, "d2": 0.61, "d3": 0.0, "d4": 0.14, "d5": 0.0,
+                               "d6": 0.31, "d8": 0.0, "d9": 0.12, "d10": 0.05 },
+    <span class="com">// the NINE shipped registry ids — d7 never shipped; the registry is authoritative</span>
+    <span class="k">"shape_mix"</span>: { "AGENT_LOOP": 0.4, "RETRY_BURST": 0.1, "CONTEXT_GROWTH": 0.0,
+                  "UNCLAIMED_CACHE": 0.2, "STEADY": 0.3 } } }</div>
+    <p class="filehint">Counts and ratios only — no names, routes, tags or text can exist
+      in the schema (an executable self-audit pins every field, the
+      <code>frame.py</code> pattern). Figures are passthrough of audited numbers — no new
+      money math, so no pricing-golden impact. Two exports of the same DB are
+      byte-identical (deterministic sort, pure read).</p>
+  </div>
+
+  <!-- ============================================================ ABSENCE -->
+  <div class="demo-label">Absence rules · everywhere else</div>
+
+  <div class="note">No customer surface changes beyond the one Settings card: no banner,
+    no dashboard mention, no countdown anywhere customer-visible. A workspace that never
+    opts in appears NOWHERE in any export — absence from the file is the default state,
+    not an empty row. The admin endpoint is token-gated like every /admin route; there is
+    no API/SDK surface for this export (R-SCOPE-STOP — the factory pulls from /admin,
+    nothing else).</div>
+
+  <p class="muted" style="font-size:13px">Kit composition: the Settings card is the
+    shipped <code>kit.surface_open</code> + the checkbox-consent idiom Peer benchmarks
+    already uses — kit tones only, no new colors on the card (ux f.3: AA holds because
+    only already-audited kit tokens appear at wiring). The admin row wires into the
+    shipped BARE admin panel (header-token curl actions, no kit, no buttons) — the
+    styled button here is illustrative; the wired affordance is the state row + the
+    documented <code>GET /admin/cohort-export.json</code> action line, matching every
+    other admin action.
+    Green appears only on the founder's “live” pill (a state fact, not a money claim —
+    same tone the admin digest already uses for LIVE rungs). R-DESIGN-ADDENDUM delight:
+    NONE claimed — this is a consent control and an ops row; the designed care is the
+    consent copy telling the whole truth in one breath (what leaves, what never can,
+    when nothing leaves at all) so the decision needs no docs page. “Cohort learning”
+    is glossed in the card title at first use; “k-anonymity” is glossed inline
+    (“ten or more opted-in workspaces”).</p>
+</div>
+</body>
+</html>

@@ -11,7 +11,14 @@ GUARDED_PACKAGES = ("rules", "pricing")
 # forecast was clean by discipline only — enforcement belongs here).
 # dashboard/shapes.py (FR-36 behaviour lens) joins the same law: the classifier
 # reads only counts/timing/model/cache columns, never network or LLM libraries.
-GUARDED_MODULES = ("forecast.py", "dashboard/shapes.py", "dashboard/showback.py")
+# flywheel/export.py (FR-35 cohort export) likewise: the factory's only inlet
+# is a pure DB read — nothing may phone anywhere from it.
+GUARDED_MODULES = (
+    "forecast.py",
+    "dashboard/shapes.py",
+    "dashboard/showback.py",
+    "flywheel/export.py",
+)
 FORBIDDEN = {
     "anthropic",
     "openai",

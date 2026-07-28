@@ -13,8 +13,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
 from tokenops_cost_auditor.api.routes_upload import current_user
-from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, utcnow
+from tokenops_cost_auditor.persistence.models import Audit, Source, Subscription, Workspace, utcnow
 from tokenops_cost_auditor.persistence.repo import (
+    active_role,
     active_workspace_id,
     get_or_create_user,
     get_or_create_workspace,
@@ -23,6 +24,7 @@ from tokenops_cost_auditor.persistence.repo import (
 )
 from tokenops_cost_auditor.services.lifecycle import auditlog, purge
 from tokenops_cost_auditor.services.payments import subscriptions
+from tokenops_cost_auditor.web import authz
 from tokenops_cost_auditor.web.auth import SESSION_COOKIE
 from tokenops_cost_auditor.web.routes_dashboard import _render, _session, _shell_ctx
 from tokenops_cost_auditor.web.routes_sources import PROVIDERS, user_plan
@@ -70,6 +72,9 @@ def settings_page(
             .all()
         )
         plan = user_plan(session, user.id)
+        # T-F2 · FR-35: the ACTIVE workspace's consent state — the card only
+        # renders for MANAGE_WORKSPACE (can_manage_workspace via shell ctx).
+        active_ws = session.get(Workspace, ws)
         ctx = _shell_ctx(session, request, user, "settings")
         return _render(
             request,
@@ -84,6 +89,7 @@ def settings_page(
             statement_emails=user.statement_emails is not False,
             daily_digest_emails=user.daily_digest_emails is not False,
             benchmark_sharing=user.benchmark_sharing is not False,
+            cohort_opt_in=active_ws.cohort_opt_in if active_ws is not None else False,
             held_uploads=len(held),
             retention_days=settings.purge_after_days,
             purge_phrase=PURGE_PHRASE,
@@ -173,6 +179,38 @@ def save_benchmark_pref(
             user.email,
             "settings.benchmark_sharing",
             "included" if benchmark_sharing is not None else "excluded",
+        )
+        session.commit()
+    return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/cohort", response_model=None)
+def save_cohort_consent(
+    request: Request,
+    cohort_opt_in: str | None = Form(default=None),
+    user_email: str = Depends(current_user),
+) -> RedirectResponse:
+    """T-F2 · FR-35: workspace cohort-export consent — the one flag the
+    exporter honors. Owner-only (MANAGE_WORKSPACE): sharing data OUT of the
+    workspace is a governance act, so the ensure() runs before any write and
+    non-owners 403 (they never see the card either — O-2 absence idiom).
+    Audit-logged like every data-use decision."""
+    with _session(request) as session:
+        user = get_or_create_user(session, user_email)
+        authz.ensure(
+            active_role(session, user.id),
+            authz.Perm.MANAGE_WORKSPACE,
+            detail="workspace data-use consent is an owner decision",
+        )
+        workspace = session.get(Workspace, active_workspace_id(session, user.id))
+        if workspace is None:  # pragma: no cover — every user has a workspace (O-0)
+            raise HTTPException(status_code=404, detail="workspace not found")
+        workspace.cohort_opt_in = cohort_opt_in is not None
+        auditlog.append(
+            session,
+            user.email,
+            "settings.cohort_opt_in",
+            "opted in" if cohort_opt_in is not None else "opted out",
         )
         session.commit()
     return RedirectResponse("/settings", status_code=303)

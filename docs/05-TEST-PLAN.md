@@ -93,6 +93,21 @@ marker-absence on the CSV body; affordance owner-only and absent without
 an artifact.
 T-SHOW-13 (journey): upload → audit done → button → download → figures
 match the artifact byte-for-byte.
+[amendment 2026-07-29, T-F2 (FR-35):]
+T-COH-01..04 (tests/test_cohort_export.py, exporter): pinned envelope-JSON
+golden at exactly floor-k incl. serialized key order; below-floor → zero
+envelopes + reason naming n and the floor; two builds byte-identical;
+period discipline (an adjacent-month audit never enters the export).
+T-COH-05..08 (consent + RBAC): default off and absent from the export even
+when others qualify; POST opt-in → present on rebuild, opt-out → absent
+again (the consent journey); card owner-only and POST 403 for non-owner
+roles with the flag unchanged; audit-log row on every flip.
+T-COH-09..12 (privacy + admin): workspace_ref disjoint from frame.py's
+user-pseudonym space and raw workspace ids absent from the serialized file;
+FR-22 marker-absence (workspace names / route names / rationales never
+serialize); schema self-audit clean (no str-typed feature can ship); admin
+route below-floor 404 naming the floor, live 200 with period-named
+attachment, wrong/absent token 404.
 
 ## 4. CI pipeline (GitHub Actions)
 

@@ -4114,3 +4114,38 @@ registered as QUEUE candidate T-D5); cold-reviewer NO-VERDICT (truncated respons
 harness fault, not a finding; re-runs on the fix push). CI lint caught test_showback.py
 unformatted — ruff format is now part of the authoring checklist, not just ruff check.
 Next per NOW order: T-F2; T-F4's scope-check may run.
+
+2026-07-29 (T-F2 · FR-35 cohort export + consent, Issue #95 — build session): SHIPPED.
+Session start verified #93 merged / #92 closed; found NO prod promotion dispatched yet —
+staging carries T-F3/T-F5, the founder staging→prod review lane is still open. T-F2 filed
+as Issue #95 with §2 criteria and registered in QUEUE NOW (docs(spine) 4ddeace). The
+QUEUE-mandated scope-check ran at filing: flywheel/{frame,cohort,benchmarks}.py verified
+NON-covering (frame = per-finding user-level R-F1 opt-OUT rows; FR-35 = aggregate-only
+workspace-level explicit opt-IN) — the slice stood as scoped, reusing the pseudonym idiom
+under a DISTINCT HKDF context, the L1 floor config, and frame's schema-self-audit
+pattern. The slice: migration 024 workspaces.cohort_opt_in (NOT NULL default false);
+services/flywheel/export.py (LLD §9.1 envelope verbatim; DETECTOR_KEYS is a LITERAL
+nine-id tuple test-pinned to the registry because T-FLY-07/R-F4 forbids flywheel→engine
+imports — the first full-suite run caught exactly that violation, fixed same-run; the
+LLD's "d1..d10" is span notation, d7 never shipped; shape_mix passthrough from persisted
+shapes blocks; k<10 → honest refusal naming n and the floor; deterministic; added to
+T-NFR-01 GUARDED_MODULES); POST /settings/cohort behind MANAGE_WORKSPACE (owner-only,
+audit-logged) + the owner-gated "Model improvement (cohort learning)" Settings card; GET
+/admin/cohort-export.json (X-Admin-Token; below-floor 404 carrying the reason; every pull
+audit-logged) + admin panel state row. ux mockup gate BEFORE wiring: PASS-WITH-NOTES, all
+3 notes closed in-slice (f.1 the disambiguation-from-Peer-benchmarks now LEADS the
+consent copy; f.2 mockup-only dimming flagged non-transferable; f.3 kit-tones-only at
+wiring). Admin affordance wired to the panel's REAL idiom — bare header-token curl
+actions, no kit button (the mockup's styled button was illustrative; recorded in the
+mockup itself). Unit tests authored on Sonnet 5 per TE-5/R-REQ-PIPELINE
+(tests/test_cohort_export.py, T-COH-01..12: pinned envelope golden incl. key order,
+below-floor refusal, consent journey, RBAC absence+403, audit-log row, admin
+404/200/token-gate, determinism, pseudonym-space disjointness, FR-22 marker-absence,
+schema self-audit + registry pin, period discipline). Sonnet flagged tokenomics.py:142
+`except json.JSONDecodeError, OSError:` — VALID under the pinned 3.14 interpreter
+(PEP 758 tuple grammar), not a bug; noted in case the pin ever moves. No money-math
+change (features are passthrough sums/ratios) → no pricing golden / pricing_verify
+impact. Full suite green (1308 selected, exit 0); coverage gate green (services 96.4%,
+money files coster/findings 100%); ruff + mypy + migration chain 001→024 all clean. docs/04 FR-35 row split out of the design span (residual row now FR-34+FR-37);
+docs/05 T-COH block; endpoints.md regenerated (MP-3); QUEUE T-F2 NOW-line retired.
+Next per NOW order: T-D1; T-F4's scope-check may run.
