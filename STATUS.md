@@ -4018,3 +4018,17 @@ protection restored (verified: force=false, 6 checks intact), remote verified by
 scripts/check_authorship.py: 439/439 clean. Tags untouched (all in clean prefix). Forward
 path already guarded by the rebase auto-merge flip. WitAura ownership noted; product name
 stays TokenOps (R-NAME-SEO).
+
+2026-07-28 (fresh session, spine reconcile + NOW sequencing): QUEUE law-6 reconcile ran
+clean — zero open issues, HEAD = spine @ 9d98161, docs/04 tail consistent with shipped
+slices. One stray found + fixed same-session: FR-34..38 and FR-39..42 were registered in
+docs/01 (§H/§I) with no docs/04 rows (the matrix's own "any new FR requires a row" rule) —
+two design-registered/unbuilt rows added, each shipping slice replaces its span. NOW order
+decided (founder-delegated in the handoff prompt): T-F3 → T-F5 → T-F2 → T-D1 → T-D2;
+T-F1 stays blocked on ruling ③ (factory repo name — the handoff placeholder came through
+unfilled, so the name is STILL owed); T-F4 follows T-F3 with its scope-check first. T-F3
+(FR-36 behaviour lens v1) filed as loop:ready Issue #89 with full docs/09 §2 acceptance
+criteria: services/dashboard/shapes.py classifier per LLD §9.3, artifact-persisted shapes,
+/breakdown chips (mockup before wiring, ux gate both depths), verbatim read-API
+passthrough, honest coarse-depth degrade (findings-depth law), purity guard, Sonnet 5
+unit-test authoring per TE-5. Builds run Opus 5 per R-REQ-PIPELINE.

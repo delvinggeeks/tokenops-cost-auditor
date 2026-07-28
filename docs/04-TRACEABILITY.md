@@ -130,6 +130,8 @@ surfaces such as the gate-round PR comment.
 | NFR-14 | C1,C9 | api error handlers, obs/errors            | T-API-07 | api/overview |
 | NFR-15 | Ops,C3 | pricing/data/prices.yaml, scripts/pricing_age.py, CI | T-NFR-15 | concepts/pricing-data |
 | X-01..05 | — | reviewer checklist item                   | REV-X (PR template) | limits, engineering/security |
+| FR-34..38 | — | design-registered 2026-07-28 (R-MODEL-FACTORY: docs/01 §H, HLD §8, LLD §9); unbuilt — QUEUE T-F1..T-F5, each shipped slice replaces its span of this row | — | — |
+| FR-39..42 | — | design-registered 2026-07-28 (R-ENT-DEPLOY: docs/01 §I, docs/15); trigger-gated, zero build authorized — QUEUE PARKED T-E1..E5 | — | — |
 
 Coverage rule: `pytest --cov=src/tokenops_cost_auditor` ≥ 85% lines on services/*,
 100% on pricing/coster and rules/findings estimators (money math).

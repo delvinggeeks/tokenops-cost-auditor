@@ -48,6 +48,16 @@ count in STATUS.md._
 > Each task lands here as one line:
 > `T-<id> · FR-xx | R-RULING · <vertical-slice one-liner> · trace: <module>→<test>`
 
+_NOW order set 2026-07-28 (founder-delegated pick, session handoff): T-F3 → T-F5 → T-F2 →
+T-D1 → T-D2. T-F1 enters when ruling ③ (factory repo name) lands; T-F4 follows T-F3 with
+its scope-check first._
+
+- **T-F3 · FR-36 | R-MODEL-FACTORY** · behaviour lens v1 — deterministic per-route
+  workload-shape chips (agent-loop / retry-burst / context-growth / unclaimed-cache /
+  steady) on `/breakdown` + verbatim in `GET /api/v1/audits/{id}/breakdown`; fix-first dev
+  copy, money-verified owner depth, honest coarse-depth degrade · trace:
+  `services/dashboard/shapes.py` → shape goldens + journey + ux both depths · **Issue #89**
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
@@ -79,10 +89,7 @@ gets its first shipped surfaces. Slices:
   stripped at the web/persistence boundary, engine stays tenant-blind (R-ORG) · overlaps
   `services/flywheel/{cohort,benchmarks}.py` — verify before building · trace: export
   golden + consent journey
-- **T-F3 · FR-36** behaviour lens v1 — BEHAVIORAL intent (docs/12 INTENT LAW) surfaced per route:
-  shape chips (loop / retry-burst / context-growth / unclaimed-cache) on the breakdown page
-  + read API, fix-first copy per COPY LAW ("your pipeline, same output, lower bill");
-  deterministic, engine-pure · trace: shape fixtures → ux gate at both depths
+- _(T-F3 → NOW 2026-07-28, Issue #89.)_
 - **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
   next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
   provenance) · SCOPE-CHECK FIRST: `services/statements/build.py` already carries verified
