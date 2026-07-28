@@ -172,6 +172,17 @@ test("getBreakdown GETs /api/v1/audits/{id}/breakdown and returns the whole resp
       ],
       pct_priced: 1.0,
       pct_attributed: 1.0,
+      // FR-36 behaviour lens — additive, verbatim from the artifact.
+      shapes: {
+        schema: 1,
+        by_route: [
+          {
+            route: "chat",
+            shape: "STEADY",
+            rationale: "no loop, burst, growth or cache signal crossed its threshold across 40 calls",
+          },
+        ],
+      },
     },
     unavailable_reason: null,
   };

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-F3 — Breakdown workload-shape chips (mockup, FR-36)</title>
+<style>
+  /* Approximation of the app kit for the T-F3 ux gate (three-second rule +
+     R-DESIGN checklist). Not pixel-parity — the wired surface reuses
+     kit/_kit.html (.ledger table, .badge chips) and wa-design.css tones. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --verified:#0f9d58; --verified-bg:#e9f7ef;
+    --waste:#c0392b; --waste-bg:#fbeeec; --estimate:#b45309; --estimate-bg:#fdf3e7;
+    --chip:#eef1f6; --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;--verified-bg:#12291c;--waste-bg:#2e1a17;
+      --estimate-bg:#2b2113;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)} h2{font-size:17px;margin:0 0 var(--s2)}
+  .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--accent);font-weight:700;margin:var(--s4) 0 var(--s2);
+    border-top:2px dashed var(--line);padding-top:var(--s3)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  .muted{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  td.money,th.money{text-align:right;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto}
+  .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;
+    font-weight:600;border:1px solid var(--line);white-space:nowrap}
+  .badge-waste{color:var(--waste);background:var(--waste-bg)}
+  .badge-estimate{color:var(--estimate);background:var(--estimate-bg)}
+  .badge-neutral{color:var(--muted);background:var(--chip)}
+  .shape-cell{max-width:340px}
+  .shape-why{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;
+    white-space:normal;line-height:1.45}
+  .shape-why b{color:var(--ink);font-weight:600}
+  .note{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;
+    background:var(--card);font-size:13.5px;color:var(--muted);margin:var(--s2) 0}
+  .empty-state{text-align:center;padding:var(--s4)}
+  .empty-state h2{margin-bottom:var(--s1)}
+  .empty-state p{max-width:560px;margin:0 auto var(--s3);color:var(--muted)}
+  .btn{display:inline-block;padding:8px 16px;border-radius:8px;border:1px solid var(--accent);
+    background:var(--accent);color:#fff;font-weight:600;text-decoration:none;font-size:14px}
+  .btn.alt{background:none;color:var(--accent);margin-left:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Breakdown — workload-shape chips (T-F3 · FR-36)</h1>
+  <p class="sub">Mockup for the ux gate, BEFORE wiring (R-DESIGN). Three states below.
+    Copy law: the money lead and every dollar figure are UNCHANGED (owner depth stays
+    money-verified); the new chips speak fix-first dev language — name the fix, never
+    the blame. Chips are deterministic: counts, timing and cache fields only.</p>
+
+  <!-- ============================================================ STATE 1 -->
+  <div class="demo-label">State 1 · Upload/SDK audit — chips live (dev depth added, owner depth untouched)</div>
+
+  <div class="card">
+    <h2>Here's exactly where your $1,284.60/mo of LLM spend goes.</h2>
+    <p class="muted" style="margin:0">Broken down by model, by route and by efficiency — every
+      figure is exact arithmetic on the pinned rate card, reproducible, and it reconciles to
+      your provider invoice to the penny. <em>(unchanged owner lead — no copy change)</em></p>
+  </div>
+
+  <div class="card">
+    <h2>By route (cost allocation)</h2>
+    <p class="muted" style="margin-top:0">Attributed from your call <code>tag</code>. Untagged spend is
+      its own row — never silently allocated, so the numbers stay honest. The workload shape is
+      classified from counts and timing only — we never read your prompts.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Route</th><th class="shape-cell">Workload shape</th>
+        <th class="money">Monthly $</th><th class="money">Share</th>
+        <th class="money">Calls</th><th class="money">Cache hit</th><th class="money">$/1k out</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>agent-runner</td>
+          <td class="shape-cell"><span class="badge badge-estimate">Agent loop</span>
+            <span class="shape-why">Batch the small steps or cache the shared context — same
+              output, fewer round-trips. <b>34 calls under 300 output tokens within
+              600&nbsp;s (threshold: 8).</b></span></td>
+          <td class="money">$612.40</td><td class="money">48%</td>
+          <td class="money">8,102</td><td class="money">12%</td><td class="money">$0.0311</td>
+        </tr>
+        <tr>
+          <td>checkout-search</td>
+          <td class="shape-cell"><span class="badge badge-waste">Retry burst</span>
+            <span class="shape-why">Add backoff or dedupe the trigger — you're paying for the
+              same answer more than once. <b>6 near-identical calls within 120&nbsp;s
+              (threshold: 3).</b></span></td>
+          <td class="money">$228.11</td><td class="money">18%</td>
+          <td class="money">2,940</td><td class="money">0%</td><td class="money">$0.0455</td>
+        </tr>
+        <tr>
+          <td>support-chat</td>
+          <td class="shape-cell"><span class="badge badge-estimate">Context growth</span>
+            <span class="shape-why">Trim or summarize history as it accumulates — same answers,
+              smaller prompts. <b>Median input grew 412 → 1,890 tokens (4.6×) from the first
+              to the last quarter of the window (threshold: 2.0×).</b></span></td>
+          <td class="money">$201.87</td><td class="money">16%</td>
+          <td class="money">1,455</td><td class="money">3%</td><td class="money">$0.0389</td>
+        </tr>
+        <tr>
+          <td>doc-summarize</td>
+          <td class="shape-cell"><span class="badge badge-estimate">Unclaimed cache</span>
+            <span class="shape-why">Mark the stable prefix for provider caching — repeat calls
+              read it at a fraction of the price. <b>Same prefix sent 41× at median 2,000 input
+              tokens with 0 cached tokens read (threshold: 25 repeats).</b></span></td>
+          <td class="money">$147.02</td><td class="money">11%</td>
+          <td class="money">620</td><td class="money">0%</td><td class="money">$0.0502</td>
+        </tr>
+        <tr>
+          <td>(untagged)</td>
+          <td class="shape-cell"><span class="badge badge-neutral">Steady</span>
+            <span class="shape-why"><b>No loop, burst, growth or cache signal crossed its
+              threshold across 220 calls.</b></span></td>
+          <td class="money">$95.20</td><td class="money">7%</td>
+          <td class="money">220</td><td class="money">41%</td><td class="money">$0.0298</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ============================================================ STATE 2 -->
+  <div class="demo-label">State 2 · Pre-feature artifact — honest null, never a fabricated “Steady”</div>
+
+  <div class="card">
+    <h2>By route (cost allocation)</h2>
+    <div class="note">This audit ran before the shape lens shipped, so its workload shapes
+      were never classified. Run a new audit and each route gets its shape chip — we never
+      guess one after the fact.&nbsp;<a href="#" style="color:var(--accent);font-weight:600">Upload
+      a log file</a> <span aria-hidden="true">→</span></div>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Route</th><th class="shape-cell">Workload shape</th>
+        <th class="money">Monthly $</th><th class="money">Share</th>
+        <th class="money">Calls</th><th class="money">Cache hit</th><th class="money">$/1k out</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>agent-runner</td>
+          <td class="shape-cell"><span class="muted">—</span></td>
+          <td class="money">$612.40</td><td class="money">48%</td>
+          <td class="money">8,102</td><td class="money">12%</td><td class="money">$0.0311</td>
+        </tr>
+        <tr>
+          <td>support-chat</td>
+          <td class="shape-cell"><span class="muted">—</span></td>
+          <td class="money">$201.87</td><td class="money">16%</td>
+          <td class="money">1,455</td><td class="money">3%</td><td class="money">$0.0389</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ============================================================ STATE 3 -->
+  <div class="demo-label">State 3 · Latest audit is a connected source (aggregate depth) — honest coarse-depth degrade</div>
+
+  <div class="card empty-state">
+    <h2>Your latest audit is from a connected source — its data is aggregate</h2>
+    <p>A connected usage API reports daily totals, not per-request rows, so the exact
+      tokenomics breakdown and the workload-shape lens can't run on it. Upload a request
+      log or send traffic through the SDK and both appear here — per-route dollars,
+      efficiency ratios, and each route's workload shape.</p>
+    <a class="btn" href="#">Upload a log file</a>
+    <a class="btn alt" href="#">Set up SDK ingest</a>
+  </div>
+
+  <p class="muted" style="font-size:13px">Chip tones compose the shipped kit: red
+    (<code>badge-waste</code>) = paying twice for the same answer; amber
+    (<code>badge-estimate</code>) = efficiency win available; gray
+    (<code>badge-neutral</code>) = steady, no claim. Green (<code>badge-verified</code>) is
+    reserved for verified dollars — a shape is a classification, never a money claim, so no
+    chip is ever green.</p>
+</div>
+</body>
+</html>

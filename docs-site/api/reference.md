@@ -418,11 +418,29 @@ be indistinguishable from a real all-zero audit); code defensively — check
       {"name": "chat", "calls": 800, "monthly_usd": 42.5, "share": 1.0,
        "cache_hit_rate": 0.1, "out_in_ratio": 0.33, "cost_per_1k_out": 0.14}
     ],
-    "pct_priced": 1.0, "pct_attributed": 1.0
+    "pct_priced": 1.0, "pct_attributed": 1.0,
+    "shapes": {
+      "schema": 1,
+      "by_route": [
+        {"route": "chat", "shape": "STEADY",
+         "rationale": "no loop, burst, growth or cache signal crossed its threshold across 800 calls"}
+      ]
+    }
   },
   "unavailable_reason": null
 }
 ```
+
+**Workload shapes** (`shapes`, additive): each route's behaviour classified
+**deterministically** from counts, timing, model and cache fields only — never
+your prompt or completion text (there is no text to read: the platform never
+stores it). `shape` is one of `AGENT_LOOP`, `RETRY_BURST`, `CONTEXT_GROWTH`,
+`UNCLAIMED_CACHE`, `STEADY`; `rationale` is a fixed template naming the exact
+counts that crossed a threshold — no probabilities, no inference. The block is
+**absent** on audits that ran before the shape lens shipped (the server never
+back-fills a classification), and it never exists for connected-source audits
+— aggregate usage buckets have no per-request rows to classify, so nothing is
+fabricated. Code defensively: treat `shapes` as optional.
 
 ### List findings
 

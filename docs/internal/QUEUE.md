@@ -52,11 +52,11 @@ _NOW order set 2026-07-28 (founder-delegated pick, session handoff): T-F3 → T-
 T-D1 → T-D2. T-F1 enters when ruling ③ (factory repo name) lands; T-F4 follows T-F3 with
 its scope-check first._
 
-- **T-F3 · FR-36 | R-MODEL-FACTORY** · behaviour lens v1 — deterministic per-route
-  workload-shape chips (agent-loop / retry-burst / context-growth / unclaimed-cache /
-  steady) on `/breakdown` + verbatim in `GET /api/v1/audits/{id}/breakdown`; fix-first dev
-  copy, money-verified owner depth, honest coarse-depth degrade · trace:
-  `services/dashboard/shapes.py` → shape goldens + journey + ux both depths · **Issue #89**
+_T-F3 SHIPPED 2026-07-28 — Issue #89 slice: `services/dashboard/shapes.py` classifier
+(LLD §9.3), shapes block in tokenomics.json, `/breakdown` chip column with fix-first dev
+copy + pre-feature and coarse-depth honest states, verbatim API passthrough + sdk/js
+types, docs/04 FR-36 row split out of the design span. T-F5 is next per the NOW order;
+T-F4's scope-check may now run._
 
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 

@@ -44,6 +44,10 @@ console.log(`${summary.totals.calls} calls, $${summary.totals.estimated_cost_usd
 const { breakdown, unavailable_reason } = await client.getBreakdown(audit_id); // tokenomics
 if (breakdown) {
   console.log(`$${breakdown.monthly_spend_usd}/mo, ${breakdown.by_model.length} models`);
+  // FR-36 workload shapes — optional: absent on pre-lens audits, never back-filled.
+  for (const s of breakdown.shapes?.by_route ?? []) {
+    console.log(`${s.route}: ${s.shape} — ${s.rationale}`);
+  }
 } else {
   console.log(`no breakdown: ${unavailable_reason}`);
 }

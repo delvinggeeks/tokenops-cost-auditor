@@ -37,6 +37,16 @@ timestamps, never text. Estimates are conservative by construction; each
 detector's exact formula and haircuts are documented on
 [its own page](waste-classes/index.md). <!-- src: FR-07..FR-12; docs/03 §3 -->
 
+**Classify (the shape lens).** Alongside the detectors, each route's workload
+is classified into one of five deterministic shapes — agent loop, retry burst,
+context growth, unclaimed cache, or steady — from counts, timing and cache
+fields only, never content. The shape appears as a chip per route on the
+Breakdown page and rides the read API verbatim; its rationale names the exact
+counts that crossed a threshold, so there is nothing to second-guess. Audits
+from connected usage APIs are never classified — aggregate buckets have no
+per-request rows, and the lens says so instead of guessing.
+<!-- src: FR-36; services/dashboard/shapes.py; docs/12 INTENT LAW -->
+
 **Report.** All numbers are assembled once into a single report model, then
 rendered three ways from that one source: deterministic JSON, the private web
 report, and the PDF. The renderers never recompute anything — what you read in

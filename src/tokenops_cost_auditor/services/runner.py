@@ -31,6 +31,7 @@ from tokenops_cost_auditor.persistence.models import (
 )
 from tokenops_cost_auditor.persistence.repo import make_session_factory, processing_count
 from tokenops_cost_auditor.services import ingest
+from tokenops_cost_auditor.services.dashboard import shapes as shapes_svc
 from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.flywheel import benchmarks as flywheel_benchmarks
 from tokenops_cost_auditor.services.ingest.base import IngestError
@@ -194,9 +195,20 @@ class AuditRunner:
         # atomically (temp + rename) so a concurrent /breakdown read never sees a
         # half-written file (cold gate).
         tk_tmp = report_dir / "tokenomics.json.tmp"
-        tk_tmp.write_text(
-            json.dumps(dataclasses.asdict(tokenomics_svc.compute(priced))), encoding="utf-8"
-        )
+        tk_artifact = dataclasses.asdict(tokenomics_svc.compute(priced))
+        # FR-36 behaviour lens: per-route workload shapes ride in the same
+        # artifact (additive, schema-versioned block) — classified from the
+        # full observed frame, since behaviour needs counts/timing, not a rate
+        # card. A pre-feature artifact simply lacks the block (honest null).
+        # The block is strictly additive, so a classification failure must
+        # never fail the audit — report + money artifacts are already rendered
+        # by now; omit the block instead (same honest-null degrade downstream)
+        # and log it (G-T-F3 cold-reviewer f.1).
+        try:
+            tk_artifact["shapes"] = shapes_svc.compute_shapes(priced, self.settings)
+        except Exception:
+            log.warning("shapes_classification_failed", audit_id=audit_id, exc_info=True)
+        tk_tmp.write_text(json.dumps(tk_artifact), encoding="utf-8")
         tk_tmp.replace(report_dir / "tokenomics.json")
         t_report = datetime.now(UTC)
         stage_rows = (

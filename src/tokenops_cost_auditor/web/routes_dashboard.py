@@ -37,6 +37,7 @@ from tokenops_cost_auditor.persistence.repo import (
 from tokenops_cost_auditor.services.alerts import dispatch as alerts_dispatch
 from tokenops_cost_auditor.services.dashboard import drift as drift_svc
 from tokenops_cost_auditor.services.dashboard import metrics
+from tokenops_cost_auditor.services.dashboard import shapes as shapes_svc
 from tokenops_cost_auditor.services.dashboard import tokenomics as tokenomics_svc
 from tokenops_cost_auditor.services.lifecycle import auditlog
 from tokenops_cost_auditor.services.payments import plans
@@ -614,6 +615,32 @@ def _load_tokenomics(report_dir: str | Path, audit: Audit | None) -> dict[str, o
     return tokenomics_svc.load_artifact(report_dir, audit.id)
 
 
+def _shape_map(tk: dict[str, object] | None) -> tuple[dict[str, dict[str, str]], bool]:
+    """(route -> shape entry, has_shapes) from the artifact's FR-36 `shapes`
+    block. A pre-feature or partial artifact yields ({}, False) — the page
+    renders an honest null note, never a fabricated STEADY and never a 500
+    (cold gate): every access is type-checked, nothing raises."""
+    if not isinstance(tk, dict):
+        return {}, False
+    block = tk.get("shapes")
+    if not isinstance(block, dict):
+        return {}, False
+    entries = block.get("by_route")
+    if not isinstance(entries, list):
+        return {}, False
+    out: dict[str, dict[str, str]] = {}
+    keys = ("route", "shape", "rationale")
+    for e in entries:
+        if isinstance(e, dict) and all(isinstance(e.get(k), str) for k in keys):
+            out[e["route"]] = e
+        else:
+            # Dropped, not raised (cold gate) — but discoverable: a corrupt
+            # entry must not be silently identical to the honest pre-feature
+            # "—" state (G-T-F3 cold-reviewer f.3).
+            log.debug("shape_entry_dropped", entry_type=type(e).__name__)
+    return out, True
+
+
 @router.get("/breakdown", response_class=HTMLResponse)
 def breakdown_page(request: Request, user_email: str = Depends(current_user)) -> HTMLResponse:
     """Enterprise tokenomics breakdown — exact, deterministic per-dimension usage
@@ -643,12 +670,20 @@ def breakdown_page(request: Request, user_email: str = Depends(current_user)) ->
                     # an older/partial tokenomics.json (valid JSON, missing a vital)
                     # degrades to no-trend, never a 500 (cold gate).
                     drift_view = None
+        shape_map, has_shapes = _shape_map(tk)
         ctx = _shell_ctx(session, request, user, "breakdown")
         return _render(
             request,
             "app/breakdown.html",
             tk=tk,
             audit=audit,
+            # FR-36 depth honesty: the latest audit came from a connected usage
+            # API (aggregate buckets, no per-request rows) — the breakdown and
+            # the shape lens structurally cannot run on it; the page says so.
+            coarse_source=tk is None and audit is not None and audit.source_id is not None,
+            shape_map=shape_map,
+            has_shapes=has_shapes,
+            shape_copy=shapes_svc.SHAPE_COPY,
             drift=drift_view,
             drift_prior_date=drift_prior_date,
             clarity=metrics.audit_clarity(session, request.app.state.pricing_table, user.id),
