@@ -4313,3 +4313,30 @@ BOTH inlined and "not inlined" in the same prompt — footer query now derived f
 GENERATED_DIFF_EXCLUDES (single source, pinned in the harness test); vv.6 (explicitly
 no-fix-requested) residual-on-largest-line at ≥3 lines → one BACKLOG line with its
 trigger, per R-IMPROVISE no-silent-drop.
+
+2026-07-29 (T-D2, Issue #106): docs/uml/ refreshed from the 2-diagram D6/D7 G4-sweep
+set to 6 platform-era diagrams, every node/edge derived from the LIVE tree (route
+tables, import graphs, module docstrings — grep-verified this session), never from a
+spec snapshot. components.mmd redrawn package-truthful: web/ tenancy+authz boundary
+(auth/authz/api_auth/api_scopes) drawn as its own subgraph, ENGINE CORE grouped and
+labelled tenant-blind/role-blind (NFR-01 + R-ORG laws in the header), platform
+services at package level, workspace-spine persistence, customer-side sdk/mcp/cli as
+out-of-process consumers, external provider/factory sinks. audit-seq.mmd tail updated
+(tokenomics.json + FR-36 shapes additive block, StageEvents, M-FLY-1 B1b benchmark
+attach with honest-n alt, S-5 dispatch_audit_completed; FR-17 session auth replaces
+the pre-D8 stub note). Four new sequences: read-api-seq (rt_/at_ resolution →
+ReadPrincipal → scope → workspace-scoped read, MCP as same-door consumer),
+payments-seq (both markets' Standard Checkout, FR-27 rail order, dunning ladder),
+orgs-seq (invite→accept→membership, O-2 matrix, boundary-resolved tenancy),
+flywheel-seq (R-Q9 verified loop → statement, L1/cohort/frame/FR-35 rungs with
+consent + threshold alts). Validation: all six render green under mermaid-cli 11.16.0
+(npx, pinned run this session); two mermaid lexer classes fixed during authoring —
+bare `%%` comment lines break the flowchart parser, `;` in sequence message text acts
+as a statement separator (replaced with em-dashes). No docs/04 row: T-D2 implements
+no FR; diagrams are HLD/LLD conformance artifacts (architect charter). Gate round in
+CI on the PR per LE-4. R-IMPROVISE in-slice: the first round ran WITHOUT the architect
+gate — ARCHITECT_TRIGGER only matched services/ + persistence/models.py, so a
+diagram-only diff (the architect's own artifact surface) drew no architect, and this
+card's "D6/D13-style pass" DoD would have shipped reviewed by no one. Fixed in the
+same PR: docs/uml/ added to ARCHITECT_TRIGGER with test
+(test_architect_added_for_uml_diagrams); the re-run round must show all five gates.

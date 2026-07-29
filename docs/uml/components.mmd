@@ -1,124 +1,171 @@
-%% components.mmd — TokenOps Cost Auditor component diagram
-%% Generated at G4 sweep (covers D6+D7) from docs/03-LLD.md §1 package layout
-%% and the actual import graph observed in .gates/d6-d7.diff + current
-%% src/tokenops_cost_auditor/ package tree. Architect gate duty per
-%% founder ruling R-Q1 (no gate fires at end of D6; emission lands here).
-%% D7-vs-D6 boundary: no structural change. D6 fixed the package boundaries
-%% (runner.py, report/model.py+render_json.py, lifecycle/auditlog.py,
-%% mail/base.py, api/routes_upload.py, persistence/{models,repo}.py). D7 only
-%% added renderers/consumers inside the existing report/ and web/ packages
-%% (render_pdf.py, signer.py, routes_report.py, templates) — no new package,
-%% no new service, no change to any D6 dependency arrow.
-%% services/payments/ is present (per LLD §1) but empty (only __init__.py)
-%% until D9. services/mail/smtp.py is not yet present — mail/base.py houses
-%% MailPort + a log adapter for now.
+%% components.mmd — TokenOps Cost Auditor component diagram (platform era)
+%% T-D2 refresh (Issue #106), supersedes the D6/D7 G4-sweep version. Drawn
+%% from the LIVE src/tokenops_cost_auditor/ tree and its import graph, not
+%% from a spec snapshot; docs/02-HLD.md + docs/03-LLD.md name the laws the
+%% boundaries below enforce. Grouping is package-truthful: a node sits in
+%% the subgraph of the package that owns its file.
+%% ---
+%% What changed since D6/D7: payments/ is real (Standard Checkout, both
+%% markets); web/ gained the tenancy boundary (auth, authz RBAC, api_auth
+%% bearer resolution) plus dashboard/explorer/runs/sources/statements/
+%% alerts/settings/billing/members/developer/oauth/copilot/devices/ingest
+%% routers; services/ gained connectors, dashboard, statements, flywheel,
+%% alerts, webhooks, copilot, collector, geo, forecast; sdk/ and mcp/ are
+%% customer-side consumers; persistence gained the workspace spine (R-ORG).
+%% ---
+%% Boundary laws drawn here:
+%%  - ENGINE CORE (ingest/pricing/rules/report) is TENANT-BLIND and
+%%    role-blind: it never imports web/authz, api_auth, or any workspace
+%%    concept (R-ORG). rules/ + pricing/ import no network/LLM libraries
+%%    (NFR-01, import-guard T-NFR-01).
+%%  - Tenancy + authorization live at the WEB boundary only: auth.py
+%%    (magic-link session), authz.py (O-2 RBAC matrix), api_auth.py
+%%    (rt_/at_ bearer -> ReadPrincipal, workspace-scoped reads).
+%%  - report/model.py ReportModel.build() stays the SOLE money-math
+%%    assembly point (HLD C5); renderers serialize only.
+%%  - FR-22 everywhere: persistence + exports carry counts/enums/ids/
+%%    dollars, never prompt/completion text.
 
 graph TD
-  subgraph WEB["web/ (Jinja2, server-rendered — ADR-2)"]
-    web_routes["routes_report.py<br/>GET /r/{token}, /r/{token}/pdf"]
-    web_templates["templates/ (_report_body, _report_style,<br/>report.html, pdf/report.html)"]
+  subgraph CUSTSIDE["customer-side processes (out of our process)"]
+    sdk_pkg["sdk/ (S-1)<br/>instrument.py observe-only patch,<br/>extract.py, batcher.py"]
+    mcp_pkg["mcp/ (S-3)<br/>stdio server — HTTP GET only,<br/>no DB, no engine"]
+    cli_main["cli.py — offline pipeline<br/>(FR-04, bypasses web/api/persistence)"]
   end
 
-  subgraph API["api/ (/api/v1 — FR-25 / R-API)"]
+  subgraph WEB["web/ (server-rendered UI + /api/v1 read mounts — ADR-2)"]
+    subgraph WEBBOUNDARY["tenancy + authorization boundary (R-ORG)"]
+      web_auth["auth.py (FR-17 magic-link session)"]
+      web_authz["authz.py (O-2 RBAC matrix:<br/>owner/admin/member/viewer)"]
+      web_api_auth["api_auth.py (rt_/at_ bearer -><br/>ReadPrincipal; workspace-scoped)"]
+      web_api_scopes["api_scopes.py (read:audits,<br/>read:findings)"]
+    end
+    web_read["routes_api_read.py<br/>GET /api/v1/audits[.../findings,<br/>.../breakdown] (S-6)"]
+    web_oauth["routes_oauth.py (/oauth<br/>authorize + token — at_ issuance)"]
+    web_developer["routes_developer.py<br/>(/settings/developer — rt_ mint)"]
+    web_billing["routes_billing.py (/billing<br/>order/subscription/checkout/verify)"]
+    web_members["routes_members.py (/settings/members<br/>+ /invite/accept — O-1b)"]
+    web_ui["product UI routers:<br/>dashboard, explorer, runs, sources,<br/>statements, alerts, settings, admin,<br/>copilot, devices, ingest, report (/r/),<br/>pages, webhooks-settings"]
+  end
+
+  subgraph API["api/ (/api/v1 write side — FR-25)"]
     api_upload["routes_upload.py<br/>POST /audits, GET /audits/{id}/status"]
-  end
-
-  subgraph CLI["cli.py (offline pipeline, FR-04)"]
-    cli_main["main() — console script<br/>tokenops-cost-auditor"]
+    api_webhooks["routes_webhooks.py<br/>POST /webhooks/razorpay|stripe<br/>(FR-27 rail)"]
   end
 
   subgraph SERVICES["services/"]
-    subgraph INGEST["ingest"]
-      ingest_base["base.py (detect_format)"]
-      ingest_parsers["openai_jsonl / anthropic_jsonl /<br/>generic_csv"]
-      ingest_norm["normalizer.py"]
-      ingest_val["validator.py"]
+    subgraph ENGINE["ENGINE CORE — tenant-blind, role-blind"]
+      subgraph INGEST["ingest"]
+        ingest_base["base.py + parsers +<br/>normalizer + validator"]
+      end
+      subgraph PRICING["pricing (no network/LLM libs — NFR-01)"]
+        pricing_mods["table.py, coster.py"]
+      end
+      subgraph RULES["rules (no I/O, no network — NFR-01)"]
+        rules_mods["registry.py: d1..d6, d8..d10<br/>(9 detectors), findings.py,<br/>detector_copy.py"]
+      end
+      subgraph REPORT["report"]
+        report_model["model.py ReportModel.build()<br/>— SOLE money-math point (HLD C5)"]
+        report_render["render_json / render_pdf /<br/>signer / sample (serialize only)"]
+      end
     end
-    subgraph PRICING["pricing (no network/LLM libs — NFR-01 adjacent)"]
-      pricing_table["table.py"]
-      pricing_coster["coster.py"]
+    runner["runner.py — AuditRunner<br/>(BackgroundTasks — ADR-5)"]
+    subgraph PLATFORM["platform services"]
+      svc_connectors["connectors/ — provider usage APIs<br/>(openai/anthropic/azure/bedrock/vertex),<br/>pull + schedule + daily digest,<br/>source_audit, crypto (key sealing)"]
+      svc_dashboard["dashboard/ — metrics, tokenomics,<br/>shapes (FR-36), savings (R-Q9 verified),<br/>showback, drift, explorer, activity"]
+      svc_statements["statements/build.py<br/>(monthly owner artifact)"]
+      svc_flywheel["flywheel/ — frame, benchmarks (L1),<br/>cohort ledger, export (FR-35 envelope)"]
+      svc_payments["payments/ — plans (price config),<br/>razorpay orders+subscriptions,<br/>stripe checkout+subscriptions,<br/>base (grant), subscriptions (dunning)"]
+      svc_alerts["alerts/ (rules + dispatch,<br/>observe-only — X-02)"]
+      svc_webhooks["webhooks/ (S-5 outbound<br/>audit.completed dispatcher)"]
+      svc_copilot["copilot/ (seat governance)"]
+      svc_collector["collector/ (transcript intake)"]
+      svc_lifecycle["lifecycle/ (auditlog append-only,<br/>purge — FR-21)"]
+      svc_mail["mail/ (MailPort, smtp)"]
+      svc_misc["geo/, forecast.py"]
     end
-    subgraph RULES["rules (no I/O, no network — NFR-01)"]
-      rules_registry["registry.py (D1..D6)"]
-      rules_findings["findings.py"]
-    end
-    subgraph REPORT["report"]
-      report_model["model.py<br/>ReportModel.build() — SOLE money-math<br/>assembly point (HLD C5)"]
-      report_json["render_json.py (serialize only)"]
-      report_pdf["render_pdf.py (weasyprint — ADR-4,<br/>serialize only)"]
-      report_signer["signer.py (itsdangerous signed URLs)"]
-    end
-    subgraph LIFECYCLE["lifecycle"]
-      lifecycle_auditlog["auditlog.py (append-only)"]
-    end
-    subgraph MAIL["mail"]
-      mail_base["base.py (MailPort + log adapter)"]
-    end
-    subgraph PAYMENTS["payments (empty until D9)"]
-      payments_stub["(no files yet)"]
-    end
-    runner["runner.py — AuditRunner<br/>(BackgroundTasks orchestration — ADR-5)"]
   end
 
   subgraph PERSISTENCE["persistence/"]
-    persist_models["models.py"]
-    persist_repo["repo.py (thin repositories +<br/>session factory)"]
+    persist_models["models.py — workspace spine<br/>(Workspace, WorkspaceMember, WorkspaceInvite)<br/>+ Audit, FindingRow, CallAggregate (FR-22),<br/>Payment, Source, IngestKey, ApiToken,<br/>OAuth*, Webhook*, Statement, StageEvent, ..."]
+    persist_repo["repo.py (session factory,<br/>active_workspace_id scoping)"]
     persist_mig["migrations/ (alembic, additive-only)"]
   end
 
   subgraph OBS["obs/"]
-    obs_log["logging.py"]
-    obs_err["errors.py"]
-    obs_rate["ratelimit.py"]
+    obs_mods["logging, errors (NFR-14 envelope),<br/>ratelimit"]
   end
 
-  %% API layer — sanctioned persistence access via repo.py + models.py
+  EXT_PROVIDERS(["provider APIs<br/>(Razorpay, Stripe, usage APIs)"])
+  EXT_FACTORY(["model factory repo<br/>(R-MODEL-FACTORY inlet)"])
+
+  %% customer-side consumers reach us over HTTP only
+  sdk_pkg -. "POST ingest DSN (ik_)" .-> web_ui
+  mcp_pkg -. "HTTP GET, Bearer rt_" .-> web_read
+  cli_main --> ingest_base
+  cli_main --> pricing_mods
+  cli_main --> rules_mods
+  cli_main --> report_model
+
+  %% web boundary — every router resolves identity/role/workspace HERE
+  web_read --> web_api_auth
+  web_api_auth --> web_api_scopes
+  web_oauth --> web_api_scopes
+  web_read --> persist_repo
+  web_ui --> web_auth
+  web_ui --> web_authz
+  web_ui --> persist_repo
+  web_members --> web_authz
+  web_members --> persist_repo
+  web_members --> svc_mail
+  web_billing --> web_authz
+  web_billing --> svc_payments
+  web_developer --> persist_repo
+  web_oauth --> persist_repo
+
+  %% API write side
+  api_upload --> web_auth
   api_upload --> persist_repo
-  api_upload --> persist_models
-  api_upload --> ingest_base
-  api_upload --> lifecycle_auditlog
-  api_upload --> obs_rate
+  api_upload --> svc_lifecycle
+  api_upload --> obs_mods
   api_upload -. "BackgroundTasks.add_task" .-> runner
+  api_webhooks --> svc_payments
+  api_webhooks --> persist_repo
 
-  %% web layer — never touches persistence internals directly; goes
-  %% through report/signer.py only
-  web_routes --> report_signer
-  web_routes --> web_templates
-
-  %% runner orchestrates the full pipeline (3.1 in LLD)
-  runner --> persist_repo
-  runner --> persist_models
+  %% runner orchestrates the audit pipeline (audit-seq.mmd)
   runner --> ingest_base
-  runner --> ingest_val
-  runner --> lifecycle_auditlog
-  runner --> mail_base
-  runner --> pricing_coster
-  runner --> pricing_table
+  runner --> pricing_mods
+  runner --> rules_mods
   runner --> report_model
-  runner --> report_json
-  runner --> report_pdf
-  runner --> report_signer
-  runner --> rules_registry
-  runner --> rules_findings
-  runner --> obs_err
+  runner --> report_render
+  runner --> svc_dashboard
+  runner --> svc_flywheel
+  runner --> svc_webhooks
+  runner --> svc_lifecycle
+  runner --> svc_mail
+  runner --> persist_repo
 
-  %% report assembly — single money-math point, render layers serialize only
-  report_model --> pricing_coster
-  report_model --> pricing_table
-  report_model --> rules_findings
-  report_json --> report_model
-  report_pdf --> report_model
-  report_pdf --> web_templates
+  %% engine core internal
+  report_model --> pricing_mods
+  report_model --> rules_mods
+  report_render --> report_model
+  rules_mods --> pricing_mods
+
+  %% platform services
+  svc_connectors --> pricing_mods
+  svc_connectors --> report_model
+  svc_connectors --> svc_flywheel
+  svc_connectors -->|httpx| EXT_PROVIDERS
+  svc_payments -->|httpx| EXT_PROVIDERS
+  svc_statements --> svc_dashboard
+  svc_statements --> svc_payments
+  svc_statements --> persist_repo
+  svc_dashboard --> persist_repo
+  svc_flywheel --> persist_models
+  svc_flywheel -. "FR-35 envelope, opt-in,<br/>k-anon, pseudonymous" .-> EXT_FACTORY
+  svc_alerts --> persist_repo
+  svc_alerts --> svc_payments
+  svc_webhooks --> persist_models
 
   persist_repo --> persist_models
   persist_mig --> persist_models
-  rules_registry --> rules_findings
-
-  %% CLI — offline pipeline, bypasses api/persistence entirely
-  cli_main --> ingest_base
-  cli_main --> pricing_coster
-  cli_main --> pricing_table
-  cli_main --> rules_registry
-  cli_main --> report_model
-  cli_main --> report_json
-  cli_main --> report_pdf

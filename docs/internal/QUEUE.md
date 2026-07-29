@@ -82,15 +82,24 @@ claims as a CLASS — nine customer surfaces made count-free, landing waste list
 to d8/d9/d10, scan widened to templates/js/yaml). docs-site six-detector-era copy →
 T-D4. Next per NOW order: T-F4 (shrunk scope) → T-D2._
 
+_T-D2 SHIPPED 2026-07-29 — Issue #106: `docs/uml/` refreshed from 2 pre-platform (D6/D7
+G4-sweep) diagrams to a 6-diagram platform-era set, drawn from the LIVE tree + import
+graph (not spec snapshots): `components.mmd` (package-truthful map — web tenancy
+boundary, engine-core tenant-blind grouping, platform services, workspace-spine
+persistence, customer-side sdk/mcp/cli) and `audit-seq.mmd` (post-D7 tail: tokenomics +
+shapes artifact, StageEvents, L1 benchmark attach, S-5 webhook dispatch; pre-D8 auth
+stub note retired) refreshed; `read-api-seq.mmd`, `payments-seq.mmd`, `orgs-seq.mmd`,
+`flywheel-seq.mmd` added. All six validated with mermaid-cli 11.16. Architect-gated in
+the CI gate round (D6/D13-style pass). NOW is now empty — founder sequences the next
+card from CANDIDATES (T-D4, T-D5) or a ruling._
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
 re-derive them, and so they cannot be silently dropped (R-IMPROVISE).
 
 - _(T-D1 → NOW 2026-07-29, Issue #99.)_
-- **T-D2 diagram set refresh** — `docs/uml/` holds 2 pre-platform diagrams; add/refresh
-  components + sequence diagrams covering read API, payments, orgs, flywheel
-  (architect-gated per its charter — D6/D13-style pass).
+- _(T-D2 → NOW 2026-07-29, Issue #106.)_
 - **T-D5 docs/05 test-plan refresh (FR-3x era)** — `docs/05-TEST-PLAN.md` §3 has no IDs
   for the v1.5+ slices (FR-36 shapes precedent; surfaced by the T-F5 vv gate note, which
   called the gap compounding). T-F5 added its own T-SHOW block in-slice; backfill the

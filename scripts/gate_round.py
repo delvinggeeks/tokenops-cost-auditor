@@ -35,7 +35,10 @@ from pathlib import Path
 # touches a customer-facing surface; architect/ops when it touches structure/infra.
 CORE_GATES = ("cold-reviewer", "spec-guard", "vv-engineer", "system-tester")
 UX_TRIGGER = ("web/templates/", "web/static/", "templates/app/", "landing")
-ARCHITECT_TRIGGER = ("services/", "persistence/models.py")
+# docs/uml/ is the architect's own artifact surface (its charter verifies package
+# boundaries AND emits/verifies the Mermaid set) — a diagram-only diff must draw the
+# architect gate or a "D6/D13-style pass" card ships reviewed by no one (T-D2 gap).
+ARCHITECT_TRIGGER = ("services/", "persistence/models.py", "docs/uml/")
 # Specific tokens, not bare "docker"/"compose" — the latter also match docs/
 # dockerized-notes.md and decompose.py, drawing an unneeded ops gate (cold-reviewer note).
 OPS_TRIGGER = (
