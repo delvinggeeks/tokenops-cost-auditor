@@ -1,0 +1,73 @@
+%% payments-seq.mmd — Payments (Standard Checkout, both markets) sequence
+%% T-D2 (Issue #106). Drawn from web/routes_billing.py, api/routes_webhooks.py,
+%% services/payments/* AS IMPLEMENTED (Issues #74/#77/#79/#81 — the pivot
+%% from hosted Payment Links to real Standard Checkout).
+%% ---
+%% Laws drawn here:
+%%  - Dual market (R-PRICING-FINAL-2): Global = USD via Stripe, India = INR
+%%    via Razorpay. Every amount comes from services/payments/plans.py
+%%    (prices in Settings — config, never code, never dashboard-entered):
+%%    the price-integrity rail — what the provider bills cannot drift from
+%%    what the plans page displays.
+%%  - httpx only, no provider SDK (PLAN §0.2 PAYMENT-SDKS).
+%%  - Card data never touches us: Razorpay checkout.js modal / Stripe
+%%    hosted redirect collect it provider-side.
+%%  - FR-27 webhook rail, in order: HMAC signature -> 5-min timestamp
+%%    tolerance -> event-id dedup (append-only webhook_events; duplicates
+%%    get 200, never reprocess) -> grant.
+%%  - One completed payment = one audit credit (Q8) via payments/base
+%%    grant_payment; admin mark-paid + comp grants use the SAME table.
+%%  - Billing is owner-only (O-2 RBAC matrix, web/authz.py).
+
+sequenceDiagram
+    autonumber
+    actor U as Owner (browser)
+    participant BIL as web/routes_billing.py<br/>(/billing, owner-only — O-2)
+    participant PLN as payments/plans.py<br/>(THE price config)
+    participant RZP_M as payments/razorpay_orders.py<br/>+ razorpay_subscriptions.py
+    participant STR_M as payments/stripe_checkout.py<br/>+ stripe_subscriptions.py
+    participant RZP as Razorpay API
+    participant STR as Stripe API
+    participant WHK as api/routes_webhooks.py<br/>(/api/v1/webhooks — FR-27)
+    participant GRT as payments/base.py<br/>grant_payment
+    participant SUB as payments/subscriptions.py<br/>(lifecycle + dunning)
+    participant DB as persistence<br/>(Payment, WebhookEvent)
+
+    U->>BIL: GET /billing (plans, INR/USD by market)
+    BIL->>PLN: plan catalogue + entitlements
+
+    rect rgb(245, 245, 245)
+        Note over U,RZP: India / INR — Razorpay Standard Checkout
+        U->>BIL: POST /billing/razorpay/order (one-time audit)
+        BIL->>RZP_M: create order (amount from plans.py, in paise)
+        RZP_M->>RZP: POST /v1/orders (Basic auth key_id:key_secret)<br/>server-side FIRST — orderless payments auto-refund
+        RZP-->>BIL: order_id
+        BIL-->>U: checkout.js modal opens against order_id<br/>(card data stays with Razorpay)
+        U->>BIL: POST /billing/razorpay/verify<br/>{order_id, payment_id, signature} from the modal handler
+        BIL->>RZP_M: verify HMAC-SHA256("{order_id}|{payment_id}",<br/>key_secret) == signature
+        BIL->>DB: Payment recorded
+        Note over U,RZP: recurring Pro/Team: POST /billing/razorpay/subscription —<br/>plan created first from plans.py (POST /v1/plans), then<br/>POST /v1/subscriptions (ongoing total_count) — checkout.js opens<br/>against subscription_id — handler payload verified at<br/>/billing/razorpay/subscription/verify
+    end
+
+    rect rgb(245, 245, 245)
+        Note over U,STR: Global / USD — Stripe Checkout (hosted redirect)
+        U->>BIL: POST /billing/stripe/checkout (one-time)<br/>or /billing/stripe/subscription (recurring)
+        BIL->>STR_M: create Checkout Session (amount from plans.py, cents)
+        STR_M->>STR: POST /v1/checkout/sessions (form-encoded —<br/>secret or restricted key as Basic-auth username —<br/>subscription mode uses inline recurring price_data)
+        STR-->>BIL: session URL
+        BIL-->>U: 303 redirect to Stripe-hosted page
+        Note over U,STR: grant happens on the webhook, not the redirect —<br/>the return URL is UX only, never proof of payment
+    end
+
+    rect rgb(245, 245, 245)
+        Note over RZP,DB: FR-27 rail — both providers, same order of checks
+        RZP->>WHK: POST /api/v1/webhooks/razorpay (payment/subscription events)
+        STR->>WHK: POST /api/v1/webhooks/stripe (checkout.session.completed, ...)
+        WHK->>WHK: 1. HMAC signature  2. timestamp within 5 min
+        WHK->>DB: 3. event-id dedup (WebhookEvent append-only —<br/>duplicate -> 200, never reprocessed)
+        WHK->>GRT: 4. grant_payment — one payment = one audit credit (Q8)
+        GRT->>DB: Payment credit granted
+        WHK->>SUB: subscription events update lifecycle state
+    end
+
+    Note over SUB: dunning ladder (R-Q11/Q12): day 0 fail -> past_due + email,<br/>provider retries continue — day 7 -> read_only (dashboard visible,<br/>SCHEDULED audits pause, connections KEPT) — day 21 -> cancelled,<br/>revert to Free. Data lifecycle untouched — cancellation never<br/>deletes beyond normal purge rules (FR-21).

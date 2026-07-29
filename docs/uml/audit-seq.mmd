@@ -1,38 +1,47 @@
-%% audit-seq.mmd — Audit happy-path sequence diagram
-%% Generated at G4 sweep (covers D6+D7) from docs/02-HLD.md §3 (key data
-%% flow) as IMPLEMENTED in api/routes_upload.py + services/runner.py per
-%% .gates/d6-d7.diff. Architect gate duty per founder ruling R-Q1.
-%% D7-vs-D6 boundary: no new step introduced. D6 fixed the pipeline
-%% (queued -> processing -> done|failed, NFR-13 slot admission, JSON report).
-%% D7 added PDF rendering + the signed /r/ mail link INSIDE the existing
-%% "report" step of the D6 runner — not a new stage, per STATUS.md D6-D7
-%% paragraph ("Runner renders JSON+HTML+PDF, mails signed /r/ link").
+%% audit-seq.mmd — Audit happy-path sequence diagram (platform era)
+%% T-D2 refresh (Issue #106), supersedes the D6/D7 G4-sweep version. Drawn
+%% from api/routes_upload.py + services/runner.py AS IMPLEMENTED today.
+%% What changed since D6/D7:
+%%  - Auth is real (FR-17 magic-link session cookie); X-User-Email survives
+%%    only as a fail-closed dev/test shim, so the "pre-D8 stub" note is gone.
+%%  - The report step also writes tokenomics.json (+ FR-36 shapes block,
+%%    additive, failure never kills the audit) atomically via temp+rename.
+%%  - WP-PIPELINE-UI StageEvents (wall-clock per stage, counts-only detail)
+%%    are persisted alongside findings/aggregates.
+%%  - M-FLY-1 B1b: the L1 peer-benchmark block is attached to the report
+%%    when the sharing cohort is honest (n >= threshold); otherwise the key
+%%    never exists (zero-state law).
+%%  - S-5: after completion, audit.completed is dispatched to the
+%%    workspace's registered webhook endpoints — best-effort, FR-22-clean.
 
 sequenceDiagram
     autonumber
     actor U as Browser/CLI user
     participant API as api/routes_upload.py<br/>(/api/v1)
+    participant AUTH as web/auth.py<br/>(FR-17 session cookie)
     participant DB as persistence<br/>(repo.py + models.py)
     participant LOG as lifecycle/auditlog.py
     participant BG as FastAPI BackgroundTasks<br/>(ADR-5, no queue)
     participant R as services/runner.py<br/>AuditRunner
     participant ING as services/ingest
     participant PR as services/pricing
-    participant RU as services/rules (D1..D6)
+    participant RU as services/rules<br/>(9 detectors: d1..d6, d8..d10)
+    participant FLY as flywheel/benchmarks.py<br/>(L1, M-FLY-1)
     participant RM as services/report/model.py<br/>ReportModel.build()
-    participant JSON as report/render_json.py
-    participant PDF as report/render_pdf.py<br/>(weasyprint, ADR-4)
+    participant REN as report renderers<br/>(json / html / pdf) + tokenomics
     participant SGN as report/signer.py
     participant MAIL as services/mail
+    participant WH as services/webhooks<br/>WebhookDispatcher (S-5)
     participant WEB as web/routes_report.py
 
-    U->>API: POST /api/v1/audits (file, Idempotency-Key,<br/>X-User-Email pre-D8 stub)
+    U->>API: POST /api/v1/audits (file, Idempotency-Key)
+    API->>AUTH: resolve_session(cookie)<br/>(X-User-Email = dev/test shim only, fail-closed)
     API->>DB: get_or_create_user() / find_idempotent_audit()
     alt Idempotency-Key replay (FR-26)
         API-->>U: 200 {audit_id, replayed:true}
     else new audit
         API->>API: stream upload to disk, 200MB cap (FR-01)
-        API->>DB: Audit(status=queued)
+        API->>DB: Audit(status=queued, workspace_id — O-0)
         API->>LOG: audit.uploaded
         API-->>U: 201 {audit_id, replayed:false}
         API->>BG: add_task(runner.run, audit_id)
@@ -40,17 +49,24 @@ sequenceDiagram
         R->>DB: processing_count() -- NFR-13 admission slot wait
         R->>DB: Audit.status = processing
         R->>ING: detect_format + parse + normalize -> CallRecordFrame
-        R->>ING: validator.enforce() (FR-03 row errors, user-safe failures)
-        R->>PR: coster.add cost columns + reconcile() (NFR-07)
-        R->>RU: registry.run_all(frame) -> findings[]
-        R->>RM: ReportModel.build(priced, findings, unpriced, table)<br/>-- single money-math assembly point
-        R->>JSON: render_json(report) -> reports/{audit_id}.json
-        R->>PDF: render_pdf(report) -> reports/{audit_id}.pdf<br/>(shared HTML body with web view)
-        R->>SGN: sign_report_url(audit_id) -> 30-day /r/ token
-        R->>DB: persist findings + call_aggregates (FR-22 aggregates only)
-        R->>DB: Audit.status = done, report_ready_at
+        R->>ING: validator.enforce() (FR-03 <95% aborts, user-safe)
+        R->>PR: coster.apply + reconcile() (NFR-07)
+        R->>RU: registry.run_all(frame, ctx) -> findings[]
+        R->>RM: ReportModel.build(priced, findings, unpriced, table)<br/>-- single money-math assembly point (HLD C5)
+        R->>FLY: report_block(own_value=savings_pct)
+        alt sharing cohort honest (n >= flywheel_l1_min_customers)
+            FLY-->>R: {percentile, n} -> report.benchmark
+        else below threshold
+            FLY-->>R: None (key never exists -- zero-state law)
+        end
+        R->>REN: report.json + report.html + report.pdf
+        R->>REN: tokenomics.json (+ FR-36 shapes block, additive —<br/>classification failure logged, never fails the audit)<br/>atomic temp+rename
+        R->>DB: replace FindingRows + CallAggregates (FR-22 counts only)<br/>+ StageEvents (ingest/price/detect/report wall-clock)
+        R->>DB: Audit.status = done, savings_pct, equiv_spend (FR-30), ...
         R->>LOG: audit.completed
-        R->>MAIL: send report-ready mail with signed /r/ link
+        R->>SGN: sign_report_url(audit_id) -> 30-day /r/ token
+        R->>MAIL: report-ready mail with signed /r/ link
+        R->>WH: dispatch_audit_completed(workspace_id, counts/dollars only)<br/>best-effort: delivery failure never fails the audit
         Note over R,LOG: on failure at any stage: Audit.status = failed,<br/>audit_log event, user-safe error message
     end
 
@@ -58,9 +74,5 @@ sequenceDiagram
     API->>DB: session.get(Audit), queue_position() if queued
     API-->>U: {status, queue_position?, valid_pct?, error?}
 
-    U->>WEB: GET /r/{token}
-    WEB->>SGN: verify_report_url(token)
-    WEB-->>U: HTML report (shared _report_body partial)
-    U->>WEB: GET /r/{token}/pdf
-    WEB->>SGN: verify_report_url(token)
-    WEB-->>U: FileResponse (reports/{audit_id}.pdf)
+    U->>WEB: GET /r/{token} (verify) -> HTML report
+    U->>WEB: GET /r/{token}/pdf (verify) -> FileResponse

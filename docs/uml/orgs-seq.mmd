@@ -1,0 +1,64 @@
+%% orgs-seq.mmd — Workspaces, invites, RBAC (R-ORG O-0/O-1/O-2) sequence
+%% T-D2 (Issue #106). Drawn from web/routes_members.py, web/authz.py,
+%% persistence/models.py (workspace spine) AS IMPLEMENTED.
+%% ---
+%% Laws drawn here:
+%%  - O-0 tenancy root: every resource is owned by a Workspace; every user
+%%    belongs to at least one — their personal workspace-of-one (a DB-level
+%%    partial-unique invariant, not an app promise). Single-tenant is the
+%%    unchanged default; orgs are opt-in.
+%%  - O-2 RBAC matrix (web/authz.py, the single source of truth):
+%%      view reports/dashboard/runs   ALL roles
+%%      run audits                    all but viewer
+%%      manage sources + keys         owner, admin
+%%      manage members                owner, admin (admin never over owner)
+%%      billing / plan                owner only
+%%      delete/transfer workspace     owner only
+%%  - Roles gate OUR product actions only — never the customer's LLM
+%%    traffic (X-01/X-02). The audit ENGINE never imports authz and never
+%%    learns a workspace exists (tenant-blind law): tenancy lives at the
+%%    web/persistence boundary via repo.active_workspace_id().
+%%  - Ownership never moves by invite: assignable roles are admin/member/
+%%    viewer only; transfer is an explicit owner action out of O-2 scope.
+
+sequenceDiagram
+    autonumber
+    actor OWN as Owner/Admin (browser)
+    actor INV as Invitee (their inbox/browser)
+    participant MEM as web/routes_members.py<br/>(/settings/members, /invite/accept)
+    participant AZ as web/authz.py<br/>(O-2 role->permission matrix)
+    participant DB as persistence<br/>(Workspace, WorkspaceMember,<br/>WorkspaceInvite — repo.py)
+    participant MAIL as services/mail
+    participant ANY as any product router<br/>(dashboard, sources, billing, ...)
+    participant ENG as ENGINE CORE<br/>(rules/pricing — tenant-blind)
+
+    OWN->>MEM: GET /settings/members
+    MEM->>AZ: require manage-members (owner|admin)
+    MEM->>DB: members + pending invites for the workspace
+    MEM-->>OWN: member list, roles, invite form
+
+    OWN->>MEM: POST /settings/members/invite (email, role)
+    MEM->>AZ: role must be ASSIGNABLE (admin|member|viewer —<br/>never owner via invite)
+    MEM->>DB: WorkspaceInvite(workspace_id, email, role)
+    MEM->>MAIL: invite mail with accept link
+    Note over OWN,MEM: same permission gate on resend / cancel /<br/>role change / revoke — admin never acts over the owner
+
+    INV->>MEM: GET /invite/accept (from the mail)
+    MEM-->>INV: workspace + role shown, confirm
+    INV->>MEM: POST /invite/accept (session-authed — FR-17)
+    MEM->>DB: WorkspaceMember(workspace_id, user_id, role)<br/>one row per (workspace, user)
+    MEM-->>INV: joined — workspace now switchable
+
+    rect rgb(245, 245, 245)
+        Note over INV,ENG: every later request — tenancy resolved at the boundary
+        INV->>ANY: any product page/action
+        ANY->>DB: repo.active_workspace_id(user_id) — validated against<br/>LIVE memberships, falls back to personal workspace<br/>(a stale/foreign value can never scope a read)
+        ANY->>AZ: matrix check for the ACTION (e.g. viewer may view,<br/>not run — billing owner-only)
+        alt permitted
+            ANY->>DB: query scoped to workspace_id
+            ANY-->>INV: page/action result
+        else forbidden
+            ANY-->>INV: 403 — honest denial, no silent hiding
+        end
+        Note over ANY,ENG: the engine runs identically for every tenant:<br/>rules/ + pricing/ receive frames and rate tables,<br/>never a workspace, role, or token (R-ORG blind law)
+    end

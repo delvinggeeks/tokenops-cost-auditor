@@ -1,0 +1,82 @@
+%% flywheel-seq.mmd — the data flywheel (verified savings + learning rungs)
+%% T-D2 (Issue #106). Drawn from services/dashboard/savings.py,
+%% services/statements/build.py, services/flywheel/{frame,cohort,
+%% benchmarks,export}.py, services/runner.py AS IMPLEMENTED.
+%% ---
+%% The flywheel, one turn: an audit finds waste -> the developer applies a
+%% fix -> the next audit RE-MEASURES the same detector+route -> the delta
+%% becomes a VERIFIED dollar (R-Q9) -> the owner's monthly statement leads
+%% with it -> aggregate, consented, pseudonymous rungs (benchmarks ->
+%% factory export) make every next audit more persuasive. Owners buy
+%% verified savings; devs get fix-first solutions (R-MODEL-FACTORY);
+%% models follow customers, never precede them.
+%% ---
+%% Laws drawn here:
+%%  - R-Q9 verified formula (savings.py, golden-pinned MONEY MATH):
+%%    Σ max(0, baseline - recomputed) over Applied findings; counted only
+%%    after >=1 post-application audit covering >=7 days; capped at the
+%%    original estimate; R1 ONE CREDIT PER ROUTE (earliest applied
+%%    feedback). Customer-reported figures NEVER merge into verified.
+%%  - Statement headline carries VERIFIED figures only; every figure names
+%%    its audit (provenance); FR-30 equiv-spend line when billing could be
+%%    non-metered.
+%%  - Honesty/zero-state law: no rung renders below its data threshold —
+%%    absence, never a countdown. Thresholds live in config (cohort.py).
+%%  - Consent: benchmark_sharing (opt-OUT) excludes an account from every
+%%    rung at the source; cohort_opt_in (explicit opt-IN, default false)
+%%    gates the ONLY path data takes OUT of the product (FR-35 export).
+%%  - FR-22 + pseudonymity: frames/envelopes carry counts, enums, opaque
+%%    ids only; customer refs are keyed one-way HMACs under DISTINCT HKDF
+%%    contexts (frame user-ref vs export workspace-ref can never be joined).
+
+sequenceDiagram
+    autonumber
+    actor DEVU as Developer (customer)
+    actor OWNER as Owner (signs the bill)
+    participant AUD as audit pipeline<br/>(runner / source_audit)
+    participant FB as report/dashboard UI<br/>(FindingFeedback: Applied)
+    participant SAV as dashboard/savings.py<br/>compute() — R-Q9 MONEY MATH
+    participant STMT as statements/build.py<br/>(monthly owner artifact)
+    participant MAIL as services/mail
+    participant BEN as flywheel/benchmarks.py<br/>(L1 percentiles)
+    participant COH as flywheel/cohort.py<br/>(rung ledger)
+    participant FRM as flywheel/frame.py<br/>(training-frame contract)
+    participant EXP as flywheel/export.py<br/>(FR-35 envelope)
+    participant FAC as model factory repo<br/>(R-MODEL-FACTORY, separate)
+
+    AUD->>AUD: audit N: detector fires on a route<br/>-> finding {fix_text, monthly_impact_usd = baseline}
+    AUD-->>DEVU: fix-first finding in report/dashboard
+    DEVU->>FB: applies the fix in THEIR code,<br/>marks finding Applied (feedback row)
+
+    DEVU->>AUD: audit N+1 (scheduled pull or upload)<br/>re-measures the SAME detector+route
+    AUD->>SAV: recomputed impact now available
+    SAV->>SAV: verified = max(0, baseline - recomputed)<br/>only after >=7 observed days post-application —<br/>capped at original estimate —<br/>R1: route credited ONCE (earliest applied feedback)
+
+    rect rgb(245, 245, 245)
+        Note over OWNER,MAIL: the owner turn — monthly statement
+        STMT->>SAV: compute(period=month) — the ONE formula,<br/>never a second copy
+        STMT->>STMT: headline = VERIFIED only — customer-reported +<br/>identified in their own labelled sections —<br/>provenance stamps — FR-30 equiv-spend line if needed
+        STMT->>MAIL: one page, plain text, one CTA —<br/>forwardable to someone who never logs in
+        MAIL-->>OWNER: monthly savings statement
+    end
+
+    rect rgb(245, 245, 245)
+        Note over BEN,FAC: the aggregate turn — consented, thresholded, pseudonymous
+        AUD->>BEN: report_block(own savings_pct) during audit N+1
+        BEN->>COH: is L1 live? (n >= flywheel_l1_min_customers,<br/>benchmark_sharing honored at the source)
+        alt cohort honest
+            BEN-->>AUD: {percentile, n} — nearest-rank vs latest DONE<br/>audit per included customer — "based on N companies" —<br/>never another company's value or the distribution
+        else below threshold
+            BEN-->>AUD: absent — key never exists (zero-state law)
+        end
+        FRM->>FRM: deterministic extract, FR-22 enum/id columns only —<br/>benchmark_sharing=False never enters —<br/>savings_realized_usd = label-quality passthrough,<br/>never merged into verified (R-Q9)
+        EXP->>COH: opted-in cohort (cohort_opt_in, default false)<br/>with audited usage >= k-anonymity floor?
+        alt floor met
+            EXP-->>FAC: CohortExportEnvelope v1 — aggregate features,<br/>opaque workspace_ref (HKDF context distinct from<br/>frame's user-ref), detector fire rates dN
+        else below floor
+            EXP-->>FAC: honest refusal naming n and the floor — never a file
+        end
+        Note over FRM,FAC: services/rules + services/pricing never learn the<br/>word "cohort" (tenant-blind law, R-ORG)
+    end
+
+    Note over DEVU,BEN: the wheel closes: verified dollars sell the next fix,<br/>benchmarks contextualize the next report, the factory's models<br/>(evals-only until docs/12 thresholds) follow shipped customer value

@@ -1,0 +1,64 @@
+%% read-api-seq.mmd — Read API (S-6, R-SDK-PLATFORM) sequence diagram
+%% T-D2 (Issue #106). Drawn from web/routes_api_read.py, web/api_auth.py,
+%% web/api_scopes.py, web/routes_developer.py, web/routes_oauth.py,
+%% mcp/server.py AS IMPLEMENTED.
+%% ---
+%% The platform's READ half. Two bearer credentials, one resolver:
+%%   rt_… personal API token (ApiToken) — minted in Developer Settings.
+%%   at_… OAuth access token (OAuthAccessToken) — issued to a third-party
+%%        app the user authorized via /oauth.
+%% Both hash to a keyed HMAC fingerprint; both carry a scope subset of the
+%% closed set {read:audits, read:findings}; NEITHER can write (writing
+%% usage stays the write-only ingest-key ik_ path). Tenancy lives at this
+%% web boundary: every query is scoped to the principal's ACTIVE WORKSPACE
+%% (O-1, R-ORG) — the engine never learns a token or workspace exists.
+%% X-01/X-02: scopes govern reading OUR product data, never customer
+%% traffic. FR-22: responses carry counts/metadata/dollars only.
+
+sequenceDiagram
+    autonumber
+    actor DEV as Developer<br/>(curl / SDK code)
+    actor AGENT as MCP client<br/>(agent host)
+    participant MCP as mcp/server.py<br/>(stdio, no DB, no engine)
+    participant RAPI as web/routes_api_read.py<br/>(/api/v1, read-only)
+    participant AUTH as web/api_auth.py<br/>(bearer resolver)
+    participant SCP as web/api_scopes.py<br/>{read:audits, read:findings}
+    participant DEVS as routes_developer.py<br/>(/settings/developer)
+    participant OAUTH as routes_oauth.py<br/>(/oauth authorize + token)
+    participant DB as persistence<br/>(repo + models)
+
+    rect rgb(245, 245, 245)
+        Note over DEV,DB: credential issuance — two doors, same authority set
+        DEV->>DEVS: mint personal token (session-authed UI)
+        DEVS->>DB: ApiToken(fingerprint=HMAC, scopes)
+        DEVS-->>DEV: rt_… shown ONCE, never stored plaintext
+        DEV->>OAUTH: GET /oauth/authorize (third-party app flow)
+        OAUTH-->>DEV: consent screen (scope sentences from api_scopes)
+        DEV->>OAUTH: approve -> code -> POST /oauth/token
+        OAUTH->>DB: OAuthAccessToken(fingerprint=HMAC, granted scopes)
+        OAUTH-->>DEV: at_…
+    end
+
+    DEV->>RAPI: GET /api/v1/audits[/{id}|/{id}/findings|/{id}/breakdown]<br/>Authorization: Bearer rt_…|at_…
+    RAPI->>AUTH: resolve bearer
+    AUTH->>DB: lookup by credential_fingerprint<br/>(keyed HMAC — token itself never stored)
+    alt unknown / revoked / expired credential
+        AUTH-->>DEV: 401 under the NFR-14 /api/* envelope
+    else resolved
+        AUTH-->>RAPI: ReadPrincipal(user_id, scopes) — never the token
+        RAPI->>SCP: require scope for this endpoint<br/>(read:audits | read:findings)
+        alt scope missing
+            RAPI-->>DEV: 403 (NFR-14 envelope)
+        else scope granted
+            RAPI->>DB: active_workspace_id(principal.user_id)<br/>-> EVERY query workspace-scoped (O-1, R-ORG)
+            DB-->>RAPI: audits / findings / breakdown rows
+            RAPI-->>DEV: JSON — counts, status, dollars (FR-22:<br/>no prompt/completion text exists to return)
+        end
+    end
+
+    Note over AGENT,RAPI: MCP path — same door, nothing duplicated
+    AGENT->>MCP: tool call (JSON-RPC over stdio)
+    MCP->>RAPI: plain HTTP GET, Bearer rt_ from<br/>TOKENOPS_COST_AUDITOR_TOKEN env
+    Note over MCP: never touches DB or engine — tenancy + scope<br/>enforcement happen exactly once, server-side
+    RAPI-->>MCP: same JSON as any API caller
+    MCP-->>AGENT: tool result (read-only — X-01/X-02 safe)
