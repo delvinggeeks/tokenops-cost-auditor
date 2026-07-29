@@ -129,6 +129,10 @@ roundings drift from the total's — Σ line amounts == verified_usd EXACTLY
 (residual cent lands on the largest line), each line within $0.01 of its
 raw credit, and the headline equals the hand-derived round(Σ unrounded)
 — the formula unchanged.
+T-VL-10 (zero-credit honesty): applied + re-measured at the same impact
+= $0.00 credit — stays in counts/lines (formula untouched) but never
+renders as a confident "$0.00 — <saving claim>" under VERIFIED; the real
+line still renders and Σ rendered == headline.
 
 ## 4. CI pipeline (GitHub Actions)
 
