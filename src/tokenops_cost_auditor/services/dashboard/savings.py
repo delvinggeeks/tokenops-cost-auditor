@@ -203,9 +203,7 @@ def compute(
         # the headline cannot move; the line records the SAME number with its
         # provenance (FR-37). Rounding to display cents happens once, in
         # _reconciled_lines, so Σ lines always equals the rounded headline.
-        raw_lines.append(
-            (credit, finding.finding_id, finding.detector, finding.audit_id, check.id)
-        )
+        raw_lines.append((credit, finding.finding_id, finding.detector, finding.audit_id, check.id))
 
     # R3: identified excludes anything already settled as verified or pending.
     in_period = (
