@@ -104,10 +104,39 @@ def select_gates(changed: list[str]) -> list[str]:
     return gates
 
 
+# Generated fixture files are named in the prompt but never inlined: their bytes are
+# machine-written low-signal bulk (5,400-char repeated-prefix lines) that burns the
+# agents' diff budget, and inlining the T-F4 pair was what first pushed the prompt past
+# the kernel's 128 KiB per-argv-element cap (MAX_ARG_STRLEN) — every agent died with
+# E2BIG/OSError before invocation. Agents that need them read the checkout (TE-3).
+GENERATED_DIFF_EXCLUDES = (
+    ":!tests/fixtures/*.jsonl",
+    ":!tests/fixtures/*.csv",
+    ":!tests/fixtures/*.jsonl.gz",
+)
+
+
 def _diff(base: str) -> str:
     out = subprocess.run(
-        ["git", "diff", f"{base}...HEAD"], capture_output=True, text=True, check=False
+        ["git", "diff", f"{base}...HEAD", "--", ".", *GENERATED_DIFF_EXCLUDES],
+        capture_output=True,
+        text=True,
+        check=False,
     )
+    excluded = subprocess.run(
+        ["git", "diff", "--name-only", f"{base}...HEAD", "--", "tests/fixtures/"],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if excluded:
+        return (
+            out.stdout
+            + "\n----- generated fixture files changed but NOT inlined "
+            + "(read them in the checkout if the review needs their content) -----\n"
+            + excluded
+            + "\n"
+        )
     return out.stdout
 
 
@@ -157,11 +186,14 @@ def _invoke_cli(agent: str, prompt: str) -> str:
     traceback and no comment (cold-reviewer finding). `--model` is forced from the charter
     so the round stays on Sonnet (TE-5) regardless of the runner's default tier."""
     try:
+        # The prompt travels on STDIN, never as an argv element: a prompt carrying a
+        # large diff blows the kernel's per-argument cap (MAX_ARG_STRLEN, 128 KiB) and
+        # execve fails with E2BIG before the CLI even starts — which is how the whole
+        # T-F4 round died five-for-five, twice. stdin has no such cap.
         proc = subprocess.run(
             [
                 "claude",
                 "-p",
-                prompt,
                 "--model",
                 agent_model(agent),
                 "--allowedTools",
@@ -169,6 +201,7 @@ def _invoke_cli(agent: str, prompt: str) -> str:
                 "--output-format",
                 "text",
             ],
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=AGENT_TIMEOUT_S,

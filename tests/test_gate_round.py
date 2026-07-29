@@ -92,7 +92,7 @@ class TestLiveInvocationIsCrashSafe:
         captured: dict[str, object] = {}
 
         def capture(cmd, **kw):
-            captured["prompt"] = cmd[2]  # ["claude", "-p", <prompt>, ...]
+            captured["prompt"] = kw.get("input")  # prompt travels on STDIN, not argv
             captured["timeout"] = kw.get("timeout")
 
             class _P:
@@ -106,6 +106,30 @@ class TestLiveInvocationIsCrashSafe:
         assert "do NOT re-run the whole suite" in prompt
         assert "changed/added test files" in prompt
         assert captured["timeout"] == gr.AGENT_TIMEOUT_S == 1200
+
+    def test_prompt_travels_on_stdin_never_argv(self, monkeypatch) -> None:
+        """T-F4 round outage: a prompt embedding a large diff as an argv element
+        blows the kernel's 128 KiB per-argument cap (MAX_ARG_STRLEN) and execve
+        dies with E2BIG/OSError before the CLI starts — five NO-VERDICTs, twice.
+        The prompt must ride stdin (uncapped); no argv element may scale with
+        the diff."""
+        captured: dict[str, object] = {}
+
+        def capture(cmd, **kw):
+            captured["argv"] = cmd
+            captured["input"] = kw.get("input")
+
+            class _P:
+                stdout, stderr, returncode = "1. fine\n\nVERDICT: PASS", "", 0
+
+            return _P()
+
+        monkeypatch.setattr(gr.subprocess, "run", capture)
+        huge_diff = "x" * (300_000)  # well past MAX_ARG_STRLEN if it ever hit argv
+        gr._run_agent_live("cold-reviewer", huge_diff, "main")
+        argv = captured["argv"]
+        assert all(len(str(a)) < 4096 for a in argv), "an argv element scales with the diff"
+        assert captured["input"] is not None and huge_diff[:1000] in captured["input"]
 
 
 class TestLooksTruncated:
@@ -278,3 +302,32 @@ class TestRunRoundDryRun:
         results = gr.run_round("origin/main", dry_run=True)
         assert not gr.is_blocking(results)
         assert [r.agent for r in results] == list(gr.CORE_GATES)
+
+
+class TestGeneratedFixturesNotInlined:
+    """The T-F4 fixture pair (5,400-char repeated-prefix lines) is what first
+    pushed the prompt past MAX_ARG_STRLEN — generated fixture bytes are named
+    in the diff, never inlined (agents read the checkout, TE-3)."""
+
+    def test_diff_excludes_fixture_globs_and_names_them(self, monkeypatch) -> None:
+        calls: list[list[str]] = []
+
+        def capture(cmd, **kw):
+            calls.append(cmd)
+
+            class _P:
+                stderr, returncode = "", 0
+                stdout = (
+                    "tests/fixtures/fr37_before.jsonl\ntests/fixtures/fr37_after.jsonl"
+                    if "--name-only" in cmd
+                    else "diff --git a/x b/x\n"
+                )
+
+            return _P()
+
+        monkeypatch.setattr(gr.subprocess, "run", capture)
+        text = gr._diff("main")
+        content_diff = calls[0]
+        assert all(exclude in content_diff for exclude in gr.GENERATED_DIFF_EXCLUDES)
+        assert "NOT inlined" in text
+        assert "tests/fixtures/fr37_before.jsonl" in text
