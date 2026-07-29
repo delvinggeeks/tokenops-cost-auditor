@@ -4229,3 +4229,56 @@ detectors could not run" when six now cannot; _waste_trend's "all six"), both fi
 count-free, plus export.py's own "NINE detectors" docstring. docs-site six-detector-era
 copy (quickstart/reference/getting-started) stays deliberately untouched — T-D4 owns
 docs-site; named in the tripwire docstring so it is parked, not dropped.
+
+
+2026-07-29 (T-F4 · FR-37 realized-delta attribution, Issue #102 — build session): SHIPPED
+(PR pending). Built to the SHRUNK scope recorded on the QUEUE line (spine 3fc0c8c): the
+credit mechanic pre-existed, so the slice is pure attribution. savings.compute() now
+emits SavingsSummary.verified_lines — one frozen VerifiedLine per credited route,
+captured at the exact point the credit enters the headline (from_audit = R1
+earliest-applied baseline audit, to_audit = the ≥7-day qualifying audit); `detector`
+added to the LLD §9.4 shape (amended in-slice with rationale) because the ux gate's
+jargon-law note required the statement to lead each line with DETECTOR_COPY plain copy,
+which needs the key. statements/build.py renders the attributed lines in VERIFIED —
+fixed explainer, plain-copy lead (off-registry detector falls back to raw id, visibly),
+ref + BOTH short audit-id stamps in a parenthetical, shared _stamp() keeping line stamps
+and the provenance list matchable by eye; zero-verified body untouched. Mockup
+statement-verified-lines.html gated BEFORE wiring: PASS-WITH-NOTES ×3 (raw finding-id
+jargon, AA contrast at 12.5px, delight-N/A unstated), all closed and re-gated to a clean
+PASS. New fr37_before/after.jsonl fixture pair (gen_fixtures, zero RNG disturbance —
+existing fixtures byte-identical): the only ≥7-observed-day fixtures in the tree, same
+claude-sonnet-5 route, 32 uncached D2 repeats then cache-fixed traffic, so a real
+pipeline re-audit genuinely qualifies (waste packs span 3 days and never can). FR-37
+acceptance journey (test_fr37_journey.py): upload → D2 finding → applied via the real
+feedback route → re-audit → statement issued via the real send route shows the
+attributed line (HTML-escape gotcha: the plain copy's apostrophe renders as &#39; —
+asserted on the unescaped body) + the honest applied-but-unproven pending state.
+Unit tests T-VL-01..07 authored on Sonnet per TE-5 (emission fields, Σ==headline, R1
+provenance, period discipline; rendering golden, zero-state, amount==headline). TOTALS
+DID NOT MOVE: every pre-existing golden in test_verified_savings.py/test_statements.py
+passed unchanged before any new test was added. docs: 04 FR-37 row split out (residual
+row now FR-34 only), 05 T-VL block, LLD §9.4 amendment, QUEUE T-D1+T-F4 retired.
+Pre-emptive note closure: the #101 round-6 cold-reviewer flagged (against code not in
+that diff — extrapolated from the QUEUE line, but mathematically real for THIS slice)
+that per-line cent rounding can drift a cent from the end-rounded headline on a
+multi-line month. Closed here where the code lives via _reconciled_lines: headline
+formula byte-identical (round of the unrounded sum, totals-must-not-move), lines
+rounded individually with any residual cent landed on the largest line so Σ lines ==
+headline EXACTLY; the reviewer's own suggested fix (accumulate rounded credits) was
+REJECTED because it moves the headline in the same edge cases. Pinned by T-VL-09
+(pathological sub-cent credits, hand-derived).
+PARALLEL-IMPLEMENTATION RECONCILIATION: filing Issue #102 with loop:ready activated the
+loop, and fb7d84b (loop session) shipped a leaner FR-37 directly to main at 07:43 —
+4-field VerifiedLine (no detector), bare-ref statement copy ("finding D2-001", never
+ux-gated — the jargon-law violation this slice's mockup gate had already ruled out),
+per-line rounding WITH the Σ-drift defect, a seeded statement journey (the
+false-confidence class from the 2026-07-27 founder ruling), and no docs/05/QUEUE
+updates; it closed #102. This branch reconciles ON TOP of it (its commit stays in
+history): my savings.py/build.py versions supersede (detector field, plain-copy lead,
+_reconciled_lines, explainer sentence); their duplicate TestVerifiedLines class removed
+(shadowed mine at collection) with its one unique case ADOPTED
+(test_period_scoping_lands_the_line_in_the_proof_month, credited in its docstring);
+their three statement tests removed as superseded — two pinned the un-gated bare-ref
+copy, the third was the seeded journey replaced by the real-pipeline
+test_fr37_journey.py. Nothing dropped silently; the union survives. Process lesson →
+memory: never label an issue loop:ready while building it in-session.

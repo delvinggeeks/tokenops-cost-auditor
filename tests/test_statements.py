@@ -27,6 +27,7 @@ from tokenops_cost_auditor.persistence.models import (
     User,
 )
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
+from tokenops_cost_auditor.services.rules.detector_copy import DETECTOR_COPY
 from tokenops_cost_auditor.services.statements import build as statements
 
 JUNE = datetime(2026, 6, 1, tzinfo=UTC)
@@ -186,29 +187,6 @@ class TestStatementLabelling:
         # the three figures are never summed anywhere
         assert "1,125" not in doc.body and "$1,125.00" not in doc.body
 
-    def test_fr37_verified_line_names_finding_and_both_audits(self, session: Session) -> None:
-        """FR-37 (T-F4): every verified dollar names its evidence — the
-        finding it came from, the audit that raised it, and the audit that
-        proved it (R-Q9 provenance)."""
-        user = seed_month(session)
-        doc = statements.build(session, user, 2026, 6)
-        audits = session.execute(select(Audit).order_by(Audit.created_at)).scalars().all()
-        a1, a2 = audits[0], audits[1]
-        assert "finding D2-001" in doc.body
-        assert f"{a1.id[:4]}…{a1.id[-3:]}" in doc.body
-        assert f"{a2.id[:4]}…{a2.id[-3:]}" in doc.body
-        assert "$750.00 — finding D2-001" in doc.body
-
-    def test_zero_verified_month_has_no_line_list(self, session: Session) -> None:
-        """Honest empty state: no verified findings -> no line scaffolding,
-        the existing 'none yet' copy is unchanged."""
-        user = User(email="quiet2@example.com")
-        session.add(user)
-        session.commit()
-        doc = statements.build(session, user, 2026, 6)
-        assert "VERIFIED SAVINGS THIS MONTH: none yet" in doc.body
-        assert "— finding" not in doc.body
-
     def test_provenance_stamps_every_audit(self, session: Session) -> None:
         user = seed_month(session)
         doc = statements.build(session, user, 2026, 6)
@@ -314,84 +292,6 @@ class TestStatementPages:
             rows = session.execute(select(Statement)).scalars().all()
             assert len(rows) == 1 and rows[0].sent_at is not None
         assert client.get("/statements/1999-01", headers=HDR).status_code == 404
-
-    def test_fr37_journey_apply_reaudit_statement_shows_attributed_line(self, app: FastAPI) -> None:
-        """FR-37 acceptance journey (T-F4): a finding is raised, applied, and
-        a later >=7-day audit proves it — the owner's next statement, opened
-        through the real route, names the finding and both audit ids."""
-        client = TestClient(app)
-        client.get("/statements", headers=HDR)  # provisions the owner
-        now = datetime.now(UTC)
-        with app.state.session_factory() as session:
-            user = session.execute(select(User).where(User.email == EMAIL)).scalar_one()
-            a1 = Audit(
-                user_id=user.id,
-                status="done",
-                created_at=now - timedelta(days=10),
-                report_ready_at=now - timedelta(days=10),
-                observed_days=30,
-                row_count=1000,
-                total_spend_usd=900.0,
-            )
-            session.add(a1)
-            session.flush()
-            session.add(
-                FindingRow(
-                    audit_id=a1.id,
-                    finding_id="D2-001",
-                    detector="d2_missing_cache",
-                    route="m1",
-                    severity="high",
-                    monthly_impact_usd=1000.0,
-                    confidence="estimated",
-                    fix_text="x",
-                    evidence_sample=[],
-                )
-            )
-            session.add(
-                FindingFeedback(
-                    audit_id=a1.id,
-                    finding_id="D2-001",
-                    verdict="applied",
-                    actor=EMAIL,
-                    ts=now - timedelta(days=10) + timedelta(hours=1),
-                )
-            )
-            a2 = Audit(
-                user_id=user.id,
-                status="done",
-                created_at=now,
-                report_ready_at=now,
-                observed_days=30,
-                row_count=1000,
-                total_spend_usd=250.0,
-            )
-            session.add(a2)
-            session.flush()
-            session.add(
-                FindingRow(
-                    audit_id=a2.id,
-                    finding_id="D2-009",
-                    detector="d2_missing_cache",
-                    route="m1",
-                    severity="med",
-                    monthly_impact_usd=250.0,
-                    confidence="estimated",
-                    fix_text="x",
-                    evidence_sample=[],
-                )
-            )
-            session.commit()
-            a1_id, a2_id = a1.id, a2.id
-        period = f"{now.year:04d}-{now.month:02d}"
-        sent = client.post(f"/statements/{period}/send", headers=HDR, follow_redirects=False)
-        assert sent.status_code == 303
-        detail = client.get(f"/statements/{period}", headers=HDR)
-        assert detail.status_code == 200
-        assert "$750.00" in detail.text
-        assert "finding D2-001" in detail.text
-        assert f"{a1_id[:4]}…{a1_id[-3:]}" in detail.text
-        assert f"{a2_id[:4]}…{a2_id[-3:]}" in detail.text
 
     def test_cross_user_statements_are_not_readable(self, app: FastAPI) -> None:
         client = TestClient(app)
@@ -617,3 +517,40 @@ class TestStmtGatingEmail:
         catalogue = plan_catalogue.catalogue(settings)  # type: ignore[arg-type]
         assert "emailed every month" in catalogue["pro"].blurb
         assert "emailed when there's something to show" in catalogue["free"].blurb
+
+
+class TestVerifiedLineRendering:
+    """T-VL-05..07 (docs/05 T-VL block, FR-37) — the attributed verified-line
+    body copy, rendered from savings.compute()'s verified_lines."""
+
+    def test_05_seed_month_golden_attributed_line(self, session: Session) -> None:
+        """T-VL-05: FR-37 attributed line — plain-language detector copy,
+        ref, and BOTH provenance stamps (raised-by, proved-by) appear
+        verbatim, matching the T-STMT-01 golden (750.00, D2-001, a1 -> a2)."""
+        user = seed_month(session)
+        doc = statements.build(session, user, 2026, 6)
+        a1, a2 = session.execute(select(Audit).order_by(Audit.created_at)).scalars().all()
+        plain = DETECTOR_COPY["d2_missing_cache"]["plain"]
+        assert f"  $750.00 — {plain}" in doc.body
+        assert (
+            f"(ref D2-001, raised in audit {a1.id[:4]}…{a1.id[-3:]}, "
+            f"proved by audit {a2.id[:4]}…{a2.id[-3:]})"
+        ) in doc.body
+
+    def test_06_zero_verified_has_no_attribution_section(self, session: Session) -> None:
+        """T-VL-06: no verified lines -> no attribution intro or per-line
+        provenance, only the standing zero-state copy."""
+        user = User(email="quiet@example.com")
+        session.add(user)
+        session.commit()
+        doc = statements.build(session, user, 2026, 6)
+        assert "VERIFIED SAVINGS THIS MONTH: none yet" in doc.body
+        assert "raised in audit" not in doc.body
+        assert "Each saving below" not in doc.body
+
+    def test_07_line_amount_matches_headline_when_singular(self, session: Session) -> None:
+        """T-VL-07: with exactly one verified line, its amount and the
+        headline are the same figure, both spelled out in the body."""
+        user = seed_month(session)
+        doc = statements.build(session, user, 2026, 6)
+        assert doc.body.count("$750.00") >= 2

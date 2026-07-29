@@ -190,8 +190,13 @@ inference). Ships beside tokenomics.py; import-guard covered.
 ### 9.4 RealizedDelta (FR-37)
 Join key: (workspace_id, detector, route/model scope) — L0 verdict row ×
 drift delta between the audit that raised the finding and the next completed
-audit. Emitted as `VerifiedLine(amount_usd, finding_ref, from_audit, to_audit)`
+audit. Emitted as
+`VerifiedLine(amount_usd, finding_ref, detector, from_audit, to_audit)`
 consumed ONLY by statements/build.py (R-Q9: provenance = both audit ids).
+[T-F4 2026-07-29: `detector` added to the shape — the statement leads each
+line with the DETECTOR_COPY plain one-liner instead of a bare ref (ux jargon
+law, mockup gate note u.1); amounts are attribution-only, Σ lines == the
+verified headline.]
 
 ### 9.5 Showback CSV (FR-38)
 Columns: `dimension,name,calls,monthly_usd,share,pct_attributed_caveat` —

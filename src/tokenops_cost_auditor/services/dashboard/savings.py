@@ -38,7 +38,7 @@ for detectors that name no model.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -59,19 +59,17 @@ RouteKey = tuple[str, str]
 
 @dataclass(frozen=True)
 class VerifiedLine:
-    """One proven finding behind a verified dollar (LLD §9.4, FR-37).
-
-    R-Q9 provenance travels with the amount: `from_audit` is the audit that
-    RAISED the finding (the baseline in force when the fix was applied — R1
-    means this is always the earliest applied feedback for the route);
-    `to_audit` is the >=7-day audit that proved it. Consumed ONLY by
-    statements/build.py.
-    """
+    """One credited route, attributed (LLD §9.4, FR-37): the amount plus its
+    full provenance — the finding, the audit that raised it, the audit that
+    proved it. Consumed ONLY by statements/build.py (R-Q9). `detector` rides
+    along so the statement can lead with the plain-language finding copy
+    (DETECTOR_COPY) instead of a bare ref — the ux jargon law."""
 
     amount_usd: float
     finding_ref: str
-    from_audit: str
-    to_audit: str
+    detector: str
+    from_audit: str  # the audit that raised the finding (earliest applied baseline, R1)
+    to_audit: str  # the >=7-day audit that proved the saving
 
 
 @dataclass(frozen=True)
@@ -81,7 +79,7 @@ class SavingsSummary:
     customer_reported_usd: float  # self-reported, shown separately, never in the headline
     verified_count: int  # routes whose saving a later audit confirmed
     pending_count: int  # applied, but not yet confirmable
-    verified_lines: list[VerifiedLine] = field(default_factory=list)  # one per verified_count
+    verified_lines: tuple[VerifiedLine, ...] = ()  # one per credited route; Σ == verified_usd
 
 
 def _route_key(detector: str, route: str | None, finding_id: str) -> RouteKey:
@@ -154,8 +152,8 @@ def compute(
     verified = 0.0
     verified_count = 0
     pending_count = 0
+    raw_lines: list[tuple[float, str, str, str, str]] = []
     settled: set[RouteKey] = set()
-    verified_lines: list[VerifiedLine] = []
 
     for key, (finding, fb) in applied.items():
         settled.add(key)
@@ -198,16 +196,15 @@ def compute(
         ):
             continue  # proved in a different month — not this statement's line
         baseline = float(finding.monthly_impact_usd)
-        amount = min(max(0.0, baseline - recomputed), baseline)
-        verified += amount
+        credit = min(max(0.0, baseline - recomputed), baseline)
+        verified += credit
         verified_count += 1
-        verified_lines.append(
-            VerifiedLine(
-                amount_usd=round(amount, 2),
-                finding_ref=finding.finding_id,
-                from_audit=finding.audit_id,
-                to_audit=check.id,
-            )
+        # Attribution only — `credit` enters `verified` exactly as before, so
+        # the headline cannot move; the line records the SAME number with its
+        # provenance (FR-37). Rounding to display cents happens once, in
+        # _reconciled_lines, so Σ lines always equals the rounded headline.
+        raw_lines.append(
+            (credit, finding.finding_id, finding.detector, finding.audit_id, check.id)
         )
 
     # R3: identified excludes anything already settled as verified or pending.
@@ -223,7 +220,7 @@ def compute(
             customer_reported_usd=0.0,
             verified_count=verified_count,
             pending_count=pending_count,
-            verified_lines=verified_lines,
+            verified_lines=_reconciled_lines(raw_lines, round(verified, 2)),
         )
     latest = in_period[-1]
     identified = 0.0
@@ -249,7 +246,39 @@ def compute(
         customer_reported_usd=round(customer_reported, 2),
         verified_count=verified_count,
         pending_count=pending_count,
-        verified_lines=verified_lines,
+        verified_lines=_reconciled_lines(raw_lines, round(verified, 2)),
+    )
+
+
+def _reconciled_lines(
+    raw: list[tuple[float, str, str, str, str]], total_rounded: float
+) -> tuple[VerifiedLine, ...]:
+    """Display rounding that always reconciles. The headline is
+    round(Σ unrounded credits, 2) — the R-Q9 formula, untouched — and each
+    line is its own credit rounded to cents; when float rounding leaves a
+    residual cent, it lands on the LARGEST line so Σ lines == the headline
+    EXACTLY. No line is invented and no line moves by more than the
+    residual; a statement whose attributed lines visibly failed to add up
+    to its own headline would be a money-math bug (T-D1 round-6
+    cold-review note, closed here where the code lives). NOT the
+    accumulate-rounded-credits fix the note suggested — that would change
+    the headline itself in the same edge cases, and totals must not move."""
+    if not raw:
+        return ()
+    rounded = [round(credit, 2) for credit, *_ in raw]
+    residual = round(total_rounded - sum(rounded), 2)
+    if residual:
+        largest = max(range(len(raw)), key=lambda i: raw[i][0])
+        rounded[largest] = round(rounded[largest] + residual, 2)
+    return tuple(
+        VerifiedLine(
+            amount_usd=amount,
+            finding_ref=ref,
+            detector=detector,
+            from_audit=from_audit,
+            to_audit=to_audit,
+        )
+        for amount, (_, ref, detector, from_audit, to_audit) in zip(rounded, raw, strict=True)
     )
 
 

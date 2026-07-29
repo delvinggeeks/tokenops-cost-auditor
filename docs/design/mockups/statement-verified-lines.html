@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-F4 — Statement VERIFIED attributed lines (mockup, FR-37)</title>
+<style>
+  /* Approximation of the app kit for the T-F4 ux gate (three-second rule +
+     R-DESIGN checklist). Not pixel-parity — the wired surface is the SAME
+     plain-text statement body, rendered by the existing
+     app/statement_detail.html pre.snippet and the statement email. */
+  :root{
+    --ink:#1a1c22; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa; --card:#fff;
+    --accent:#3b5bdb; --verified:#0f9d58; --verified-bg:#e9f7ef;
+    --chip:#eef1f6; --s1:6px; --s2:12px; --s3:18px; --s4:28px; --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#e7e9ee;--muted:#9aa1ad;--line:#2a2e37;--bg:#12141a;--card:#191c23;
+      --accent:#7d93f0;--chip:#22262f;--verified-bg:#12291c;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:var(--s4) var(--s3);}
+  h1{font-size:24px;margin:0 0 var(--s1)}
+  .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--accent);font-weight:700;margin:var(--s4) 0 var(--s2);
+    border-top:2px dashed var(--line);padding-top:var(--s3)}
+  .sub{color:var(--muted);margin:0 0 var(--s3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:var(--s3);margin-bottom:var(--s3)}
+  .snippet{background:var(--chip);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    overflow-x:auto;white-space:pre-wrap;color:var(--ink)}
+  /* Highlight ink darkened past the kit --verified for WCAG AA at 12.5px on
+     the wash background (ux-gate note u.2): 7.2:1 light, 9.1:1 dark. */
+  .snippet .new{background:var(--verified-bg);color:#0a5c36;display:inline}
+  @media (prefers-color-scheme:dark){ .snippet .new{color:#86e3ae} }
+  .note{border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:8px;padding:10px 14px;background:var(--card);font-size:13.5px;
+    color:var(--muted);margin:var(--s2) 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Savings Statement — VERIFIED attributed lines (T-F4, FR-37)</h1>
+  <p class="sub">The statement is the owner artifact: one page a month, plain text,
+  read by whoever signs off on the bill and never logs in. Today the VERIFIED
+  section shows only the aggregate; R-Q9 says every figure names its evidence.
+  This slice adds one line per proven finding — amount, finding ref, and BOTH
+  audit ids (raised / proved). Highlighted spans are the NEW copy; everything
+  else is the shipped body, unchanged.</p>
+
+  <div class="demo-label">State A — two fixes verified (June statement)</div>
+  <div class="card">
+<pre class="snippet">AI SPEND STATEMENT — June 2026
+
+VERIFIED SAVINGS THIS MONTH: $950.00
+
+This is money you are no longer spending. 2 fix(es)
+were applied and then re-measured against your own logs by a later
+audit covering at least 7 days. It is not a projection.
+
+<span class="new">Each saving below names the fix it came from and its evidence: the
+audit that raised the finding, and the later audit that proved it.
+
+  $750.00 — You're paying full price for prompts you send again and again
+            (ref D2-009, raised in audit a1b2…c3d, proved by audit e5f6…a7b)
+  $200.00 — You're using a top-tier model for work a cheaper one handles
+            (ref D1-001, raised in audit a1b2…c3d, proved by audit e5f6…a7b)</span>
+
+WHAT YOU SPENT
+
+  Run-rate at the last audit: $600.00 per month
+  Audits this month: 2
+
+STILL ON THE TABLE (ESTIMATES, NOT SAVINGS)
+
+  $300.00 per month identified and not yet applied.
+  These are estimates from our detectors. They become verified figures
+  only after you apply a fix and a later audit confirms it.
+
+WHERE THESE NUMBERS COME FROM
+
+  Audit a1b2…c3d — 2026-06-01 09:00 UTC, 1,000 calls over 30 day(s)
+  Audit e5f6…a7b — 2026-06-14 09:00 UTC, 1,000 calls over 30 day(s)
+
+Open your dashboard to see the detail behind every figure.</pre>
+  </div>
+  <div class="note">The line amounts sum to the headline exactly — same formula,
+  now attributed (existing money-math goldens are the tripwire). Each entry
+  leads with the detector's established plain one-liner
+  (<code>DETECTOR_COPY[…]["plain"]</code> — the same words the app and report
+  use), with the ref and both audit ids in a parenthetical second line: the ids
+  use the statement's existing short stamp (<code>a1b2…c3d</code>) and resolve
+  in the WHERE THESE NUMBERS COME FROM list at the bottom, so the reader can
+  match every line to its audit without leaving the page. No new figure is
+  introduced. No "one designed delight" is claimed for this surface — a
+  plain-text email/pre artifact has no medium for it (R-DESIGN-ADDENDUM item 1
+  noted, not skipped).</div>
+
+  <div class="demo-label">State B — nothing verified yet (honest zero, UNCHANGED)</div>
+  <div class="card">
+<pre class="snippet">AI SPEND STATEMENT — July 2026
+
+VERIFIED SAVINGS THIS MONTH: none yet
+
+Nothing was confirmed this month. A saving is only called verified
+once a later audit re-measures the same route and proves it — we do
+not count a fix the moment it ships.</pre>
+  </div>
+  <div class="note">Zero state: no attributed-line scaffolding, no empty list,
+  no "0 lines" — the shipped copy already tells the truth and is not touched.</div>
+</div>
+</body>
+</html>
