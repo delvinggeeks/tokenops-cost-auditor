@@ -123,8 +123,12 @@ def _diff(base: str) -> str:
         text=True,
         check=False,
     )
+    # SAME globs as the content exclusion (derived, single source) — querying the
+    # whole fixtures dir listed real .py sources (gen_fixtures.py) as "not inlined"
+    # while the content diff above showed them in full (G-T-F4 round-4 c.1).
+    excluded_globs = [spec[2:] for spec in GENERATED_DIFF_EXCLUDES]
     excluded = subprocess.run(
-        ["git", "diff", "--name-only", f"{base}...HEAD", "--", "tests/fixtures/"],
+        ["git", "diff", "--name-only", f"{base}...HEAD", "--", *excluded_globs],
         capture_output=True,
         text=True,
         check=False,

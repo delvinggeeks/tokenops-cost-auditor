@@ -331,3 +331,10 @@ class TestGeneratedFixturesNotInlined:
         assert all(exclude in content_diff for exclude in gr.GENERATED_DIFF_EXCLUDES)
         assert "NOT inlined" in text
         assert "tests/fixtures/fr37_before.jsonl" in text
+        # The footer query must use the SAME globs as the content exclusion —
+        # naming the whole fixtures dir listed inlined .py sources as "not
+        # inlined" (G-T-F4 round-4 c.1: self-contradictory prompt).
+        footer_query = calls[1]
+        assert "tests/fixtures/" not in footer_query
+        for spec in gr.GENERATED_DIFF_EXCLUDES:
+            assert spec[2:] in footer_query

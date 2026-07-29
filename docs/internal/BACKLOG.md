@@ -335,3 +335,7 @@ follow-ups from that build and the depth-engine detour:
 - CODE-TOUR STOPS FOR DASHBOARD/ALERTS/COPILOT/COLLECTOR (T-D1 #99 kept to the five
   registered areas; trigger: the first TEACH session that reaches one of those modules,
   or the next CODE-TOUR touch).
+- STATEMENT LINE RESIDUAL DISTRIBUTION (vv-engineer G-T-F4 r4 awareness note, no fix
+  requested): _reconciled_lines lands the whole rounding residual on the largest line —
+  bounded and invisible at today's 1-3 lines/statement; distribute cent-by-cent largest-
+  first if per-statement verified-line counts grow.

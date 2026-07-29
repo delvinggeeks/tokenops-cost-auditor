@@ -4304,4 +4304,12 @@ totals/counts and emitted lines untouched; dropping $0 entries cannot move Σ re
 off the headline) + T-VL-10 pinning the mixed real+zero case, fixes_applied count
 semantics deliberately left as pre-existing; st.1 (system-tester) live stdin smoke for
 `claude -p` outside the mocked tests — already run in-session before the push (recorded
-in the harness-fix commit), noted here as the closure.
+in the harness-fix commit), noted here as the closure. Round 4 (on the closures): all
+cleared, PR #104 auto-merged 09:27 UTC, Issue #102's DoD now genuinely complete. Two
+round-4 notes triaged same-day in follow-up (fix/issue-102-gate-notes): c.1
+(cold-reviewer, real) the harness footer's name-only query spanned the whole fixtures
+dir while the content exclusion stripped only the data globs, so gen_fixtures.py showed
+BOTH inlined and "not inlined" in the same prompt — footer query now derived from
+GENERATED_DIFF_EXCLUDES (single source, pinned in the harness test); vv.6 (explicitly
+no-fix-requested) residual-on-largest-line at ≥3 lines → one BACKLOG line with its
+trigger, per R-IMPROVISE no-silent-drop.
