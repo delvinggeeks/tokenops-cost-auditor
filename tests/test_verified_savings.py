@@ -423,9 +423,7 @@ class TestVerifiedLines:
         assert line.from_audit == audits[0].id  # the earliest applied feedback's audit
         assert line.to_audit == a3.id
 
-    def test_04_no_qualifying_audit_and_period_excludes_proof_month(
-        self, session: Session
-    ) -> None:
+    def test_04_no_qualifying_audit_and_period_excludes_proof_month(self, session: Session) -> None:
         """T-VL-04: pending-only compute() emits no lines; and scoping to a
         period before the proof lands must not leak the line into it either."""
         uid = seed(session)
