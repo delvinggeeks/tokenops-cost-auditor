@@ -4334,4 +4334,9 @@ consent + threshold alts). Validation: all six render green under mermaid-cli 11
 bare `%%` comment lines break the flowchart parser, `;` in sequence message text acts
 as a statement separator (replaced with em-dashes). No docs/04 row: T-D2 implements
 no FR; diagrams are HLD/LLD conformance artifacts (architect charter). Gate round in
-CI on the PR per LE-4.
+CI on the PR per LE-4. R-IMPROVISE in-slice: the first round ran WITHOUT the architect
+gate — ARCHITECT_TRIGGER only matched services/ + persistence/models.py, so a
+diagram-only diff (the architect's own artifact surface) drew no architect, and this
+card's "D6/D13-style pass" DoD would have shipped reviewed by no one. Fixed in the
+same PR: docs/uml/ added to ARCHITECT_TRIGGER with test
+(test_architect_added_for_uml_diagrams); the re-run round must show all five gates.

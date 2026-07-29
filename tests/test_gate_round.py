@@ -194,6 +194,12 @@ class TestSelectGates:
         gates = gr.select_gates(["src/tokenops_cost_auditor/services/rules/d10.py"])
         assert "architect" in gates
 
+    def test_architect_added_for_uml_diagrams(self) -> None:
+        # docs/uml/ is the architect's own artifact surface: a diagram-only diff
+        # must draw the architect gate (T-D2 — the round ran without it).
+        gates = gr.select_gates(["docs/uml/components.mmd"])
+        assert "architect" in gates
+
     def test_ops_added_for_workflows(self) -> None:
         gates = gr.select_gates([".github/workflows/gate-round.yml"])
         assert "ops-engineer" in gates
