@@ -108,6 +108,27 @@ FR-22 marker-absence (workspace names / route names / rationales never
 serialize); schema self-audit clean (no str-typed feature can ship); admin
 route below-floor 404 naming the floor, live 200 with period-named
 attachment, wrong/absent token 404.
+[amendment 2026-07-29, T-F4 (FR-37):]
+T-VL-01..04 (tests/test_verified_savings.py, VerifiedLine emission): per
+credited route one line (amount_usd, finding_ref, detector, from_audit,
+to_audit) with every field pinned; Σ line amounts == verified_usd exactly
+on a multi-line golden; R1 provenance — same route applied across audits
+credits once, from_audit = the EARLIEST applied feedback's audit; no
+qualifying audit or a period excluding the proof month ⇒ no line, ever.
+T-VL-05..07 (tests/test_statements.py, statement body): the golden line
+rendered under VERIFIED with the DETECTOR_COPY plain lead + ref + BOTH
+short audit-id stamps; zero-verified body unchanged (no explainer, no
+scaffolding); the single-line amount equals the headline figure.
+T-VL-08 (tests/test_fr37_journey.py, FR-37 acceptance journey): upload →
+D2 finding → applied through the real feedback route → ≥7-day cache-fixed
+re-audit (fr37 fixture pair) → statement issued through the real send
+route shows the attributed line with both audit ids; applied-but-unproven
+stays an honest pending statement with no line scaffolding.
+T-VL-09 (rounding reconciliation): sub-cent credits whose individual
+roundings drift from the total's — Σ line amounts == verified_usd EXACTLY
+(residual cent lands on the largest line), each line within $0.01 of its
+raw credit, and the headline equals the hand-derived round(Σ unrounded)
+— the formula unchanged.
 
 ## 4. CI pipeline (GitHub Actions)
 

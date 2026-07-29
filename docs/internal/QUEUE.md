@@ -73,12 +73,14 @@ floor), owner-gated Settings consent card (ux mockup gate PASS-WITH-NOTES, all 3
 closed in-slice), `GET /admin/cohort-export.json` + admin state row, docs/04 FR-35 row
 split out of the design span. Next per NOW order: T-D1; T-F4's scope-check may run.
 
-- **T-D1 · spine/docs | WP-COMPREHEND** internal-docs refresh — Issue #99: every
-  CODE-TOUR stop verified against the tree (nine detectors d1–d6/d8–d10, agent-verified
-  pricing per R-AUTO-PRICING, Standard-Checkout payments, 31 tables / chain 001→024) +
-  Part-2 stops for platform API / orgs / flywheel / statements; `docs/README.md`
-  stale-register line cleared; docs-drift tripwire test ·
-  trace: `docs/internal/CODE-TOUR.md`→`tests/test_docs_internal.py`_
+_T-D1 SHIPPED 2026-07-29 — Issue #99 / PR #101: CODE-TOUR verified stop-by-stop (nine
+detectors, agent-verified pricing, Standard Checkout, 31 tables / chain 001→024) + four
+Part-2 platform-era stops; README stale-register line cleared; docs-drift tripwire test
+hardened across four gate rounds (no prefix allowlist, bare-filename + path::symbol()
+citations fully resolved; round-4 system-tester FAIL closed by killing counted-detector
+claims as a CLASS — nine customer surfaces made count-free, landing waste list completed
+to d8/d9/d10, scan widened to templates/js/yaml). docs-site six-detector-era copy →
+T-D4. Next per NOW order: T-F4 (shrunk scope) → T-D2._
 
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
@@ -112,19 +114,16 @@ gets its first shipped surfaces. Slices:
 - _(T-F2 → NOW 2026-07-28, Issue #95 — scope-check run at filing: existing flywheel
   modules verified non-covering.)_
 - _(T-F3 → NOW 2026-07-28, Issue #89.)_
-- **T-F4 · FR-37** realized-delta per finding — Applied-verdict findings (flywheel L0) get a
-  next-audit drift delta attributed into the Savings Statement VERIFIED section (R-Q9
-  provenance) · SCOPE-CHECK RUN 2026-07-29 (T-D1 session): the realized-delta MECHANIC is
-  already shipped — `services/dashboard/savings.py::compute()` credits each Applied finding
-  min(max(0, baseline − recomputed), baseline) at the next ≥7-day audit, honest
-  pending/identified when unmeasurable, and `statements/build.py` inherits the figure
-  (goldens in test_verified_savings.py / test_statements.py). The slice SHRINKS (does not
-  collapse) to the LLD §9.4 residue: emit per-finding
-  `VerifiedLine(amount_usd, finding_ref, from_audit, to_audit)` from the existing compute,
-  render the attributed lines in the statement VERIFIED section (R-Q9: provenance = both
-  audit ids — today only the aggregate + a period-wide audit list ship), + the FR-37
-  acceptance journey test (upload→finding→apply→re-audit→statement). Totals must not move:
-  same formula, now attributed — existing money-math goldens are the tripwire.
+- _(T-F4 SHIPPED 2026-07-29 — Issue #102, shrunk scope per the T-D1-session scope-check:
+  the credit mechanic pre-existed in `savings.py::compute()`; the slice delivered the LLD
+  §9.4 attribution residue — `VerifiedLine(amount_usd, finding_ref, detector, from_audit,
+  to_audit)` emission (detector added for the plain-copy lead, ux jargon law), the
+  statement VERIFIED attributed lines with both audit-id stamps, the fr37 ≥7-day fixture
+  pair, and the FR-37 acceptance journey. Totals verified unmoved — the pre-existing
+  money-math goldens passed unchanged. Shipped as a RECONCILIATION on top of fb7d84b, a
+  parallel loop-session implementation that reached main first with the 4-field line,
+  un-gated bare-ref copy and a seeded journey — superseded test-by-test with the union
+  kept; full record in STATUS.md.)_
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 

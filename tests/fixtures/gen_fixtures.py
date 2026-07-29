@@ -459,6 +459,64 @@ def _clean_optimal_lines() -> list[str]:
     return lines
 
 
+def _fr37_pair_lines(cached: bool, month: int) -> list[str]:
+    """FR-37 journey pair (T-F4): the SAME route (claude-sonnet-5) across
+    EIGHT distinct UTC days — the only fixtures spanning >= MIN_VERIFY_DAYS,
+    so a real pipeline re-audit can QUALIFY as verification (the waste packs
+    span 3 days by design and never can).
+
+    before (cached=False, June): 4 identical-prefix uncached calls/day x 8
+    days = 32 repeats >= d2_cache_min_repeats(25), prompt 2000 >= 1024 →
+    exactly D2 fires (output 200 > d1_short_completion_t keeps D1 silent;
+    200s spacing keeps D4/D6 silent; max_tokens set keeps D5 silent).
+    after (cached=True, July): identical traffic WITH cache reads → D2 is
+    silent, the route still shows traffic → R2 credits the applied fix.
+    """
+    lines: list[str] = []
+    for day in range(8):
+        base = datetime(2026, month, 1 + day, 9, 0, 0, tzinfo=UTC)
+        for i in range(4):
+            n = day * 4 + i
+            ts = base + timedelta(seconds=200 * i)
+            usage = (
+                {
+                    "input_tokens": 200,
+                    "cache_creation_input_tokens": 0,
+                    "cache_read_input_tokens": 1800,
+                    "output_tokens": 200,
+                }
+                if cached
+                else {
+                    "input_tokens": 2000,
+                    "cache_creation_input_tokens": 0,
+                    "cache_read_input_tokens": 0,
+                    "output_tokens": 200,
+                }
+            )
+            lines.append(
+                json.dumps(
+                    {
+                        "request_id": f"fr37-{n:03d}",
+                        "ts": ts.isoformat(),
+                        "endpoint": "/v1/messages",
+                        "tag": "summarizer",
+                        "request": {
+                            "max_tokens": 256,
+                            "system": D2_PREFIX_TEXT,
+                            "messages": [{"role": "user", "content": f"vary-{n}"}],
+                        },
+                        "response": {
+                            "id": f"msg_fr37_{n:03d}",
+                            "type": "message",
+                            "model": "claude-sonnet-5",
+                            "usage": usage,
+                        },
+                    }
+                )
+            )
+    return lines
+
+
 def main(outdir: Path) -> None:
     rng = random.Random(SEED)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -483,6 +541,12 @@ def main(outdir: Path) -> None:
         "\n".join(line for line in waste if '"chat.completion"' in line) + "\n"
     )
     (outdir / "clean_optimal.jsonl").write_text("\n".join(_clean_optimal_lines()) + "\n")
+    (outdir / "fr37_before.jsonl").write_text(
+        "\n".join(_fr37_pair_lines(cached=False, month=6)) + "\n"
+    )
+    (outdir / "fr37_after.jsonl").write_text(
+        "\n".join(_fr37_pair_lines(cached=True, month=7)) + "\n"
+    )
     print(f"fixtures written to {outdir}")
 
 

@@ -28,8 +28,15 @@ from tokenops_cost_auditor.persistence.repo import active_workspace_id, workspac
 from tokenops_cost_auditor.services.dashboard.savings import compute
 from tokenops_cost_auditor.services.payments import plans, subscriptions
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
+from tokenops_cost_auditor.services.rules.detector_copy import DETECTOR_COPY
 
 MONTH_DAYS = 30.0
+
+
+def _stamp(audit_id: str) -> str:
+    """The statement's short audit-id stamp — one format for the attributed
+    lines AND the provenance list, so a reader can match them by eye."""
+    return f"{audit_id[:4]}…{audit_id[-3:]}"
 
 
 @dataclass(frozen=True)
@@ -144,14 +151,28 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
             f"This is money you are no longer spending. {summary.verified_count} fix(es)",
             "were applied and then re-measured against your own logs by a later",
             "audit covering at least 7 days. It is not a projection.",
-            "",
         ]
-        for vl in summary.verified_lines:
-            lines.append(
-                f"  ${vl.amount_usd:,.2f} — finding {vl.finding_ref}, raised in audit "
-                f"{vl.from_audit[:4]}…{vl.from_audit[-3:]}, confirmed by audit "
-                f"{vl.to_audit[:4]}…{vl.to_audit[-3:]}"
-            )
+        # FR-37 attributed lines (R-Q9: every figure names its evidence —
+        # BOTH audit ids). Each entry leads with the detector's plain
+        # one-liner (DETECTOR_COPY — the same words the app and report use;
+        # ux jargon law), the ref and provenance in a parenthetical second
+        # line. An off-registry detector falls back to its raw id — visible,
+        # never silently dropped.
+        if summary.verified_lines:
+            lines += [
+                "",
+                "Each saving below names the fix it came from and its evidence: the",
+                "audit that raised the finding, and the later audit that proved it.",
+                "",
+            ]
+            for vl in summary.verified_lines:
+                plain = DETECTOR_COPY.get(vl.detector, {}).get("plain", vl.detector)
+                lines += [
+                    f"  ${vl.amount_usd:,.2f} — {plain}",
+                    f"            (ref {vl.finding_ref}, "
+                    f"raised in audit {_stamp(vl.from_audit)}, "
+                    f"proved by audit {_stamp(vl.to_audit)})",
+                ]
     else:
         lines += [
             "VERIFIED SAVINGS THIS MONTH: none yet",
@@ -210,7 +231,7 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
         for a in audits:
             when = a.report_ready_at or a.created_at
             lines.append(
-                f"  Audit {a.id[:4]}…{a.id[-3:]} — {when:%Y-%m-%d %H:%M} UTC, "
+                f"  Audit {_stamp(a.id)} — {when:%Y-%m-%d %H:%M} UTC, "
                 f"{a.row_count or 0:,} calls over {a.observed_days or 0} day(s)"
             )
     else:
