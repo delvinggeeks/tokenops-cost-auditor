@@ -260,7 +260,7 @@ below-floor exports by naming n and the floor rather than blurring. The
 flywheel reads the engine's OUTPUTS only — it never imports the engine
 (R-F4, pinned by test).
 - Serves: FR-34..FR-38 span (FR-35 shipped), docs/12 intent law, FR-22.
-- Read first: `extract()` in `frame.py`, then `build()` in `export.py`.
+- Read first: `frame.py::extract()`, then `export.py::build()`.
 - Proof: `tests/test_flywheel.py`, `tests/test_cohort_export.py` (pinned
   envelope golden, below-floor refusal, pseudonym-space disjointness).
 - Terms: **HKDF** derives purpose-bound keys from one secret, so frame and
@@ -281,8 +281,8 @@ the statement from that summary with provenance stamps for every audit;
 the archive and `scripts/monthly_statements.py` is the cron entry.
 - Serves: R-Q9 (verified-only headline), FR-30 (equiv-spend line), FR-37
   residue tracked in QUEUE (per-finding provenance lines).
-- Read first: `compute()` in `savings.py` — the one formula; then
-  `build()` in `statements/build.py`.
+- Read first: `savings.py::compute()` — the one formula; then
+  `statements/build.py::build()`.
 - Proof: `tests/test_verified_savings.py` (goldens, derivation in the NOTES
   sheet), `tests/test_statements.py` (arithmetic, labelling, frozen-once-sent).
 
