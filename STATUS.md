@@ -4200,3 +4200,15 @@ coverage gate green (services 96.4%, money files 100%). No money-math change, no
 migration, no docs/04 row (spine/docs card, T-D3 class). Gate round: CI on the PR; no ux
 gate (internal docs, no customer surface). Next per NOW order: T-F4 (shrunk scope above)
 → T-D2.
+
+2026-07-29 (T-D1 gate round, PR #101): first run BLOCKED on a harness artifact —
+cold-reviewer's response truncated twice, recorded NO-VERDICT; re-run came back green in
+one pass (spec-guard/vv-engineer/system-tester PASS, cold-reviewer PASS-WITH-NOTES ×1).
+The note, closed on the branch pre-merge: the tripwire's PATH_PREFIX_RE allowlist
+silently excluded module-relative citations (web/…, api/…, services/…, persistence/…) —
+exactly the drift class the test promises to catch. Fix inverts the approach: NO
+allowlist — every backticked slash token is a path citation (product routes `/x` and
+URLs excluded), resolved against four bases (repo root, package root, services/,
+persistence/ stop contexts), `::symbol()` suffixes stripped; a moved file must now fail
+at every base. The first widened run itself caught `/developer` being counted as a path
+— the exclusion rule is evidence-driven, not guessed.

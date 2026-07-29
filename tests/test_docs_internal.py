@@ -16,7 +16,6 @@ CODE_TOUR = REPO / "docs/internal/CODE-TOUR.md"
 SRC = REPO / "src/tokenops_cost_auditor"
 
 PATH_TOKEN_RE = re.compile(r"`([^`]+)`")
-PATH_PREFIX_RE = re.compile(r"^(src|tests|docs|scripts|sdk|data)/")
 SYMBOL_CALL_RE = re.compile(r"`([A-Za-z_][\w.]*)\(\)`")
 DETECTOR_COUNT_RE = re.compile(r"the (\w+) detectors")
 SIX_DETECTOR_RE = re.compile(r"six[- ]detector", re.IGNORECASE)
@@ -32,9 +31,38 @@ DETECTOR_COUNT_WORDS = {
 }
 
 
+# The tour cites paths at three depths: repo-relative (src/..., docs/...),
+# package-relative (web/..., api/...), and stop-context-relative inside the
+# services/persistence stops (payments/base.py, migrations/). A citation
+# counts as existing if ANY base resolves it; a moved file fails at every
+# base. No prefix allowlist — an allowlist silently exempts whatever citation
+# form it forgot (the V-T-D1 cold-review note).
+PATH_BASES = (
+    "",
+    "src/tokenops_cost_auditor",
+    "src/tokenops_cost_auditor/services",
+    "src/tokenops_cost_auditor/persistence",
+)
+
+
 def _cited_repo_paths(text: str) -> list[str]:
     tokens = PATH_TOKEN_RE.findall(text)
-    return [t for t in tokens if PATH_PREFIX_RE.match(t) or t == "docker-compose.yml"]
+    return [
+        t
+        for t in tokens
+        if t == "docker-compose.yml"
+        or (
+            "/" in t
+            and " " not in t
+            and not t.startswith("http")
+            and not t.startswith("/")  # `/developer` etc. are product ROUTES, not repo paths
+        )
+    ]
+
+
+def _resolves(token: str) -> bool:
+    rel = token.split("::")[0].rstrip("/")
+    return any((REPO / base / rel).exists() for base in PATH_BASES)
 
 
 def _cited_symbol_names(text: str) -> list[str]:
@@ -44,11 +72,7 @@ def _cited_symbol_names(text: str) -> list[str]:
 class TestCodeTourDrift:
     def test_every_cited_repo_path_exists(self) -> None:
         text = CODE_TOUR.read_text(encoding="utf-8")
-        missing = []
-        for token in _cited_repo_paths(text):
-            rel = token[:-1] if token.endswith("/") else token
-            if not (REPO / rel).exists():
-                missing.append(token)
+        missing = [t for t in _cited_repo_paths(text) if not _resolves(t)]
         assert not missing, f"CODE-TOUR.md cites repo paths that do not exist: {missing}"
 
     def test_every_cited_symbol_resolves(self) -> None:
