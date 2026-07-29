@@ -210,10 +210,12 @@
         </div>
       </div>
 
-      {# what it finds: the six detectors, named plainly — the product's
-         substance, not adjectives #}
+      {# what it finds: the detectors, named plainly — the product's
+         substance, not adjectives. COUNT-FREE heading: a hard-coded count
+         goes stale every time a detector ships (T-D1 system-tester FAIL —
+         this list said six while nine shipped). #}
       <div class="finds" data-reveal>
-        <h3 class="finds-h">Six kinds of waste it prices, every audit</h3>
+        <h3 class="finds-h">The kinds of waste it prices, every audit</h3>
         <ul class="finds-grid">
           <li><strong>Missing prompt caching</strong><span>The same prefix paid for again and again.</span></li>
           <li><strong>Retry storms</strong><span>Near-identical calls in bursts — one answer, billed repeatedly.</span></li>
@@ -221,6 +223,9 @@
           <li><strong>Prompt bloat</strong><span>Routes sending far more context than their answers use.</span></li>
           <li><strong>Unbounded output caps</strong><span>max_tokens set to the moon; latency and reservations pay for it.</span></li>
           <li><strong>Chatty agent loops</strong><span>Many tiny calls re-sending shared context where one would do.</span></li>
+          <li><strong>Spend concentration</strong><span>One route quietly eating most of your bill.</span></li>
+          <li><strong>Ineffective caching</strong><span>Prompt caching switched on but costing more than it saves.</span></li>
+          <li><strong>Spend anomalies</strong><span>A day's spend spiking far above your normal.</span></li>
         </ul>
       </div>
     </div>
@@ -316,7 +321,7 @@
         <tbody>
           <tr><th scope="row">FinOps platforms</th><td>Unify all cloud + AI spend in one dashboard</td><td>A tagging program and an enterprise contract, before the first number</td></tr>
           <tr><th scope="row">Consultancy audits</th><td>A team manually reviews your bills</td><td>Weeks of engagement for a one-time, point-in-time report</td></tr>
-          <tr><th scope="row">Model routers</th><td>Pick a cheaper model per request</td><td>Solves one of the six kinds of waste</td></tr>
+          <tr><th scope="row">Model routers</th><td>Pick a cheaper model per request</td><td>Solves one kind of waste; the audit prices them all</td></tr>
           <tr><th scope="row">Gateways &amp; proxies</th><td>Sit inside your request path</td><td>A new dependency in production</td></tr>
           <tr><th scope="row">Observability</th><td>Traces and dashboards built for latency and errors</td><td>Cost is a side view, not what it was built to answer</td></tr>
           <tr class="compare-us"><th scope="row">TokenOps</th><td>Self-serve, zero-integration — audits the logs you already have</td><td>Nothing in your path — read-only, deletable, evidence-cited answers this afternoon</td></tr>
@@ -350,7 +355,7 @@
         </div>
         <div class="connect-card">
           <span class="cc-name">Anything else — upload</span>
-          <p>Export a usage file and get the same six-detector audit. Zero keys,
+          <p>Export a usage file and get the same full-depth audit. Zero keys,
             nothing to provision.</p>
         </div>
         <div class="connect-card connect-card-alt">

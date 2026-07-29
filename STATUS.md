@@ -4211,4 +4211,21 @@ allowlist — every backticked slash token is a path citation (product routes `/
 URLs excluded), resolved against four bases (repo root, package root, services/,
 persistence/ stop contexts), `::symbol()` suffixes stripped; a moved file must now fail
 at every base. The first widened run itself caught `/developer` being counted as a path
-— the exclusion rule is evidence-driven, not guessed.
+— the exclusion rule is evidence-driven, not guessed. Rounds 2–3 (same law, same day):
+bare-filename citations (`subscriptions.py`) now resolved by package rglob, URL guard
+widened to any `://` scheme, and `path::symbol()` citations split BEFORE the filter so
+both halves verify (six tour citations previously had neither half checked). Round 4:
+cold-reviewer finally clean, but system-tester FAIL — and rightly: the count-free
+tripwire scanned only *.py, while findings.html's live empty state, landing.html,
+_first_run, _savings, connect_wizard, tour.js and help_registry.yaml all still told
+customers "six detectors" at nine — false confidence, the exact class T-D1 exists to
+kill. Closure (TE-10, main thread): every customer surface made COUNT-FREE ("full-depth
+audit" preserving the upload-vs-connected depth contrast; findings empty state "none of
+our detectors"); the landing waste list gained the three missing kinds (d8/d9/d10 in
+their DETECTOR_COPY plain voice) under a count-free heading; the tripwire now scans
+*.py/*.html/*.js/*.yaml/yml for ANY spelled count beside "detector" — its first widened
+run immediately caught two surfaces the gate had NOT cited (explore.html claiming "three
+detectors could not run" when six now cannot; _waste_trend's "all six"), both fixed
+count-free, plus export.py's own "NINE detectors" docstring. docs-site six-detector-era
+copy (quickstart/reference/getting-started) stays deliberately untouched — T-D4 owns
+docs-site; named in the tripwire docstring so it is parked, not dropped.

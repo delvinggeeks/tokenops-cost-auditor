@@ -5,8 +5,8 @@
   {{ widget_head("i-trend-down", "waste_share", help) }}
   {% if w.empty %}
     <div class="empty">
-      <p>Needs one audit. On connected sources we run three detectors; on uploaded
-        request logs, all six.</p>
+      <p>Needs one audit. Connected sources get the lighter aggregate check;
+        uploaded request logs get every detector.</p>
       <a class="btn btn-quiet" href="/guide/how-it-works">What each detector finds</a>
     </div>
   {% else %}
