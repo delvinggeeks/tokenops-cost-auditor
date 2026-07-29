@@ -4282,3 +4282,26 @@ their three statement tests removed as superseded — two pinned the un-gated ba
 copy, the third was the seeded journey replaced by the real-pipeline
 test_fr37_journey.py. Nothing dropped silently; the union survives. Process lesson →
 memory: never label an issue loop:ready while building it in-session.
+
+2026-07-29 (T-F4 gate round, PR #104 + LE-4 harness outage): round 1 fell to a real CI
+lint miss (ruff FORMAT check — the local pre-push ran `ruff check` only; both files
+formatted, style commit) and rounds 1–2 both returned five instant [harness] OSErrors —
+diagnosed from the runner log timing (all five within 1ms, twice, on fresh runners =
+deterministic, pre-invocation): gate_round.py passed the whole prompt, embedding up to
+200K chars of diff, as ONE `claude -p` argv element; the fr37 fixture pair (~350KB of
+5,400-char repeated-prefix lines) pushed it past the kernel's 128 KiB MAX_ARG_STRLEN, so
+execve died E2BIG before the CLI started. #101 never tripped it — its diffs were small;
+the first fixture-carrying PR found the cap. Class-killed in scripts/gate_round.py on
+the same branch: prompt on STDIN (uncapped; regression test pins that no argv element
+scales with a 300KB diff) + generated fixture files excluded from the inlined diff and
+NAMED for checkout reading instead (TE-2 budget; TE-3). Live stdin smoke + --dry-run
+harness green; round 3 validates the fix by running on it. Round 3 (first REAL review
+of the diff): all gates cleared — spec-guard/vv-engineer/architect PASS, two
+PASS-WITH-NOTES triaged same-day on the branch: c.1 (cold-reviewer, real) a zero-dollar
+credit — applied, re-measured, nothing saved — would render as a confident "$0.00 —
+<saving claim>" under VERIFIED; closed with a RENDER-ONLY filter in build.py (summary
+totals/counts and emitted lines untouched; dropping $0 entries cannot move Σ rendered
+off the headline) + T-VL-10 pinning the mixed real+zero case, fixes_applied count
+semantics deliberately left as pre-existing; st.1 (system-tester) live stdin smoke for
+`claude -p` outside the mocked tests — already run in-session before the push (recorded
+in the harness-fix commit), noted here as the closure.

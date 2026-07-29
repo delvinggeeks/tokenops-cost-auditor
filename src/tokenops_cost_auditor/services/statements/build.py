@@ -166,6 +166,13 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
                 "",
             ]
             for vl in summary.verified_lines:
+                # A zero-dollar credit (applied, re-measured, nothing saved) must
+                # not render as a confident "$0.00 — <saving claim>" line under
+                # VERIFIED (G-T-F4 round-3 c.1). Render-only filter: the summary's
+                # totals/counts and the emitted lines are untouched, and dropping
+                # $0 entries cannot move Σ rendered lines off the headline.
+                if vl.amount_usd <= 0:
+                    continue
                 plain = DETECTOR_COPY.get(vl.detector, {}).get("plain", vl.detector)
                 lines += [
                     f"  ${vl.amount_usd:,.2f} — {plain}",

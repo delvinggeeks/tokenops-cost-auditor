@@ -554,3 +554,43 @@ class TestVerifiedLineRendering:
         user = seed_month(session)
         doc = statements.build(session, user, 2026, 6)
         assert doc.body.count("$750.00") >= 2
+
+    def test_10_zero_credit_route_renders_no_confident_zero_line(self, session: Session) -> None:
+        """T-VL-10 (G-T-F4 round-3 c.1): applied + re-measured at the SAME
+        impact = a $0.00 credit. It stays in the summary's counts and lines
+        (formula untouched), but the statement must not render a confident
+        "$0.00 — <saving claim>" under VERIFIED. The real $750.00 line
+        still renders, and dropping the $0 entry cannot move Σ rendered
+        lines off the headline."""
+        user = seed_month(session)
+        audits = session.execute(select(Audit).order_by(Audit.created_at)).scalars().all()
+        a1, a2 = audits[0], audits[1]
+        for audit, fid in ((a1, "D3-001"), (a2, "D3-002")):
+            session.add(
+                FindingRow(
+                    audit_id=audit.id,
+                    finding_id=fid,
+                    detector="d3_prompt_bloat",
+                    route="m3",
+                    severity="med",
+                    monthly_impact_usd=400.0,  # unchanged across audits -> credit 0.0
+                    confidence="estimated",
+                    fix_text="x",
+                    evidence_sample=[],
+                )
+            )
+        session.add(
+            FindingFeedback(
+                audit_id=a1.id,
+                finding_id="D3-001",
+                verdict="applied",
+                actor=EMAIL,
+                ts=JUNE + timedelta(hours=2),
+            )
+        )
+        session.commit()
+        doc = statements.build(session, user, 2026, 6)
+        assert doc.verified_usd == 750.00  # the $0 credit adds nothing
+        assert doc.fixes_applied == 2  # pre-existing count semantics untouched
+        assert "$750.00 — " in doc.body
+        assert "$0.00 — " not in doc.body
