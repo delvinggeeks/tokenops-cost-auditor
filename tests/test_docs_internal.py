@@ -89,15 +89,29 @@ def _resolves(rel: str) -> bool:
     return "/" not in rel and any(SRC.rglob(rel))
 
 
-def _cited_symbol_names(text: str) -> list[str]:
-    names = [call.split(".")[-1] for call in SYMBOL_CALL_RE.findall(text)]
-    # `path::symbol()` citations carry a symbol too — SYMBOL_CALL_RE cannot
-    # match across the `::`, so they are collected via the split.
+def _cited_symbol_pairs(text: str) -> list[tuple[str | None, str]]:
+    """(file, symbol) pairs. Bare `name()` tokens pair with None and are
+    checked against the whole package; `path::symbol()` citations name their
+    file, so the symbol must be defined IN THAT FILE — compute()/build()
+    exist in several modules, and a corpus-wide check would keep passing
+    after a mis-pairing or a rename (round-5 gate note)."""
+    pairs: list[tuple[str | None, str]] = [
+        (None, call.split(".")[-1]) for call in SYMBOL_CALL_RE.findall(text)
+    ]
     for token in PATH_TOKEN_RE.findall(text):
-        _, sym = _split_citation(token)
+        rel, sym = _split_citation(token)
         if sym is not None:
-            names.append(sym)
-    return names
+            pairs.append((rel, sym))
+    return pairs
+
+
+def _cited_file(rel: str) -> Path | None:
+    for base in PATH_BASES:
+        if (REPO / base / rel).is_file():
+            return REPO / base / rel
+    if "/" not in rel:
+        return next(iter(SRC.rglob(rel)), None)
+    return None
 
 
 class TestCodeTourDrift:
@@ -108,12 +122,19 @@ class TestCodeTourDrift:
 
     def test_every_cited_symbol_resolves(self) -> None:
         text = CODE_TOUR.read_text(encoding="utf-8")
-        names = sorted(set(_cited_symbol_names(text)))
         corpus = "\n".join(p.read_text(encoding="utf-8") for p in SRC.rglob("*.py"))
-        missing = [name for name in names if f"def {name}(" not in corpus]
+        missing = []
+        for rel, name in sorted(set(_cited_symbol_pairs(text)), key=str):
+            if rel is None:
+                if f"def {name}(" not in corpus:
+                    missing.append(name)
+                continue
+            target = _cited_file(rel)
+            if target is None or f"def {name}(" not in target.read_text(encoding="utf-8"):
+                missing.append(f"{rel}::{name}")
         assert not missing, (
-            f"CODE-TOUR.md cites symbols with no matching `def` under "
-            f"src/tokenops_cost_auditor: {missing}"
+            f"CODE-TOUR.md cites symbols with no matching `def` in the cited "
+            f"file (or package, for bare names): {missing}"
         )
 
     def test_detector_count_word_matches_registry(self) -> None:
