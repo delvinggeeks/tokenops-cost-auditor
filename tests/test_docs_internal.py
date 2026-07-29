@@ -45,24 +45,34 @@ PATH_BASES = (
 )
 
 
+def _split_citation(token: str) -> tuple[str, str | None]:
+    """`path::symbol()` → (path, symbol); plain tokens → (token, None).
+    The split runs BEFORE the path filter — the raw token ends in `()`, so
+    filtering on it would skip the whole citation (round-3 gate note)."""
+    if "::" in token:
+        path, _, sym = token.partition("::")
+        call = re.fullmatch(r"([A-Za-z_][\w.]*)\(\)", sym)
+        return path, call.group(1).split(".")[-1] if call else None
+    return token, None
+
+
 def _cited_repo_paths(text: str) -> list[str]:
-    tokens = PATH_TOKEN_RE.findall(text)
-    return [
-        t
-        for t in tokens
-        if t == "docker-compose.yml"
-        or (
-            " " not in t
-            and "://" not in t  # URLs of any scheme are not repo paths
-            and not t.startswith("http")
-            and not t.startswith("/")  # `/developer` etc. are product ROUTES, not repo paths
-            and ("/" in t or t.endswith(".py"))  # bare `subscriptions.py` cites a file too
-        )
-    ]
+    paths = []
+    for token in PATH_TOKEN_RE.findall(text):
+        rel, _ = _split_citation(token)
+        if rel == "docker-compose.yml" or (
+            " " not in rel
+            and "://" not in rel  # URLs of any scheme are not repo paths
+            and not rel.startswith("http")
+            and not rel.startswith("/")  # `/developer` etc. are product ROUTES, not repo paths
+            and ("/" in rel or rel.endswith(".py"))  # bare `subscriptions.py` cites a file too
+        ):
+            paths.append(rel)
+    return paths
 
 
-def _resolves(token: str) -> bool:
-    rel = token.split("::")[0].rstrip("/")
+def _resolves(rel: str) -> bool:
+    rel = rel.rstrip("/")
     if any((REPO / base / rel).exists() for base in PATH_BASES):
         return True
     # A bare filename is cited from inside its stop's module context (Stop 9
@@ -72,7 +82,14 @@ def _resolves(token: str) -> bool:
 
 
 def _cited_symbol_names(text: str) -> list[str]:
-    return [call.split(".")[-1] for call in SYMBOL_CALL_RE.findall(text)]
+    names = [call.split(".")[-1] for call in SYMBOL_CALL_RE.findall(text)]
+    # `path::symbol()` citations carry a symbol too — SYMBOL_CALL_RE cannot
+    # match across the `::`, so they are collected via the split.
+    for token in PATH_TOKEN_RE.findall(text):
+        _, sym = _split_citation(token)
+        if sym is not None:
+            names.append(sym)
+    return names
 
 
 class TestCodeTourDrift:
