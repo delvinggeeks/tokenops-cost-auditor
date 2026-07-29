@@ -38,7 +38,7 @@ for detectors that name no model.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -58,12 +58,30 @@ RouteKey = tuple[str, str]
 
 
 @dataclass(frozen=True)
+class VerifiedLine:
+    """One proven finding behind a verified dollar (LLD §9.4, FR-37).
+
+    R-Q9 provenance travels with the amount: `from_audit` is the audit that
+    RAISED the finding (the baseline in force when the fix was applied — R1
+    means this is always the earliest applied feedback for the route);
+    `to_audit` is the >=7-day audit that proved it. Consumed ONLY by
+    statements/build.py.
+    """
+
+    amount_usd: float
+    finding_ref: str
+    from_audit: str
+    to_audit: str
+
+
+@dataclass(frozen=True)
 class SavingsSummary:
     verified_usd: float  # proven by re-audit (the headline)
     identified_usd: float  # open findings, still estimates
     customer_reported_usd: float  # self-reported, shown separately, never in the headline
     verified_count: int  # routes whose saving a later audit confirmed
     pending_count: int  # applied, but not yet confirmable
+    verified_lines: list[VerifiedLine] = field(default_factory=list)  # one per verified_count
 
 
 def _route_key(detector: str, route: str | None, finding_id: str) -> RouteKey:
@@ -137,6 +155,7 @@ def compute(
     verified_count = 0
     pending_count = 0
     settled: set[RouteKey] = set()
+    verified_lines: list[VerifiedLine] = []
 
     for key, (finding, fb) in applied.items():
         settled.add(key)
@@ -179,8 +198,17 @@ def compute(
         ):
             continue  # proved in a different month — not this statement's line
         baseline = float(finding.monthly_impact_usd)
-        verified += min(max(0.0, baseline - recomputed), baseline)
+        amount = min(max(0.0, baseline - recomputed), baseline)
+        verified += amount
         verified_count += 1
+        verified_lines.append(
+            VerifiedLine(
+                amount_usd=round(amount, 2),
+                finding_ref=finding.finding_id,
+                from_audit=finding.audit_id,
+                to_audit=check.id,
+            )
+        )
 
     # R3: identified excludes anything already settled as verified or pending.
     in_period = (
@@ -195,6 +223,7 @@ def compute(
             customer_reported_usd=0.0,
             verified_count=verified_count,
             pending_count=pending_count,
+            verified_lines=verified_lines,
         )
     latest = in_period[-1]
     identified = 0.0
@@ -220,6 +249,7 @@ def compute(
         customer_reported_usd=round(customer_reported, 2),
         verified_count=verified_count,
         pending_count=pending_count,
+        verified_lines=verified_lines,
     )
 
 

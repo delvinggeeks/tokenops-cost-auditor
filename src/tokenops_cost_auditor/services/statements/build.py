@@ -144,7 +144,14 @@ def build(session: Session, user: User, year: int, month: int) -> StatementDoc:
             f"This is money you are no longer spending. {summary.verified_count} fix(es)",
             "were applied and then re-measured against your own logs by a later",
             "audit covering at least 7 days. It is not a projection.",
+            "",
         ]
+        for vl in summary.verified_lines:
+            lines.append(
+                f"  ${vl.amount_usd:,.2f} — finding {vl.finding_ref}, raised in audit "
+                f"{vl.from_audit[:4]}…{vl.from_audit[-3:]}, confirmed by audit "
+                f"{vl.to_audit[:4]}…{vl.to_audit[-3:]}"
+            )
     else:
         lines += [
             "VERIFIED SAVINGS THIS MONTH: none yet",

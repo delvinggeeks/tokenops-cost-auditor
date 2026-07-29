@@ -18,7 +18,7 @@ from tokenops_cost_auditor.persistence.models import (
     FindingRow,
     User,
 )
-from tokenops_cost_auditor.services.dashboard.savings import compute
+from tokenops_cost_auditor.services.dashboard.savings import VerifiedLine, compute
 
 T0 = datetime(2026, 7, 1, tzinfo=UTC)
 
@@ -279,6 +279,118 @@ class TestColdReviewRegressions:
         s = compute(session, uid)
         assert s.verified_usd == 600.00  # 1000 - 400
         assert s.identified_usd == 0.0, "a settled route must not also be identified"
+
+
+class TestVerifiedLines:
+    """FR-37 (T-F4, LLD §9.4 residue) — the realized-delta MECHANIC above is
+    unchanged; these pin the per-finding attribution, `VerifiedLine(amount_usd,
+    finding_ref, from_audit, to_audit)`, emitted alongside it."""
+
+    def test_one_line_per_credited_route_with_both_audit_ids(self, session: Session) -> None:
+        uid = seed(session)
+        a1 = add_audit(session, uid, T0, 30)
+        add_finding(session, a1.id, "D2-001", "d2_missing_cache", 1000.0, route="m1")
+        session.add(
+            FindingFeedback(
+                audit_id=a1.id,
+                finding_id="D2-001",
+                verdict="applied",
+                actor="o@e.com",
+                ts=T0 + timedelta(hours=1),
+            )
+        )
+        a2 = add_audit(session, uid, T0 + timedelta(days=10), 30)
+        add_finding(session, a2.id, "D2-001", "d2_missing_cache", 250.0, route="m1")
+        session.commit()
+        s = compute(session, uid)
+        assert s.verified_lines == [
+            VerifiedLine(amount_usd=750.0, finding_ref="D2-001", from_audit=a1.id, to_audit=a2.id)
+        ]
+
+    def test_sum_of_lines_equals_verified_usd(self, session: Session) -> None:
+        uid = seed(session)
+        a1 = add_audit(session, uid, T0, 30)
+        add_finding(session, a1.id, "D2-001", "d2_missing_cache", 1000.0, route="m1")
+        add_finding(session, a1.id, "D1-001", "d1_oversized_model", 400.0, route="m2")
+        for fid in ("D2-001", "D1-001"):
+            session.add(
+                FindingFeedback(
+                    audit_id=a1.id,
+                    finding_id=fid,
+                    verdict="applied",
+                    actor="o@e.com",
+                    ts=T0 + timedelta(hours=1),
+                )
+            )
+        a2 = add_audit(session, uid, T0 + timedelta(days=10), 30)
+        add_finding(session, a2.id, "D2-001", "d2_missing_cache", 250.0, route="m1")
+        add_finding(session, a2.id, "D1-001", "d1_oversized_model", 100.0, route="m2")
+        session.commit()
+        s = compute(session, uid)
+        assert len(s.verified_lines) == 2
+        assert round(sum(line.amount_usd for line in s.verified_lines), 2) == s.verified_usd
+        assert s.verified_usd == 750.0 + 300.0  # (1000-250) + (400-100)
+
+    def test_r1_names_the_earliest_audit_as_from_audit(self, session: Session) -> None:
+        """R1: a route re-applied across weekly re-issues is credited ONCE
+        against the EARLIEST applied feedback — the line's from_audit must
+        name that earliest audit, never a later re-issue."""
+        uid = seed(session)
+        a1 = add_audit(session, uid, T0, 30)
+        add_finding(session, a1.id, "D2-000", "d2_missing_cache", 1000.0, route="m1")
+        session.add(
+            FindingFeedback(
+                audit_id=a1.id,
+                finding_id="D2-000",
+                verdict="applied",
+                actor="o@e.com",
+                ts=T0 + timedelta(hours=1),
+            )
+        )
+        a_reissue = add_audit(session, uid, T0 + timedelta(days=7), 30)
+        add_finding(session, a_reissue.id, "D2-001", "d2_missing_cache", 1000.0, route="m1")
+        session.add(
+            FindingFeedback(
+                audit_id=a_reissue.id,
+                finding_id="D2-001",
+                verdict="applied",
+                actor="o@e.com",
+                ts=T0 + timedelta(days=7, hours=1),
+            )
+        )
+        a3 = add_audit(session, uid, T0 + timedelta(days=21), 30)
+        add_finding(session, a3.id, "D2-009", "d2_missing_cache", 200.0, route="m1")
+        session.commit()
+        s = compute(session, uid)
+        assert len(s.verified_lines) == 1
+        line = s.verified_lines[0]
+        assert line.from_audit == a1.id
+        assert line.finding_ref == "D2-000"
+        assert line.to_audit == a3.id
+        assert line.amount_usd == 800.0
+
+    def test_period_scoping_matches_the_credit_month(self, session: Session) -> None:
+        uid = seed(session)
+        a1 = add_audit(session, uid, T0, 30)  # July
+        add_finding(session, a1.id, "D2-001", "d2_missing_cache", 1000.0, route="m1")
+        session.add(
+            FindingFeedback(
+                audit_id=a1.id,
+                finding_id="D2-001",
+                verdict="applied",
+                actor="o@e.com",
+                ts=T0 + timedelta(hours=1),
+            )
+        )
+        a2 = add_audit(session, uid, T0 + timedelta(days=32), 30)  # proved in August
+        add_finding(session, a2.id, "D2-001", "d2_missing_cache", 250.0, route="m1")
+        session.commit()
+        july = compute(session, uid, period=(2026, 7))
+        assert july.verified_lines == []  # applied in July, but PROVED in August
+        august = compute(session, uid, period=(2026, 8))
+        assert len(august.verified_lines) == 1
+        assert august.verified_lines[0].from_audit == a1.id
+        assert august.verified_lines[0].to_audit == a2.id
 
 
 class TestMoneyMathCoverageGate:
