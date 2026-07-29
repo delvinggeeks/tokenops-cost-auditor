@@ -52,17 +52,23 @@ def _cited_repo_paths(text: str) -> list[str]:
         for t in tokens
         if t == "docker-compose.yml"
         or (
-            "/" in t
-            and " " not in t
+            " " not in t
+            and "://" not in t  # URLs of any scheme are not repo paths
             and not t.startswith("http")
             and not t.startswith("/")  # `/developer` etc. are product ROUTES, not repo paths
+            and ("/" in t or t.endswith(".py"))  # bare `subscriptions.py` cites a file too
         )
     ]
 
 
 def _resolves(token: str) -> bool:
     rel = token.split("::")[0].rstrip("/")
-    return any((REPO / base / rel).exists() for base in PATH_BASES)
+    if any((REPO / base / rel).exists() for base in PATH_BASES):
+        return True
+    # A bare filename is cited from inside its stop's module context (Stop 9
+    # says `subscriptions.py` meaning services/payments/) — it exists if it
+    # lives anywhere under the package.
+    return "/" not in rel and any(SRC.rglob(rel))
 
 
 def _cited_symbol_names(text: str) -> list[str]:
