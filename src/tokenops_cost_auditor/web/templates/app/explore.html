@@ -129,7 +129,7 @@
       or (f.source_id and view.unattributed_connected) or view.no_breakdown_in_view %}
 <p class="muted">
   {% if view.connected_in_view %}Some of this usage came from connected provider
-    accounts: three detectors need per-request logs and could not run on those
+    accounts: detectors that need per-request logs could not run on those
     audits. {% endif %}
   {% if f.source_id and view.unattributed_connected %}{{ view.unattributed_connected }}
     earlier connected audit{{ "s" if view.unattributed_connected != 1 }} ran before we

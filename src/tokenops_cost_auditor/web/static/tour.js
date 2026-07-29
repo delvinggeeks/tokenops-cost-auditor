@@ -15,7 +15,7 @@
     { sel: "#w-top_findings", title: "Work top-down, in dollars",
       body: "Findings are ranked by monthly impact, not severity labels. Open one for the evidence and a fix you can paste, then mark it Applied when it ships." },
     { sel: "#w-sources", title: "Where your data comes from",
-      body: "A connected source pulls usage counts daily — never prompt text. Upload a request log instead when you want all six detectors." },
+      body: "A connected source pulls usage counts daily — never prompt text. Upload a request log instead when you want the full-depth audit." },
     { sel: "#w-next_audit", title: "It keeps checking without you",
       body: "Audits run weekly. Anything you applied gets re-measured, and alerts watch the gaps in between." }
   ];

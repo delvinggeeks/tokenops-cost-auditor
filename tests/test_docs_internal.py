@@ -4,8 +4,9 @@ CODE-TOUR.md is the WP-COMPREHEND reading guide: a founder walks it top to
 bottom and trusts every path, symbol, and detector count it cites. These
 tests fail the moment the tour drifts from the code it describes — a moved
 file, a renamed function, a shipped detector the tour never mentions, or a
-stale "six detectors" claim creeping back into src/. They do NOT check
-docs-site/ (that is T-D4's scope).
+stale counted-detector claim ("six detectors" at nine) creeping back into
+src/ code, templates, scripts, or help copy. They do NOT check docs-site/
+(that is T-D4's scope — including its own six-detector-era copy).
 """
 
 import re
@@ -18,7 +19,14 @@ SRC = REPO / "src/tokenops_cost_auditor"
 PATH_TOKEN_RE = re.compile(r"`([^`]+)`")
 SYMBOL_CALL_RE = re.compile(r"`([A-Za-z_][\w.]*)\(\)`")
 DETECTOR_COUNT_RE = re.compile(r"the (\w+) detectors")
-SIX_DETECTOR_RE = re.compile(r"six[- ]detector", re.IGNORECASE)
+# ANY spelled count beside "detector" goes stale the moment a detector ships
+# (the T-D1 system-tester FAIL: six customer surfaces said "six" at nine).
+COUNTED_DETECTOR_RE = re.compile(
+    r"\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)[- ]detector",
+    re.IGNORECASE,
+)
+# Customer-facing copy lives in templates/scripts/yaml, not only .py docstrings.
+SRC_COPY_GLOBS = ("*.py", "*.html", "*.js", "*.yaml", "*.yml")
 
 DETECTOR_COUNT_WORDS = {
     "six": 6,
@@ -133,14 +141,17 @@ class TestCodeTourDrift:
 
 
 class TestCountFreeDetectorClaims:
-    def test_no_literal_six_detector_claims_in_src(self) -> None:
-        """Pins the count-free docstring fix (sdk/__init__.py,
-        web/routes_ingest.py): no source file may hard-code a "six
-        detectors" figure that goes stale every time a detector ships.
+    def test_no_literal_counted_detector_claims_in_src(self) -> None:
+        """No file under src/ — code, template, script, or help copy — may
+        hard-code a "<count> detectors" figure: it goes stale every time a
+        detector ships. The T-D1 gate round proved the .py-only version of
+        this check gave false confidence while findings.html, landing.html,
+        tour.js and help_registry.yaml told customers "six" at nine.
         """
         offenders = [
-            str(path.relative_to(REPO))
-            for path in SRC.rglob("*.py")
-            if SIX_DETECTOR_RE.search(path.read_text(encoding="utf-8"))
+            f"{path.relative_to(REPO)}: {m.group(0)!r}"
+            for glob in SRC_COPY_GLOBS
+            for path in sorted(SRC.rglob(glob))
+            if (m := COUNTED_DETECTOR_RE.search(path.read_text(encoding="utf-8")))
         ]
-        assert not offenders, f"stale 'six-detector' claim(s) found in: {offenders}"
+        assert not offenders, f"stale counted-detector claim(s) found in: {offenders}"

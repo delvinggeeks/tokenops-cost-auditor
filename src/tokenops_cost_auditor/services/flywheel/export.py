@@ -15,10 +15,11 @@ never collide or be joined. `services/rules` and `services/pricing` never
 learn the word "cohort" (tenant-blind law, R-ORG).
 
 Feature keys are LLD §9.1 verbatim. `detector_fire_rates` keys are the short
-"dN" ids derived from the shipped registry — NINE detectors; d7 never
-shipped, and the registry is authoritative over the LLD's "d1..d10" span
-notation. A fire rate is the share of the workspace's period audits in which
-that detector raised at least one finding. `shape_mix` keys are the five
+"dN" ids derived from the shipped registry (count-free on purpose — the
+registry is the only counter); d7 never shipped, and the registry is
+authoritative over the LLD's "d1..d10" span notation. A fire rate is the
+share of the workspace's period audits in which that detector raised at
+least one finding. `shape_mix` keys are the five
 ShapeClass values (FR-36), aggregated from each audit's persisted
 tokenomics.json shapes block — passthrough, no reclassification (HLD §8.3).
 
