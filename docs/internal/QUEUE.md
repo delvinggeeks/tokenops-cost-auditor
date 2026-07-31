@@ -105,6 +105,12 @@ _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with lo
   Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
   DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
   `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
+- **T-T5 · LE-11 | R-DESIGN** UI/UX spec entry point + visual regression — ONE `docs/design/SPEC.md`
+  indexing the laws that already hold (role-token-only colour, AA contrast per mood, kit composition,
+  motion) so they are findable, plus screenshot re-capture + diff in CI (the 41 audit shots become a
+  maintained baseline, not a one-time artifact) and rendered token-PLACEMENT checks. **Depends on
+  T-T4/LE-10** — placement and regression are only observable by rendering ·
+  trace: `docs/design/SPEC.md` + `tests/browser/test_visual.py` → diffed baseline in CI
 - **T-T4 · LE-10 | R-SYSTEM-TEST** demoable system validation — give `system-tester` a browser
   (Playwright against the existing `make preview` app) so htmx SWAPS and JS-only surfaces (Razorpay
   `checkout.js` modal) are EXECUTED rather than inferred, and make the recorded click path the PR
