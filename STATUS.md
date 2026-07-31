@@ -4405,3 +4405,23 @@ observed on PRs #69/#75 — and an empty or verdict-less short reply stays trunc
 test_short_reply_with_no_verdict_token_is_still_truncated, so shortness alone can never pass).
 Note the pre-existing test suite had pinned bare FAIL and bare PASS-WITH-NOTES but never bare PASS,
 which is exactly why the case slipped through; it is pinned now.
+2026-07-31 (R-TRACE intake — docs/09 §9 R-REQ-PIPELINE step 1, analysis only, no build):
+founder ask "full traceability end to end for audit ... for auditing the requirements for
+humans" analyzed into docs/01 §J FR-43/44/45 + QUEUE candidates T-T1/T-T2/T-T3. This is
+GROUNDED IN A MEASURED DEFECT, not a proposal — a ground-truth sweep of
+docs/04-TRACEABILITY.md against the live tree found: 22 of 63 test ids named in the matrix
+resolve to NO collected test (T-RUL-D1-01..03 for FR-07 — a shipped core detector — is absent
+from BOTH tests/ and docs/05; T-PRC-04..05 for FR-06 is declared in docs/05 but carried by no
+test; T-VL-08 is a hole in an otherwise contiguous T-VL-01..10 block); 3 requirements
+(FR-40/41/42) hold no matrix row; tests/ carries 192 distinct test ids of which the matrix
+cites ~41, so the up-direction (test → requirement) barely exists. The matrix header claims
+"CI gate: every M-priority FR/NFR row must have >=1 passing test" — NOTHING enforces it; the
+only CI gate citing docs/04 is scripts/coverage_gate.py, which checks line-coverage
+thresholds. Root cause is structural: a hand-maintained prose matrix rots. Design answer:
+move the requirement<->test edge INTO the test as a registered pytest marker (FR-43) so the
+matrix becomes DERIVED, gate the four drift classes in CI (FR-44) with design-only/
+trigger-gated requirements exempt BY DECLARATION not by silence, and generate the
+bidirectional human audit walk (FR-45). Deliberately NOT minted: a kanban/flow surface —
+QUEUE.md stays the single spine per the standing ruling; scope recorded rather than dropped
+(R-IMPROVISE). T-D5 (docs/05 test-plan refresh) OVERLAPS T-T1 and should fold into its
+backfill rather than run twice. NOW stays empty: the founder sequences T-T1..T-T3.

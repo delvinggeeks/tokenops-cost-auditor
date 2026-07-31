@@ -275,3 +275,59 @@ FR-42 (S) [R-ENT-DEPLOY, R-MARKETPLACE b] Scale claims discipline: public
   triggers. Accept: docs-site perf claims trace to a measured run; stale-era
   figures carry their caveat (six-detector detect timing flagged until
   re-measured).
+
+## J. Requirement traceability & audit evidence [added 2026-07-31, R-TRACE — design home: docs/04 + docs/05]
+
+Driven by a measured defect, not a proposal. Ground-truth sweep 2026-07-31 over
+`docs/04-TRACEABILITY.md` against the live `tests/` tree: **22 of 63 test IDs named
+in the matrix resolve to no collected test** (e.g. `T-RUL-D1-01..03` for FR-07 — a
+shipped core detector — exists in neither `tests/` nor docs/05; `T-PRC-04..05` for
+FR-06 is declared in docs/05 but carried by no test), **three requirements
+(FR-40/41/42) hold no matrix row at all**, and `tests/` carries 192 distinct test
+IDs of which the matrix references ~41 — so the up-direction (test → requirement) is
+largely absent. The matrix header claims *"CI gate: every M-priority FR/NFR row must
+have ≥1 passing test"*; **no script enforces it** — the only CI gate citing docs/04 is
+`scripts/coverage_gate.py`, which checks line-coverage thresholds, not traceability.
+The root cause is structural: the matrix is hand-maintained prose, so it rots.
+
+FR-43 (M) [R-TRACE] Requirement-bound tests — the link lives in the test, not in a
+  document. Every test declares the requirement(s) it verifies via a registered
+  pytest marker carrying the FR/NFR id; that marker becomes the SINGLE source of the
+  requirement↔test edge, making the matrix DERIVED rather than authored. Scope
+  includes backfilling the current `tests/` tree, and the settled matrix convention
+  is unchanged (CLAUDE.md rule 7 tooling owns no requirement row, so its tests carry
+  no marker). Accept: marker registered in pytest config (zero unknown-mark
+  warnings); a marker naming an id absent from docs/01 fails collection; every
+  M-priority FR/NFR resolves to ≥1 marked passing test; the full req→test map is
+  obtainable from collection alone with no document read. Tenancy/RBAC: none —
+  engine-internal, no customer surface. Honest state: a requirement with zero bound
+  tests is REPORTED as untested, never silently omitted.
+
+FR-44 (M) [R-TRACE] Traceability gate — the claim in the docs/04 header becomes
+  machine-enforced. A CI gate FAILS the PR when any of: a requirement in docs/01 has
+  no docs/04 row; a test id named in docs/04 resolves to no collected test; an
+  M-priority requirement has no passing bound test; a docs/04 LLD module path does
+  not exist. The gate MUST distinguish *not-yet-implemented* from *implemented but
+  untraced* — a design-only or trigger-gated requirement (FR-39..42 today) declares
+  that status explicitly and is exempted by declaration, never by silence, so the
+  exemption is itself auditable. Runs on `pull_request` only, per the standing
+  CI-cost rule. Accept: run against the tree at 2026-07-31 the gate reproduces the 22
+  dead ids and 3 unrowed requirements as failures, and is green after the FR-43
+  backfill; a deliberately broken row fails CI with the offending id named (refusal
+  proof recorded, R-64 discipline). Honest state: failure output names every
+  offending id and its file, never a bare count.
+
+FR-45 (S) [R-TRACE] Human audit view — the bidirectional walk an auditor actually
+  performs. A GENERATED (never hand-written) trace report, walkable both ways:
+  requirement → HLD component → LLD module → bound tests → last recorded result →
+  the merge commit/PR that landed it; and inversely from any test or module back to
+  its requirement. Sourced from the FR-43 markers + docs/01 + docs/04 + the last CI
+  run, regenerated in CI so it cannot drift from the markers. Published as a
+  docs-site page. The kanban/flow surface is deliberately NOT minted here: the single
+  work spine `docs/internal/QUEUE.md` remains the board per the standing ruling, and
+  the trace status attaches to its lines rather than to a new surface. Accept: every
+  M-priority requirement walks down to a dated result and up from any marked test;
+  regeneration is byte-stable given identical inputs; honest empty state NAMES
+  untraced or unimplemented requirements rather than hiding them. Tenancy/RBAC: the
+  page carries no customer data — requirement/module/test identifiers only (FR-22
+  unaffected).
