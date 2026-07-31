@@ -105,6 +105,12 @@ _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with lo
   Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
   DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
   `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
+- **T-T4 · LE-10 | R-SYSTEM-TEST** demoable system validation — give `system-tester` a browser
+  (Playwright against the existing `make preview` app) so htmx SWAPS and JS-only surfaces (Razorpay
+  `checkout.js` modal) are EXECUTED rather than inferred, and make the recorded click path the PR
+  artifact so R-VERTICAL's "a user completed the journey" is SHOWN, not asserted. Validation and
+  demo are the same act. Does NOT rewrite the 46 TestClient journeys ·
+  trace: `tests/browser/` + system-tester charter → walkthrough artifact on the PR
 - **T-T3 · LE-9 | R-TRACE** traceability & delivery console — `scripts/trace.py` builds a derived
   index and serves it three ways: **CLI** (`status`/`walk`/`check`/`baseline`), a **generated
   static docs-site page** regenerated in CI (the auditor artifact — cannot drift), and a **local
