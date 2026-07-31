@@ -99,8 +99,11 @@ jobs:
         # un-fixably without the one edit the design forbids.
         run: uv run python scripts/pricing_sync.py
       - name: strict pricing verification (R-AUTO-PRICING — fails the build)
-        # Held swings (gate 4) are reported, not fatal here: a legitimate large price
-        # cut must not brick every PR. Deploy runs the same gate with --strict-held.
+        # Held swings (gate 4) are reported, never fatal — here or at deploy. A hold
+        # expires on EVIDENCE (pricing_sync applies it once the feed corroborates it
+        # across runs), so gating on one would reintroduce the human price gate
+        # R-AUTO-PRICING abolished. A SUB-threshold divergence still fails: that means
+        # the sync did not run.
         run: uv run python scripts/pricing_verify.py
 
   build:

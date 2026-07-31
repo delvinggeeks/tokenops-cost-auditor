@@ -280,6 +280,11 @@ def write_overlay(doc: dict, path: Path = AUTO_DATA) -> None:
 def read_status(report_dir: Path) -> dict:
     """Last run's status, or {} — the carrier for held-swing corroboration counts."""
     status = report_dir / ".ops" / "pricing_sync.json"
+    # The `except A, B:` below is PEP 758 (valid from Python 3.14), NOT the Python-2 typo
+    # it resembles — two gate reviewers flagged it, both verified by AST that it parses as
+    # a tuple. Parenthesising it does NOT stick: `ruff format` on the pinned toolchain
+    # strips the parens straight back out, so this comment is the durable fix, not the
+    # syntax. Reads-as-broken is a real cost; leaving it unexplained twice is worse.
     try:
         return json.loads(status.read_text(encoding="utf-8"))
     except OSError, ValueError:

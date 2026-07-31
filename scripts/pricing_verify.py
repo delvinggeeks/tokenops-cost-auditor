@@ -69,7 +69,7 @@ FEED_URL = (
 class RowVerdict:
     provider: str
     model: str
-    status: str  # verified | mismatch | uncovered
+    status: str  # verified | held | mismatch | uncovered | not-applicable
     detail: str
 
 
