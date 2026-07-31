@@ -339,3 +339,5 @@ follow-ups from that build and the depth-engine detour:
   requested): _reconciled_lines lands the whole rounding residual on the largest line —
   bounded and invisible at today's 1-3 lines/statement; distribute cent-by-cent largest-
   first if per-statement verified-line counts grow.
+
+- **Tenant-scoped rate cards (ENTERPRISE BLOCKER, found 2026-07-31).** `PricingTable.load()` is keyed `(provider, model)` only — there is NO tenant axis, so every figure is computed at PUBLIC LIST PRICE. Enterprises never pay list (committed-use discounts, EAs, negotiated Azure/Bedrock/Vertex rates), so for exactly the buyers who spend most, every number is wrong — and wrong in the direction that OVERSTATES spend and therefore overstates the verified-savings claim. Breaks the reconciliation moment: finance compares our figure to their provider invoice and it will not match. Architectural (no tenant dimension), not a feature gap. Multi-account per provider IS already modelled (Source.provider + label + dup guard); FR-30 equiv-spend covers only the claude-code non-metered case, not enterprise agreements.
