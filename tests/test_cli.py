@@ -2,11 +2,14 @@
 
 from pathlib import Path
 
+import pytest
+
 from tokenops_cost_auditor.cli import main
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+@pytest.mark.verifies_requirement("FR-04")
 class TestTCLI01:
     def test_audit_produces_pdf_and_json(self, tmp_path: Path, capsys) -> None:
         out_pdf = tmp_path / "report.pdf"

@@ -34,6 +34,7 @@ import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -56,6 +57,8 @@ from tokenops_cost_auditor.persistence.repo import (
     set_active_workspace,
 )
 from tokenops_cost_auditor.services.flywheel import export, frame
+
+pytestmark = [pytest.mark.verifies_requirement("FR-35")]
 
 PERIOD = "2026-06"
 PERIOD_DT = datetime(2026, 6, 15, 12, 0, tzinfo=UTC)

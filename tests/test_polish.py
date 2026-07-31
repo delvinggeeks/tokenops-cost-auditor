@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -38,6 +39,7 @@ class TestPolicyString:
         assert page.index("What we receive") < page.index("</form>") or "form" not in page
 
 
+@pytest.mark.verifies_requirement("FR-16")
 class TestSampleReport:
     def test_02_sample_is_real_engine_output_not_a_mockup(self, app: FastAPI) -> None:
         """T-POL-02: /sample runs synthetic fixtures through the shipped

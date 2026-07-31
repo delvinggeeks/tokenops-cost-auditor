@@ -5,6 +5,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "pricing_age.py"
@@ -19,6 +21,7 @@ def _load():
     return module
 
 
+@pytest.mark.verifies_requirement("NFR-15")
 class TestTNFR15PricingAge:
     def test_fresh_table_ok_and_stale_warns_without_failing(self, capsys) -> None:
         mod = _load()

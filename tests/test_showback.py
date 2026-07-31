@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -34,6 +35,8 @@ from tokenops_cost_auditor.persistence.repo import (
 from tokenops_cost_auditor.services.dashboard import showback, tokenomics
 from tokenops_cost_auditor.services.pricing.coster import apply
 from tokenops_cost_auditor.services.pricing.table import PricingTable
+
+pytestmark = [pytest.mark.verifies_requirement("FR-38")]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 TABLE = PricingTable.load()

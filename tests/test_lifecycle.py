@@ -23,6 +23,7 @@ def age_audit(app: FastAPI, audit_id: str, days: int) -> None:
         session.commit()
 
 
+@pytest.mark.verifies_requirement("FR-21")
 class TestTLIF01Selection:
     def test_only_due_audits_selected(self, app: FastAPI) -> None:
         due = seed_audit(app, "openai_small.jsonl", email="due@example.com")
@@ -70,6 +71,7 @@ class TestTLIF01Selection:
             assert purge_due(session, WINDOW_DAYS) == []  # idempotent re-run
 
 
+@pytest.mark.verifies_requirement("FR-21")
 class TestTLIF02FilesRemoved:
     def test_upload_dir_gone_reports_and_aggregates_kept(self, app: FastAPI) -> None:
         audit_id = seed_audit(app, "openai_small.jsonl", email="files@example.com")
@@ -91,6 +93,7 @@ class TestTLIF02FilesRemoved:
         assert aggs  # derived counts retained (FR-21/FR-22)
 
 
+@pytest.mark.verifies_requirement("FR-21")
 class TestTLIF03AuditTrail:
     def test_audit_log_entry_and_purged_at_set(self, app: FastAPI) -> None:
         audit_id = seed_audit(app, "openai_small.jsonl", email="trail@example.com")
@@ -114,6 +117,7 @@ class TestTLIF03AuditTrail:
         assert entries[0].detail == {"mode": "scheduled"}
 
 
+@pytest.mark.verifies_requirement("FR-21")
 class TestFR21PurgeCliEntrypoint:
     """Named for the requirement, not a T-LIF id: docs/05 defines T-LIF-01..04
     and none of them covers the cron entrypoint. Follows the naming precedent
@@ -148,6 +152,7 @@ class TestFR21PurgeCliEntrypoint:
             assert session.get(Audit, audit_id).upload_path is None  # type: ignore[union-attr]
 
 
+@pytest.mark.verifies_requirement("FR-26")
 class TestFR26KeysPurgeWithUploads:
     def test_idempotency_keys_deleted_when_audit_purges(self, app: FastAPI) -> None:
         """FR-26: 7-day key retention shares the upload lifecycle (T-API-05)."""

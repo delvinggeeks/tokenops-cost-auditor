@@ -48,6 +48,7 @@ def upload(client: TestClient, headers: dict, key: str | None = None, data: byte
     )
 
 
+@pytest.mark.verifies_requirement("FR-01")
 class TestTAPI01UploadHappyPath:
     def test_upload_and_complete(self, client: TestClient, app: FastAPI, settings) -> None:
         credit(app, "alice@example.com")
@@ -69,6 +70,7 @@ class TestTAPI01UploadHappyPath:
         assert resp.status_code == 404
 
 
+@pytest.mark.verifies_requirement("NFR-10")
 class TestTAPI02StatusTransitions:
     def test_lifecycle_logged_queued_processing_done(
         self, client: TestClient, app: FastAPI
@@ -96,6 +98,7 @@ class TestTAPI02StatusTransitions:
         assert "95" in body["error"]  # user-safe FR-03 message
 
 
+@pytest.mark.verifies_requirement("FR-25")
 class TestTAPI03VersionedPrefix:
     def test_api_lives_under_v1_only(self, client: TestClient) -> None:
         assert client.post("/api/audits", headers=ALICE).status_code == 404
@@ -104,6 +107,7 @@ class TestTAPI03VersionedPrefix:
         assert client.post("/api/v1/audits", headers=ALICE).status_code != 404
 
 
+@pytest.mark.verifies_requirement("FR-26")
 class TestTAPI0405Idempotency:
     def test_replay_returns_original(self, client: TestClient, app: FastAPI) -> None:
         credit(app, "alice@example.com", n=2)
@@ -123,6 +127,7 @@ class TestTAPI0405Idempotency:
         assert a.json()["audit_id"] != b.json()["audit_id"]
 
 
+@pytest.mark.verifies_requirement("NFR-13")
 class TestTAPI06ConcurrencyQueue:
     def test_queue_position_reported(self, client: TestClient, app: FastAPI) -> None:
         with app.state.session_factory() as session:
@@ -161,6 +166,7 @@ class TestTAPI06ConcurrencyQueue:
         assert runner.wait_for_slot(timeout_s=0.3, poll_s=0.05) is True
 
 
+@pytest.mark.verifies_requirement("NFR-14")
 class TestTAPI07ErrorEnvelope:
     def assert_envelope(self, body: dict, code: str) -> None:
         assert set(body) == {"error"}
@@ -227,6 +233,8 @@ class TestTAPI07ErrorEnvelope:
         assert resp.headers["content-type"].startswith("application/json")
 
 
+@pytest.mark.verifies_requirement("NFR-03")
+@pytest.mark.verifies_requirement("NFR-12")
 class TestTNFR03And12RateLimits:
     def test_burst_hits_429_with_retry_after(self, client: TestClient, app: FastAPI) -> None:
         credit(app, "alice@example.com", n=30)

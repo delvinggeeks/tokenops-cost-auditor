@@ -95,6 +95,7 @@ def synth_frame(rows: list[dict]) -> pd.DataFrame:
     return priced
 
 
+@pytest.mark.verifies_requirement("FR-13")
 class TestTRUL00Registry:
     def test_runs_all_ordered_by_impact_stable(self, waste_pack: pd.DataFrame) -> None:
         first = run_all(waste_pack, ctx_for(waste_pack))
@@ -132,6 +133,8 @@ class TestTRUL00Registry:
         ]
 
 
+@pytest.mark.verifies_requirement("FR-13")
+@pytest.mark.verifies_requirement("FR-22")
 class TestTRULEV01Evidence:
     def test_evidence_capped_and_text_free(self, waste_pack: pd.DataFrame) -> None:
         findings = run_all(waste_pack, ctx_for(waste_pack))
@@ -179,6 +182,7 @@ class TestTRULEV01Evidence:
         assert len(refs) == 3
 
 
+@pytest.mark.verifies_requirement("FR-08")
 class TestTRULD2:
     def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D2MissingCache().run(waste_pack, ctx_for(waste_pack))
@@ -284,6 +288,7 @@ class TestTRULD2:
         assert ttl_window_s(s, "openai", "gpt-5.4-mini") == 300  # fallback
 
 
+@pytest.mark.verifies_requirement("FR-10")
 class TestTRULD4:
     def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D4RetryStorm().run(waste_pack, ctx_for(waste_pack))
@@ -338,6 +343,7 @@ class TestTRULD4:
         assert D4RetryStorm().run(echoes, ctx_for(echoes)) == []
 
 
+@pytest.mark.verifies_requirement("FR-10")
 class TestEffectivePromptRateUATFix:
     """UAT-1 mini-milestone (D11): prompt-token savings priced as billed —
     cache reads at cache_read rates, never flat input rate."""
@@ -389,6 +395,7 @@ class TestEffectivePromptRateUATFix:
         assert ratio < 0.2  # cache-read pricing collapses the over-claim
 
 
+@pytest.mark.verifies_requirement("FR-10")
 class TestD4UATDogfoodFixes:
     """UAT-1 mini-milestone (D11): agent-session traffic must not read as storms."""
 
@@ -472,6 +479,7 @@ D3_GOLDEN_MONTHLY = 0.50
 D6_GOLDEN_MONTHLY = 0.096
 
 
+@pytest.mark.verifies_requirement("FR-07")
 class TestTRULD1:
     def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D1OversizedModel().run(waste_pack, ctx_for(waste_pack))
@@ -562,6 +570,7 @@ class TestTRULD1:
         assert D1OversizedModel().run(frame, ctx_for(frame)) == []
 
 
+@pytest.mark.verifies_requirement("FR-09")
 class TestTRULD3:
     def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D3PromptBloat().run(waste_pack, ctx_for(waste_pack))
@@ -608,6 +617,7 @@ class TestTRULD3:
         assert "fat" in findings[0].fix_text
 
 
+@pytest.mark.verifies_requirement("FR-11")
 class TestTRULD5:
     def test_01_informational_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D5UnboundedMaxTokens().run(waste_pack, ctx_for(waste_pack))
@@ -645,6 +655,7 @@ class TestTRULD5:
         assert D5UnboundedMaxTokens().run(absent, ctx_for(absent)) == []
 
 
+@pytest.mark.verifies_requirement("FR-12")
 class TestTRULD6:
     def test_01_golden_on_waste_pack(self, waste_pack: pd.DataFrame) -> None:
         findings = D6ChattyLoop().run(waste_pack, ctx_for(waste_pack))
@@ -701,6 +712,7 @@ class TestTRULD6:
         assert D6ChattyLoop().run(frame, ctx_for(frame)) == []
 
 
+@pytest.mark.verifies_requirement("FR-12")
 class TestRD6AGGSessionAggregation:
     """R-D6-AGG (founder 2026-07-18): one finding per session for D6 and D4."""
 
@@ -765,6 +777,7 @@ class TestRD6AGGSessionAggregation:
         assert "2 burst(s) in one session" in findings[0].fix_text
 
 
+@pytest.mark.verifies_requirement("FR-33")
 class TestD8SpendConcentration:
     """D8 — informational 'start here' pointer (founder 2026-07-25). Flags the
     route that carries a large share of spend; never claims a saving."""
@@ -806,6 +819,7 @@ class TestD8SpendConcentration:
         assert D8SpendConcentration().run(frame, ctx_for(frame)) == []
 
 
+@pytest.mark.verifies_requirement("FR-33")
 class TestD9IneffectiveCache:
     """D9 — cache written but rarely read = net cost. Money math on OBSERVED
     billed tokens; golden derived in pricing_golden_NOTES.md (D9 section).
@@ -881,6 +895,7 @@ class TestD9IneffectiveCache:
         assert D2MissingCache().run(frame, ctx_for(frame)) == []
 
 
+@pytest.mark.verifies_requirement("FR-33")
 class TestD10SpendAnomaly:
     """D10 — deterministic temporal spend-anomaly detection (founder 2026-07-25,
     "dynamic analysis based on logs"). Robust (median + MAD) daily-spike detection

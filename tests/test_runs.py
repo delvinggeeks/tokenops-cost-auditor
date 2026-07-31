@@ -44,6 +44,8 @@ from tokenops_cost_auditor.services.lifecycle.purge import purge_one
 from tokenops_cost_auditor.services.pricing.table import PricingTable
 from tokenops_cost_auditor.services.rules.registry import DETECTORS
 
+pytestmark = [pytest.mark.verifies_requirement("FR-31")]
+
 EMAIL = "runner@example.com"
 HDR = {"X-User-Email": EMAIL}
 

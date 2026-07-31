@@ -13,12 +13,15 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.persistence.models import Audit, FindingRow, User
+
+pytestmark = [pytest.mark.verifies_requirement("FR-33")]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EMAIL = "anomaly@example.com"

@@ -75,6 +75,7 @@ def consume(client: TestClient, link: str, follow_redirects: bool = False):
     )
 
 
+@pytest.mark.verifies_requirement("FR-17")
 class TestTAUTH01Issue:
     def test_link_issued_and_logged(self, client: TestClient, mail: MailRecorder) -> None:
         link = request_link(client, mail, "cto@example.com")
@@ -93,6 +94,7 @@ class TestTAUTH01Issue:
         assert last is not None and last.status_code == 429
 
 
+@pytest.mark.verifies_requirement("FR-17")
 class TestTAUTH02Consume:
     def test_verify_sets_session_cookie_with_flags(
         self, client: TestClient, mail: MailRecorder
@@ -122,6 +124,7 @@ class TestTAUTH02Consume:
         assert "cto@example.com" in page.text  # upload page shows signed-in state
 
 
+@pytest.mark.verifies_requirement("FR-17")
 class TestTAUTH03SingleUse:
     def test_second_consume_rejected(self, client: TestClient, mail: MailRecorder) -> None:
         link = request_link(client, mail, "cto@example.com")
@@ -145,6 +148,7 @@ class TestTAUTH03SingleUse:
         assert consume(client, link).status_code == 303
 
 
+@pytest.mark.verifies_requirement("FR-17")
 class TestTAUTH04Expiry:
     def test_expired_link_rejected(
         self, client: TestClient, mail: MailRecorder, monkeypatch: pytest.MonkeyPatch
@@ -157,6 +161,7 @@ class TestTAUTH04Expiry:
         assert "expired" in resp.text
 
 
+@pytest.mark.verifies_requirement("FR-23")
 class TestTWEB01Landing:
     def test_fr23_string_verbatim(self, client: TestClient) -> None:
         page = client.get("/")
@@ -247,6 +252,7 @@ def make_adapter() -> SmtpMailAdapter:
     )
 
 
+@pytest.mark.verifies_requirement("FR-20")
 class TestTMAIL01Smtp:
     def test_smtp_adapter_sends_via_starttls(self, monkeypatch: pytest.MonkeyPatch) -> None:
         outbox = install_fake_smtp(monkeypatch)

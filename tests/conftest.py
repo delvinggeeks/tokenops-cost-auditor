@@ -1,4 +1,5 @@
 import os
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -29,6 +30,38 @@ from tokenops_cost_auditor.persistence.models import (
     WorkspaceMember,
     new_id,
 )
+
+# LE-7 (docs/09-SDLC.md §6, ADR-8) needs the pytester fixture for its own
+# guard/probe tests of the verifies_requirement marker.
+pytest_plugins = ["pytester"]
+
+# --- LE-7 requirement-id guard (docs/09-SDLC.md §6) --------------------------
+# @pytest.mark.verifies_requirement(<id>) is the single source of the
+# requirement<->test edge (docs/04 becomes DERIVED, not authored). A marker
+# naming an id absent from docs/01-REQUIREMENTS.md fails collection so a typo
+# or a stale id can never silently masquerade as traceability.
+_REQUIREMENT_ID_RE = re.compile(r"^(FR|NFR)-\d+")
+
+
+def _known_requirement_ids() -> frozenset[str]:
+    doc = Path(__file__).resolve().parent.parent / "docs" / "01-REQUIREMENTS.md"
+    return frozenset(
+        m.group(0) for line in doc.read_text().splitlines() if (m := _REQUIREMENT_ID_RE.match(line))
+    )
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    known = _known_requirement_ids()
+    unknown = [
+        f"{item.nodeid}: verifies_requirement({marker.args[0]!r}) is not a "
+        f"requirement id in docs/01-REQUIREMENTS.md"
+        for item in items
+        for marker in item.iter_markers(name="verifies_requirement")
+        if marker.args[0] not in known
+    ]
+    if unknown:
+        raise pytest.UsageError("\n".join(unknown))
+
 
 # --- O-1 test-fixture parity (R-ORG) -----------------------------------------
 # Production stamps workspace_id at every create site (O-0) and mints each user

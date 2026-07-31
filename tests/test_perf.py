@@ -30,6 +30,7 @@ ROWS = 1_000_000
 
 
 @pytest.mark.perf
+@pytest.mark.verifies_requirement("NFR-04")
 class TestTPERF01:
     def test_1m_rows_under_wall_clock_bound(self, tmp_path: Path) -> None:
         if not FIXTURE_GZ.exists():  # F7 is generated, not committed (docs/05 §2)

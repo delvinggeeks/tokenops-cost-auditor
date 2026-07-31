@@ -21,6 +21,7 @@ import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -28,6 +29,8 @@ from sqlalchemy import select
 from tokenops_cost_auditor.persistence.models import Audit, FindingFeedback, FindingRow, User
 from tokenops_cost_auditor.services.dashboard.savings import compute
 from tokenops_cost_auditor.services.rules.detector_copy import DETECTOR_COPY
+
+pytestmark = [pytest.mark.verifies_requirement("FR-37")]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EMAIL = "fr37@example.com"

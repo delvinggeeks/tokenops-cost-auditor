@@ -151,3 +151,19 @@ UAT-2: one friendly external design partner log set (free audit) — verify
 export instructions comprehensible without a call.
 Exit criteria: zero false-positive findings judged embarrassing; report
 readable by a non-founder CTO in <10 minutes.
+
+## 6. Requirement-bound tests (LE-7, docs/09-SDLC.md §6; folds in T-D5)
+
+The T-XXX ids above (§3) remain the human-readable test-plan vocabulary, but
+they are no longer the machine-checked requirement<->test binding. Tests
+that verify an FR/NFR now also carry `@pytest.mark.verifies_requirement("FR-nn")`
+(pytest-requirements, ADR-8, docs/02-HLD.md §5) — `uv run pytest
+--collect-only` yields the full requirement->test map without running a
+single test body, and `docs/04-TRACEABILITY.md` is derived from it rather
+than hand-authored. `tests/conftest.py::pytest_collection_modifyitems` fails
+collection outright if a marker names an id absent from
+`docs/01-REQUIREMENTS.md`. `tests/test_traceability.py` (LE-7 tooling — owns
+no row here, CLAUDE.md rule 7) is the owner of this convention: it pins
+M-priority coverage (with an explicit, never-silent exemption list for
+manual-only, perf-excluded, and design-only/unbuilt requirements), the
+backfill floor, and the plugin's guarantees via probe.

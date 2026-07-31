@@ -18,6 +18,8 @@ import pytest
 from tokenops_cost_auditor.config import Settings
 from tokenops_cost_auditor.services.dashboard.shapes import ShapeClass, classify, compute_shapes
 
+pytestmark = [pytest.mark.verifies_requirement("FR-36")]
+
 BASE = datetime(2026, 7, 1, tzinfo=UTC)
 
 

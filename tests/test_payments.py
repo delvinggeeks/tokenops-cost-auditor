@@ -122,6 +122,7 @@ def upload(client: TestClient, email: str):
     )
 
 
+@pytest.mark.verifies_requirement("FR-18")
 class TestTPAY01Webhooks:
     def test_razorpay_valid_signature_grants_credit(
         self, pclient: TestClient, papp: FastAPI
@@ -154,6 +155,7 @@ class TestTPAY01Webhooks:
             assert payment.amount == 500.0 and payment.currency == "USD"
 
 
+@pytest.mark.verifies_requirement("FR-18")
 class TestTPAY02InvalidSignature:
     def test_razorpay_bad_signature_400(self, pclient: TestClient) -> None:
         body = rzp_event("x@example.com", "evt2", int(time.time()))
@@ -176,6 +178,7 @@ class TestTPAY02InvalidSignature:
         assert resp.status_code == 400
 
 
+@pytest.mark.verifies_requirement("FR-18")
 class TestTPAY03WebhookUnlocksUpload:
     def test_paid_then_upload_succeeds(self, pclient: TestClient) -> None:
         body = rzp_event("buyer@example.com", "evt3", int(time.time()))
@@ -190,6 +193,7 @@ class TestTPAY03WebhookUnlocksUpload:
         assert upload(pclient, "buyer@example.com").status_code == 402
 
 
+@pytest.mark.verifies_requirement("FR-18")
 class TestTPAY04UnpaidBlocked:
     def test_402_with_payment_links_and_envelope(self, pclient: TestClient) -> None:
         resp = upload(pclient, "unpaid@example.com")
@@ -200,6 +204,7 @@ class TestTPAY04UnpaidBlocked:
         assert "buy.stripe.com" in body["error"]["message"]
 
 
+@pytest.mark.verifies_requirement("FR-18")
 class TestTPAY05AdminMarkPaid:
     def test_mark_paid_unlocks_and_comp_is_zero(self, pclient: TestClient, papp: FastAPI) -> None:
         resp = pclient.post(
@@ -221,6 +226,7 @@ class TestTPAY05AdminMarkPaid:
             assert payment.audit_id is not None  # consumed by the upload
 
 
+@pytest.mark.verifies_requirement("FR-27")
 class TestTPAY06TimestampTolerance:
     def test_stale_razorpay_event_ignored(self, pclient: TestClient, papp: FastAPI) -> None:
         body = rzp_event("late@example.com", "evt4", int(time.time()) - 600)  # 10 min old
@@ -244,6 +250,7 @@ class TestTPAY06TimestampTolerance:
         assert resp.status_code == 400  # FR-27: timestamp outside tolerance
 
 
+@pytest.mark.verifies_requirement("FR-27")
 class TestTPAY07Dedup:
     def test_duplicate_event_acknowledged_once(self, pclient: TestClient, papp: FastAPI) -> None:
         body = rzp_event("dup@example.com", "evt5", int(time.time()))
@@ -257,6 +264,7 @@ class TestTPAY07Dedup:
         assert len(payments) == 1  # exactly ONE credit
 
 
+@pytest.mark.verifies_requirement("FR-19")
 class TestTADM01Token:
     def test_no_or_wrong_token_is_404(self, pclient: TestClient) -> None:
         assert pclient.get("/admin").status_code == 404
@@ -267,6 +275,7 @@ class TestTADM01Token:
         assert client.get("/admin", headers={"X-Admin-Token": ""}).status_code == 404
 
 
+@pytest.mark.verifies_requirement("FR-19")
 class TestTADM02Rerun:
     def test_rerun_idempotent(self, pclient: TestClient, papp: FastAPI) -> None:
         audit_id = seed_audit(papp, "openai_small.jsonl", email="adm@example.com")
@@ -280,6 +289,7 @@ class TestTADM02Rerun:
         assert status["status"] == "done"  # re-ran to completion, no duplicates (FR-19)
 
 
+@pytest.mark.verifies_requirement("FR-19")
 class TestTADM03Purge:
     def test_manual_purge(self, pclient: TestClient, papp: FastAPI) -> None:
         audit_id = seed_audit(papp, "openai_small.jsonl", email="purge@example.com")
@@ -300,6 +310,7 @@ class TestTADM03Purge:
         assert pclient.post(f"/admin/audits/{audit_id}/rerun", headers=ADMIN).status_code == 400
 
 
+@pytest.mark.verifies_requirement("FR-19")
 class TestTADM04ListView:
     def test_admin_list_shows_audits(self, pclient: TestClient, papp: FastAPI) -> None:
         audit_id = seed_audit(papp, "openai_small.jsonl", email="list@example.com")
@@ -309,6 +320,7 @@ class TestTADM04ListView:
         assert "list@example.com" in page.text
 
 
+@pytest.mark.verifies_requirement("FR-19")
 class TestTADM05DownloadReport:
     def test_admin_downloads_pdf_and_action_is_logged(
         self, pclient: TestClient, papp: FastAPI
