@@ -7,6 +7,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 
 from tokenops_cost_auditor.config import Settings
@@ -24,6 +25,7 @@ def load_script(name: str):
     return module
 
 
+@pytest.mark.verifies_requirement("FR-29")
 class TestTOPS04PricingRefresh:
     def test_diff_on_fixture_page_lists_new_changed_and_never_writes(self) -> None:
         refresh = load_script("pricing_refresh")

@@ -4435,3 +4435,25 @@ BUILD THIN: no standard exists for machine-readable req→test links (OTel's tes
 requirement-id attribute); OpenFastTrace is healthy and GPL-3.0-clean for CLI use but costs a JVM
 in CI and an id rename; Doorstop/StrictDoc want to own the requirement store; sphinx-needs is
 Sphinx-only; pytest-requirements is one-directional. NOW stays empty: the founder sequences.
+2026-07-31 (T-T1 · LE-7 — requirement-bound tests, built via the LE-5 loop, Issue #113): adopted
+pytest-requirements (ADR-8, docs/02-HLD.md §5) — @pytest.mark.verifies_requirement("FR-nn") is now
+the single source of the requirement<->test edge. tests/conftest.py adds a pytest_collection_modifyitems
+guard: a marker naming an id absent from docs/01-REQUIREMENTS.md fails collection outright (proven by
+a pytester probe, not just asserted). Backfilled markers across the core v1.0 matrix — test_ingest,
+test_pricing, test_rules, test_api, test_auth, test_payments, test_lifecycle, test_exporter, test_cli,
+test_runner, test_report_web, test_polish, test_ops_scripts, test_perf, test_smoke, test_pricing_age,
+test_import_guard, test_explorer, test_spend_anomaly, test_cohort_export, test_shapes,
+test_fr37_journey, test_showback, test_runs — covering every M-priority FR/NFR (FR-01..FR-33/35..38,
+NFR-01..15) with at least one marked test, except a small, DECLARED (never silent) exemption set:
+NFR-02/08/09 (manual ops drills, not pytest-collectible), NFR-04 (T-PERF-01 is @pytest.mark.perf,
+excluded from the default -m 'not perf' run), and FR-34/39..42 (design-registered/unbuilt or
+trigger-gated, zero build authorized per docs/04). tests/test_traceability.py is the new LE-7 tooling
+owner (CLAUDE.md rule 7 — owns no docs/04 row, carries no marker itself): pins M-priority coverage,
+a 250-test backfill floor (up from zero before this card), the tooling-owns-no-marker convention for
+gate_round/loop_driver/loop_status/auto_merge_workflow/pricing_verify/pricing_sync, and four
+pytester-isolated probes of the plugin's guarantees (self-registering marker, JUnit XML
+requirement_id property, -m verifies_requirement selection, collect-only map-building). Full suite
+(uv run pytest -m 'not perf') green at 1345 collected tests, 295 now carrying a requirement marker.
+docs/05-TEST-PLAN.md §6 added (folds in T-D5) documenting the marker convention alongside the
+existing T-XXX vocabulary. Out of scope, per the card: the CI gate (T-T2/LE-8) and the console
+(T-T3/LE-9) — scripts/trace.py does not exist yet, built next.

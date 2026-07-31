@@ -31,6 +31,7 @@ def make_frame(rows: list[dict]) -> pd.DataFrame:
     return frame
 
 
+@pytest.mark.verifies_requirement("FR-05")
 class TestTPRC01RateLookup:
     def test_exact_lookup(self) -> None:
         rate = TABLE.rate("anthropic", "claude-opus-4-8", date(2026, 6, 15))
@@ -59,6 +60,7 @@ class TestTPRC01RateLookup:
         assert TABLE.rate("Anthropic", "Claude-Opus-4-8", date(2026, 6, 15)).input == 5.0
 
 
+@pytest.mark.verifies_requirement("FR-05")
 class TestTPRC02EffectiveDateBoundaries:
     def test_sonnet5_intro_last_day(self) -> None:
         rate = TABLE.rate("anthropic", "claude-sonnet-5", date(2026, 8, 31))
@@ -73,6 +75,7 @@ class TestTPRC02EffectiveDateBoundaries:
             TABLE.rate("anthropic", "claude-opus-4-8", date(2025, 1, 1))
 
 
+@pytest.mark.verifies_requirement("FR-05")
 class TestTPRC03UnknownModelPath:
     def test_unknown_model_raises_gap(self) -> None:
         with pytest.raises(PricingGapError, match="nonexistent/mystery-model"):
@@ -91,6 +94,7 @@ class TestTPRC03UnknownModelPath:
         assert priced["cost_usd"].notna().sum() == 1
 
 
+@pytest.mark.verifies_requirement("FR-06")
 class TestTPRC04GoldenValues:
     def test_golden_csv_exact(self) -> None:
         """Every golden row (independent spreadsheet arithmetic) matches the coster
@@ -165,6 +169,8 @@ ROW = st.builds(
 )
 
 
+@pytest.mark.verifies_requirement("FR-06")
+@pytest.mark.verifies_requirement("NFR-07")
 class TestTPRC05ReconcileProperty:
     @settings(max_examples=200, deadline=None)
     @given(rows=st.lists(ROW, min_size=1, max_size=60))

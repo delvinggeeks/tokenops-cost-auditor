@@ -88,6 +88,14 @@ ADR-6 Payment links over full checkout integration: 14-day scope; webhook
 ADR-7 Prefix-hash technique for cache/duplicate detection: SHA-256 over
 first N tokens' text when text present in logs, else token-count
 heuristics; guarantees FR-22 (no prompt text persisted).
+ADR-8 pytest-requirements over a hand-rolled marker (LE-7, docs/09-SDLC.md
+§6): BSD-3, pytest-only dependency, `@pytest.mark.verifies_requirement(id)`
+self-registers (zero PytestUnknownMarkWarning), emits `<property
+name="requirement_id">` into JUnit XML, supports `-m verifies_requirement`.
+Tool scan (STATUS.md 2026-07-31) ruled out OpenFastTrace (JVM in CI),
+Doorstop/StrictDoc (want to own the requirement store), sphinx-needs
+(Sphinx-only) — build thin, adopt the one-directional pytest-native plugin;
+the up-direction walk is CI/console tooling (LE-8/LE-9), not this library.
 
 ## 6. Security model
 

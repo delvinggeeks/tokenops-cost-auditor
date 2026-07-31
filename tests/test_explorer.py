@@ -31,6 +31,8 @@ from tokenops_cost_auditor.persistence.models import (
 from tokenops_cost_auditor.services.dashboard import explorer
 from tokenops_cost_auditor.services.report.model import EQUIV_SPEND_LINE
 
+pytestmark = [pytest.mark.verifies_requirement("FR-32")]
+
 EMAIL = "owner@example.com"
 HDR = {"X-User-Email": EMAIL}
 DETECTOR_IDS = re.compile(r"\b(d[1-6]_[a-z_]+)\b")

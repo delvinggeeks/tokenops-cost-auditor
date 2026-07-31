@@ -41,6 +41,7 @@ def waste_report() -> ReportModel:
     return ReportModel.build("test-audit-01", priced, findings, unpriced, TABLE)
 
 
+@pytest.mark.verifies_requirement("FR-14")
 class TestTREP02Pdf:
     def test_pdf_renders_nonempty_with_summary(
         self, waste_report: ReportModel, tmp_path: Path
@@ -90,6 +91,7 @@ class TestReportPlainEnglishParity:
             assert str(escape(detector_copy.summary(f.detector))) in html
 
 
+@pytest.mark.verifies_requirement("FR-14")
 class TestTREP04Methodology:
     def test_methodology_and_data_handling_present(self, waste_report: ReportModel) -> None:
         html = render_report_html(waste_report, template="pdf/report.html")
@@ -117,6 +119,7 @@ class TestTREP04Methodology:
         assert "not a machine-verified rate" not in html  # no seat copy bleed
 
 
+@pytest.mark.verifies_requirement("FR-15")
 class TestTREP0506SignedUrls:
     SECRET = "test-secret"
 
@@ -219,6 +222,7 @@ class TestD11SavingsCap:
         assert "capped at your observed monthly spend" in report.methodology
 
 
+@pytest.mark.verifies_requirement("FR-30")
 class TestTREP09EquivSpend:
     """FR-30 (R-EQUIV-SPEND): subscription-plan traffic gets the verbatim
     API-equivalent framing in header + methodology; metered traffic does not."""

@@ -4,6 +4,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 from tokenops_cost_auditor.services.ingest import load
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -19,6 +21,7 @@ def _load_exporter():  # scripts/ is not a package; load by path
     return module
 
 
+@pytest.mark.verifies_requirement("FR-24")
 class TestTEXP01ExportsIngestibleJsonl:
     def test_export_then_ingest(self, tmp_path: Path) -> None:
         exporter = _load_exporter()
@@ -47,6 +50,7 @@ class TestTEXP01ExportsIngestibleJsonl:
         assert exporter.export(empty, tmp_path / "out.jsonl") == 0
 
 
+@pytest.mark.verifies_requirement("FR-24")
 class TestTEXP02NoTextInOutput:
     def test_output_carries_no_prompt_or_completion_text(self, tmp_path: Path) -> None:
         """FR-22 at exporter level: fixture content markers must not survive export."""

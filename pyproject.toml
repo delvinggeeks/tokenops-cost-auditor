@@ -28,6 +28,10 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-cov",
+    # LE-7 (docs/09-SDLC.md §6): @pytest.mark.verifies_requirement(id) is the
+    # single source of the requirement<->test edge; docs/04 becomes derived
+    # from it rather than hand-authored. BSD-3, pytest-only dependency (ADR-8).
+    "pytest-requirements",
     "hypothesis",
     "ruff",
     "mypy",

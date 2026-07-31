@@ -44,6 +44,7 @@ def seed_audit(app: FastAPI, fixture: str, email: str = "runner@example.com") ->
         return audit.id
 
 
+@pytest.mark.verifies_requirement("FR-22")
 class TestRunnerEndToEnd:
     def test_waste_pack_full_pipeline(self, app: FastAPI, settings) -> None:
         audit_id = seed_audit(app, "waste_pack_anthropic.jsonl")
@@ -95,6 +96,7 @@ class TestRunnerEndToEnd:
         assert len(ids) == len(set(ids)), "re-run must not duplicate findings"
 
 
+@pytest.mark.verifies_requirement("FR-14")
 class TestTREP01ModelNumbersEqualEngineNumbers:
     def test_report_matches_engine(self, app: FastAPI, settings) -> None:
         audit_id = seed_audit(app, "waste_pack_anthropic.jsonl", email="rep@example.com")
@@ -137,6 +139,7 @@ class TestTREP01ModelNumbersEqualEngineNumbers:
         assert json.dumps(one, sort_keys=True) == json.dumps(two, sort_keys=True)
 
 
+@pytest.mark.verifies_requirement("FR-14")
 class TestTREP03JsonSchema:
     REQUIRED: typing.ClassVar[dict[str, type]] = {
         "schema_version": int,
@@ -182,6 +185,7 @@ class TestTREP03JsonSchema:
             }
 
 
+@pytest.mark.verifies_requirement("FR-28")
 class TestTREP08PricingProvenance:
     def test_json_carries_pricing_version_and_unpriced(self, tmp_path: Path) -> None:
         frame, _ = load(FIXTURES / "openai_small.jsonl")
@@ -203,6 +207,7 @@ class TestTREP08PricingProvenance:
         assert payload2["pricing"]["unpriced_model_count"] == 1
 
 
+@pytest.mark.verifies_requirement("NFR-11")
 class TestTNFR11Utc:
     def test_report_days_are_utc_dates_and_aggregate_days_match(self) -> None:
         frame, _ = load(FIXTURES / "waste_pack_anthropic.jsonl")

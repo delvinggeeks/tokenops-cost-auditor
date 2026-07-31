@@ -5,6 +5,8 @@ engine must be deterministic by construction."""
 import ast
 from pathlib import Path
 
+import pytest
+
 SRC = Path(__file__).parents[1] / "src" / "tokenops_cost_auditor" / "services"
 GUARDED_PACKAGES = ("rules", "pricing")
 # Single deterministic modules held to the same law (vv-gate 01334e8 f.4: the
@@ -46,6 +48,7 @@ def iter_imports(path: Path) -> set[str]:
     return roots
 
 
+@pytest.mark.verifies_requirement("NFR-01")
 class TestTNFR01ImportGuard:
     def test_no_network_or_llm_imports_in_engine(self) -> None:
         offenders: list[str] = []

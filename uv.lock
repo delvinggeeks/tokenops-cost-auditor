@@ -1214,6 +1214,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-requirements"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/bc/1a0aa3b0e651da6ca689a0d0acda406d34db0955f3fed27ce070e9e4dec0/pytest_requirements-0.3.0.tar.gz", hash = "sha256:47003696eca3413cc19e6ccb1a5e7bc56c1a365e0f64c4e33caf40583b7d168e", size = 11767, upload-time = "2026-06-05T09:58:46.747Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/5c/617be3eb5df96b1b8d2dfb36c5edaeb714ea575fe23ea0f00812d93b27d4/pytest_requirements-0.3.0-py3-none-any.whl", hash = "sha256:2191cc4d8b10c81b25c93342581cf607a3d4e0ca399a94127d251c8f92a4f3f9", size = 5657, upload-time = "2026-06-05T09:58:45.777Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -1474,6 +1486,7 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-requirements" },
     { name = "ruff" },
 ]
 
@@ -1509,6 +1522,7 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-requirements" },
     { name = "ruff" },
 ]
 

@@ -4,6 +4,7 @@
 import re
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
@@ -13,6 +14,7 @@ from tokenops_cost_auditor.main import create_app
 from tokenops_cost_auditor.obs import errors as obs_errors
 
 
+@pytest.mark.verifies_requirement("NFR-05")
 class TestTOBS01RequestIdLogging:
     def test_request_id_present_in_log_lines(self, client: TestClient) -> None:
         with capture_logs() as logs:
@@ -28,6 +30,7 @@ class TestTOBS01RequestIdLogging:
         assert resp.headers["X-Request-ID"] == "trace-abc-123"
 
 
+@pytest.mark.verifies_requirement("NFR-05")
 class TestTOBS02Healthz:
     def test_healthy(self, client: TestClient) -> None:
         resp = client.get("/healthz")
@@ -53,6 +56,7 @@ class TestTOBS02Healthz:
             bad_app.state.engine.dispose()
 
 
+@pytest.mark.verifies_requirement("NFR-06")
 class TestTOBS03ErrorHook:
     def test_error_hook_called_on_unhandled_error(self, app: FastAPI, monkeypatch) -> None:
         captured: list[BaseException] = []

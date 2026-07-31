@@ -18,6 +18,7 @@ F3 = FIXTURES / "mixed_dirty.jsonl"
 F4 = FIXTURES / "generic.csv"
 
 
+@pytest.mark.verifies_requirement("FR-01")
 class TestTING01FormatDetection:
     def test_openai_detected(self) -> None:
         assert detect_format(F1).name == "openai_jsonl"
@@ -35,6 +36,7 @@ class TestTING01FormatDetection:
             detect_format(p)
 
 
+@pytest.mark.verifies_requirement("FR-01")
 class TestTING02OversizeRejected:
     def test_oversize(self, tmp_path: Path) -> None:
         p = tmp_path / "big.jsonl"
@@ -43,6 +45,7 @@ class TestTING02OversizeRejected:
             check_file(p, max_upload_mb=1)
 
 
+@pytest.mark.verifies_requirement("FR-01")
 class TestTING03WrongExtensionRejected:
     def test_wrong_extension(self, tmp_path: Path) -> None:
         p = tmp_path / "logs.txt"
@@ -51,6 +54,7 @@ class TestTING03WrongExtensionRejected:
             check_file(p, max_upload_mb=200)
 
 
+@pytest.mark.verifies_requirement("FR-01")
 class TestTING04EmptyFile:
     def test_empty_file_actionable(self, tmp_path: Path) -> None:
         p = tmp_path / "empty.jsonl"
@@ -59,6 +63,7 @@ class TestTING04EmptyFile:
             check_file(p, max_upload_mb=200)
 
 
+@pytest.mark.verifies_requirement("FR-02")
 class TestTING05ColumnMapping:
     def test_openai_mapping(self) -> None:
         frame, report = load(F1)
@@ -92,6 +97,7 @@ class TestTING05ColumnMapping:
         assert frame["request_id"].str.startswith("csv-").all()
 
 
+@pytest.mark.verifies_requirement("FR-02")
 class TestPrecomputedPrefixHashPassthrough:
     """Counts-only JSONL shippers may precompute prefix_hash client-side (same
     contract as generic CSV) — honored by both JSONL parsers since D11-12 prep."""
@@ -143,6 +149,7 @@ class TestPrecomputedPrefixHashPassthrough:
         assert frame["prefix_hash"].iloc[0] != "c" * 64  # computed from text instead
 
 
+@pytest.mark.verifies_requirement("FR-02")
 class TestTING06RawExtraPreserved:
     def test_openai_unknown_field_preserved(self) -> None:
         frame, _ = load(F1)
@@ -160,6 +167,7 @@ class TestTING06RawExtraPreserved:
         assert frame["raw_extra"].map(lambda d: not (set(d) & forbidden)).all()
 
 
+@pytest.mark.verifies_requirement("FR-02")
 class TestTING07UTCCoercion:
     def test_epoch_and_naive_and_offset(self) -> None:
         rows = [
@@ -202,6 +210,7 @@ class TestTING07UTCCoercion:
         assert result.frame.loc[2, "ts"] == datetime(2026, 6, 1, 10, 0, tzinfo=UTC)
 
 
+@pytest.mark.verifies_requirement("FR-03")
 class TestTING08DirtyFixtureErrorFile:
     def test_row_error_file_contents(self, tmp_path: Path) -> None:
         _frame, report = load(F3)
@@ -217,6 +226,7 @@ class TestTING08DirtyFixtureErrorFile:
         assert "missing or invalid prompt_tokens" in content
 
 
+@pytest.mark.verifies_requirement("FR-03")
 class TestTING09Below95Aborts:
     def test_dirty_fixture_aborts(self) -> None:
         _, report = load(F3)  # 92% valid < 95%
