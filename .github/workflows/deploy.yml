@@ -62,8 +62,13 @@ jobs:
           uv run ruff check .
           uv run mypy
           uv run pytest -q -m "not perf"
-      - name: strict pricing verification (R-AUTO-PRICING)
-        run: uv run python scripts/pricing_verify.py
+      - name: pricing sync (R-LIVE-PRICING — materializes the machine overlay)
+        run: uv run python scripts/pricing_sync.py
+      - name: strict pricing verification (R-AUTO-PRICING, --strict-held)
+        # Deploy is stricter than CI on purpose: a held swing means a rate we ship in
+        # customer-facing reports is knowingly diverged from source, so it must be
+        # confirmed and re-synced before it reaches production.
+        run: uv run python scripts/pricing_verify.py --strict-held
 
   deploy-staging:
     needs: [resolve, gate]

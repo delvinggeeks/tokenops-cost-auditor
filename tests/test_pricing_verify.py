@@ -81,16 +81,51 @@ class TestStrictContract:
         verdicts = verify(TABLE, full_feed(), today=NOW)
         assert verdicts and all(v.status == "verified" for v in verdicts)
 
-    def test_04_mismatch_is_named_and_fails(self, tmp_path: Path) -> None:
+    def test_04_sub_threshold_mismatch_is_named_and_fails(self, tmp_path: Path) -> None:
+        """A divergence BELOW gate 4's jump threshold is a hard failure: pricing_sync
+        would have auto-applied it, so its persistence means the sync did not run or
+        did not write — a real defect, not a held swing."""
         feed = full_feed()
-        feed["gpt-5.4"]["input_cost_per_token"] = 9.99e-06  # wrong on purpose
+        feed["gpt-5.4"]["input_cost_per_token"] = 2.6e-06  # 4% off — under JUMP
         verdicts = verify(TABLE, feed, today=NOW)
         bad = [v for v in verdicts if v.status == "mismatch"]
         assert len(bad) == 1 and bad[0].model == "gpt-5.4"
-        assert "9.99" in bad[0].detail  # the divergent number is SHOWN
+        assert "2.6" in bad[0].detail  # the divergent number is SHOWN
         feed_file = tmp_path / "feed.json"
         feed_file.write_text(json.dumps(feed))
         assert main(["--feed", str(feed_file)]) == 1  # strict: nonzero exit
+
+    def test_04b_large_swing_is_HELD_not_fatal_in_ci_but_fatal_on_deploy(
+        self, tmp_path: Path
+    ) -> None:
+        """R-LIVE-PRICING gate 4 holds a swing beyond JUMP rather than applying it
+        blind, so such a row is NOT 'unverified' — corroboration ran and the divergence
+        is known. Classifying it as a mismatch made the two rulings mutually exclusive:
+        a legitimate large price cut bricked CI and deploy forever. CI reports it;
+        deploy (--strict-held) still refuses to ship it."""
+        feed = full_feed()
+        feed["gpt-5.4"]["input_cost_per_token"] = 9.99e-06  # ~300% — over JUMP
+        verdicts = verify(TABLE, feed, today=NOW)
+        held = [v for v in verdicts if v.status == "held"]
+        assert len(held) == 1 and held[0].model == "gpt-5.4"
+        assert not [v for v in verdicts if v.status == "mismatch"]
+        assert "9.99" in held[0].detail  # the divergent number is still SHOWN
+        feed_file = tmp_path / "feed.json"
+        feed_file.write_text(json.dumps(feed))
+        assert main(["--feed", str(feed_file)]) == 0  # CI: reported, not fatal
+        assert main(["--feed", str(feed_file), "--strict-held"]) == 1  # deploy: refused
+
+    def test_04c_swing_mirrors_gate_4_input_output_only(self, tmp_path: Path) -> None:
+        """The hold test must mirror pricing_sync's gate 4 EXACTLY, which measures the
+        swing over input and output only. A huge cache-component move with input and
+        output intact is a MISMATCH — the sync would apply it, so calling it held would
+        hide a real failure behind a non-fatal verdict."""
+        feed = full_feed()
+        key = "gpt-5.4"
+        feed[key]["cache_read_input_token_cost"] = 9.99e-06  # cache only
+        verdicts = verify(TABLE, feed, today=NOW)
+        assert [v.model for v in verdicts if v.status == "mismatch"] == [key]
+        assert not [v for v in verdicts if v.status == "held"]
 
     def test_05_uncovered_row_fails(self, tmp_path: Path) -> None:
         feed = full_feed()

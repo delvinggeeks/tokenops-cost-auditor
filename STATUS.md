@@ -4340,3 +4340,32 @@ diagram-only diff (the architect's own artifact surface) drew no architect, and 
 card's "D6/D13-style pass" DoD would have shipped reviewed by no one. Fixed in the
 same PR: docs/uml/ added to ARCHITECT_TRIGGER with test
 (test_architect_added_for_uml_diagrams); the re-run round must show all five gates.
+
+2026-07-31 (pricing gate unblocked — R-AUTO-PRICING × R-LIVE-PRICING reconciled): main was RED and
+every PR blocked, for a reason neither ruling anticipated. Diagnosis: `pricing_verify` checks the
+EFFECTIVE table (base + machine overlay), but `prices.auto.yaml` is a gitignored RUNTIME artifact
+and neither ci.yml nor deploy.yml ever ran `pricing_sync` — so CI verified the hand-authored base
+against a live feed, while R-LIVE-PRICING states that base "is never touched". That gate was
+therefore structurally guaranteed to go red on any upstream feed move, permanently, and the only
+hand-fix available was the one edit the design forbids. Second, deeper conflict: gate 4 of
+pricing_sync deliberately HOLDS a swing beyond ±60% ("a one-off feed glitch must not rewrite money
+math") while pricing_verify demanded exact corroboration — so during a LEGITIMATE large price cut
+the two rulings were mutually exclusive and the safety hold bricked shipping. FIX: (a) ci.yml and
+deploy.yml now run `pricing_sync` before `pricing_verify`, materializing the overlay; (b) a
+divergence beyond gate 4's threshold is classified `held` — reported loudly, non-fatal in CI,
+because corroboration RAN and the divergence is known, which is not "unverified" in
+R-AUTO-PRICING's sense; (c) deploy runs `--strict-held` and still refuses, because a held row means
+a rate we ship in customer-facing reports knowingly diverges from source. A SUB-threshold
+divergence stays a hard failure — that one means the sync did not run, a real defect. Live result:
+gpt-5.6-terra (20% cut) now AUTO-APPLIES via the overlay; gpt-5.6-luna (80% cut) is HELD and named;
+CI exit 0, deploy exit 1 until luna is confirmed at source. Correctness catch during the build: my
+first `_worst_swing` measured all four rate components, but gate 4 measures INPUT and OUTPUT only —
+that mismatch would have let the verifier call a row "held" that the sync would actually apply,
+hiding a real failure behind a non-fatal verdict; now mirrored exactly and pinned by
+test_04c. Two pre-existing tests changed meaning and were updated honestly rather than deleted:
+test_04 now uses a sub-threshold divergence (its intent, "a mismatch is named and fails", intact)
+and test_04b pins the held path in both CI and deploy modes. NOTE a latent trap found en route: the
+pricing tests assume NO overlay exists (they build the feed at a pinned date while `main()` verifies
+at today), so running `pricing_sync` locally before pytest makes them fail; CI is safe because
+pytest runs BEFORE the new sync step, but that ordering is now load-bearing and should be made
+explicit when LE-8 touches this area.
