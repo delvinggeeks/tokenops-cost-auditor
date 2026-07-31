@@ -111,6 +111,17 @@ _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with lo
   maintained baseline, not a one-time artifact) and rendered token-PLACEMENT checks. **Depends on
   T-T4/LE-10** — placement and regression are only observable by rendering ·
   trace: `docs/design/SPEC.md` + `tests/browser/test_visual.py` → diffed baseline in CI
+- **T-A1 · FR-43 | R-AUTHZ** unified principal + single decision point — behaviour-preserving
+  enabler; scope ∩ role ∩ plan, fail-closed. **HARD PRECONDITION of any write API** ·
+  trace: `web/api_auth.py` + `web/authz.py` → `tests/test_authz_matrix.py`
+- **T-A2 · FR-44 | R-AUTHZ** per-stage scope families (read/write across the six lifecycle
+  stages) + consent/Developer-Settings copy. **After T-A1** · trace: `web/api_scopes.py` → journey
+- **T-A3 · FR-45 | R-AUTHZ** admin identity — attributable `/admin/*` actions, rotatable ·
+  trace: `web/routes_admin.py` → audit-log row per action
+- **T-A4 · FR-46 | R-AUTHZ** OAuth revocation (RFC 7009) + `/api/v1/me` introspection (RFC 7662) ·
+  trace: `web/routes_oauth.py` → revoked-token-refused test
+- **T-A5 · FR-47 | R-AUTHZ** MCP as a credential resolver + the omitted read tools. **After T-A1** ·
+  trace: `mcp/server.py` → same-authorizer test
 - **T-T4 · LE-10 | R-SYSTEM-TEST** demoable system validation — give `system-tester` a browser
   (Playwright against the existing `make preview` app) so htmx SWAPS and JS-only surfaces (Razorpay
   `checkout.js` modal) are EXECUTED rather than inferred, and make the recorded click path the PR

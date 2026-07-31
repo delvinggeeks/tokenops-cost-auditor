@@ -4496,3 +4496,20 @@ docs/09 LE-7 card and the QUEUE T-T1 line, so the repo would have instructed a b
 the marker ADR-8 says to adopt. Both restored. Issue #113 — what the loop is actually building from
 — always carried the correct instruction, so no wrong work was dispatched. Lesson: a clean rebuild
 must be diffed against what it replaces, not just against main.
+
+2026-08-01 (R-AUTHZ intake — authorization model decomposed into vertical slices, analysis only):
+founder directive "proceed as per the rules, vertical slices, smart zone, loop engineering, separate
+session". VERIFIED DEFECT behind it: `ReadPrincipal` carries user_id/scopes/kind — NO role, NO
+workspace — and routes_api_read.py never references authz/Perm/role, so the API authorizes on SCOPES
+while the app authorizes on ROLES and the two never compose. Benign today (both read scopes map to
+VIEW, which every role holds); NOT benign the moment a write scope exists, when a member-minted token
+could do what the matrix reserves for owner. Hence FR-43 is recorded as a HARD PRECONDITION of any
+write API — sequencing constraint, not preference. Nine auth mechanisms already exist (session,
+session+pay, rt_/at_, ik_, device, admin, HMAC, signed-URL, public): the gap is not authentication
+but the absence of one authorization model they resolve into. Registered docs/01 §K FR-43..47 + QUEUE
+T-A1..T-A5. FR-43 unified principal (behaviour-preserving enabler, every existing journey test is the
+proof) → FR-44 per-stage scope families → FR-45 admin identity (today NO admin action is attributable
+to a person) · FR-46 OAuth revocation RFC-7009 + /api/v1/me introspection RFC-7662 (a leaked at_ has
+no kill path) · FR-47 MCP as a resolver, not a parallel auth path. NOT DISPATCHED: T-T1 (#113) is
+`loop:in-progress`, so WIP discipline holds — nothing new labelled loop:ready while the loop is
+mid-ticket (the fb7d84b race lesson). Sequencing into NOW remains the founder's.
