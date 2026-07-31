@@ -275,3 +275,56 @@ FR-42 (S) [R-ENT-DEPLOY, R-MARKETPLACE b] Scale claims discipline: public
   triggers. Accept: docs-site perf claims trace to a measured run; stale-era
   figures carry their caveat (six-detector detect timing flagged until
   re-measured).
+
+## K. Authorization model & credential surface [added 2026-08-01, R-AUTHZ — design home: docs/02 §6 + web/api_auth, web/authz]
+
+Driven by a verified defect, not a proposal. `ReadPrincipal` carries `user_id`,
+`scopes`, `kind` — **no role, no workspace** — and `web/routes_api_read.py` never
+references `authz`, `Perm` or `role`. So the API authorizes on SCOPES while the app
+authorizes on ROLES, and the two never compose. This is harmless today because both
+read scopes map to `VIEW`, which every role holds. **It stops being harmless the
+moment a write scope exists**: a token minted by a `member` would perform actions the
+matrix reserves for `owner` (billing, members, workspace). FR-44 is therefore a HARD
+PRECONDITION of any write API — building the write surface first bakes the escalation
+in. Nine authentication mechanisms already exist (session, session+pay, `rt_`/`at_`,
+`ik_`, device, admin, HMAC, signed-URL, public); the gap is not authentication but the
+absence of one authorization model they resolve into.
+
+FR-43 (M) [R-AUTHZ] Unified principal + single decision point. Every credential kind
+  resolves to one `Principal{identity, workspace, role, scopes, credential_kind,
+  plan}`, and every guarded route asks one authorizer — `can(principal, action,
+  resource)` evaluated as scope ∩ role ∩ plan, FAIL-CLOSED. Behaviour-preserving
+  enabler: no new capability, no new surface. Accept: every existing journey test
+  passes unchanged (the proof it preserved behaviour); a table-driven test asserts the
+  intersection for every (credential_kind × role × scope) combination; an unknown or
+  absent principal is denied, never defaulted. Tenancy/RBAC: this IS the tenancy
+  boundary — the engine stays role-blind. Honest state: a denial names WHICH of scope,
+  role or plan failed, never a bare 403.
+
+FR-44 (M) [R-AUTHZ] Per-stage scope families. The two read scopes become read/write
+  families across the six lifecycle stages (`PLAN.md` §0.0 INPUT→ANALYZE→REPORT→ACT→
+  PREVENT→IMPROVE), so least privilege is expressible. Accept: consent screen and
+  Developer Settings render each scope in the plain sentence a non-AI-native CTO
+  understands (ux jargon law); a token cannot exceed its app's ceiling (`is_subset`);
+  scope∩role is enforced per FR-43. **Depends on FR-43.** Out of scope: the write
+  ENDPOINTS themselves — this slice ships the vocabulary and its enforcement only.
+
+FR-45 (M) [R-AUTHZ] Admin identity. The single shared global `X-Admin-Token` becomes a
+  per-admin identity so an admin action is attributable to a person. Accept: every
+  `/admin/*` action writes an audit-log row naming the actor; the 404-on-bad-token
+  posture is preserved or consciously retired (see the `/openapi.json` contradiction in
+  BACKLOG); rotation is possible without a redeploy. Rationale: today no admin action
+  can answer "who did what", which every enterprise review asks.
+
+FR-46 (S) [R-AUTHZ] OAuth token revocation (RFC 7009) + introspection (RFC 7662).
+  `/oauth/revoke` kills an `at_` before expiry; `/api/v1/me` lets a client discover its
+  own identity and scopes. Accept: a revoked token is refused on the next call; the
+  Developer Settings app card exposes revoke; introspection returns scopes without
+  leaking the token. Rationale: a leaked access token currently lives until natural
+  expiry with no kill path.
+
+FR-47 (S) [R-AUTHZ] MCP as a credential resolver. The MCP server authenticates into the
+  SAME `Principal` rather than a parallel path, and exposes the read tools it currently
+  omits (`get_audit`, `get_breakdown` exist in REST and the JS SDK but not in MCP).
+  Accept: MCP tool calls traverse the identical authorizer; the tool set matches the
+  read scope family; no enforcement is duplicated MCP-side. **Depends on FR-43.**

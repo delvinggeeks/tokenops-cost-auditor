@@ -95,8 +95,8 @@ card from CANDIDATES (T-D4, T-D5) or a ruling._
 
 _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with loop engineering"): **T-T1 → T-T2 → T-T3-residue**. Dispatched through the LE-5 loop as `loop:ready` issues, NOT built in-session — filing the label and building in the same session races the loop and lands a duplicate on main (the fb7d84b lesson). **T-T2 is filed but deliberately NOT labelled `loop:ready` until T-T1 merges**: the gate cannot go green before the backfill exists, so dispatching both at once guarantees a red PR. Loop state verified live at sequencing time — LOOP_PAUSED running, auto-merge enabled, gate-round REQUIRED, `LOOP_PAT` present, driver green on schedule, zero open `loop:ready` issues._
 
-- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
-  FR/NFR id becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
+- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — **adopt `pytest-requirements`** (BSD-3,
+  pytest-only dep; ADR-8) rather than hand-rolling: `@pytest.mark.verifies_requirement("FR-07")` becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
   authored), plus backfill of the current `tests/` tree; a marker naming an unknown id fails
   collection · trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
 - **T-T2 · LE-8 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
@@ -105,6 +105,34 @@ _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with lo
   Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
   DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
   `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
+- **T-T5 · LE-11 | R-DESIGN** UI/UX spec entry point + visual regression — ONE `docs/design/SPEC.md`
+  indexing the laws that already hold (role-token-only colour, AA contrast per mood, kit composition,
+  motion) so they are findable, plus screenshot re-capture + diff in CI (the 41 audit shots become a
+  maintained baseline, not a one-time artifact) and rendered token-PLACEMENT checks. **Depends on
+  T-T4/LE-10** — placement and regression are only observable by rendering ·
+  trace: `docs/design/SPEC.md` + `tests/browser/test_visual.py` → diffed baseline in CI
+- **T-L1 · LE-12 | LE-6 defect** claim reaper + progress observability — stamp the `loop:in-progress`
+  claim (owner + timestamp), auto-release past a stale threshold, and make "stuck ticket" a first-class
+  line in `loop_status.py`. **Live incident 2026-08-01: #113 wedged ~6h, six driver runs reported
+  success, loop_status said healthy.** Without it every executor death silently halts the factory ·
+  trace: `scripts/loop_driver.py` + `scripts/loop_status.py` → `tests/test_loop_driver.py`
+- **T-A1 · FR-43 | R-AUTHZ** unified principal + single decision point — behaviour-preserving
+  enabler; scope ∩ role ∩ plan, fail-closed. **HARD PRECONDITION of any write API** ·
+  trace: `web/api_auth.py` + `web/authz.py` → `tests/test_authz_matrix.py`
+- **T-A2 · FR-44 | R-AUTHZ** per-stage scope families (read/write across the six lifecycle
+  stages) + consent/Developer-Settings copy. **After T-A1** · trace: `web/api_scopes.py` → journey
+- **T-A3 · FR-45 | R-AUTHZ** admin identity — attributable `/admin/*` actions, rotatable ·
+  trace: `web/routes_admin.py` → audit-log row per action
+- **T-A4 · FR-46 | R-AUTHZ** OAuth revocation (RFC 7009) + `/api/v1/me` introspection (RFC 7662) ·
+  trace: `web/routes_oauth.py` → revoked-token-refused test
+- **T-A5 · FR-47 | R-AUTHZ** MCP as a credential resolver + the omitted read tools. **After T-A1** ·
+  trace: `mcp/server.py` → same-authorizer test
+- **T-T4 · LE-10 | R-SYSTEM-TEST** demoable system validation — give `system-tester` a browser
+  (Playwright against the existing `make preview` app) so htmx SWAPS and JS-only surfaces (Razorpay
+  `checkout.js` modal) are EXECUTED rather than inferred, and make the recorded click path the PR
+  artifact so R-VERTICAL's "a user completed the journey" is SHOWN, not asserted. Validation and
+  demo are the same act. Does NOT rewrite the 46 TestClient journeys ·
+  trace: `tests/browser/` + system-tester charter → walkthrough artifact on the PR
 - **T-T3 · LE-9 | R-TRACE** traceability & delivery console — `scripts/trace.py` builds a derived
   index and serves it three ways: **CLI** (`status`/`walk`/`check`/`baseline`), a **generated
   static docs-site page** regenerated in CI (the auditor artifact — cannot drift), and a **local

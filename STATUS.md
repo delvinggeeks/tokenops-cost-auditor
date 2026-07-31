@@ -4479,3 +4479,148 @@ missing; and splitting informal matrix module cells on commas produced prose fra
 "docs/15); trigger-gated" that were then reported missing. Module checking now fires ONLY on clean
 path-shaped cells and is ADVISORY, never allowed to drive status, because a console that raises false
 defects is the exact failure it exists to fix (pinned by T-TRC-06/07).
+
+2026-07-31 (ADR-8 — traceability build-vs-adopt recorded, and LE-7 CORRECTED): the founder asked
+why tools were researched and then not used. Fair catch: the decision was defensible but never
+recorded, so it read as a default. ADR-8 now states it as a SPLIT, with reconsideration triggers
+written down. ADOPT for LE-7: `pytest-requirements` (BSD-3, 0.3.0 2026-06-05, depends only on
+pytest). PROBED BEFORE ADOPTING rather than trusted from a research summary — installed in a
+throwaway venv: `@pytest.mark.verifies_requirement("FR-07")` self-registers (zero unknown-mark
+warnings), emits `<property name="requirement_id" value="FR-07"/>` into JUnit XML, supports
+`-m verifies_requirement` selection (1 passed / 1 deselected), and a five-line
+`pytest_collection_modifyitems` hook returns `{'FR-07': ['test_probe.py::test_marked']}` WITHOUT
+running the suite. My earlier dismissal of it as "one-directional — half the job" was wrong:
+one-directional is exactly what LE-7 IS, because the reconciliation against docs/01 is LE-8's job.
+Hand-rolling would have reimplemented a maintained BSD-3 library for no gain. BUILD stands for
+LE-8/LE-9: every adoptable tool (OpenFastTrace, Doorstop, StrictDoc) is a requirements MANAGEMENT
+system that wants to own the requirement store, but ours is docs/01 markdown — CLAUDE.md's named
+single requirement source — so adopting means MIGRATING BEFORE MEASURING, whereas the reader
+measured today and found 51 dead links where a grep estimated 22. OpenFastTrace was the closest
+call; its blocker is not the GPL (CLI use is clean) but the `req~fr-07~1` id format, which would
+rename FR ids across docs/01/04/05, CLAUDE.md, QUEUE and STATUS. Triggers to revisit are recorded
+in ADR-8 so this stays a decision rather than an assumption.
+
+
+2026-07-31 (CONTENT-LOSS CATCH — found BY the new board, and what it cost): rendering the delivery
+board showed the T-T1 card still reading "registered pytest marker" — the text ADR-8 superseded when
+it ruled we ADOPT `pytest-requirements` rather than hand-roll one. Cause: rebuilding the console
+branch cleanly off a squash-merged main restored only ONE of the ADR-8 commit's three edits (the
+docs/02 ADR text) and silently dropped the docs/09 LE-7 card and the QUEUE T-T1 line — so the repo
+would have instructed a builder to hand-roll the very thing ADR-8 says to adopt. Both restored here,
+where ADR-8 itself lives. Issue #113, which the loop actually builds from, always carried the correct
+instruction, so no wrong work was dispatched — luck, not design. LESSON, now recorded twice over: a
+clean rebuild must be diffed against WHAT IT REPLACES, not merely against main; and resolving a
+STATUS/QUEUE conflict by stripping markers keeps BOTH sides, which duplicated content five separate
+times this session. "Conflict resolved" and "content correct" are two steps, and only the second one
+matters.
+
+
+2026-08-01 (R-AUTHZ intake — authorization model decomposed into vertical slices, analysis only):
+founder directive "proceed as per the rules, vertical slices, smart zone, loop engineering, separate
+session". VERIFIED DEFECT behind it: `ReadPrincipal` carries user_id/scopes/kind — NO role, NO
+workspace — and routes_api_read.py never references authz/Perm/role, so the API authorizes on SCOPES
+while the app authorizes on ROLES and the two never compose. Benign today (both read scopes map to
+VIEW, which every role holds); NOT benign the moment a write scope exists, when a member-minted token
+could do what the matrix reserves for owner. Hence FR-43 is recorded as a HARD PRECONDITION of any
+write API — sequencing constraint, not preference. Nine auth mechanisms already exist (session,
+session+pay, rt_/at_, ik_, device, admin, HMAC, signed-URL, public): the gap is not authentication
+but the absence of one authorization model they resolve into. Registered docs/01 §K FR-43..47 + QUEUE
+T-A1..T-A5. FR-43 unified principal (behaviour-preserving enabler, every existing journey test is the
+proof) → FR-44 per-stage scope families → FR-45 admin identity (today NO admin action is attributable
+to a person) · FR-46 OAuth revocation RFC-7009 + /api/v1/me introspection RFC-7662 (a leaked at_ has
+no kill path) · FR-47 MCP as a resolver, not a parallel auth path. NOT DISPATCHED: T-T1 (#113) is
+`loop:in-progress`, so WIP discipline holds — nothing new labelled loop:ready while the loop is
+mid-ticket (the fb7d84b race lesson). Sequencing into NOW remains the founder's.
+
+
+2026-08-01 (LOST-SCOPE SWEEP — the session's architectural analysis was chat-only, now recorded):
+founder asked whether the previous findings and analysis were recorded. Checked rather than claimed,
+and the answer was PARTIALLY — which docs/09 §9 itself calls a spine bug ("a conversation decision
+that never became an FR is LOST SCOPE"). Already recorded: tenant rate cards + the /openapi.json
+contradiction (BACKLOG), R-AUTHZ FR-43..47 (docs/01 §K), LE-10/LE-11 (docs/09), ADR-8 (docs/02).
+NOT recorded and therefore one session-end away from being lost: the API surface inventory, the
+configuration-plane absence, and the docs/12 coverage map. All four now in BACKLOG as evidenced
+one-liners per CLAUDE.md rule 1: (a) API-first is intention not property — 103 endpoints, SIX
+bearer-reachable, zero scoped write, every mutation HTML-form+cookie, and `/explore`'s full filter
+model (date/group/tier/source/model/detector/severity/status) built but unreachable over JSON; no
+offset/cursor, no bulk, no async job API, no JSON export, no CORS, and `/audits/{id}/status` is
+session-only so an API client cannot poll its own audit; (b) the configuration plane does not exist —
+ONE per-workspace boolean and one string, four alert thresholds, while ~40 detector thresholds are
+process-global env vars, so two enterprises on one deployment cannot be tuned differently; the
+dimension was never created, and tenant rate cards + per-workspace thresholds + DECLARED intent all
+block on it; (c) docs/12 coverage measured against PLAN §0.0's six stages — NOT built: T4 OTLP (spec
+only, zero code), D7 (named in the INTENT LAW, never shipped), DECLARED intent (no task_class/
+quality_sensitivity/expected_recurrence — only a free-form tag, so the INTENT LAW's "you tell us why"
+half has no channel), FOCUS export; PREVENT's "later real-time control" means enforcement is
+SEQUENCED, not forbidden; (d) the six-stages × three-planes frame recorded as PROPOSED, not adopted.
+Process lesson worth keeping: a long analytical session accumulates findings faster than it records
+them, and the recording must happen per-finding, not at the end.
+
+
+2026-08-01 (LIVE INCIDENT — the loop was silently wedged; stale claim released, LE-12 registered):
+routine "what next?" check found T-T1 (#113) had sat `loop:in-progress` for ~6 HOURS with no branch
+and no PR, while SIX scheduled loop-driver runs completed "success". Cause: the selector correctly
+skips anything already claimed ("a re-run never double-builds one the driver already claimed"), but
+**the claim label has no TTL and no reaper**, so an executor that dies mid-ticket holds the claim
+forever and every later run passes over it. COMPOUNDING IT: `loop_status.py` reported the loop
+HEALTHY the whole time — it checks kill-switch, auto-merge, gate-round enforcement and armed PRs, but
+never whether any ticket is PROGRESSING. LE-6 answers "is the loop armed?", not "is the loop moving?",
+which is the only question that matters once it stops. ACTION: released the stale claim on #113
+(label back to `loop:ready`, reason recorded on the issue so the next executor sees why) — the next
+scheduled driver run re-claims it, work unchanged. REGISTERED: LE-12 in docs/09 §6 + QUEUE T-L1 —
+stamp the claim (owner + timestamp), auto-release past a stale threshold, and make "stuck ticket" a
+first-class line in loop_status; LE-6's row amended to name the defect rather than read as
+unqualified SHIPPED. Note this is the KNOWN failure class (agent-execution outages are already
+recorded) meeting the absence of a mechanical guard — exactly the P10 pattern: eliminate the failure
+CLASS, not the instance.
+
+
+2026-08-01 (K-2 STOP — PR #110 blocked by a reproducible cold-reviewer NO-VERDICT; escalating, not
+re-attempting): CI on #110 is FULLY GREEN (build/test/type/lint/docs/authorship). The gate round
+BLOCKS on `cold-reviewer — NO-VERDICT` ("returned a verdict with no findings twice"). Ruled out, in
+order: (a) NOT the terse-clean-PASS bug — that fix (ce4be10) is present on this branch and only ever
+accepts a bare `VERDICT: PASS`; (b) NOT diff size — 76,111 chars against the 200,000 DIFF_CAP;
+(c) NOT transient — TWO full rounds, each with the harness's own internal retry, so FOUR attempts,
+while spec-guard, vv-engineer and system-tester all returned substantive reviews on the same diff
+every time (the run log shows cold-reviewer producing a clean PASS in one attempt and nothing in
+others, so the agent CAN review this diff and intermittently returns verdict-only). Per K-2 I am NOT
+running a third attempt. DIAGNOSIS I'd act on with a ruling: **#110 is oversized for review and that
+is my error** — 9 commits carrying a 685-line new module (`scripts/trace.py`) PLUS five unrelated
+documentation registrations (LE-10, LE-11, LE-12, ADR-8, R-AUTHZ FR-43..47). That is a session's
+accumulation, not one vertical slice, and the smart-zone rule applies to a REVIEW UNIT as much as to
+a session. RECOMMENDED REMEDY: split into (a) console code — `scripts/trace.py`,
+`tests/test_trace_console.py`, Makefile, the docs/09 LE-9 row and its STATUS paragraphs; and (b) the
+registrations — docs/09 LE-10/11/12, docs/02 ADR-8, docs/01 §K, QUEUE cards, BACKLOG entries. Two
+coherent diffs a reviewer (agent or human) can hold at once. SECOND-ORDER FINDING, widening LE-12:
+every loop failure mode so far needs a HUMAN to notice — a dead executor holds its claim forever
+while `loop_status` reports healthy, and a NO-VERDICT blocks a PR waiting for a manual re-run the
+harness could perform itself. LE-12 should cover round-level auto-retry on NO-VERDICT, not just the
+claim reaper.
+
+
+2026-08-01 (four founder findings recorded — claim surface, API docs, UI bar, production drift):
+"ensure its not missed" — all four are in BACKLOG with their evidence, not just in conversation.
+(1) LANDING + SUB-PAGES need full rework AND a standing law that they track what shipped. The copy
+BOTH over-claims and under-sells: the "your logs and prompts are never used to train any model"
+sentence sits in EIGHT places including the privacy policy, the terms and the footer of every public
+page, while `flywheel/frame.py` includes any account whose `benchmark_sharing is not False` — silence
+means included; meanwhile nine shipped detectors with dev-facing plain-language fixes, the Claude
+Code collector and verified savings are barely told. Rework has three lanes — rewrite what is true
+and undersold, remove/replace the training claim pending the opt-in ruling, and HOLD the unbuilt
+story (DECLARED intent, predictive prompting, and AUTOMATIC model switching, the last being
+X-01/X-02-forbidden today, not merely unbuilt). PROPOSED DoD ADDITION, needing a founder ruling
+because it changes what "Done" means: a slice is not Done until the public claim surface reflects it.
+Precedent: T-D1 killed counted-detector claims as a CLASS across nine surfaces, and FR-42 is scale-
+claims discipline. (2) API DOCS are a machine dump: `docs-site/api/endpoints.md` has ZERO fenced code
+blocks — no curl, no Python, no TypeScript — emits all 103 paths including HTML pages into an "API"
+reference, documents the `x-user-email` dev shim as a parameter, and uses function docstrings
+("Landing.") as descriptions. Against the Anthropic-docs bar (task-oriented, runnable example per
+endpoint, explicit auth/errors/pagination) it is a schema dump. (3) UI NOT ENTERPRISE-GRADE recorded
+as the founder's standing judgement, anchored to DESIGN-AUDIT.md, the 41 evidence screenshots and
+LE-11's placement/visual-regression gap — first step is a founder-led walkthrough naming the failing
+surfaces, NOT an agent guessing at "drastic". (4) PRODUCTION DRIFT: main moved substantially on
+07-31/08-01 and staging auto-deploys, but prod promotion is founder-gated and undispatched, so
+customers run an older build than the repo describes — which compounds every claim-accuracy item
+above. Note the through-line in all four: the CLAIM surface (landing, docs, UI, deployed build) has
+no mechanism binding it to the BUILD surface — the same defect class as the traceability matrix, one
+level out.

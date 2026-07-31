@@ -88,6 +88,7 @@ ADR-6 Payment links over full checkout integration: 14-day scope; webhook
 ADR-7 Prefix-hash technique for cache/duplicate detection: SHA-256 over
 first N tokens' text when text present in logs, else token-count
 heuristics; guarantees FR-22 (no prompt text persisted).
+<<<<<<< HEAD
 ADR-8 pytest-requirements over a hand-rolled marker (LE-7, docs/09-SDLC.md
 §6): BSD-3, pytest-only dependency, `@pytest.mark.verifies_requirement(id)`
 self-registers (zero PytestUnknownMarkWarning), emits `<property
@@ -96,6 +97,41 @@ Tool scan (STATUS.md 2026-07-31) ruled out OpenFastTrace (JVM in CI),
 Doorstop/StrictDoc (want to own the requirement store), sphinx-needs
 (Sphinx-only) — build thin, adopt the one-directional pytest-native plugin;
 the up-direction walk is CI/console tooling (LE-8/LE-9), not this library.
+=======
+ADR-9 Traceability tooling — build the reader (2026-07-31, R-TRACE).
+Renumbered from 8: the LOOP independently minted ADR-8 in PR #118 for the same
+decision's ADOPT half (pytest-requirements over a hand-rolled marker), and it
+landed on main first, so it owns the number. Two authors allocated one id because
+nothing allocates ADR numbers — the R-nn collision class, recurring locally.
+That ADR covers ADOPT; this one covers BUILD. Candidates evaluated with licence + maintenance
+verified: OpenFastTrace (GPL-3.0, healthy, real shallow/deep coverage algebra),
+Doorstop (LGPL-3.0, 649*, suspect-link detection), StrictDoc (Apache-2.0, ReqIF
+export), sphinx-needs (MIT), pytest-requirements (BSD-3), rtmx (Apache-2.0).
+  ADOPT for LE-7 (the requirement<->test edge): **pytest-requirements**. BSD-3,
+  0.3.0 (2026-06-05), depends only on pytest. Probed before adopting, not assumed:
+  `@pytest.mark.verifies_requirement("FR-07")` self-registers (no unknown-mark
+  warning), emits `<property name="requirement_id">` into JUnit XML, supports
+  `-m verifies_requirement` selection, and a five-line collection hook yields the
+  full req->test map WITHOUT running the suite. Hand-rolling this would reimplement
+  a maintained BSD-3 library for no gain. (An earlier draft of LE-7 dismissed it as
+  "one-directional"; one-directional is precisely what LE-7 IS — the reconciliation
+  is LE-8's job. That reasoning was wrong and is corrected here.)
+  BUILD for LE-8/LE-9 (reconciliation + console): `scripts/trace.py`. Every
+  adoptable tool is a requirements MANAGEMENT system that wants to own the
+  requirement store; ours is `docs/01` markdown, named by CLAUDE.md as the single
+  requirement source. Adopting one means migrating the store BEFORE any measurement
+  is possible, whereas a reader over the existing store measures today — and did:
+  it found 51 dead links where a grep estimated 22, because the matrix writes id
+  RANGES. OpenFastTrace was the closest call; its blocker is not the GPL (CLI use
+  is clean) but its `req~fr-07~1` id format, which would rename FR ids across
+  docs/01/04/05, CLAUDE.md, QUEUE and STATUS.
+  RECONSIDER WHEN (written down so this is a decision, not a default): trace.py
+  starts owning requirement CONTENT rather than reading it -> adopt Doorstop or
+  StrictDoc instead of reimplementing them; a second consumer needs shallow/deep
+  coverage algebra or ReqIF export -> revisit OpenFastTrace and accept the id
+  rename; rtmx reaches production maturity -> re-evaluate (it matches our
+  git-native philosophy most closely but was far too young to gate on in 2026-07).
+>>>>>>> a00f776 (docs: LE-10/11/12 + ADR-8 + R-AUTHZ registrations, and the recorded findings)
 
 ## 6. Security model
 
