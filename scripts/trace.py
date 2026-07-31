@@ -27,11 +27,14 @@ import http.server
 import json
 import re
 import socketserver
+import subprocess
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+QUEUE_DOC = ROOT / "docs" / "internal" / "QUEUE.md"
 REQS_DOC = ROOT / "docs" / "01-REQUIREMENTS.md"
 MATRIX_DOC = ROOT / "docs" / "04-TRACEABILITY.md"
 TESTS_DIR = ROOT / "tests"
@@ -210,6 +213,121 @@ def build_index() -> dict[str, object]:
     }
 
 
+# ---------------------------------------------------------- agile / SAFe surface
+#
+# The board is a PROJECTION of the single work spine (docs/internal/QUEUE.md), never a
+# second source of truth — QUEUE zones are the columns and its card lines are the cards.
+# That is deliberate: `docs/internal/KANBAN.md` was a hand-maintained board and its own
+# header records it going stale within three days. A generated board cannot rot.
+#
+# Flow metrics come from GitHub issue/PR timestamps, so all of them are derived with ZERO
+# human estimation — which is why story points are absent here and in the repo at large.
+
+ZONE_RE = re.compile(r"^## (NOW|CANDIDATES|BLOCKED|PARKED)\b(?P<rest>.*)$")
+CARD_RE = re.compile(r"^- \*\*(?P<id>T-[A-Z0-9-]+)(?P<tail>[^*]*)\*\*(?P<desc>.*)$")
+
+
+def parse_queue(doc: str) -> dict[str, list[dict[str, str]]]:
+    """QUEUE zones -> cards. A zone with no card lines is reported empty rather than
+    omitted: an empty NOW is a real, meaningful state (frontier exhausted)."""
+    zones: dict[str, list[dict[str, str]]] = {
+        z: [] for z in ("NOW", "CANDIDATES", "BLOCKED", "PARKED")
+    }
+    current = None
+    for line in doc.splitlines():
+        z = ZONE_RE.match(line)
+        if z:
+            current = z.group(1)
+            continue
+        if current is None:
+            continue
+        m = CARD_RE.match(line.strip())
+        if m:
+            zones[current].append(
+                {
+                    "id": m.group("id"),
+                    "req": m.group("tail").strip(" ·|"),
+                    "desc": re.sub(r"\s+", " ", m.group("desc")).strip(" —·")[:150],
+                }
+            )
+    return zones
+
+
+def _gh_json(args: list[str]) -> list[dict]:
+    """Best-effort `gh` read. Returns [] when gh is missing, unauthenticated or offline —
+    the board still renders from the spine, and the flow panel says so honestly."""
+    try:
+        out = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=30, check=False)
+        return json.loads(out.stdout) if out.returncode == 0 and out.stdout.strip() else []
+    except OSError, ValueError, subprocess.SubprocessError:
+        return []
+
+
+def _hours(a: str, b: str) -> float | None:
+    try:
+        return (
+            datetime.fromisoformat(b.replace("Z", "+00:00"))
+            - datetime.fromisoformat(a.replace("Z", "+00:00"))
+        ).total_seconds() / 3600
+    except ValueError, AttributeError:
+        return None
+
+
+def collect_flow() -> dict[str, object]:
+    """The six SAFe flow metrics, every one derived from timestamps — no estimation.
+
+    Flow Load is WIP (open work). Flow Time is entry->release. Flow Velocity is
+    completions per week. Flow Distribution is the share of work that is enabler/
+    compliance rather than feature — the auditable statement about whether V&V is being
+    deferred. Flow Efficiency is deliberately reported as UNAVAILABLE rather than guessed:
+    it needs an active-vs-waiting split that GitHub timestamps alone cannot supply, and a
+    fabricated number here would be worse than an honest gap."""
+    issues = _gh_json(
+        [
+            "issue",
+            "list",
+            "--state",
+            "all",
+            "--limit",
+            "100",
+            "--json",
+            "number,title,createdAt,closedAt,labels,state",
+        ]
+    )
+    prs = _gh_json(
+        ["pr", "list", "--state", "merged", "--limit", "100", "--json", "number,createdAt,mergedAt"]
+    )
+    if not issues and not prs:
+        return {"available": False}
+    closed = [i for i in issues if i.get("closedAt")]
+    lead = [h for h in (_hours(i["createdAt"], i["closedAt"]) for i in closed) if h is not None]
+    merge = [
+        h
+        for h in (_hours(p["createdAt"], p["mergedAt"]) for p in prs if p.get("mergedAt"))
+        if h is not None
+    ]
+    lead.sort()
+    enabler = sum(
+        1
+        for i in closed
+        if any(
+            k in (i.get("title") or "").lower()
+            for k in ("docs", "gate", "trace", "loop", "ci", "fix")
+        )
+    )
+    return {
+        "available": True,
+        "flow_load": sum(1 for i in issues if i.get("state") == "OPEN"),
+        "flow_velocity_per_week": round(len(closed) / 4, 1) if closed else 0,
+        "flow_time_median_h": round(lead[len(lead) // 2], 1) if lead else None,
+        "merge_median_h": round(sorted(merge)[len(merge) // 2], 1) if merge else None,
+        "flow_distribution_enabler_pct": round(100 * enabler / len(closed)) if closed else None,
+        "completed": len(closed),
+        "merged_prs": len(merge),
+        "flow_efficiency": None,  # honestly unavailable — see docstring
+    }
+
+
 # ---------------------------------------------------------------- text surface
 
 
@@ -285,6 +403,11 @@ th{color:var(--mut);font-weight:600;font-size:.8rem}
 code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
 .dead{color:var(--r)}.ok{color:var(--g)}.muted{color:var(--mut)}
 .wrap{max-width:64rem;margin:0 auto}.back{color:var(--mut);text-decoration:none;font-size:.85rem}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:1rem;margin-top:1rem}
+.col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.col h3{margin:.1rem 0 .5rem;font-size:.95rem}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:8px;
+padding:.55rem .65rem;margin-bottom:.5rem;font-size:.86rem}
 """
 
 
@@ -326,7 +449,7 @@ def render_dashboard(index: dict[str, object]) -> bytes:
         "<h1>Traceability console</h1>"
         "<div class=sub>docs/01 &rarr; docs/04 &rarr; tests/ &middot; "
         f"<a href='/unclaimed'>{t['unclaimed_tests']} tests invisible "
-        "to the matrix</a></div>"
+        "to the matrix</a> &middot; <a href='/board'>delivery board</a></div>"
         f"<div class=grid>{stats}</div>"
         "<table><tr><th>requirement</th><th>pri</th>"
         "<th>title</th><th>tests</th></tr>"
@@ -385,6 +508,94 @@ def render_req_page(index: dict[str, object], rid: str) -> bytes:
     return _page(rid, body)
 
 
+def render_board() -> bytes:
+    """The agile/SAFe surface: QUEUE zones as columns, flow metrics from timestamps."""
+    zones = parse_queue(QUEUE_DOC.read_text(encoding="utf-8"))
+    flow = collect_flow()
+    cols = ""
+    blurb = {
+        "NOW": "buildable, in order — the only zone work may be pulled from",
+        "CANDIDATES": "verified gaps; the founder sequences these into NOW",
+        "BLOCKED": "needs a founder action first",
+        "PARKED": "trigger-gated — do NOT pull forward",
+    }
+    for z in ("NOW", "CANDIDATES", "BLOCKED", "PARKED"):
+        cards = zones[z]
+        body = (
+            "".join(
+                f"<div class=card><b>{html.escape(c['id'])}</b>"
+                + (f" <span class=muted>{html.escape(c['req'])}</span>" if c["req"] else "")
+                + f"<div class=muted style='margin-top:.3rem'>{html.escape(c['desc'])}</div></div>"
+                for c in cards
+            )
+            or "<div class='muted' style='padding:.6rem'>— empty —</div>"
+        )
+        cols += (
+            f"<div class=col><h3>{z} <span class=muted>({len(cards)})</span></h3>"
+            f"<div class=muted style='font-size:.78rem;margin:-.4rem 0 .6rem'>{blurb[z]}</div>"
+            f"{body}</div>"
+        )
+    if flow.get("available"):
+        f = flow
+        cells = [
+            ("Flow Load", f["flow_load"], "open items (WIP)"),
+            ("Flow Velocity", f["flow_velocity_per_week"], "completed / week"),
+            (
+                "Flow Time",
+                f"{f['flow_time_median_h']}h" if f["flow_time_median_h"] else "—",
+                "median entry to close",
+            ),
+            (
+                "Merge time",
+                f"{f['merge_median_h']}h" if f["merge_median_h"] else "—",
+                "median PR open to merge",
+            ),
+            (
+                "Flow Distribution",
+                f"{f['flow_distribution_enabler_pct']}%"
+                if f["flow_distribution_enabler_pct"] is not None
+                else "—",
+                "enabler / compliance share",
+            ),
+            ("Flow Efficiency", "unavailable", "needs active-vs-wait split"),
+        ]
+        metrics = "".join(
+            f"<div class=stat><b>{v}</b><span>{k}</span>"
+            f"<span style='display:block;font-size:.7rem;opacity:.7'>{note}</span></div>"
+            for k, v, note in cells
+        )
+        foot = (
+            f"<p class=muted style='font-size:.8rem'>Derived from {f['completed']} closed "
+            f"issues and "
+            f"{f['merged_prs']} merged PRs — <b>every figure from timestamps, zero estimation</b>. "
+            "Story points are absent by design. Flow Efficiency is reported as unavailable rather "
+            "than guessed: GitHub timestamps cannot split active from waiting time, and a "
+            "fabricated "
+            "number would be worse than an honest gap.</p>"
+        )
+    else:
+        metrics = (
+            "<div class=stat><b>—</b><span>flow metrics unavailable</span>"
+            "<span style='display:block;font-size:.7rem;opacity:.7'>gh not available</span></div>"
+        )
+        foot = (
+            "<p class=muted style='font-size:.8rem'>The board still renders from the spine; only "
+            "the timestamp-derived metrics need <code>gh</code>.</p>"
+        )
+    body = (
+        "<a class=back href='/'>&larr; traceability</a>"
+        "<h1>Delivery board</h1>"
+        "<div class=sub>A <b>projection</b> of <code>docs/internal/QUEUE.md</code> — the "
+        "single work "
+        "spine, never a second source of truth. <code>KANBAN.md</code> was hand-maintained "
+        "and its own "
+        "header records it going stale within three days; a generated board cannot rot.</div>"
+        f"<div class=grid>{metrics}</div>{foot}"
+        f"<div class=board>{cols}</div>"
+    )
+    return _page("Delivery board", body)
+
+
 def render_unclaimed(index: dict[str, object]) -> bytes:
     present: dict[str, list[str]] = index["present_tests"]  # type: ignore[assignment]
     unclaimed: list[str] = index["unclaimed_tests"]  # type: ignore[assignment]
@@ -412,6 +623,8 @@ def serve(port: int) -> None:
             idx = build_index()  # rebuild per request: always current, never stale
             if self.path == "/":
                 payload = render_dashboard(idx)
+            elif self.path == "/board":
+                payload = render_board()
             elif self.path == "/unclaimed":
                 payload = render_unclaimed(idx)
             elif self.path.startswith("/req/"):

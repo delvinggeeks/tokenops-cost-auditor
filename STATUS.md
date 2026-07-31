@@ -4476,3 +4476,23 @@ measured today and found 51 dead links where a grep estimated 22. OpenFastTrace 
 call; its blocker is not the GPL (CLI use is clean) but the `req~fr-07~1` id format, which would
 rename FR ids across docs/01/04/05, CLAUDE.md, QUEUE and STATUS. Triggers to revisit are recorded
 in ADR-8 so this stays a decision rather than an assumption.
+
+2026-07-31 (LE-9 slice 2 — the AGILE/SAFe board, and a content-loss catch): founder asked where the
+agile/SAFe surface was; it did not exist — slice 1 shipped only the requirements-and-traceability
+half, recorded as residue but not said plainly enough. Built now as `/board`: QUEUE zones (NOW /
+CANDIDATES / BLOCKED / PARKED) as columns projecting `docs/internal/QUEUE.md`, plus the flow metrics.
+KEY DESIGN CHOICE: the board is a PROJECTION of the single spine, never a second source of truth —
+`docs/internal/KANBAN.md` was hand-maintained and its own header records it going stale within three
+days, so a generated board is the only kind that cannot rot. Flow metrics derive from GitHub
+issue/PR timestamps with ZERO estimation (live: load 2, velocity 6.8/wk, flow time 0.8h median,
+merge 0.2h median, enabler share 100%, from 27 closed issues + 76 merged PRs) — which is why story
+points are absent here and repo-wide. **Flow Efficiency is reported as "unavailable" rather than
+computed**: it needs an active-vs-waiting split that GitHub timestamps cannot supply, and a
+fabricated number would be worse than an honest gap. `gh` absence degrades to spine-only rendering,
+never a crash. CONTENT-LOSS CATCH, found BY the new board: the T-T1 card still read "registered
+pytest marker", the text ADR-8 superseded. Rebuilding this branch cleanly off the squashed main had
+restored only one of the ADR-8 commit's three edits (docs/02 ADR text) and silently dropped the
+docs/09 LE-7 card and the QUEUE T-T1 line, so the repo would have instructed a builder to hand-roll
+the marker ADR-8 says to adopt. Both restored. Issue #113 — what the loop is actually building from
+— always carried the correct instruction, so no wrong work was dispatched. Lesson: a clean rebuild
+must be diffed against what it replaces, not just against main.

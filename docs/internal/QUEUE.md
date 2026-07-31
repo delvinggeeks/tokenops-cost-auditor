@@ -95,8 +95,8 @@ card from CANDIDATES (T-D4, T-D5) or a ruling._
 
 _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with loop engineering"): **T-T1 → T-T2 → T-T3-residue**. Dispatched through the LE-5 loop as `loop:ready` issues, NOT built in-session — filing the label and building in the same session races the loop and lands a duplicate on main (the fb7d84b lesson). **T-T2 is filed but deliberately NOT labelled `loop:ready` until T-T1 merges**: the gate cannot go green before the backfill exists, so dispatching both at once guarantees a red PR. Loop state verified live at sequencing time — LOOP_PAUSED running, auto-merge enabled, gate-round REQUIRED, `LOOP_PAT` present, driver green on schedule, zero open `loop:ready` issues._
 
-- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
-  FR/NFR id becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
+- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — **adopt `pytest-requirements`** (BSD-3,
+  pytest-only dep; ADR-8) rather than hand-rolling: `@pytest.mark.verifies_requirement("FR-07")` becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
   authored), plus backfill of the current `tests/` tree; a marker naming an unknown id fails
   collection · trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
 - **T-T2 · LE-8 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
