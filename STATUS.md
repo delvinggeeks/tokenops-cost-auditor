@@ -4435,3 +4435,44 @@ BUILD THIN: no standard exists for machine-readable req→test links (OTel's tes
 requirement-id attribute); OpenFastTrace is healthy and GPL-3.0-clean for CLI use but costs a JVM
 in CI and an id rename; Doorstop/StrictDoc want to own the requirement store; sphinx-needs is
 Sphinx-only; pytest-requirements is one-directional. NOW stays empty: the founder sequences.
+
+2026-07-31 (LE-9 slice 1 — traceability console, founder-sequenced in session): `scripts/trace.py`
+built and running. Ops tooling, zero third-party deps, imports nothing from the product package and
+is never mounted in the customer app (the pricing_sync.py separation). Surfaces: `make trace` (text),
+`make trace-ui` (local server-rendered console at 127.0.0.1:8765 — dashboard, per-requirement walk,
+unclaimed-tests view, /index.json), and `trace walk FR-07`. X-05-safe: server-rendered HTML, no SPA
+framework, no build step, no JS required for the walk. FIRST RUN AGAINST THE LIVE TREE, and the
+numbers are worse than the earlier grep estimate because the matrix's ID RANGES now expand properly
+(`T-ING-01..04` is four claims, not one): **56 requirements — 15 walk clean, 13 partial, 28 broken,
+3 with no matrix row; 103 test ids claimed by docs/04 of which 54 RESOLVE TO NO COLLECTED TEST; 185
+ids present in tests/ of which 136 are claimed by nothing.** Verified not a false positive before
+publishing: T-ING-02/03/04 exist in neither tests/ nor docs/05 — only T-ING-01 is real. TWO
+SELF-CAUGHT FALSE-POSITIVE CLASSES fixed during the build, both worth keeping in mind: (a) module
+paths resolved against the package root only, so `rules/d1_oversized_model` (which lives under
+services/) reported "path not found" — now resolved against package root, services/ and repo root;
+(b) splitting informal matrix module cells on commas produced prose fragments like
+"docs/15); trigger-gated" that were then reported missing — module checking now fires ONLY on clean
+path-shaped cells and is ADVISORY, never allowed to drive status, because a console that raises
+false defects is the exact failure it exists to fix (pinned by T-TRC-06/07). Residue on T-T3: the
+generated static docs-site page, the agile board, flow metrics, the up-direction walk (blocked on
+LE-7's marker) and `baseline <tag>`.
+
+2026-07-31 (ADR-8 — traceability build-vs-adopt recorded, and LE-7 CORRECTED): the founder asked
+why tools were researched and then not used. Fair catch: the decision was defensible but never
+recorded, so it read as a default. ADR-8 now states it as a SPLIT, with reconsideration triggers
+written down. ADOPT for LE-7: `pytest-requirements` (BSD-3, 0.3.0 2026-06-05, depends only on
+pytest). PROBED BEFORE ADOPTING rather than trusted from a research summary — installed in a
+throwaway venv: `@pytest.mark.verifies_requirement("FR-07")` self-registers (zero unknown-mark
+warnings), emits `<property name="requirement_id" value="FR-07"/>` into JUnit XML, supports
+`-m verifies_requirement` selection (1 passed / 1 deselected), and a five-line
+`pytest_collection_modifyitems` hook returns `{'FR-07': ['test_probe.py::test_marked']}` WITHOUT
+running the suite. My earlier dismissal of it as "one-directional — half the job" was wrong:
+one-directional is exactly what LE-7 IS, because the reconciliation against docs/01 is LE-8's job.
+Hand-rolling would have reimplemented a maintained BSD-3 library for no gain. BUILD stands for
+LE-8/LE-9: every adoptable tool (OpenFastTrace, Doorstop, StrictDoc) is a requirements MANAGEMENT
+system that wants to own the requirement store, but ours is docs/01 markdown — CLAUDE.md's named
+single requirement source — so adopting means MIGRATING BEFORE MEASURING, whereas the reader
+measured today and found 51 dead links where a grep estimated 22. OpenFastTrace was the closest
+call; its blocker is not the GPL (CLI use is clean) but the `req~fr-07~1` id format, which would
+rename FR ids across docs/01/04/05, CLAUDE.md, QUEUE and STATUS. Triggers to revisit are recorded
+in ADR-8 so this stays a decision rather than an assumption.
