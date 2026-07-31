@@ -4425,3 +4425,33 @@ bidirectional human audit walk (FR-45). Deliberately NOT minted: a kanban/flow s
 QUEUE.md stays the single spine per the standing ruling; scope recorded rather than dropped
 (R-IMPROVISE). T-D5 (docs/05 test-plan refresh) OVERLAPS T-T1 and should fold into its
 backfill rather than run twice. NOW stays empty: the founder sequences T-T1..T-T3.
+2026-07-31 (R-TRACE intake — docs/09 §9 R-REQ-PIPELINE, analysis only, no build): founder asks
+"full traceability end to end for audit ... for auditing the requirements for humans" and
+"internal UI tool for human viewing and validating the traceability, agile safe methodologies"
+analyzed and registered as **LE-7/LE-8/LE-9** in docs/09 §6 + QUEUE candidates T-T1/T-T2/T-T3.
+HOMING CORRECTION MADE BEFORE MERGE: the first draft of this ticket minted them as FR-43/44/45 in
+docs/01 §J. That was wrong and self-contradictory — requirement-traceability tooling is SDLC/CI
+tooling, the same class as the gate agents and coverage_gate.py, which per the docs/04 scope note
+is governed by CLAUDE.md rule 7 + docs/09 and OWNS NO docs/04 ROW; as FRs, DoD item 10 would have
+demanded a matrix row the matrix itself forbids. §J removed, scope re-homed to the LE track.
+GROUNDED IN A MEASURED DEFECT, not a proposal: sweep of docs/04 against the live tree found 22 of
+63 test ids resolve to NO collected test (T-RUL-D1-01..03 for FR-07 — a shipped core detector —
+absent from BOTH tests/ and docs/05; T-PRC-04..05 declared in docs/05 but carried by no test;
+T-VL-08 a hole in a contiguous T-VL-01..10 block), 3 requirements (FR-40/41/42) with no row, and
+192 distinct test ids in tests/ of which docs/04 cites ~41 — so 148 tests are invisible to any
+document and the up-direction barely exists. ROOT CAUSE is structural and now stated: DoD item 10
+is the ONLY machine-checkable DoD item whose owner is a review (spec-guard) rather than a script,
+while items 2/3/4/5/6/7/9/12 all have mechanical owners — the repo tooled its EXECUTION layer
+(loop_status, gate_round, coverage_gate, pricing_verify, check_authorship) and left its
+SPECIFICATION layer manual. Design: LE-7 moves the edge INTO the test as a registered marker so
+docs/04 becomes derived; LE-8 gates the drift classes in CI incl. suspect-link detection (parent
+content-hash change — the one control Doorstop has that pytest-native options lack); LE-9 is the
+console — one scripts/trace.py serving a CLI, a generated static docs-site page, and a LOCAL
+server-rendered htmx UI launched like `make preview`, carrying the bidirectional walk, a GENERATED
+agile board (projecting QUEUE × issue/PR state, replacing KANBAN.md — stale since 2026-07-24) and
+the six flow metrics from issue/PR timestamps with zero estimation. X-05 permits this: it was
+relaxed 2026-07-20 to server-side rendering + htmx partials. Tool scan (verified, 2026) concluded
+BUILD THIN: no standard exists for machine-readable req→test links (OTel's test namespace has no
+requirement-id attribute); OpenFastTrace is healthy and GPL-3.0-clean for CLI use but costs a JVM
+in CI and an id rename; Doorstop/StrictDoc want to own the requirement store; sphinx-needs is
+Sphinx-only; pytest-requirements is one-directional. NOW stays empty: the founder sequences.

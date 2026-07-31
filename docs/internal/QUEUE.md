@@ -134,30 +134,35 @@ gets its first shipped surfaces. Slices:
   un-gated bare-ref copy and a seeded journey — superseded test-by-test with the union
   kept; full record in STATUS.md.)_
 
-- **T-T1 · FR-43 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
-  FR/NFR id becomes the SINGLE source of the requirement↔test edge (matrix becomes DERIVED, not
-  authored), plus backfill of the current `tests/` tree; unknown id fails collection ·
-  trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
-- **T-T2 · FR-44 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
-  M-priority requirement with no passing bound test, or missing LLD module path; design-only /
-  trigger-gated requirements exempt BY DECLARATION, never by silence. **Sequence after T-T1** (the
-  gate cannot go green before the backfill) · trace: `scripts/traceability_gate.py` +
-  `.github/workflows/ci.yml` → `tests/test_traceability_gate.py`
-- **T-T3 · FR-45 | R-TRACE** human audit view — generated bidirectional trace report (requirement →
-  HLD → module → bound tests → last result → merge commit, and the reverse), regenerated in CI so it
-  cannot drift, published as a docs-site page. Board/flow surface deliberately NOT minted: QUEUE.md
-  stays the single spine per the standing ruling · trace: `scripts/trace_report.py` →
-  `tests/test_trace_report.py` + docs-site page
+- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
+  FR/NFR id becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
+  authored), plus backfill of the current `tests/` tree; a marker naming an unknown id fails
+  collection · trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
+- **T-T2 · LE-8 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
+  M-priority requirement with no passing bound test, missing module path, or **suspect link**
+  (parent requirement content-hash changed since the link was last verified — the one control
+  Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
+  DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
+  `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
+- **T-T3 · LE-9 | R-TRACE** traceability & delivery console — `scripts/trace.py` builds a derived
+  index and serves it three ways: **CLI** (`status`/`walk`/`check`/`baseline`), a **generated
+  static docs-site page** regenerated in CI (the auditor artifact — cannot drift), and a **local
+  server-rendered htmx console** launched like `make preview` (bidirectional walk + a GENERATED
+  agile board projecting QUEUE × issue/PR state, replacing the hand-maintained KANBAN.md stale
+  since 2026-07-24 + the six flow metrics from issue/PR timestamps, zero estimation). Never
+  mounted in the customer product. X-05-safe (SSR + htmx, no SPA, no build step) ·
+  trace: `scripts/trace.py` + `web/templates/internal/` → `tests/test_trace_console.py`
 
 _R-TRACE registered 2026-07-31 from a founder ask ("full traceability end to end for audit... for
-auditing the requirements for humans"), analyzed per docs/09 §9 R-REQ-PIPELINE step 1. **Grounded in
-a measured defect, not a proposal**: sweep of `docs/04-TRACEABILITY.md` against the live tree found
-**22 of 63 test ids resolve to no collected test** (incl. `T-RUL-D1-01..03` for FR-07, a shipped core
-detector, absent from BOTH `tests/` and docs/05), **3 requirements with no matrix row** (FR-40/41/42),
-and 192 test ids in `tests/` of which the matrix cites ~41 — so the up-direction barely exists. The
-header's "CI gate: every M-priority FR/NFR row must have ≥1 passing test" is **enforced by nothing**;
-`scripts/coverage_gate.py` checks line coverage, not traceability. Overlaps T-D5 (docs/05 test-plan
-refresh) — T-D5 should fold into T-T1's backfill rather than run twice._
+auditing the requirements for humans" + "internal UI tool for human viewing and validating"),
+analyzed per docs/09 §9 R-REQ-PIPELINE. **Homed as LE-7..LE-9, NOT as FRs** — requirement
+traceability is SDLC/CI tooling, which per the docs/04 scope note is governed by CLAUDE.md rule 7
+and docs/09 and owns no docs/04 row; registering it as FRs was self-contradictory (DoD item 10
+would demand a matrix row the matrix forbids) and was corrected before merge. **Grounded in a
+measured defect**: 22 of 63 test ids in docs/04 resolve to no collected test (incl. `T-RUL-D1-01..03`
+for FR-07, a shipped core detector, absent from BOTH tests/ and docs/05), 3 requirements with no row,
+and 148 of 192 test ids invisible to any document. Full rationale in docs/09 §6. Overlaps T-D5
+(docs/05 test-plan refresh) — T-D5 folds into T-T1's backfill rather than running twice._
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
