@@ -4457,3 +4457,45 @@ requirement_id property, -m verifies_requirement selection, collect-only map-bui
 docs/05-TEST-PLAN.md §6 added (folds in T-D5) documenting the marker convention alongside the
 existing T-XXX vocabulary. Out of scope, per the card: the CI gate (T-T2/LE-8) and the console
 (T-T3/LE-9) — scripts/trace.py does not exist yet, built next.
+
+2026-07-31 (LE-9 slice 1 — traceability console, founder-sequenced in session): `scripts/trace.py`
+built and running. Ops tooling, zero third-party deps, imports nothing from the product package and
+is never mounted in the customer app (the pricing_sync.py separation). Surfaces: `make trace` (text),
+`make trace-ui` (local server-rendered console at 127.0.0.1:8765 — dashboard, per-requirement walk,
+unclaimed-tests view, /index.json), and `trace walk FR-07`. X-05-safe: server-rendered HTML, no SPA
+framework, no build step, no JS required for the walk. FIRST RUN AGAINST THE LIVE TREE, and the
+numbers are worse than the earlier grep estimate because the matrix's ID RANGES now expand properly
+(`T-ING-01..04` is four claims, not one): **56 requirements — 15 walk clean, 13 partial, 28 broken,
+3 with no matrix row; 103 test ids claimed by docs/04 of which 54 RESOLVE TO NO COLLECTED TEST; 185
+ids present in tests/ of which 136 are claimed by nothing.** Verified not a false positive before
+publishing: T-ING-02/03/04 exist in neither tests/ nor docs/05 — only T-ING-01 is real. TWO
+SELF-CAUGHT FALSE-POSITIVE CLASSES fixed during the build, both worth keeping in mind: (a) module
+paths resolved against the package root only, so `rules/d1_oversized_model` (which lives under
+services/) reported "path not found" — now resolved against package root, services/ and repo root;
+(b) splitting informal matrix module cells on commas produced prose fragments like
+"docs/15); trigger-gated" that were then reported missing — module checking now fires ONLY on clean
+path-shaped cells and is ADVISORY, never allowed to drive status, because a console that raises
+false defects is the exact failure it exists to fix (pinned by T-TRC-06/07). Residue on T-T3: the
+generated static docs-site page, the agile board, flow metrics, the up-direction walk (blocked on
+LE-7's marker) and `baseline <tag>`.
+
+
+2026-07-31 (LE-9 slice 2 — the AGILE/SAFe board, and a content-loss catch): founder asked where the
+agile/SAFe surface was; it did not exist — slice 1 shipped only the requirements-and-traceability
+half, recorded as residue but not said plainly enough. Built now as `/board`: QUEUE zones (NOW /
+CANDIDATES / BLOCKED / PARKED) as columns projecting `docs/internal/QUEUE.md`, plus the flow metrics.
+KEY DESIGN CHOICE: the board is a PROJECTION of the single spine, never a second source of truth —
+`docs/internal/KANBAN.md` was hand-maintained and its own header records it going stale within three
+days, so a generated board is the only kind that cannot rot. Flow metrics derive from GitHub
+issue/PR timestamps with ZERO estimation (live: load 2, velocity 6.8/wk, flow time 0.8h median,
+merge 0.2h median, enabler share 100%, from 27 closed issues + 76 merged PRs) — which is why story
+points are absent here and repo-wide. **Flow Efficiency is reported as "unavailable" rather than
+computed**: it needs an active-vs-waiting split that GitHub timestamps cannot supply, and a
+fabricated number would be worse than an honest gap. `gh` absence degrades to spine-only rendering,
+never a crash. CONTENT-LOSS CATCH, found BY the new board: the T-T1 card still read "registered
+pytest marker", the text ADR-8 superseded. Rebuilding this branch cleanly off the squashed main had
+restored only one of the ADR-8 commit's three edits (docs/02 ADR text) and silently dropped the
+docs/09 LE-7 card and the QUEUE T-T1 line, so the repo would have instructed a builder to hand-roll
+the marker ADR-8 says to adopt. Both restored. Issue #113 — what the loop is actually building from
+— always carried the correct instruction, so no wrong work was dispatched. Lesson: a clean rebuild
+must be diffed against what it replaces, not just against main.
