@@ -4369,3 +4369,24 @@ pricing tests assume NO overlay exists (they build the feed at a pinned date whi
 at today), so running `pricing_sync` locally before pytest makes them fail; CI is safe because
 pytest runs BEFORE the new sync step, but that ordering is now load-bearing and should be made
 explicit when LE-8 touches this area.
+
+
+2026-07-31 (CORRECTION — the human price gate I reintroduced, removed; gate-4 holds now expire on
+EVIDENCE): the founder caught it — "why I should confirm the price? there was no human gate needed
+for prices?" Correct, and this was the SECOND time in one session I proposed a human confirming a
+rate. R-AUTO-PRICING is unambiguous ("no human gate — it has to be done by the agent strictly
+verifying") and my `--strict-held` flag put one straight back by failing deploy until someone
+confirmed gpt-5.6-luna. REMOVED from pricing_verify and deploy.yml; a held row is now non-fatal
+everywhere. But removing the flag alone would have left luna stale at 5x the real rate forever,
+because the ORIGINAL design has no automatic exit from a hold either: gate 4 holds, daily_digest
+alerts a human, and `write_status` only overwrites the latest payload — nothing tracked a held
+candidate across runs, so the only escape the design left WAS a person. That is the real gap, and
+it predates me. FIX: gate 4 now corroborates across runs. `read_status` carries a `held_streaks`
+map; a candidate the feed reports IDENTICALLY on `HOLD_CORROBORATIONS`(=3) consecutive runs has
+falsified the one-off-glitch hypothesis and is applied automatically, while a FLAPPING feed — a
+different wild number each run — resets the streak to 1 and never accumulates, which is precisely
+the case gate 4 exists to stop. Proven end to end, not asserted: three consecutive real syncs gave
+held(1/3) → held(2/3) → APPLIED, after which pricing_verify reports 35/35 rows verified, exit 0,
+with luna at 0.2/1.2 under a dated epoch and no human anywhere in the loop. Daily ofelia cadence
+means a genuine cut now lands in ~3 days by itself. Pinned by three tests incl. the flapping-feed
+case; docs/04 rows updated in the same commit.

@@ -95,14 +95,17 @@ class TestStrictContract:
         feed_file.write_text(json.dumps(feed))
         assert main(["--feed", str(feed_file)]) == 1  # strict: nonzero exit
 
-    def test_04b_large_swing_is_HELD_not_fatal_in_ci_but_fatal_on_deploy(
-        self, tmp_path: Path
-    ) -> None:
-        """R-LIVE-PRICING gate 4 holds a swing beyond JUMP rather than applying it
-        blind, so such a row is NOT 'unverified' — corroboration ran and the divergence
-        is known. Classifying it as a mismatch made the two rulings mutually exclusive:
-        a legitimate large price cut bricked CI and deploy forever. CI reports it;
-        deploy (--strict-held) still refuses to ship it."""
+    def test_04b_large_swing_is_HELD_and_never_gates_a_human(self, tmp_path: Path) -> None:
+        """R-LIVE-PRICING gate 4 holds a swing beyond JUMP rather than applying it blind,
+        so such a row is NOT 'unverified' — corroboration ran and the divergence is known.
+
+        It is NON-FATAL everywhere, CI and deploy alike. An earlier draft added a
+        --strict-held flag that failed deploy until someone confirmed the price: that
+        reintroduced exactly the human price gate R-AUTO-PRICING abolished ("no human
+        gate — it has to be done by the agent strictly verifying"). The hold now expires
+        on EVIDENCE instead — pricing_sync applies it automatically once the feed
+        corroborates it across HOLD_CORROBORATIONS runs — so no verdict here should ever
+        wait on a person."""
         feed = full_feed()
         feed["gpt-5.4"]["input_cost_per_token"] = 9.99e-06  # ~300% — over JUMP
         verdicts = verify(TABLE, feed, today=NOW)
@@ -112,8 +115,7 @@ class TestStrictContract:
         assert "9.99" in held[0].detail  # the divergent number is still SHOWN
         feed_file = tmp_path / "feed.json"
         feed_file.write_text(json.dumps(feed))
-        assert main(["--feed", str(feed_file)]) == 0  # CI: reported, not fatal
-        assert main(["--feed", str(feed_file), "--strict-held"]) == 1  # deploy: refused
+        assert main(["--feed", str(feed_file)]) == 0  # reported, never fatal
 
     def test_04c_swing_mirrors_gate_4_input_output_only(self, tmp_path: Path) -> None:
         """The hold test must mirror pricing_sync's gate 4 EXACTLY, which measures the

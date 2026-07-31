@@ -56,7 +56,7 @@ from pathlib import Path
 # rather than a copy here that could silently drift from the sync that enforces it.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from pricing_sync import JUMP  # single source of the swing threshold
+from pricing_sync import HOLD_CORROBORATIONS, JUMP  # single source of the gate-4 rules
 
 from tokenops_cost_auditor.services.pricing.table import DEFAULT_DATA, PricingTable
 
@@ -199,12 +199,6 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--feed", type=Path, help="canned feed JSON (CI/tests); default fetches live")
     ap.add_argument("--stamp", action="store_true", help="rewrite last_verified on full pass")
-    ap.add_argument(
-        "--strict-held",
-        action="store_true",
-        help="also fail on rows pricing_sync deliberately HELD (deploy uses this; CI does not, "
-        "so a legitimate upstream price cut cannot brick every PR)",
-    )
     args = ap.parse_args(argv)
 
     if args.feed:
@@ -248,12 +242,13 @@ def main(argv: list[str] | None = None) -> int:
             "corroboration ran and the divergence is known, so this is not "
             "'unverified' (R-LIVE-PRICING)."
         )
-        print("Confirm the move at source, then re-run pricing_sync to apply it.")
+        print(
+            f"No action required and NO human confirmation is sought (R-AUTO-PRICING): the "
+            f"hold expires on EVIDENCE — pricing_sync applies it automatically once the feed "
+            f"reports the same rate on {HOLD_CORROBORATIONS} consecutive runs."
+        )
     if bad:
         print("STRICT GATE FAILED (R-AUTO-PRICING): fix the rows above; nothing ships unverified.")
-        return 1
-    if held and args.strict_held:
-        print("STRICT GATE FAILED (--strict-held): a held swing must be resolved before deploy.")
         return 1
     if args.stamp:
         stamp_last_verified(DEFAULT_DATA, datetime.now(UTC).date().isoformat())
