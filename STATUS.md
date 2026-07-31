@@ -4513,3 +4513,26 @@ to a person) · FR-46 OAuth revocation RFC-7009 + /api/v1/me introspection RFC-7
 no kill path) · FR-47 MCP as a resolver, not a parallel auth path. NOT DISPATCHED: T-T1 (#113) is
 `loop:in-progress`, so WIP discipline holds — nothing new labelled loop:ready while the loop is
 mid-ticket (the fb7d84b race lesson). Sequencing into NOW remains the founder's.
+
+2026-08-01 (LOST-SCOPE SWEEP — the session's architectural analysis was chat-only, now recorded):
+founder asked whether the previous findings and analysis were recorded. Checked rather than claimed,
+and the answer was PARTIALLY — which docs/09 §9 itself calls a spine bug ("a conversation decision
+that never became an FR is LOST SCOPE"). Already recorded: tenant rate cards + the /openapi.json
+contradiction (BACKLOG), R-AUTHZ FR-43..47 (docs/01 §K), LE-10/LE-11 (docs/09), ADR-8 (docs/02).
+NOT recorded and therefore one session-end away from being lost: the API surface inventory, the
+configuration-plane absence, and the docs/12 coverage map. All four now in BACKLOG as evidenced
+one-liners per CLAUDE.md rule 1: (a) API-first is intention not property — 103 endpoints, SIX
+bearer-reachable, zero scoped write, every mutation HTML-form+cookie, and `/explore`'s full filter
+model (date/group/tier/source/model/detector/severity/status) built but unreachable over JSON; no
+offset/cursor, no bulk, no async job API, no JSON export, no CORS, and `/audits/{id}/status` is
+session-only so an API client cannot poll its own audit; (b) the configuration plane does not exist —
+ONE per-workspace boolean and one string, four alert thresholds, while ~40 detector thresholds are
+process-global env vars, so two enterprises on one deployment cannot be tuned differently; the
+dimension was never created, and tenant rate cards + per-workspace thresholds + DECLARED intent all
+block on it; (c) docs/12 coverage measured against PLAN §0.0's six stages — NOT built: T4 OTLP (spec
+only, zero code), D7 (named in the INTENT LAW, never shipped), DECLARED intent (no task_class/
+quality_sensitivity/expected_recurrence — only a free-form tag, so the INTENT LAW's "you tell us why"
+half has no channel), FOCUS export; PREVENT's "later real-time control" means enforcement is
+SEQUENCED, not forbidden; (d) the six-stages × three-planes frame recorded as PROPOSED, not adopted.
+Process lesson worth keeping: a long analytical session accumulates findings faster than it records
+them, and the recording must happen per-finding, not at the end.
