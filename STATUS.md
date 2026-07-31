@@ -4536,3 +4536,20 @@ half has no channel), FOCUS export; PREVENT's "later real-time control" means en
 SEQUENCED, not forbidden; (d) the six-stages × three-planes frame recorded as PROPOSED, not adopted.
 Process lesson worth keeping: a long analytical session accumulates findings faster than it records
 them, and the recording must happen per-finding, not at the end.
+
+2026-08-01 (LIVE INCIDENT — the loop was silently wedged; stale claim released, LE-12 registered):
+routine "what next?" check found T-T1 (#113) had sat `loop:in-progress` for ~6 HOURS with no branch
+and no PR, while SIX scheduled loop-driver runs completed "success". Cause: the selector correctly
+skips anything already claimed ("a re-run never double-builds one the driver already claimed"), but
+**the claim label has no TTL and no reaper**, so an executor that dies mid-ticket holds the claim
+forever and every later run passes over it. COMPOUNDING IT: `loop_status.py` reported the loop
+HEALTHY the whole time — it checks kill-switch, auto-merge, gate-round enforcement and armed PRs, but
+never whether any ticket is PROGRESSING. LE-6 answers "is the loop armed?", not "is the loop moving?",
+which is the only question that matters once it stops. ACTION: released the stale claim on #113
+(label back to `loop:ready`, reason recorded on the issue so the next executor sees why) — the next
+scheduled driver run re-claims it, work unchanged. REGISTERED: LE-12 in docs/09 §6 + QUEUE T-L1 —
+stamp the claim (owner + timestamp), auto-release past a stale threshold, and make "stuck ticket" a
+first-class line in loop_status; LE-6's row amended to name the defect rather than read as
+unqualified SHIPPED. Note this is the KNOWN failure class (agent-execution outages are already
+recorded) meeting the absence of a mechanical guard — exactly the P10 pattern: eliminate the failure
+CLASS, not the instance.

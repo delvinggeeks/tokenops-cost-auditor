@@ -111,6 +111,11 @@ _NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with lo
   maintained baseline, not a one-time artifact) and rendered token-PLACEMENT checks. **Depends on
   T-T4/LE-10** — placement and regression are only observable by rendering ·
   trace: `docs/design/SPEC.md` + `tests/browser/test_visual.py` → diffed baseline in CI
+- **T-L1 · LE-12 | LE-6 defect** claim reaper + progress observability — stamp the `loop:in-progress`
+  claim (owner + timestamp), auto-release past a stale threshold, and make "stuck ticket" a first-class
+  line in `loop_status.py`. **Live incident 2026-08-01: #113 wedged ~6h, six driver runs reported
+  success, loop_status said healthy.** Without it every executor death silently halts the factory ·
+  trace: `scripts/loop_driver.py` + `scripts/loop_status.py` → `tests/test_loop_driver.py`
 - **T-A1 · FR-43 | R-AUTHZ** unified principal + single decision point — behaviour-preserving
   enabler; scope ∩ role ∩ plan, fail-closed. **HARD PRECONDITION of any write API** ·
   trace: `web/api_auth.py` + `web/authz.py` → `tests/test_authz_matrix.py`
