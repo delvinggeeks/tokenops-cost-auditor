@@ -103,7 +103,7 @@ Renumbered from 8: the LOOP independently minted ADR-8 in PR #118 for the same
 decision's ADOPT half (pytest-requirements over a hand-rolled marker), and it
 landed on main first, so it owns the number. Two authors allocated one id because
 nothing allocates ADR numbers — the R-nn collision class, recurring locally.
-ADR-8 covers ADOPT; this covers BUILD. Candidates evaluated with licence + maintenance
+That ADR covers ADOPT; this one covers BUILD. Candidates evaluated with licence + maintenance
 verified: OpenFastTrace (GPL-3.0, healthy, real shallow/deep coverage algebra),
 Doorstop (LGPL-3.0, 649*, suspect-link detection), StrictDoc (Apache-2.0, ReqIF
 export), sphinx-needs (MIT), pytest-requirements (BSD-3), rtmx (Apache-2.0).
