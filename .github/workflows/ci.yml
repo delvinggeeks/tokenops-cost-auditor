@@ -91,7 +91,19 @@ jobs:
         run: uv run python scripts/coverage_gate.py
       - name: pricing table age (NFR-15 — warns, never fails)
         run: uv run python scripts/pricing_age.py
+      - name: pricing sync (R-LIVE-PRICING — materializes the machine overlay)
+        # pricing_verify checks the EFFECTIVE table (base + overlay), but the overlay
+        # is a gitignored runtime artifact, so a fresh checkout has only the static
+        # base. Without this step CI verifies an artifact R-LIVE-PRICING says is never
+        # updated by hand, and goes red on any upstream feed move — permanently, and
+        # un-fixably without the one edit the design forbids.
+        run: uv run python scripts/pricing_sync.py
       - name: strict pricing verification (R-AUTO-PRICING — fails the build)
+        # Held swings (gate 4) are reported, never fatal — here or at deploy. A hold
+        # expires on EVIDENCE (pricing_sync applies it once the feed corroborates it
+        # across runs), so gating on one would reintroduce the human price gate
+        # R-AUTO-PRICING abolished. A SUB-threshold divergence still fails: that means
+        # the sync did not run.
         run: uv run python scripts/pricing_verify.py
 
   build:

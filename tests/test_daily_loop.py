@@ -34,7 +34,10 @@ from tokenops_cost_auditor.services.pricing.table import PricingTable as _PT
 from tokenops_cost_auditor.services.pricing.table import Rate as _Rate
 
 EMAIL = "daily@example.com"
-NOW = datetime.now(UTC)
+# Anchored to mid-month, not the real clock: the budget-stage tests advance NOW by up
+# to two days and assert on MONTH-TO-DATE spend, so a real-clock NOW straddles the month
+# boundary on the last days of a month and the month-to-date total resets under them.
+NOW = datetime.now(UTC).replace(day=15, hour=12, minute=0, second=0, microsecond=0)
 YESTERDAY = (NOW - timedelta(days=1)).date()
 
 

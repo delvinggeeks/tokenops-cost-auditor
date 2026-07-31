@@ -50,6 +50,14 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+# scripts/ is deliberately not a package, and the tests load this file BY PATH, so
+# sys.path[0] is not scripts/ then. Put our own directory on the path before the
+# sibling import, so the gate-4 threshold has exactly one definition (pricing_sync)
+# rather than a copy here that could silently drift from the sync that enforces it.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from pricing_sync import HOLD_CORROBORATIONS, JUMP  # single source of the gate-4 rules
+
 from tokenops_cost_auditor.services.pricing.table import DEFAULT_DATA, PricingTable
 
 FEED_URL = (
@@ -61,7 +69,7 @@ FEED_URL = (
 class RowVerdict:
     provider: str
     model: str
-    status: str  # verified | mismatch | uncovered
+    status: str  # verified | held | mismatch | uncovered | not-applicable
     detail: str
 
 
@@ -133,10 +141,47 @@ def verify(table: PricingTable, feed: dict, today: datetime | None = None) -> li
             if round(float(ours), 6) != theirs:
                 problems.append(f"{name}: ours {ours} vs {key} {theirs}")
         if problems:
-            out.append(RowVerdict(provider, model, "mismatch", "; ".join(problems)))
+            # R-LIVE-PRICING gate 4 HOLDS a swing beyond JUMP rather than applying it
+            # blind ("a one-off feed glitch must not rewrite money math"). A row the
+            # sync deliberately held is therefore NOT "unverified" in R-AUTO-PRICING's
+            # sense — corroboration ran, the divergence is known, and daily_digest
+            # alerts it. Classifying it as a mismatch made the two rulings mutually
+            # exclusive: a legitimate large price cut bricked CI and deploy forever.
+            # A SUB-threshold divergence stays a hard failure — that one means the
+            # sync did not run or did not write, which is a real defect.
+            worst = _worst_swing(checks)
+            if worst is not None and worst > JUMP:
+                out.append(
+                    RowVerdict(
+                        provider,
+                        model,
+                        "held",
+                        f"swing {worst:.0%} > {JUMP:.0%} — held by pricing_sync gate 4, "
+                        f"not applied blind; {'; '.join(problems)}",
+                    )
+                )
+            else:
+                out.append(RowVerdict(provider, model, "mismatch", "; ".join(problems)))
         else:
             out.append(RowVerdict(provider, model, "verified", f"corroborated by {key}"))
     return out
+
+
+def _worst_swing(checks: list[tuple[str, object, float | None]]) -> float | None:
+    """Largest relative move feed-vs-ours over INPUT and OUTPUT only.
+
+    This must mirror pricing_sync's gate 4 EXACTLY — it computes `worst` over input
+    and output, so including cache components here would let this gate call a row
+    "held" that the sync would actually apply, masking a real failure behind a
+    non-fatal verdict."""
+    worst: float | None = None
+    for name, ours, theirs in checks:
+        if name not in ("input", "output") or theirs is None:
+            continue
+        base = float(ours)  # type: ignore[arg-type]
+        rel = abs(theirs - base) / base if base else 1.0
+        worst = rel if worst is None else max(worst, rel)
+    return worst
 
 
 def stamp_last_verified(path: Path, on_date: str) -> None:
@@ -173,17 +218,35 @@ def main(argv: list[str] | None = None) -> int:
     table = PricingTable.load()
     verdicts = verify(table, feed)
     bad = [v for v in verdicts if v.status in ("mismatch", "uncovered")]
+    held = [v for v in verdicts if v.status == "held"]
     na = [v for v in verdicts if v.status == "not-applicable"]
     ok = [v for v in verdicts if v.status == "verified"]
     for v in verdicts:
         marker = (
-            "OK " if v.status == "verified" else ("na " if v.status == "not-applicable" else "!! ")
+            "OK "
+            if v.status == "verified"
+            else "na "
+            if v.status == "not-applicable"
+            else "HOLD "
+            if v.status == "held"
+            else "!! "
         )
         print(f"{marker}{v.provider}/{v.model}: {v.status} — {v.detail}")
     tally = f"{len(ok)}/{len(verdicts)} rows verified"
     if na:
         tally += f" ({len(na)} not applicable today — future-dated epochs, listed above)"
     print(f"\n{tally}")
+    if held:
+        print(
+            f"\n{len(held)} row(s) HELD by pricing_sync gate 4 (swing > {JUMP:.0%}) — "
+            "corroboration ran and the divergence is known, so this is not "
+            "'unverified' (R-LIVE-PRICING)."
+        )
+        print(
+            f"No action required and NO human confirmation is sought (R-AUTO-PRICING): the "
+            f"hold expires on EVIDENCE — pricing_sync applies it automatically once the feed "
+            f"reports the same rate on {HOLD_CORROBORATIONS} consecutive runs."
+        )
     if bad:
         print("STRICT GATE FAILED (R-AUTO-PRICING): fix the rows above; nothing ships unverified.")
         return 1

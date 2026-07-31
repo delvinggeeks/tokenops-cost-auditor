@@ -135,10 +135,27 @@ class TestLiveInvocationIsCrashSafe:
 class TestLooksTruncated:
     """A verdict-only reply (no findings) is a truncated agent response, not a verdict."""
 
-    def test_bare_verdict_is_truncated(self) -> None:
+    def test_bare_non_clean_verdict_is_truncated(self) -> None:
+        # FAIL / PASS-WITH-NOTES without findings are charter-invalid (the responses
+        # actually seen on PRs #69/#75), so they are retried.
         assert gr._looks_truncated("VERDICT: FAIL") is True
         assert gr._looks_truncated("  VERDICT: PASS-WITH-NOTES  \n") is True
         assert gr._looks_truncated("") is True
+
+    def test_bare_clean_pass_is_NOT_truncated(self) -> None:
+        """A terse `VERDICT: PASS` is a valid review, not a truncation.
+
+        Truncation removes the tail and the verdict line IS the tail, so a present
+        verdict token is evidence the reply completed; and the charter requires findings
+        only for NON-clean verdicts. Before this fix a tersely-clean reviewer was retried
+        and, when clean twice, its PASS became a merge-blocking NO-VERDICT — observed on
+        PR #111, where the rerun returned the same PASS with the diff unchanged."""
+        assert gr._looks_truncated("VERDICT: PASS") is False
+        assert gr._looks_truncated("  VERDICT: PASS  \n") is False
+
+    def test_short_reply_with_no_verdict_token_is_still_truncated(self) -> None:
+        # guard the fix: shortness alone must not pass — only a clean PASS may.
+        assert gr._looks_truncated("hmm") is True
 
     def test_substantive_review_is_not_truncated(self) -> None:
         assert gr._looks_truncated("1. bug at foo.py:2 — x\n\nVERDICT: FAIL") is False

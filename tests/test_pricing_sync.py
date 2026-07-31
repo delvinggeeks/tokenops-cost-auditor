@@ -142,6 +142,36 @@ class TestPlanRefresh:
         assert not any(x["model"] == "gpt-5.4" for x in out["writes"])
         assert any(h["model"] == "gpt-5.4" and "jump" in h["why"] for h in out["held"])
 
+    def test_hold_streak_counts_and_reports_progress(self) -> None:
+        """A held swing records how close it is to auto-applying, so the state is
+        legible without anyone having to ask a human what to do about it."""
+        table = _table(**{"openai__gpt-5.4": (_rate(0.1, 4.0),)})
+        out = ps.plan(table, ps.normalize(FEED), RUN, cover=None, prior_streaks={})
+        held = next(h for h in out["held"] if h["model"] == "gpt-5.4")
+        assert f"corroboration 1/{ps.HOLD_CORROBORATIONS}" in held["why"]
+        assert out["held_streaks"]["openai/gpt-5.4"]["n"] == 1
+
+    def test_hold_auto_applies_once_corroborated_no_human_gate(self) -> None:
+        """R-AUTO-PRICING forbids a human price gate, so gate 4's hold must expire on
+        EVIDENCE. A feed repeating the same rate for HOLD_CORROBORATIONS consecutive
+        runs has falsified the one-off-glitch hypothesis, and the swing applies itself."""
+        table = _table(**{"openai__gpt-5.4": (_rate(0.1, 4.0),)})
+        prior = {"openai/gpt-5.4": {"input": 1.1, "output": 4.4, "n": ps.HOLD_CORROBORATIONS - 1}}
+        out = ps.plan(table, ps.normalize(FEED), RUN, cover=None, prior_streaks=prior)
+        assert any(x["model"] == "gpt-5.4" for x in out["writes"])  # applied, not held
+        assert not any(h["model"] == "gpt-5.4" for h in out["held"])
+        assert "openai/gpt-5.4" not in out["held_streaks"]  # streak cleared on apply
+
+    def test_a_flapping_feed_never_accumulates_a_streak(self) -> None:
+        """The corroboration must require the SAME candidate each run. A feed that
+        reports a different wild number every run is exactly the glitch gate 4 exists to
+        stop, so its streak resets rather than creeping up to an automatic apply."""
+        table = _table(**{"openai__gpt-5.4": (_rate(0.1, 4.0),)})
+        prior = {"openai/gpt-5.4": {"input": 9.9, "output": 9.9, "n": ps.HOLD_CORROBORATIONS - 1}}
+        out = ps.plan(table, ps.normalize(FEED), RUN, cover=None, prior_streaks=prior)
+        assert not any(x["model"] == "gpt-5.4" for x in out["writes"])  # still held
+        assert out["held_streaks"]["openai/gpt-5.4"]["n"] == 1  # reset, not incremented
+
     def test_noop_is_skipped(self) -> None:
         table = _table(**{"openai__gpt-5.4": (_rate(1.1, 4.4),)})
         out = ps.plan(table, ps.normalize(FEED), RUN, cover=None)

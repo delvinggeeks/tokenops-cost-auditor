@@ -39,6 +39,13 @@ LITELLM_URL = (
 PROVIDERS = {"openai", "anthropic"}  # the providers we price
 MAX_RATE = 1000.0  # $/1M ceiling — a plausible upper band (gate 2)
 JUMP = 0.60  # a >±60% change to an EXISTING rate is held, not auto-applied (gate 4)
+# Gate 4 protects against a ONE-OFF FEED GLITCH — so the hold must expire on evidence,
+# not on a person. A feed that reports the SAME new rate on this many consecutive runs
+# has falsified the glitch hypothesis, and the swing applies automatically. Without this
+# a held row stays held forever and the only exit is a human confirming a price, which
+# is exactly the gate R-AUTO-PRICING abolished ("no human gate — it has to be done by
+# the agent strictly verifying"). Daily ofelia cadence => a real cut lands in ~3 days.
+HOLD_CORROBORATIONS = 3
 # New-model coverage must span the full backfill/audit window (365d + margin),
 # or historical usage stays unpriced behind the rate's effective_from — the
 # founder's 46,868-call year read $0.17 because 90d of back-dating left 2025
@@ -129,11 +136,14 @@ def plan(
     normalized: dict[tuple[str, str], dict[str, float]],
     run_date: date,
     cover: set[str] | None = None,
+    prior_streaks: dict[str, dict] | None = None,
 ) -> dict[str, list[dict]]:
     """Decide what to write. REFRESH mode (cover=None) touches only models
     already in the table; COVER mode adds the named unpriced models."""
     writes: list[dict] = []
     held: list[dict] = []
+    streaks: dict[str, dict] = {}
+    prior = prior_streaks or {}
     skipped = 0
     cover_bases = {base_id(m.lower()) for m in cover} if cover else set()
 
@@ -184,16 +194,33 @@ def plan(
                 abs(cand["output"] - current.output) / current.output if current.output else 1,
             )
             if worst > JUMP:
-                held.append(
-                    {
-                        "provider": provider,
-                        "model": model,
-                        "why": f"jump {worst:.0%} > {JUMP:.0%} "
-                        f"(feed ${cand['input']}/{cand['output']} vs "
-                        f"table ${current.input}/{current.output})",
-                    }
+                # Corroborate across runs instead of waiting for a person: a glitch does
+                # not repeat identically, a real price cut does. Count consecutive runs
+                # in which the feed reports THIS SAME candidate; once the count reaches
+                # HOLD_CORROBORATIONS the glitch hypothesis is falsified and the swing
+                # applies automatically (R-AUTO-PRICING: no human gate, ever).
+                key = f"{provider}/{model}"
+                seen = prior.get(key) or {}
+                same = (
+                    abs(float(seen.get("input", -1)) - cand["input"]) < 1e-6
+                    and abs(float(seen.get("output", -1)) - cand["output"]) < 1e-6
                 )
-                continue
+                n = int(seen.get("n", 0)) + 1 if same else 1
+                if n < HOLD_CORROBORATIONS:
+                    streaks[key] = {"input": cand["input"], "output": cand["output"], "n": n}
+                    held.append(
+                        {
+                            "provider": provider,
+                            "model": model,
+                            "why": f"jump {worst:.0%} > {JUMP:.0%} "
+                            f"(feed ${cand['input']}/{cand['output']} vs "
+                            f"table ${current.input}/{current.output}) — "
+                            f"corroboration {n}/{HOLD_CORROBORATIONS}, auto-applies at "
+                            f"{HOLD_CORROBORATIONS}",
+                        }
+                    )
+                    continue
+                # corroborated: fall through and write it, streak cleared
             eff = run_date  # a real price change applies going forward
         else:
             # New coverage: back-date so the usage that triggered it actually prices.
@@ -210,7 +237,7 @@ def plan(
                 "source": "litellm-auto",
             }
         )
-    return {"writes": writes, "held": held, "skipped": skipped}
+    return {"writes": writes, "held": held, "skipped": skipped, "held_streaks": streaks}
 
 
 def merge_overlay(existing: dict | None, writes: list[dict], run_date: date) -> dict:
@@ -250,6 +277,20 @@ def write_overlay(doc: dict, path: Path = AUTO_DATA) -> None:
     path.write_text(OVERLAY_BANNER + yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
 
 
+def read_status(report_dir: Path) -> dict:
+    """Last run's status, or {} — the carrier for held-swing corroboration counts."""
+    status = report_dir / ".ops" / "pricing_sync.json"
+    # The `except A, B:` below is PEP 758 (valid from Python 3.14), NOT the Python-2 typo
+    # it resembles — two gate reviewers flagged it, both verified by AST that it parses as
+    # a tuple. Parenthesising it does NOT stick: `ruff format` on the pinned toolchain
+    # strips the parens straight back out, so this comment is the durable fix, not the
+    # syntax. Reads-as-broken is a real cost; leaving it unexplained twice is worse.
+    try:
+        return json.loads(status.read_text(encoding="utf-8"))
+    except OSError, ValueError:
+        return {}
+
+
 def write_status(report_dir: Path, payload: dict) -> None:
     status = report_dir / ".ops" / "pricing_sync.json"
     status.parent.mkdir(parents=True, exist_ok=True)
@@ -268,7 +309,8 @@ def run(
     # Reference the module globals explicitly (not load()'s bound defaults) so a
     # test can retarget DEFAULT_DATA/AUTO_DATA by monkeypatching this module.
     table = PricingTable.load(path=DEFAULT_DATA, overlay=AUTO_DATA)
-    result = plan(table, normalized, run_date, cover)
+    prior_streaks = read_status(report_dir).get("held_streaks") or {}
+    result = plan(table, normalized, run_date, cover, prior_streaks=prior_streaks)
     if result["writes"] and not dry_run:
         existing = None
         if AUTO_DATA.exists():
@@ -281,6 +323,7 @@ def run(
         "written": len(result["writes"]),
         "held": result["held"],
         "skipped": result["skipped"],
+        "held_streaks": result["held_streaks"],
         "dry_run": dry_run,
     }
     if report_dir.parent.exists():
