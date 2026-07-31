@@ -184,7 +184,19 @@ def _looks_truncated(out: str) -> bool:
     if not body:
         return True
     without_verdict = _VERDICT_RE.sub("", body).strip()
-    return len(without_verdict) < 20
+    if len(without_verdict) >= 20:
+        return False
+    # Only a verdict token survived. Truncation removes the TAIL, and the verdict line
+    # IS the tail — so a verdict token being PRESENT is evidence the reply completed.
+    # A bare `VERDICT: PASS` is therefore a legitimate terse clean pass: the charter
+    # demands numbered file:line findings only for NON-clean verdicts, so a reviewer
+    # with nothing to report owes no findings. Treating it as truncation retried a valid
+    # review and, when the reviewer was tersely clean twice, converted a PASS into a
+    # merge-blocking NO-VERDICT (observed on PR #111: the round blocked, the rerun
+    # returned the same PASS, and nothing in the diff had changed).
+    # Bare FAIL / PASS-WITH-NOTES stay truncated — those verdicts are charter-invalid
+    # without findings, and are the responses actually seen on PRs #69 and #75.
+    return parse_verdict(body) != "PASS"
 
 
 def _invoke_cli(agent: str, prompt: str) -> str:

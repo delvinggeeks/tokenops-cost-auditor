@@ -4390,3 +4390,18 @@ held(1/3) → held(2/3) → APPLIED, after which pricing_verify reports 35/35 ro
 with luna at 0.2/1.2 under a dated epoch and no human anywhere in the loop. Daily ofelia cadence
 means a genuine cut now lands in ~3 days by itself. Pinned by three tests incl. the flapping-feed
 case; docs/04 rows updated in the same commit.
+2026-07-31 (LE-4 harness fix — a terse clean PASS could block a merge): PR #111's gate round
+returned BLOCKED on `cold-reviewer — NO-VERDICT` ("returned a verdict with no findings twice"),
+the rerun returned PASS with the diff byte-identical, and every other gate passed both times. That
+is a harness defect, not a review. Root cause in `_looks_truncated`: it flagged ANY reply with
+under 20 characters beyond the verdict token as truncated, retried once, and on a second terse
+reply converted the verdict into a merge-blocking NO-VERDICT — so a reviewer with genuinely
+nothing to report was punished for brevity. The reasoning that fixes it: truncation removes the
+TAIL, and the TE-8 verdict line IS the tail, so a verdict token being PRESENT is evidence the reply
+COMPLETED; and the charter demands numbered file:line findings only for NON-clean verdicts, so a
+bare `VERDICT: PASS` owes no findings and is contractually valid. Bare FAIL / PASS-WITH-NOTES stay
+truncated-and-retried — those are charter-invalid without findings and are the responses actually
+observed on PRs #69/#75 — and an empty or verdict-less short reply stays truncated too (pinned by
+test_short_reply_with_no_verdict_token_is_still_truncated, so shortness alone can never pass).
+Note the pre-existing test suite had pinned bare FAIL and bare PASS-WITH-NOTES but never bare PASS,
+which is exactly why the case slipped through; it is pinned now.
