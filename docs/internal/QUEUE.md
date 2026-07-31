@@ -93,6 +93,38 @@ stub note retired) refreshed; `read-api-seq.mmd`, `payments-seq.mmd`, `orgs-seq.
 the CI gate round (D6/D13-style pass). NOW is now empty — founder sequences the next
 card from CANDIDATES (T-D4, T-D5) or a ruling._
 
+_NOW order set 2026-07-31 (founder: "sequence vertical slices and prompt with loop engineering"): **T-T1 → T-T2 → T-T3-residue**. Dispatched through the LE-5 loop as `loop:ready` issues, NOT built in-session — filing the label and building in the same session races the loop and lands a duplicate on main (the fb7d84b lesson). **T-T2 is filed but deliberately NOT labelled `loop:ready` until T-T1 merges**: the gate cannot go green before the backfill exists, so dispatching both at once guarantees a red PR. Loop state verified live at sequencing time — LOOP_PAUSED running, auto-merge enabled, gate-round REQUIRED, `LOOP_PAT` present, driver green on schedule, zero open `loop:ready` issues._
+
+- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
+  FR/NFR id becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
+  authored), plus backfill of the current `tests/` tree; a marker naming an unknown id fails
+  collection · trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
+- **T-T2 · LE-8 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
+  M-priority requirement with no passing bound test, missing module path, or **suspect link**
+  (parent requirement content-hash changed since the link was last verified — the one control
+  Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
+  DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
+  `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
+- **T-T3 · LE-9 | R-TRACE** traceability & delivery console — `scripts/trace.py` builds a derived
+  index and serves it three ways: **CLI** (`status`/`walk`/`check`/`baseline`), a **generated
+  static docs-site page** regenerated in CI (the auditor artifact — cannot drift), and a **local
+  server-rendered htmx console** launched like `make preview` (bidirectional walk + a GENERATED
+  agile board projecting QUEUE × issue/PR state, replacing the hand-maintained KANBAN.md stale
+  since 2026-07-24 + the six flow metrics from issue/PR timestamps, zero estimation). Never
+  mounted in the customer product. X-05-safe (SSR + htmx, no SPA, no build step) ·
+  trace: `scripts/trace.py` + `web/templates/internal/` → `tests/test_trace_console.py`
+
+_R-TRACE registered 2026-07-31 from a founder ask ("full traceability end to end for audit... for
+auditing the requirements for humans" + "internal UI tool for human viewing and validating"),
+analyzed per docs/09 §9 R-REQ-PIPELINE. **Homed as LE-7..LE-9, NOT as FRs** — requirement
+traceability is SDLC/CI tooling, which per the docs/04 scope note is governed by CLAUDE.md rule 7
+and docs/09 and owns no docs/04 row; registering it as FRs was self-contradictory (DoD item 10
+would demand a matrix row the matrix forbids) and was corrected before merge. **Grounded in a
+measured defect**: 22 of 63 test ids in docs/04 resolve to no collected test (incl. `T-RUL-D1-01..03`
+for FR-07, a shipped core detector, absent from BOTH tests/ and docs/05), 3 requirements with no row,
+and 148 of 192 test ids invisible to any document. Full rationale in docs/09 §6. Overlaps T-D5
+(docs/05 test-plan refresh) — T-D5 folds into T-T1's backfill rather than running twice._
+
 ## CANDIDATES — verified gaps; the founder sequences these into NOW
 
 Not buildable yet (law 1: only a NOW task is buildable). Listed so the next session does not
@@ -134,35 +166,7 @@ gets its first shipped surfaces. Slices:
   un-gated bare-ref copy and a seeded journey — superseded test-by-test with the union
   kept; full record in STATUS.md.)_
 
-- **T-T1 · LE-7 | R-TRACE** requirement-bound tests — registered pytest marker carrying the
-  FR/NFR id becomes the SINGLE source of the requirement↔test edge (docs/04 becomes DERIVED, not
-  authored), plus backfill of the current `tests/` tree; a marker naming an unknown id fails
-  collection · trace: `tests/conftest.py` marker + backfill → `tests/test_traceability.py`
-- **T-T2 · LE-8 | R-TRACE** traceability gate — CI fails on untraced requirement, dead test id,
-  M-priority requirement with no passing bound test, missing module path, or **suspect link**
-  (parent requirement content-hash changed since the link was last verified — the one control
-  Doorstop has that the pytest-native options don't). Design-only requirements exempt BY
-  DECLARATION, never by silence. **Sequence after T-T1** · trace: `scripts/trace.py check` +
-  `.github/workflows/ci.yml` → `tests/test_trace_gate.py`
-- **T-T3 · LE-9 | R-TRACE** traceability & delivery console — `scripts/trace.py` builds a derived
-  index and serves it three ways: **CLI** (`status`/`walk`/`check`/`baseline`), a **generated
-  static docs-site page** regenerated in CI (the auditor artifact — cannot drift), and a **local
-  server-rendered htmx console** launched like `make preview` (bidirectional walk + a GENERATED
-  agile board projecting QUEUE × issue/PR state, replacing the hand-maintained KANBAN.md stale
-  since 2026-07-24 + the six flow metrics from issue/PR timestamps, zero estimation). Never
-  mounted in the customer product. X-05-safe (SSR + htmx, no SPA, no build step) ·
-  trace: `scripts/trace.py` + `web/templates/internal/` → `tests/test_trace_console.py`
-
-_R-TRACE registered 2026-07-31 from a founder ask ("full traceability end to end for audit... for
-auditing the requirements for humans" + "internal UI tool for human viewing and validating"),
-analyzed per docs/09 §9 R-REQ-PIPELINE. **Homed as LE-7..LE-9, NOT as FRs** — requirement
-traceability is SDLC/CI tooling, which per the docs/04 scope note is governed by CLAUDE.md rule 7
-and docs/09 and owns no docs/04 row; registering it as FRs was self-contradictory (DoD item 10
-would demand a matrix row the matrix forbids) and was corrected before merge. **Grounded in a
-measured defect**: 22 of 63 test ids in docs/04 resolve to no collected test (incl. `T-RUL-D1-01..03`
-for FR-07, a shipped core detector, absent from BOTH tests/ and docs/05), 3 requirements with no row,
-and 148 of 192 test ids invisible to any document. Full rationale in docs/09 §6. Overlaps T-D5
-(docs/05 test-plan refresh) — T-D5 folds into T-T1's backfill rather than running twice._
+- _(T-T1/T-T2/T-T3 → NOW 2026-07-31, founder-sequenced.)_
 
 ## BLOCKED — needs a founder action first (ROADMAP §4)
 
