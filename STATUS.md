@@ -4553,3 +4553,25 @@ first-class line in loop_status; LE-6's row amended to name the defect rather th
 unqualified SHIPPED. Note this is the KNOWN failure class (agent-execution outages are already
 recorded) meeting the absence of a mechanical guard — exactly the P10 pattern: eliminate the failure
 CLASS, not the instance.
+
+2026-08-01 (K-2 STOP — PR #110 blocked by a reproducible cold-reviewer NO-VERDICT; escalating, not
+re-attempting): CI on #110 is FULLY GREEN (build/test/type/lint/docs/authorship). The gate round
+BLOCKS on `cold-reviewer — NO-VERDICT` ("returned a verdict with no findings twice"). Ruled out, in
+order: (a) NOT the terse-clean-PASS bug — that fix (ce4be10) is present on this branch and only ever
+accepts a bare `VERDICT: PASS`; (b) NOT diff size — 76,111 chars against the 200,000 DIFF_CAP;
+(c) NOT transient — TWO full rounds, each with the harness's own internal retry, so FOUR attempts,
+while spec-guard, vv-engineer and system-tester all returned substantive reviews on the same diff
+every time (the run log shows cold-reviewer producing a clean PASS in one attempt and nothing in
+others, so the agent CAN review this diff and intermittently returns verdict-only). Per K-2 I am NOT
+running a third attempt. DIAGNOSIS I'd act on with a ruling: **#110 is oversized for review and that
+is my error** — 9 commits carrying a 685-line new module (`scripts/trace.py`) PLUS five unrelated
+documentation registrations (LE-10, LE-11, LE-12, ADR-8, R-AUTHZ FR-43..47). That is a session's
+accumulation, not one vertical slice, and the smart-zone rule applies to a REVIEW UNIT as much as to
+a session. RECOMMENDED REMEDY: split into (a) console code — `scripts/trace.py`,
+`tests/test_trace_console.py`, Makefile, the docs/09 LE-9 row and its STATUS paragraphs; and (b) the
+registrations — docs/09 LE-10/11/12, docs/02 ADR-8, docs/01 §K, QUEUE cards, BACKLOG entries. Two
+coherent diffs a reviewer (agent or human) can hold at once. SECOND-ORDER FINDING, widening LE-12:
+every loop failure mode so far needs a HUMAN to notice — a dead executor holds its claim forever
+while `loop_status` reports healthy, and a NO-VERDICT blocks a PR waiting for a manual re-run the
+harness could perform itself. LE-12 should cover round-level auto-retry on NO-VERDICT, not just the
+claim reaper.
