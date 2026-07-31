@@ -4467,9 +4467,7 @@ X-05-safe: server-rendered HTML, no SPA framework, no build step, no JS needed f
 FIRST LIVE RUN, and the figures here are the tool's own output on THIS branch — quoted once so
 docs/09 and STATUS cannot disagree (a spec-guard FAIL on the first attempt caught them differing,
 because earlier drafts recorded a run taken BEFORE this branch's own test file added T-TRC ids):
-**56 requirements — 16 walk clean, 12 partial, 28 broken, 3 with no matrix row; 103 test ids claimed
-by docs/04 of which 51 RESOLVE TO NO COLLECTED TEST; 199 ids present in tests/ of which 147 are
-claimed by nothing.** Verified not a false positive before publishing: T-ING-02/03/04 exist in
+**56 requirements — 19 walk clean, 12 partial, 25 broken, 3 with no matrix row; 103 test ids claimed by docs/04 of which 48 RESOLVE TO NO COLLECTED TEST; 202 ids present in tests/ of which 147 are claimed by nothing** (figures re-taken after T-T1/LE-7 merged its `pytest-requirements` markers, which is why they beat the pre-marker run — docs/09 and STATUS quote the SAME numbers, the spec-guard FAIL that taught this) Verified not a false positive before publishing: T-ING-02/03/04 exist in
 neither tests/ nor docs/05 — only T-ING-01 is real. The board is a PROJECTION of QUEUE.md, never a
 second source of truth — KANBAN.md was hand-maintained and its own header records it going stale
 within three days. Flow metrics derive from issue/PR timestamps with ZERO estimation, which is why
