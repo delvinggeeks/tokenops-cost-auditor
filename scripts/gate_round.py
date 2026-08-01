@@ -57,6 +57,11 @@ DIFF_CAP = 200_000  # chars of diff embedded in the prompt (kept under model con
 # NO-VERDICT: the primary fix is telling agents NOT to re-run the full suite (below),
 # this ceiling is the safety margin so a legitimately thorough gate still concludes.
 AGENT_TIMEOUT_S = 1200
+# In-process attempts before a verdict-only reply becomes NO-VERDICT. Three, not two:
+# two was empirically not enough — one agent burned five consecutive ROUNDS on the same
+# diff, each costing a human-initiated re-run, while its peers reviewed that diff fine.
+# The harness already knows the remedy is "re-run", so it should perform it (LE-12).
+ATTEMPTS_ON_TRUNCATION = 3
 # TE-8: "VERDICT (PASS | PASS-WITH-NOTES | FAIL)". Longest label first so PASS-WITH-NOTES
 # is never shadowed by a bare PASS match; trailing \b so "PASSED"/"FAILING" don't parse as
 # a clean verdict (the label must stand as a whole word).
@@ -239,9 +244,9 @@ def _invoke_cli(agent: str, prompt: str) -> str:
 
 
 def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
-    """Invoke this gate agent over the PR diff, retrying ONCE if the first response is a
-    truncated verdict-only reply (see `_looks_truncated`). Kept in one place so the exact
-    CLI contract is easy to adjust after the first live validation run (module docstring)."""
+    """Invoke this gate agent over the PR diff, retrying up to `ATTEMPTS_ON_TRUNCATION`
+    times if the response is a truncated verdict-only reply (see `_looks_truncated`), and
+    surfacing the raw replies if every attempt fails so the block is diagnosable."""
     truncated = len(diff_text) > DIFF_CAP
     marker = f" (TRUNCATED — first {DIFF_CAP} chars only; coverage is partial)" if truncated else ""
     prompt = (
@@ -257,19 +262,32 @@ def _run_agent_live(agent: str, diff_text: str, base: str) -> str:
         "VERDICT: <PASS | PASS-WITH-NOTES | FAIL>\n\n"
         f"----- diff{marker} -----\n{diff_text[:DIFF_CAP]}\n"
     )
-    out = _invoke_cli(agent, prompt)
-    if _looks_truncated(out):
-        # A verdict-only reply is not a review — one retry on the same clean diff (what a
-        # human re-run of the gate does today). If it recurs, surface an honest NO-VERDICT
-        # reason rather than a misleading bare FAIL, so the block says "re-run", not a lie.
-        retry = _invoke_cli(agent, prompt)
-        if not _looks_truncated(retry):
-            return retry
-        return (
-            f"[harness] {agent} returned a verdict with no findings twice — truncated "
-            "agent response, recorded as NO-VERDICT. Re-run the gate round."
-        )
-    return out
+    # A verdict-only reply is not a review. Retry in-process rather than asking a human
+    # to press the button the harness already knows to press: on 2026-08-01 cold-reviewer
+    # NO-VERDICTed the same code diff across five separate rounds while three other gates
+    # reviewed it substantively every time, and every occurrence cost a manual re-run.
+    attempts: list[str] = []
+    for _ in range(ATTEMPTS_ON_TRUNCATION):
+        out = _invoke_cli(agent, prompt)
+        if not _looks_truncated(out):
+            return out
+        attempts.append(out)
+    # Still nothing after every attempt. Surface WHAT came back, bounded — a NO-VERDICT
+    # that cannot say why is undiagnosable, which is how this went five rounds unexplained.
+    # Neutralise verdict tokens INSIDE the excerpt before quoting it: parse_verdict takes
+    # the LAST match in the text, so an un-redacted excerpt makes the diagnostic message
+    # itself parse as a verdict — this NO-VERDICT would have read as FAIL (caught by
+    # test_persistent_truncation_becomes_no_verdict_not_a_bare_fail the moment it was added).
+    seen = " | ".join(
+        repr(_VERDICT_RE.sub("<verdict-token>", a.strip()[:120])) if a.strip() else "<empty>"
+        for a in attempts
+    )
+    return (
+        f"[harness] {agent} returned a verdict with no findings on all "
+        f"{ATTEMPTS_ON_TRUNCATION} automatic attempts — recorded as NO-VERDICT. "
+        f"Automatic retries are EXHAUSTED, so a plain re-run is unlikely to help; "
+        f"investigate the agent or the diff. Raw replies: {seen}"
+    )
 
 
 def run_round(base: str, dry_run: bool, mock: dict[str, str] | None = None) -> list[GateResult]:
