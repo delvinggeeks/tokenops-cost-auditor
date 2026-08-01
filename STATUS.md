@@ -4457,3 +4457,25 @@ requirement_id property, -m verifies_requirement selection, collect-only map-bui
 docs/05-TEST-PLAN.md §6 added (folds in T-D5) documenting the marker convention alongside the
 existing T-XXX vocabulary. Out of scope, per the card: the CI gate (T-T2/LE-8) and the console
 (T-T3/LE-9) — scripts/trace.py does not exist yet, built next.
+
+2026-07-31 (LE-9 slice 1 + 2 — traceability console and the agile/SAFe board, founder-sequenced):
+`scripts/trace.py` built and running. Ops tooling, zero third-party deps, imports nothing from the
+product package, never mounted in the customer app (the pricing_sync.py separation). Surfaces:
+`make trace` (text), `make trace-ui` (local server-rendered console at 127.0.0.1:8765 — dashboard,
+per-requirement walk, unclaimed-tests view, delivery board, /index.json), and `trace walk FR-07`.
+X-05-safe: server-rendered HTML, no SPA framework, no build step, no JS needed for the walk.
+FIRST LIVE RUN, and the figures here are the tool's own output on THIS branch — quoted once so
+docs/09 and STATUS cannot disagree (a spec-guard FAIL on the first attempt caught them differing,
+because earlier drafts recorded a run taken BEFORE this branch's own test file added T-TRC ids):
+**56 requirements — 19 walk clean, 12 partial, 25 broken, 3 with no matrix row; 103 test ids claimed by docs/04 of which 48 RESOLVE TO NO COLLECTED TEST; 202 ids present in tests/ of which 147 are claimed by nothing** (figures re-taken after T-T1/LE-7 merged its `pytest-requirements` markers, which is why they beat the pre-marker run — docs/09 and STATUS quote the SAME numbers, the spec-guard FAIL that taught this) Verified not a false positive before publishing: T-ING-02/03/04 exist in
+neither tests/ nor docs/05 — only T-ING-01 is real. The board is a PROJECTION of QUEUE.md, never a
+second source of truth — KANBAN.md was hand-maintained and its own header records it going stale
+within three days. Flow metrics derive from issue/PR timestamps with ZERO estimation, which is why
+story points are absent repo-wide; **Flow Efficiency is reported "unavailable" rather than computed**,
+because timestamps cannot split active from waiting time and a fabricated number is worse than an
+honest gap. TWO SELF-CAUGHT FALSE-POSITIVE CLASSES fixed during the build: module paths resolved
+against the package root only, so `rules/d1_oversized_model` (which lives under services/) read as
+missing; and splitting informal matrix module cells on commas produced prose fragments like
+"docs/15); trigger-gated" that were then reported missing. Module checking now fires ONLY on clean
+path-shaped cells and is ADVISORY, never allowed to drive status, because a console that raises false
+defects is the exact failure it exists to fix (pinned by T-TRC-06/07).
