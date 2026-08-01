@@ -34,10 +34,17 @@ from tokenops_cost_auditor.services.pricing.table import PricingTable as _PT
 from tokenops_cost_auditor.services.pricing.table import Rate as _Rate
 
 EMAIL = "daily@example.com"
-# Anchored to mid-month, not the real clock: the budget-stage tests advance NOW by up
-# to two days and assert on MONTH-TO-DATE spend, so a real-clock NOW straddles the month
-# boundary on the last days of a month and the month-to-date total resets under them.
-NOW = datetime.now(UTC).replace(day=15, hour=12, minute=0, second=0, microsecond=0)
+# REAL clock, deliberately. Two test classes in this module need INCOMPATIBLE clocks:
+# TestBudgetStages advances NOW by +1/+2 days and asserts on MONTH-TO-DATE spend, so it
+# wants a mid-month anchor; TestTheTileAndTheTick reads the dashboard "yesterday" widget,
+# which computes yesterday from the REAL clock, so it wants NOW to be now. A single
+# module-level anchor cannot serve both.
+# A mid-month anchor was tried and REVERTED: day-15-of-this-month put NOW fourteen days
+# in the FUTURE on the 1st, breaking the tile tests for the first 17 days of every month
+# — strictly worse than the month-end flake it fixed (2 days). Known residual bug: the
+# budget-stage tests still straddle the boundary on the last two days of a month. The
+# real fix is per-class clocks, registered as its own card rather than patched here.
+NOW = datetime.now(UTC)
 YESTERDAY = (NOW - timedelta(days=1)).date()
 
 
@@ -120,10 +127,11 @@ def _usage(
         session.commit()
 
 
-def _run(app: FastAPI, mail: CapturingMail) -> dict[str, int]:
+def _run(app: FastAPI, mail: CapturingMail, now: datetime | None = None) -> dict[str, int]:
+    """`now` defaults to the module clock; callers that own a clock pass theirs."""
     with app.state.session_factory() as session:
         return daily.run_digests(
-            session, app.state.settings, app.state.pricing_table, mail, now=NOW
+            session, app.state.settings, app.state.pricing_table, mail, now=now or NOW
         )
 
 
@@ -294,6 +302,19 @@ class TestCachedTokenGolden:
         assert mail.sent[0][1].startswith("$10.50 yesterday")
 
 
+# TestBudgetStages owns its own clock. It advances by +1/+2 days and asserts on
+# MONTH-TO-DATE spend, so its whole window — the seeded usage AND the two later runs —
+# must sit inside one month. The module NOW cannot provide that: the dashboard-tile
+# tests read a widget that computes "yesterday" from the REAL clock, so they need NOW to
+# be now. One module anchor cannot serve both, which is why the earlier single-anchor
+# attempts each fixed one class and broke the other.
+def _month_stable_now() -> datetime:
+    """A noon anchor whose +2-day window stays in one month and never leads the clock."""
+    now = datetime.now(UTC)
+    base = now if now.day >= 18 else (now.replace(day=1) - timedelta(days=1))
+    return base.replace(day=15, hour=12, minute=0, second=0, microsecond=0)
+
+
 class TestBudgetStages:
     def _with_budget(self, app: FastAPI, threshold: float) -> str:
         uid = _paid_user(app)
@@ -305,11 +326,12 @@ class TestBudgetStages:
         return uid
 
     def test_a_stage_fires_once_and_escalates(self, app: FastAPI) -> None:
+        now = _month_stable_now()
         uid = self._with_budget(app, threshold=12.0)  # $10 mtd = 83% -> stage 80
         source = _source(app, uid)
-        _usage(app, source)
+        _usage(app, source, day=(now - timedelta(days=1)).date())
         mail = CapturingMail()
-        stats = _run(app, mail)
+        stats = _run(app, mail, now=now)
         assert stats["budget_stages"] == 1
         assert "80% of budget used" in mail.sent[0][1]
         with app.state.session_factory() as session:
@@ -322,18 +344,18 @@ class TestBudgetStages:
                 app.state.settings,
                 app.state.pricing_table,
                 mail,
-                now=NOW + timedelta(days=1),
+                now=now + timedelta(days=1),
             )
         assert later["budget_stages"] == 0 and later["digests_sent"] == 0
         # crossing 100% escalates exactly one stage further
-        _usage(app, source, day=(NOW + timedelta(days=1)).date(), prompt=300_000)  # +$3
+        _usage(app, source, day=(now + timedelta(days=1)).date(), prompt=300_000)  # +$3
         with app.state.session_factory() as session:
             final = daily.run_digests(
                 session,
                 app.state.settings,
                 app.state.pricing_table,
                 mail,
-                now=NOW + timedelta(days=2),
+                now=now + timedelta(days=2),
             )
         assert final["budget_stages"] == 1
         assert mail.sent[-1][1].startswith("Over budget:")
