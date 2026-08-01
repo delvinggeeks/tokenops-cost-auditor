@@ -180,10 +180,29 @@ class TestTruncatedVerdictRetries:
         assert gr.parse_verdict(out) == "PASS"
 
     def test_persistent_truncation_becomes_no_verdict_not_a_bare_fail(self, monkeypatch) -> None:
-        monkeypatch.setattr(gr, "_invoke_cli", lambda a, p: "VERDICT: FAIL")
+        calls = {"n": 0}
+
+        def fake_cli(agent: str, prompt: str) -> str:
+            calls["n"] += 1
+            return "VERDICT: FAIL"
+
+        monkeypatch.setattr(gr, "_invoke_cli", fake_cli)
         out = gr._run_agent_live("cold-reviewer", "diff", "main")
         assert gr.parse_verdict(out) == "NO-VERDICT"
-        assert "Re-run" in out
+        # the harness performs the retries itself rather than telling a human to
+        assert calls["n"] == gr.ATTEMPTS_ON_TRUNCATION
+        assert "EXHAUSTED" in out
+        # and it SHOWS what came back — a NO-VERDICT that cannot say why is
+        # undiagnosable, which is how one agent went five rounds unexplained — but the
+        # verdict token inside the excerpt is REDACTED, because parse_verdict reads the
+        # LAST match and an un-redacted excerpt would make this message parse as FAIL
+        assert "<verdict-token>" in out
+
+    def test_no_verdict_message_shows_an_empty_reply_as_such(self, monkeypatch) -> None:
+        monkeypatch.setattr(gr, "_invoke_cli", lambda a, p: "")
+        out = gr._run_agent_live("cold-reviewer", "diff", "main")
+        assert gr.parse_verdict(out) == "NO-VERDICT"
+        assert "<empty>" in out
 
     def test_substantive_first_reply_is_not_retried(self, monkeypatch) -> None:
         calls = {"n": 0}
